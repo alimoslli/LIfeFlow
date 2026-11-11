@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { COMPOSER, queryAsUser, signUp, whatUsersSee } from "./helpers";
+import { COMPOSER, queryAsUser, signUp, whatUsersSee, fillBirthday } from "./helpers";
 
 /**
  * The skyling has no fixed name. A new user who taps through setup without naming it (or picking one) meets Ray, the
@@ -63,7 +63,7 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   await page.getByRole("button", { name: "Continue" }).click();
   await expectNoJarvis(page, "welcome: about you");
   await page.getByLabel("What should I call you?").fill("Riley");
-  await page.getByLabel("Your birthday").fill("2003-07-21");
+  await fillBirthday(page, "2003-07-21");
   await page.getByRole("radio", { name: /Both/ }).click();
   await page.getByRole("button", { name: "Connect my sky" }).click();
   await expectNoJarvis(page, "welcome: connect your sky");

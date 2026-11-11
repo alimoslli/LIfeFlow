@@ -1,4 +1,5 @@
 "use client";
+import { AllFive } from "@/components/skylings/all-five";
 import { useState, useTransition } from "react";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
 import { useSkyling } from "@/components/skylings/use-skyling";
@@ -75,15 +76,8 @@ export function CompanionPicker({ current, tz }: { current: CompanionChoice | nu
             <span className={cn("text-xs", picked === c.key ? "text-hero-text" : "text-muted")}>{c.moment}</span>
           </button>
         ))}
-        <button
-          type="button"
-          role="radio"
-          aria-checked={sky}
-          disabled={pending}
-          onClick={() => pick(SKY_CHOICE)}
-          className={cn(tile(sky), "col-span-3 sm:col-span-1")}
-        >
-          <CompanionGlyph companion={now} night={ownsNight(now)} className="h-12 w-12" />
+        <button type="button" role="radio" aria-checked={sky} disabled={pending} onClick={() => pick(SKY_CHOICE)} className={tile(sky)}>
+          <AllFive />
           <span className="text-center text-sm leading-tight font-medium">{SKY_CHOICE_LABEL.name}</span>
           <span className={cn("text-xs", sky ? "text-hero-text" : "text-muted")}>{SKY_CHOICE_LABEL.moment}</span>
         </button>

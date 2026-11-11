@@ -5,6 +5,7 @@ import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion
 import { isHydrated } from "@/components/motion/intro";
 import { celebrate } from "@/components/motion/burst";
 import { DayClock } from "@/components/day-clock/day-clock";
+import { AllFive } from "@/components/skylings/all-five";
 import { NightSky } from "@/components/skylings/night-sky";
 import { cheerSkylings } from "@/components/skylings/night";
 import { SkyButton } from "@/components/skylings/sky-button";
@@ -23,6 +24,8 @@ import { PixelIcon } from "@/components/pixel/pixel-icon";
 import type { PixelName } from "@/components/pixel/art";
 import { NotifyAsk } from "@/components/jarvis/notify-ask";
 import { completeOnboardingAction, saveWelcomeAction, skipOnboardingAction, skyNowAction } from "./actions";
+import { BirthdayField } from "@/components/ui/birthday-field";
+import { useLink } from "@/components/finance/plaid-link";
 
 /**
  * First run (owner, 2026-11-09: "catered to the new app"; "they won't have to add their classes, syncing their school
@@ -64,7 +67,9 @@ export type Saved = {
   job: string;
 };
 type Source = { available: boolean; connected: boolean };
-type SourceKey = "canvas" | "google" | "outlook";
+/** What can be connected right in the welcome; "shifts" is a photo of the work schedule read by the skyling. */
+type SourceKey = "canvas" | "google" | "outlook" | "bank" | "shifts";
+type Linkable = Exclude<SourceKey, "shifts">;
 type Back = {
   provider: "google" | "outlook";
   result: "connected" | "denied" | "failed" | "missing_scopes" | "admin_consent" | "not_configured" | "use_main_site";
@@ -96,7 +101,7 @@ export function Onboarding({
   clock: ClockData;
   saved: Saved;
   back: Back | null;
-  sources: Record<SourceKey, Source>;
+  sources: Record<Linkable, Source>;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -111,7 +116,6 @@ export function Onboarding({
   const [companion, setCompanion] = useState<CompanionChoice | null>(saved.companion);
   // who to draw: the one picked, or whoever's moment it is for "Changes with the sky"
   const drawn = useSkyling(companion, firstClock.tz);
-  const skyNow = useSkyling(SKY_CHOICE, firstClock.tz);
   const [name, setName] = useState(saved.name);
   const [style, setStyle] = useState<AssistantStyle>(saved.style);
   const chosen = companion && companion !== SKY_CHOICE ? companionOf(companion) : null;
@@ -138,10 +142,7 @@ export function Onboarding({
   const cleanYou = yourName.trim().replace(/\s+/g, " ");
   const [birthDate, setBirthDate] = useState(saved.birthDate);
   const [stage, setStage] = useState<LifeStage | null>(saved.lifeStage);
-  const [school, setSchool] = useState(saved.school);
-  const [job, setJob] = useState(saved.job);
   const isSchool = stage === "student" || stage === "both";
-  const isWork = stage === "working" || stage === "both";
   // a neutral age question: the form only flags a day that can't be right (impossible, in the future); the age rule is the
   // server's, so the form never hints at the cutoff (an under-13 date locks the welcome there)
   const typed = birthDate ? birthDateProblem(birthDate, firstClock.today) : null;
@@ -153,10 +154,16 @@ export function Onboarding({
     canvas: sources.canvas.connected,
     google: sources.google.connected || (back?.provider === "google" && back.result === "connected"),
     outlook: sources.outlook.connected || (back?.provider === "outlook" && back.result === "connected"),
+    bank: sources.bank.connected,
+    shifts: false,
   });
-  // a week told in one message counts like a connection: something real is on the sky
+  // a bank connects in Plaid's window and the page refreshes: the server's answer counts too
+  const bankOn = linked.bank || sources.bank.connected;
+  // a week told in one message (or a schedule photo) counts like a connection: something real is on the sky
   const [told, setTold] = useState(false);
-  const anyLinked = linked.canvas || linked.google || linked.outlook || told;
+  const anyLinked = linked.canvas || linked.google || linked.outlook || bankOn || linked.shifts || told;
+  // the AI permission, asked once in the welcome for whatever the skyling reads (a typed week, a schedule photo)
+  const [aiOn, setAiOn] = useState(aiOk);
 
   const panel = useRef<HTMLDivElement>(null);
   useGSAP(
@@ -191,8 +198,6 @@ export function Onboarding({
         name: cleanYou !== firstName ? cleanYou : undefined,
         birthDate,
         lifeStage: stage ?? undefined,
-        school: isSchool ? school.trim() : undefined,
-        job: isWork ? job.trim() : "",
       });
       // under 13: the account's welcome is now locked, and the page says so (one calm line, nothing to retry)
       if (r?.error === AGE_LINE) return router.refresh();
@@ -230,14 +235,13 @@ export function Onboarding({
     if (sky.ok) setClock(sky.clock);
   };
 
-  /** Finishes setup (their skyling, their week, where they work) and goes to their sky. */
+  /** Finishes setup (their skyling and their week) and goes to their sky. Where they study or work comes from connecting. */
   const finish = (to: string) =>
     start(async () => {
       if (!nameOk) return setError("Use letters, numbers, spaces or simple punctuation for the name (up to 24 characters).");
       const r = await completeOnboardingAction({
         lifeStage: stage ?? undefined,
         assistant: { name: cleanName || undefined, style, companion: companion ?? undefined },
-        job: isWork && job.trim() ? { name: job.trim() } : undefined,
       });
       if (r?.ok) return router.replace(to);
       if (r?.error === BIRTHDAY_NEEDED) return toAbout();
@@ -261,8 +265,17 @@ export function Onboarding({
     });
 
   const night = step === "skyling" || step === "about";
-  // the sources in the order that matters to them: students start with Canvas
-  const order: SourceKey[] = isSchool || !stage ? ["canvas", "google", "outlook"] : ["google", "outlook", "canvas"];
+  // every connection, in the order that matters to them (owner, 2026-11-11: "encourage connecting everything as soon as
+  // possible"): students start with Canvas, anyone with a job gets their shifts from a photo, and the bank is for everyone
+  const works = stage === "working" || stage === "both";
+  const order: SourceKey[] = [
+    ...(isSchool || !stage ? (["canvas"] as const) : []),
+    "google",
+    "outlook",
+    ...(works ? (["shifts"] as const) : []),
+    "bank",
+    ...(isSchool || !stage ? [] : (["canvas"] as const)),
+  ];
   return (
     <div className="lf-glass min-h-dvh bg-bg">
       {/* the top: the skylings' night while you meet them; then the sun comes up on your own sky */}
@@ -345,17 +358,16 @@ export function Onboarding({
                     aria-checked={companion === SKY_CHOICE}
                     onClick={pickSky}
                     className={cn(
-                      "col-span-3 flex min-h-16 items-center justify-center gap-3 rounded-[1.25rem] px-3 py-2 transition-all duration-300 active:scale-95",
+                      "flex min-h-24 flex-col items-center justify-center gap-0.5 rounded-[1.25rem] px-1 py-2 transition-all duration-300 active:scale-95",
                       companion === SKY_CHOICE
                         ? "-translate-y-0.5 bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night shadow-lift ring-2 ring-dawn-3"
                         : "bg-surface shadow-soft hover:-translate-y-0.5",
                     )}
                   >
-                    <CompanionGlyph companion={skyNow} night={ownsNight(skyNow)} className="h-10 w-10" />
-                    <span className="text-left">
-                      <span className="block text-[0.9375rem] font-medium">{SKY_CHOICE_LABEL.name}</span>
-                      <span className={cn("block text-xs", companion === SKY_CHOICE ? "text-ink-night/75" : "text-muted")}>{SKY_CHOICE_LABEL.moment}</span>
-                    </span>
+                    {/* the sixth place in the grid: all five along the sky's arc (owner, 2026-11-11) */}
+                    <AllFive />
+                    <span className="text-center text-[0.9375rem] leading-tight font-medium">{SKY_CHOICE_LABEL.name}</span>
+                    <span className={cn("text-xs", companion === SKY_CHOICE ? "text-ink-night/75" : "text-muted")}>{SKY_CHOICE_LABEL.moment}</span>
                   </button>
                 </div>
                 {companion === SKY_CHOICE && (
@@ -415,16 +427,7 @@ export function Onboarding({
                   />
                 </Group>
                 <Group label="Your birthday">
-                  <Input
-                    type="date"
-                    aria-label="Your birthday"
-                    value={birthDate}
-                    max={firstClock.today}
-                    onChange={(e) => setBirthDate(e.target.value)}
-                    autoComplete="bday"
-                    className="min-h-11"
-                    aria-invalid={!!birthProblem || undefined}
-                  />
+                  <BirthdayField value={birthDate} onChange={setBirthDate} invalid={!!birthProblem} />
                   <p className={cn("mt-1.5 text-xs", birthProblem ? "text-danger" : "text-muted")}>{birthProblem ?? "Private to your account."}</p>
                 </Group>
                 <div data-anim>
@@ -455,32 +458,7 @@ export function Onboarding({
                     ))}
                   </div>
                 </div>
-                {isSchool && (
-                  <Group label="Your school">
-                    <Input
-                      aria-label="Your school"
-                      value={school}
-                      onChange={(e) => setSchool(e.target.value)}
-                      maxLength={120}
-                      placeholder="State University"
-                      autoComplete="organization"
-                      className="min-h-11"
-                    />
-                  </Group>
-                )}
-                {isWork && (
-                  <Group label="Where you work">
-                    <Input
-                      aria-label="Where you work"
-                      value={job}
-                      onChange={(e) => setJob(e.target.value)}
-                      maxLength={120}
-                      placeholder="Campus Coffee"
-                      autoComplete="off"
-                      className="min-h-11"
-                    />
-                  </Group>
-                )}
+                {/* no school or workplace to type (owner, 2026-11-11): connecting their sky fills those in */}
                 <p data-anim className="rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem] leading-snug text-text-2">
                   {plan.paid
                     ? `Free plan: everything you add yourself, and ${plan.freeChatsPerDay} chats with your skyling a day. Pro adds ${listOf(plan.proFeatures)}.`
@@ -492,7 +470,7 @@ export function Onboarding({
 
           {step === "connect" && (
             <>
-              <Title sub="Your classes, shifts and due dates already live somewhere. Connect it once and they land on your sky by themselves, and stay up to date.">
+              <Title sub="Connect everything you can now. Each one fills your sky by itself and keeps it up to date, so you never type your week in.">
                 Connect your sky
               </Title>
               {back && (
@@ -512,23 +490,33 @@ export function Onboarding({
                   <li key={k}>
                     {k === "canvas" ? (
                       <CanvasSource connected={linked.canvas} disabled={pending} onConnect={connectCanvas} />
+                    ) : k === "bank" ? (
+                      <BankSource connected={bankOn} available={sources.bank.available} />
+                    ) : k === "shifts" ? (
+                      <ShiftsSource
+                        who={shown ?? (chosen ? chosen.name : "your skyling")}
+                        allowed={aiOn}
+                        onAllowed={() => setAiOn(true)}
+                        done={linked.shifts}
+                        onDone={async () => {
+                          setLinked((l) => ({ ...l, shifts: true }));
+                          await weekTold();
+                        }}
+                      />
                     ) : (
                       <LinkSource
                         source={k}
                         connected={linked[k]}
                         available={sources[k].available}
                         icon={k === "google" ? "calendar" : "chat"}
-                        title={k === "google" ? "Google Calendar" : "Outlook and Teams"}
-                        brings={k === "google" ? "Your classes, plans and shifts from your calendar" : "School or work calendar, and Teams meetings"}
+                        title={k === "google" ? "Google" : "Outlook and Teams"}
+                        brings={k === "google" ? "Calendar and Gmail: your plans, bills and receipts" : "School or work calendar, and Teams meetings"}
                       />
                     )}
                   </li>
                 ))}
               </ul>
-              <TellWeek who={shown ?? (chosen ? chosen.name : "your skyling")} aiOk={aiOk} onSaved={weekTold} />
-              <p data-anim className="mt-3 text-[0.8125rem] text-muted">
-                Your bank can come later, from Money.
-              </p>
+              <TellWeek who={shown ?? (chosen ? chosen.name : "your skyling")} allowed={aiOn} onAllowed={() => setAiOn(true)} onSaved={weekTold} />
             </>
           )}
 
@@ -574,6 +562,51 @@ export function Onboarding({
 }
 
 /** Google or Microsoft: one tap away and back (the start route remembers it came from here). */
+/** One connection as a card: what it is, what it brings, and its button; warm once it's connected. Same look for all. */
+function SourceCard({
+  icon,
+  title,
+  brings,
+  connected,
+  done = "Connected. It's on your sky.",
+  note,
+  children,
+}: {
+  icon: PixelName;
+  title: string;
+  brings: string;
+  connected: boolean;
+  done?: string;
+  note?: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-2 rounded-2xl px-4 py-3.5",
+        connected ? "bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night" : "bg-surface shadow-soft",
+      )}
+    >
+      <div className="flex items-center gap-3">
+        <span
+          className={cn(
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl max-[359px]:hidden",
+            connected ? "bg-ink-night text-star-gold" : "bg-surface-2",
+          )}
+        >
+          <PixelIcon name={connected ? "todo" : icon} className="h-6 w-6" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[0.9375rem] font-medium">{title}</span>
+          <span className={cn("block text-sm", connected ? "text-ink-night/75" : "text-muted")}>{connected ? done : brings}</span>
+        </span>
+        {!connected && children}
+      </div>
+      {!connected && note}
+    </div>
+  );
+}
+
 function LinkSource({
   source,
   connected,
@@ -591,33 +624,187 @@ function LinkSource({
 }) {
   const href = source === "google" ? "/api/integrations/google/start?from=welcome" : "/api/integrations/microsoft/start?from=welcome";
   return (
-    <div
-      className={cn(
-        "flex items-center gap-3 rounded-2xl px-4 py-3.5",
-        connected ? "bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night" : "bg-surface shadow-soft",
-      )}
+    <SourceCard
+      icon={icon}
+      title={title}
+      brings={brings}
+      connected={connected}
+      // under the words, not in a column beside them: on a small phone that squeezed them to two words a line
+      note={!available && <span className="block pl-[3.25rem] text-xs text-muted max-[359px]:pl-0">Isn&apos;t available yet</span>}
     >
-      <span
-        className={cn(
-          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl max-[359px]:hidden",
-          connected ? "bg-ink-night text-star-gold" : "bg-surface-2",
-        )}
-      >
-        <PixelIcon name={connected ? "todo" : icon} className="h-6 w-6" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[0.9375rem] font-medium">{title}</span>
-        <span className={cn("block text-sm", connected ? "text-ink-night/75" : "text-muted")}>{connected ? "Connected. It's on your sky." : brings}</span>
-        {/* under the words, not in a column beside them: on a small phone that squeezed them to two words a line */}
-        {!connected && !available && <span className="mt-1 block text-xs text-muted">Isn&apos;t available yet</span>}
-      </span>
-      {!connected && available && (
+      {available && (
         <a href={href} className="lf-sb lf-sb-sun lf-sb-sm shrink-0" aria-label={`Connect ${title}`}>
           Connect
         </a>
       )}
-    </div>
+    </SourceCard>
   );
+}
+
+/** The bank, in Plaid's own window (read-only, never moves money), the same way Money connects one. */
+function BankSource({ connected, available }: { connected: boolean; available: boolean }) {
+  const { busy, status, start } = useLink();
+  return (
+    <SourceCard
+      icon="card"
+      title="Your bank"
+      brings="What's available now, bills and spending"
+      connected={connected}
+      note={
+        available ? (
+          <span className="block text-xs text-muted">
+            {status ? (
+              <span role="status" className={status.ok ? "text-text-2" : "text-danger"}>
+                {status.text}
+              </span>
+            ) : (
+              "You sign in to your bank inside Plaid. LifeFlow never sees your password and can't move money."
+            )}
+          </span>
+        ) : (
+          <span className="block pl-[3.25rem] text-xs text-muted max-[359px]:pl-0">Isn&apos;t available yet</span>
+        )
+      }
+    >
+      {available && (
+        <button type="button" onClick={start} disabled={busy} className="lf-sb lf-sb-sun lf-sb-sm shrink-0" aria-label="Connect your bank">
+          {busy ? "Opening…" : "Connect"}
+        </button>
+      )}
+    </SourceCard>
+  );
+}
+
+/**
+ * Work shifts: no work app connects yet, so a photo of the schedule is the connection. It goes to the skyling like a chat
+ * message with the photo (the same limits and permission), and the shifts it saves land on the sky.
+ */
+function ShiftsSource({
+  who,
+  allowed,
+  onAllowed,
+  done,
+  onDone,
+}: {
+  who: string;
+  allowed: boolean;
+  onAllowed: () => void;
+  done: boolean;
+  onDone: () => Promise<void>;
+}) {
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const fallback = `${nameAtStart(who)} couldn't read that just now. Try again, or tell ${who} your shifts below.`;
+  const read = async (file: File | undefined) => {
+    if (!file || busy) return;
+    setBusy(true);
+    setProblem(null);
+    try {
+      if (!allowed) {
+        const r = await setAiConsentAction(true);
+        if (!r?.ok) throw new Error(r?.error || fallback);
+        onAllowed();
+      }
+      const fd = new FormData();
+      fd.append("file", file);
+      const up = await fetch("/api/attachments", { method: "POST", body: fd });
+      // only words the server wrote for people (size, kind of file); anything else is the calm fallback
+      if (!up.ok) throw new Error(((await up.json().catch(() => null)) as { error?: string } | null)?.error || fallback);
+      const { id } = (await up.json()) as { id: string };
+      const { saved } = await askSkyling("Add my work shifts from this schedule.", [id], fallback);
+      if (!saved) throw new Error(`${nameAtStart(who)} couldn't find shifts in that photo. Try a clearer one, or tell ${who} below.`);
+      await onDone();
+    } catch (e) {
+      setProblem(e instanceof Error && e.message ? e.message : fallback);
+    } finally {
+      setBusy(false);
+      if (input.current) input.current.value = "";
+    }
+  };
+  return (
+    <SourceCard
+      icon="shift"
+      title="Work shifts"
+      brings="A photo of your schedule is enough"
+      connected={done}
+      done="Added. They're on your sky."
+      note={
+        <>
+          {!allowed && (
+            <span className="block text-xs text-muted">
+              To read it, {who} sends your photo to OpenAI, our AI provider. They don&apos;t use it to train their models.
+            </span>
+          )}
+          {problem && (
+            <span role="alert" className="block text-sm [overflow-wrap:anywhere] text-danger">
+              {problem}
+            </span>
+          )}
+        </>
+      }
+    >
+      <input
+        ref={input}
+        type="file"
+        accept="image/*,application/pdf"
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden
+        onChange={(e) => read(e.target.files?.[0])}
+      />
+      <button
+        type="button"
+        onClick={() => input.current?.click()}
+        disabled={busy}
+        className="lf-sb lf-sb-sun lf-sb-sm shrink-0"
+        aria-label="Add a photo of your work schedule"
+      >
+        {busy ? "Reading…" : "Add photo"}
+      </button>
+    </SourceCard>
+  );
+}
+
+/**
+ * Sends one message (and any uploaded files) to the skyling through the same chat as everywhere, and reads its answer:
+ * the final words, and whether a tool saved something. Throws with the server's own words, or the fallback.
+ */
+async function askSkyling(message: string, attachmentIds: string[], fallback: string): Promise<{ reply: string; saved: boolean }> {
+  const res = await fetch("/api/jarvis/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ message, attachmentIds, clientMessageId: crypto.randomUUID(), module: "calendar" }),
+  });
+  if (!res.ok || !res.body) {
+    // only words the server wrote for people (limits, permission); anything else is the calm fallback
+    const words = [402, 403, 429, 503].includes(res.status) ? ((await res.json().catch(() => null)) as { error?: string } | null)?.error : null;
+    throw new Error(words || fallback);
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  let reply = "";
+  let saved = false;
+  let failed = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let nl: number;
+    while ((nl = buf.indexOf("\n")) >= 0) {
+      const line = buf.slice(0, nl).trim();
+      buf = buf.slice(nl + 1);
+      if (!line) continue;
+      const ev = JSON.parse(line) as { type: string; delta?: string; ok?: boolean; message?: string };
+      if (ev.type === "tool_start") reply = ""; // only the final answer, not "let me check…"
+      if (ev.type === "text") reply += ev.delta ?? "";
+      if (ev.type === "tool_end" && ev.ok) saved = true;
+      if (ev.type === "error") failed = ev.message ?? "";
+    }
+  }
+  if (failed && !saved) throw new Error(failed);
+  return { reply: reply.trim(), saved };
 }
 
 /**
@@ -625,10 +812,9 @@ function LinkSource({
  * minute ends on a full sky). It goes through the same chat as everywhere else (its limits, its AI permission, the
  * one-call set_up_schedule), and the sky above comes back with what was saved. Nothing is made up: only what they wrote.
  */
-function TellWeek({ who, aiOk, onSaved }: { who: string; aiOk: boolean; onSaved: () => Promise<void> }) {
+function TellWeek({ who, allowed, onAllowed, onSaved }: { who: string; allowed: boolean; onAllowed: () => void; onSaved: () => Promise<void> }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
-  const [allowed, setAllowed] = useState(aiOk);
   const [said, setSaid] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const fallback = `${nameAtStart(who)} couldn't save that just now. Try again, or connect a calendar above.`;
@@ -641,42 +827,10 @@ function TellWeek({ who, aiOk, onSaved }: { who: string; aiOk: boolean; onSaved:
       if (!allowed) {
         const r = await setAiConsentAction(true);
         if (!r?.ok) throw new Error(r?.error || fallback);
-        setAllowed(true);
+        onAllowed();
       }
-      const res = await fetch("/api/jarvis/chat", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message, clientMessageId: crypto.randomUUID(), module: "calendar" }),
-      });
-      if (!res.ok || !res.body) {
-        // only words the server wrote for people (limits, permission); anything else is the calm fallback
-        const words = [402, 403, 429, 503].includes(res.status) ? ((await res.json().catch(() => null)) as { error?: string } | null)?.error : null;
-        throw new Error(words || fallback);
-      }
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buf = "";
-      let reply = "";
-      let saved = false;
-      let failed = "";
-      for (;;) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        let nl: number;
-        while ((nl = buf.indexOf("\n")) >= 0) {
-          const line = buf.slice(0, nl).trim();
-          buf = buf.slice(nl + 1);
-          if (!line) continue;
-          const ev = JSON.parse(line) as { type: string; delta?: string; ok?: boolean; message?: string };
-          if (ev.type === "tool_start") reply = ""; // only the final answer, not "let me check…"
-          if (ev.type === "text") reply += ev.delta ?? "";
-          if (ev.type === "tool_end" && ev.ok) saved = true;
-          if (ev.type === "error") failed = ev.message ?? "";
-        }
-      }
-      if (failed && !saved) throw new Error(failed);
-      setSaid(reply.trim() || "Saved. It's on your sky.");
+      const { reply, saved } = await askSkyling(message, [], fallback);
+      setSaid(reply || "Saved. It's on your sky.");
       setText("");
       if (saved) await onSaved();
     } catch (e) {

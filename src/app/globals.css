@@ -810,11 +810,8 @@ html[data-lf-moment="goldie"] .lf-splash-birds {
   transform: translateY(8px);
   animation: lf-letter 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) calc(0.35s + var(--i) * 35ms) forwards;
 }
-.lf-greet-1::before {
-  content: var(--lf-greet, "Hello");
-}
 .lf-greet-2::before {
-  content: var(--lf-name, "LifeFlow");
+  content: var(--lf-greet, "Hello");
 }
 .lf-greet {
   opacity: 0;

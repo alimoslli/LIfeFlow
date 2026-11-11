@@ -41,24 +41,26 @@ function runSplash(stored: Record<string, string>, instant: Date, deviceHour: nu
     location,
     DeviceDate,
   );
-  return { greeting: vars.get("--lf-greet"), name: vars.get("--lf-name"), shown: classes.has("lf-splash"), moment: attrs.get("data-lf-moment") };
+  return { greeting: vars.get("--lf-greet"), shown: classes.has("lf-splash"), moment: attrs.get("data-lf-moment") };
 }
 
 describe("splash greeting", () => {
   // 11 PM on Nov 5 in Los Angeles is 7 AM on Nov 6 in UTC.
   const lateEveningLA = new Date("2026-11-06T07:00:00Z");
 
-  it("greets by the hour in the user's time zone, not the device clock", () => {
+  // Owner, 2026-11-11: a short hello by the sky, with their first name.
+  it("greets by the sky in the user's time zone, not the device clock, with their first name", () => {
     const out = runSplash({ [TZ_KEY]: "America/Los_Angeles", [NAME_KEY]: "Alex" }, lateEveningLA, 7);
-    // 11 PM: the evening greeting, under the night sky, and Moon rises (the moment picks which skyling rises on the opening screen)
-    expect(out).toEqual({ greeting: "Good evening", name: "Alex", shown: true, moment: "moon" });
-    expect(runSplash({ [TZ_KEY]: "America/New_York" }, new Date("2026-11-05T17:30:00Z"), 23).greeting).toBe("Good afternoon");
-    expect(runSplash({ [TZ_KEY]: "Asia/Tokyo" }, new Date("2026-11-05T17:30:00Z"), 17).greeting).toBe("Up late");
+    // 11 PM: late night, so Dreamy rises (the moment picks which skyling rises on the opening screen)
+    expect(out).toEqual({ greeting: "Up with the moon, Alex", shown: true, moment: "moon" });
+    expect(runSplash({ [TZ_KEY]: "America/New_York" }, new Date("2026-11-05T17:30:00Z"), 23).greeting).toBe("Sun's up");
+    expect(runSplash({ [TZ_KEY]: "America/New_York", [NAME_KEY]: "Ali" }, new Date("2026-11-05T11:20:00Z"), 23).greeting).toBe("Rise and shine, Ali");
+    expect(runSplash({ [TZ_KEY]: "Asia/Tokyo" }, new Date("2026-11-05T17:30:00Z"), 17).greeting).toBe("Up with the moon");
   });
 
   it("falls back to the device clock before the app has saved a zone, or if the saved one is invalid", () => {
-    expect(runSplash({}, lateEveningLA, 7)).toMatchObject({ greeting: "Good morning", moment: "ray", shown: true });
-    expect(runSplash({ [TZ_KEY]: "Not/AZone" }, lateEveningLA, 20).greeting).toBe("Good evening");
+    expect(runSplash({}, lateEveningLA, 7)).toMatchObject({ greeting: "Sun's up", moment: "ray", shown: true });
+    expect(runSplash({ [TZ_KEY]: "Not/AZone" }, lateEveningLA, 20).greeting).toBe("Stars are out");
   });
 
   it("shows the same skyling as Today: whoever's moment it is by the sun in the user's zone", () => {

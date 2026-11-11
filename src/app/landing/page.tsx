@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 const MOMENTS: { who: CompanionKey; name: string; tag: string; says: string; used: string[] }[] = [
   {
     who: "star",
-    name: "Star",
+    name: "Twinkle",
     tag: "Shift vs exam",
     says: "Your Thursday shift runs until 10, and Bio is Friday at 9. I moved your study block to Wednesday. Okay?",
     used: ["Exam · Fri 9 AM", "Shift · Thu 5 to 10 PM"],

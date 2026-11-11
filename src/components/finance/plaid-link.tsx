@@ -43,8 +43,8 @@ async function post<T>(url: string, body: unknown): Promise<T> {
   return j;
 }
 
-/** Shared Link flow: get a token, open Plaid, then exchange (new) or refresh (reconnect). */
-function useLink(reconnect?: string, chooseAccounts?: boolean) {
+/** Shared Link flow: get a token, open Plaid, then exchange (new) or refresh (reconnect). Also the welcome's bank card. */
+export function useLink(reconnect?: string, chooseAccounts?: boolean) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);

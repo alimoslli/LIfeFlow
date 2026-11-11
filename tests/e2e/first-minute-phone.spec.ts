@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { queryAsUser, signUp } from "./helpers";
+import { queryAsUser, signUp, fillBirthday } from "./helpers";
 
 test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
@@ -13,7 +13,7 @@ test("the first minute: the real welcome ends on Today with the told week on the
   // 2. about you
   await page.getByLabel("What should I call you?").fill("Maya");
   await page.getByRole("radio", { name: /^Both/ }).click();
-  await page.getByLabel("Your birthday").fill("2005-04-12");
+  await fillBirthday(page, "2005-04-12");
   await page.getByRole("button", { name: "Connect my sky" }).click();
 
   // 3. no calendar to connect: the week in one message. AI is asked for first, never assumed.

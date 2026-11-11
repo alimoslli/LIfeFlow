@@ -2,9 +2,9 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/field";
 import { saveBirthdayAction } from "./actions";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
+import { BirthdayField } from "@/components/ui/birthday-field";
 
 /**
  * Asked once on Today from accounts made before the birthday was required (owner, 2026-11-10): small, on the first
@@ -62,22 +62,13 @@ export function BirthdayCard() {
         </span>
       </p>
       <form
-        className="flex items-center gap-2"
+        className="flex flex-col gap-2 sm:flex-row sm:items-center"
         onSubmit={(e) => {
           e.preventDefault();
           send(false);
         }}
       >
-        <Input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          aria-label="Your birthday"
-          autoComplete="bday"
-          max={new Date().toISOString().slice(0, 10)}
-          className="min-h-11 min-w-0 flex-1"
-          required
-        />
+        <BirthdayField value={date} onChange={setDate} className="min-w-0 flex-1" />
         <Button type="submit" loading={pending} disabled={!date} className="min-h-11">
           Save
         </Button>

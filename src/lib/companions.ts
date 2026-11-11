@@ -123,7 +123,7 @@ export const COMPANIONS: CompanionInfo[] = [
   },
   {
     key: "star",
-    name: "Star",
+    name: "Twinkle",
     moment: "Evening",
     line: "Out with the first stars. Sees far and says little.",
     traits: ["far-sighted", "quiet", "dependable"],
@@ -148,7 +148,7 @@ export const COMPANIONS: CompanionInfo[] = [
   },
   {
     key: "moon",
-    name: "Moon",
+    name: "Dreamy",
     moment: "Late night",
     line: "Up late with you, calm and in no hurry.",
     traits: ["calm", "kind", "unhurried"],
@@ -193,7 +193,7 @@ export const isCompanionChoice = (k: unknown): k is CompanionChoice => k === SKY
 export const SKY_CHOICE_LABEL = {
   name: "Changes with the sky",
   moment: "All five, by the time",
-  line: "Whoever's up: Dawn at first light, Ray through the day, Moon late at night.",
+  line: "Whoever's up: Dawn at first light, Ray through the day, Dreamy late at night.",
 };
 
 /**

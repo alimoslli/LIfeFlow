@@ -8,9 +8,11 @@ const base = { userName: "Ali", tz: "America/Chicago", now: new Date("2026-10-28
 describe("assistant profile", () => {
   it("without a name of their own it goes by its skyling's (Ray by default), friend, marin, and maps older styles", () => {
     expect(assistantProfile(undefined)).toEqual({ name: "Ray", named: false, style: "friend", notes: null, voice: "marin" });
-    expect(assistantProfile({ companion: "star" })).toMatchObject({ name: "Star", named: false });
+    expect(assistantProfile({ companion: "star" })).toMatchObject({ name: "Twinkle", named: false });
+    // a skyling's former name saved when it was picked goes by today's name (2026-11-11)
+    expect(assistantProfile({ companion: "moon", assistantName: "Moon" })).toMatchObject({ name: "Dreamy", named: false });
     // "Changes with the sky": whoever is up where they are
-    expect(skylingName("sky", "America/Chicago", new Date("2026-06-21T05:00:00Z"))).toBe("Moon"); // midnight in Chicago
+    expect(skylingName("sky", "America/Chicago", new Date("2026-06-21T05:00:00Z"))).toBe("Dreamy"); // midnight in Chicago
     expect(skylingName("sky", "America/Chicago", new Date("2026-06-21T19:00:00Z"))).toBe("Ray"); // 2 PM in Chicago
     expect(assistantProfile({ companion: "sky" }, "America/Chicago").named).toBe(false);
     // the old product name "Dev" is never shown as theirs (owner, 2026-11-10)

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signUp } from "./helpers";
+import { signUp, fillBirthday } from "./helpers";
 
 test("core pages fit a phone screen without horizontal scrolling", async ({ page }) => {
   await signUp(page, "Phone User", { onboarding: "stay" });
@@ -13,10 +13,8 @@ test("core pages fit a phone screen without horizontal scrolling", async ({ page
   await fits("skyling");
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByLabel("What should I call you?").fill("Tara");
-  await page.getByLabel("Your birthday").fill("2004-03-15");
+  await fillBirthday(page, "2004-03-15");
   await page.getByRole("radio", { name: /Both/ }).click();
-  await page.getByLabel("Your school").fill("Introduction to Organic Chemistry University");
-  await page.getByLabel("Where you work").fill("Campus Coffee and Bakery Downtown");
   await fits("about");
   await page.getByRole("button", { name: "Connect my sky" }).click();
   await fits("connect");

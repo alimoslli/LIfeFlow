@@ -12,6 +12,7 @@ import { getDb } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 import { updateProfileAction } from "../actions";
 import { SettingsHeader } from "../settings-header";
+import { BirthdayField } from "@/components/ui/birthday-field";
 
 export const metadata: Metadata = { title: "You and the look" };
 
@@ -62,7 +63,7 @@ export default async function ProfileSettings() {
               </Select>
             </Field>
             <Field label="Birthday" htmlFor="p-birth">
-              <Input id="p-birth" name="birthDate" type="date" defaultValue={u.preferences.birthDate ?? ""} />
+              <BirthdayField id="p-birth" name="birthDate" value={u.preferences.birthDate ?? ""} />
             </Field>
             <Field label="What fills your week" htmlFor="p-life">
               <Select id="p-life" name="lifeStage" defaultValue={u.preferences.lifeStage ?? "both"}>

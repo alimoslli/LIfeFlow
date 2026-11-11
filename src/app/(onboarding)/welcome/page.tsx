@@ -8,6 +8,7 @@ import { series } from "@/server/db/series";
 import { canvasConnection } from "@/server/integrations/canvas";
 import { googleConfig } from "@/server/integrations/google";
 import { microsoftConfig } from "@/server/integrations/microsoft";
+import { plaidConfig } from "@/server/integrations/plaid";
 import { dayClockData } from "@/server/services/day-clock";
 import { integrationStatus } from "@/server/services/integrations";
 import { getDb } from "@/server/db/client";
@@ -64,6 +65,7 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
         google: { available: !!googleConfig(), connected: on("google") },
         outlook: { available: !!microsoftConfig(), connected: on("outlook") },
         canvas: { available: true, connected: !!canvas },
+        bank: { available: !!plaidConfig(), connected: on("plaid") },
       }}
     />
   );

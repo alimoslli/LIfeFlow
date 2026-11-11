@@ -8,7 +8,7 @@ const POSES = Object.keys(FRAMES) as Pose[];
 describe("the cast (docs/design/companions/cast.md)", () => {
   it("has the five, each once, named for the sky (owner, 2026-11-11)", () => {
     expect(COMPANIONS.map((c) => c.key)).toEqual([...COMPANION_KEYS]);
-    expect(COMPANIONS.map((c) => c.name)).toEqual(["Dawn", "Ray", "Goldie", "Star", "Moon"]);
+    expect(COMPANIONS.map((c) => c.name)).toEqual(["Dawn", "Ray", "Goldie", "Twinkle", "Dreamy"]);
   });
 
   it("never says Jarvis, never uses an em dash, and every tone is a real one", () => {
@@ -23,7 +23,8 @@ describe("the cast (docs/design/companions/cast.md)", () => {
   it("falls back to the default until something real is picked", () => {
     expect(companionOf(undefined).key).toBe(DEFAULT_COMPANION);
     expect(companionOf("nobody").key).toBe(DEFAULT_COMPANION);
-    expect(companionOf("star").name).toBe("Star");
+    expect(companionOf("star").name).toBe("Twinkle");
+    expect(companionOf("moon").name).toBe("Dreamy");
     expect(isCompanionKey("goldie")).toBe(true);
     expect(isCompanionKey("Goldie")).toBe(false);
   });

@@ -29,7 +29,7 @@ test("picking a skyling in Settings makes it the skyling and puts it on the whee
       async () => (await queryAsUser<{ p: Record<string, string> }>(email, "select preferences as p from users where email = $1", [email]))[0].p.assistantName,
     )
     .toBe("Pip");
-  await six.getByRole("radio", { name: /^Star/ }).click();
+  await six.getByRole("radio", { name: /^Twinkle/ }).click();
   await expect
     .poll(async () => (await queryAsUser<{ p: Record<string, string> }>(email, "select preferences as p from users where email = $1", [email]))[0].p.companion)
     .toBe("star");
@@ -52,7 +52,7 @@ test.describe("changes with the sky", () => {
     await page.goto("/settings/jarvis");
     const picker = page.getByRole("radiogroup", { name: "Your skyling" });
     await picker.getByRole("radio", { name: /^Changes with the sky/ }).click();
-    await expect(page.getByText("Whoever's up: Dawn at first light, Ray through the day, Moon late at night.").first()).toBeVisible();
+    await expect(page.getByText("Whoever's up: Dawn at first light, Ray through the day, Dreamy late at night.").first()).toBeVisible();
     await expect
       .poll(
         async () => (await queryAsUser<{ p: Record<string, string> }>(email, "select preferences as p from users where email = $1", [email]))[0].p.companion,

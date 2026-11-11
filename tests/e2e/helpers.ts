@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 import { Pool } from "pg";
 
 export const pool = new Pool({ connectionString: process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" });
@@ -93,4 +93,12 @@ export function localInstant(tz: string, hour: number, minute: number) {
     if (p.slice(0, 10) === today && Number(p.slice(-2)) === hour) return d;
   }
   throw new Error(`no ${hour}:${minute} today in ${tz}`);
+}
+
+/** Picks a birthday ("YYYY-MM-DD") in the month, day and year boxes (components/ui/birthday-field.tsx). */
+export async function fillBirthday(scope: Page | Locator, date: string) {
+  const [y, m, d] = date.split("-").map(Number);
+  await scope.getByLabel("Birthday month").selectOption(String(m));
+  await scope.getByLabel("Birthday day").selectOption(String(d));
+  await scope.getByLabel("Birthday year").selectOption(String(y));
 }

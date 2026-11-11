@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { expect, test, type Page } from "@playwright/test";
-import { signUp } from "./helpers";
+import { signUp, fillBirthday } from "./helpers";
 
 /**
  * No two visible controls overlap, and no field sticks out of its container, on the phone sizes we support.
@@ -244,10 +244,8 @@ for (const size of SIZES)
       await check("welcome/skyling");
       await page.getByRole("button", { name: "Continue" }).click();
       await page.getByLabel("What should I call you?").fill("Tara");
-      await page.getByLabel("Your birthday").fill("2004-03-15");
+      await fillBirthday(page, "2004-03-15");
       await page.getByRole("radio", { name: /Both/ }).click();
-      await page.getByLabel("Your school").fill("Introduction to Organic Chemistry University");
-      await page.getByLabel("Where you work").fill("Campus Coffee and Bakery Downtown");
       await check("welcome/about");
       await page.getByRole("button", { name: "Connect my sky" }).click();
       await check("welcome/connect");

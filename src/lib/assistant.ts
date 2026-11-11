@@ -9,8 +9,12 @@ import { resolveSkyling } from "./skyling-now";
  */
 export const UNNAMED_ASSISTANT = "your skyling";
 
-/** Old product names that were saved as a name and are never shown as the skyling's (owner, 2026-11-10: "Dev" is out). */
-const OLD_NAMES = new Set(["Dev"]);
+/**
+ * Old names that were saved as a name and are never shown as the skyling's: the old product name (owner, 2026-11-10:
+ * "Dev" is out), and the skylings' own former names, saved when one was picked (2026-11-11: Noon and Dusk retired, Star
+ * is now Twinkle and Moon is Dreamy), so they go by today's name.
+ */
+const OLD_NAMES = new Set(["Dev", "Noon", "Dusk", "Star", "Moon"]);
 
 /** The name at the start of a sentence or as a heading. */
 export const nameAtStart = (name: string) => (name === UNNAMED_ASSISTANT ? "Your skyling" : name);

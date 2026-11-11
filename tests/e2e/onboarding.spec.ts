@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { pool, queryAsUser, signUp } from "./helpers";
+import { pool, queryAsUser, signUp, fillBirthday } from "./helpers";
 
 test("a new user meets the skylings, tells theirs about themselves, sees how to connect their sky, learns it by doing, then the tour", async ({ page }) => {
   const email = await signUp(page, "Maya Chen", { onboarding: "stay" });
@@ -27,9 +27,7 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
   await page.getByRole("radio", { name: /^Both/ }).click();
   await expect(go).toBeDisabled(); // the birthday is asked for, neutrally (the age rule is the server's)
   await expect(page.getByText("Private to your account.", { exact: true })).toBeVisible();
-  await page.getByLabel("Your birthday").fill("2005-04-12");
-  await page.getByLabel("Your school").fill("State University");
-  await page.getByLabel("Where you work").fill("Target");
+  await fillBirthday(page, "2005-04-12");
   await go.click();
 
   // 3. Connect your sky: their real sky, opened into the week, and one tap each for Canvas, Google and Outlook.
@@ -41,11 +39,13 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
   await expect(page.getByText("Tap Calendar Feed (bottom right) and copy the link.")).toBeVisible();
   await expect(page.getByLabel("Calendar Feed link")).toBeVisible();
   // Google and Outlook go out and come back to this step, or say plainly that they aren't available yet
-  for (const name of ["Google Calendar", "Outlook and Teams"]) {
+  // every connection is offered right here (owner, 2026-11-11), the work shifts too since they have a job, and the bank
+  for (const name of ["Google", "Outlook and Teams", "Work shifts", "Your bank"]) {
     const card = page.getByText(name, { exact: true });
     await expect(card).toBeVisible();
   }
-  const google = page.getByRole("link", { name: "Connect Google Calendar" });
+  await expect(page.getByRole("button", { name: "Add a photo of your work schedule" })).toBeVisible();
+  const google = page.getByRole("link", { name: "Connect Google" });
   if (await google.count()) await expect(google).toHaveAttribute("href", "/api/integrations/google/start?from=welcome");
   // Coming back from Google (its callback lands here): the same step, a plain line about what happened, and
   // everything chosen before is still there (the skyling, and where they work, which is saved when setup finishes).
@@ -53,8 +53,9 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
   await expect(page.getByRole("heading", { name: "Connect your sky" })).toBeVisible();
   await expect(page.getByText("Google Calendar needs calendar access to fill your sky.", { exact: false })).toBeVisible();
   await page.getByRole("button", { name: "Back" }).click();
-  await expect(page.getByLabel("Where you work")).toHaveValue("Target");
-  await expect(page.getByLabel("Your birthday")).toHaveValue("2005-04-12");
+  await expect(page.getByLabel("Birthday year")).toHaveValue("2005");
+  await expect(page.getByLabel("Birthday month")).toHaveValue("4");
+  await expect(page.getByLabel("Birthday day")).toHaveValue("12");
   await page.getByRole("button", { name: "Connect my sky" }).click();
   await page.getByRole("button", { name: "I'll connect later" }).click();
 
@@ -142,7 +143,7 @@ test("the app follows what fills your week: tabs and pills adapt", async ({ page
   await signUp(page, "Sam Ortiz", { onboarding: "stay" });
   await page.getByRole("button", { name: "Continue" }).click(); // picking a skyling is optional
   await page.getByLabel("What should I call you?").fill("Sam");
-  await page.getByLabel("Your birthday").fill("2001-09-30");
+  await fillBirthday(page, "2001-09-30");
   await page.getByRole("radio", { name: /^Work/ }).click();
   await page.getByRole("button", { name: "Connect my sky" }).click();
   await page.getByRole("button", { name: "I'll connect later" }).click(); // connecting is optional
@@ -179,7 +180,7 @@ test("setup needs a birthday: Skip goes to About you first", async ({ page }) =>
   await expect(page.getByRole("heading", { name: /^Hi/ })).toBeVisible();
   await expect(page.getByText("Add your birthday to finish setting up.")).toBeVisible();
   await page.getByLabel("What should I call you?").fill("Lee");
-  await page.getByLabel("Your birthday").fill("2002-02-02");
+  await fillBirthday(page, "2002-02-02");
   await page.getByRole("radio", { name: /^Neither/ }).click();
   await page.getByRole("button", { name: "Connect my sky" }).click();
   await page.getByRole("button", { name: "Skip setup" }).click();
@@ -194,10 +195,10 @@ test("a finished account answering under 13 on Today is locked the same way (own
   const card = page.getByRole("region", { name: "Your birthday" });
   // a valid date turns Save on once the card is live: wait for React to have taken over the field (a busy machine can
   // show the page well before that, and a date typed earlier is lost), then type it once
-  const field = card.getByLabel("Your birthday");
+  const field = card.getByLabel("Birthday month");
   await expect.poll(() => field.evaluate((el) => Object.keys(el).some((k) => k.startsWith("__reactProps"))), { timeout: 60_000 }).toBe(true);
   const answer = async (day: string) => {
-    await field.fill(day);
+    await fillBirthday(card, day);
     await expect(card.getByRole("button", { name: "Save" })).toBeEnabled();
     await card.getByRole("button", { name: "Save" }).click();
   };
@@ -235,9 +236,8 @@ test("under 13: one calm line, the welcome stays locked, and an older year later
   const email = await signUp(page, "Kai Young", { onboarding: "stay" });
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByLabel("What should I call you?").fill("Kai");
-  await page.getByLabel("Your birthday").fill(`${new Date().getFullYear() - 9}-03-03`);
+  await fillBirthday(page, `${new Date().getFullYear() - 9}-03-03`);
   await page.getByRole("radio", { name: /^Classes/ }).click();
-  await page.getByLabel("Your school").fill("Maple Elementary");
   await page.getByRole("button", { name: "Connect my sky" }).click();
   await expect(page.getByRole("heading", { name: "LifeFlow is for people 13 and older." })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
@@ -278,7 +278,7 @@ test("an account made before birthdays were asked gets one small card on Today, 
   await page.goto("/");
   const card = page.getByRole("region", { name: "Your birthday" });
   await expect(card.getByText("When's your birthday?")).toBeVisible();
-  await card.getByLabel("Your birthday").fill("1998-08-08");
+  await fillBirthday(card, "1998-08-08");
   await card.getByRole("button", { name: "Save" }).click();
   await expect(card).toHaveCount(0);
   const [row] = await queryAsUser<{ p: { birthDate?: string } }>(email, "select preferences as p from users where email = $1", [email]);

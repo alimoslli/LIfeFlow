@@ -26,7 +26,7 @@ export const TZ_KEY = "lf_tz";
  */
 const SKY_MOMENT = `function(z,t){var F=new Intl.DateTimeFormat("en-US",{timeZone:z,hourCycle:"h23",year:"numeric",month:"numeric",day:"numeric",hour:"numeric",minute:"numeric"});function P(u){var o={};F.formatToParts(u).forEach(function(x){o[x.type]=+x.value});return o}function O(u){var p=P(u);return(Date.UTC(p.year,p.month-1,p.day,p.hour%24,p.minute)-u)/6e4}var p=P(t),y=p.year,m=p.month,d=p.day,now=(p.hour%24)*60+p.minute,std=Math.min(O(Date.UTC(y,0,15,12)),O(Date.UTC(y,6,15,12))),n=Math.round((Date.UTC(y,m-1,d)-Date.UTC(y,0,0))/864e5),b=2*Math.PI*(n-81)/364,noon=720-(9.87*Math.sin(2*b)-7.53*Math.cos(b)-1.5*Math.sin(b))+(O(Date.UTC(y,m-1,d,12))-std),k=Math.PI/180,de=23.44*Math.sin(2*Math.PI*(284+n)/365)*k,la=38*k,c=(Math.sin(-.833*k)-Math.sin(la)*Math.sin(de))/(Math.cos(la)*Math.cos(de)),hf=Math.acos(Math.max(-1,Math.min(1,c)))/k*4,ri=Math.round(noon-hf),se=Math.round(noon+hf);return now>=ri-70&&now<ri+45?"dawn":now>=ri+45&&now<se-90?"ray":now>=se-90&&now<se+5?"goldie":now>=se+5&&now<Math.min(Math.max(1260,se+120),1439)?"star":"moon"}`;
 
-export const SPLASH_SCRIPT = `try{var q=location.search,s=sessionStorage;if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&(/[?&]splash=1/.test(q)||(!s.getItem("${SESSION_KEY}")&&!navigator.webdriver&&!/[?&]nosplash/.test(q)))){var r=document.documentElement,h=new Date().getHours(),n="";try{n=(localStorage.getItem("${NAME_KEY}")||"").slice(0,24)}catch(e){}try{var z=localStorage.getItem("${TZ_KEY}");if(z)h=+new Intl.DateTimeFormat("en-US",{hour:"numeric",hourCycle:"h23",timeZone:z}).format(new Date())%24}catch(e){}r.style.setProperty("--lf-greet",JSON.stringify(h<5?"Up late":h<12?"Good morning":h<17?"Good afternoon":"Good evening"));r.style.setProperty("--lf-name",JSON.stringify(n||"Welcome back"));var mo="";try{if(z)mo=(${SKY_MOMENT})(z,new Date().getTime())}catch(e){}r.setAttribute("data-lf-moment",mo||(h<5||h>=21?"moon":h<7?"dawn":h<16?"ray":h<17?"goldie":"star"));r.classList.add("lf-splash");s.setItem("${SESSION_KEY}","1")}}catch(e){}`;
+export const SPLASH_SCRIPT = `try{var q=location.search,s=sessionStorage;if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&(/[?&]splash=1/.test(q)||(!s.getItem("${SESSION_KEY}")&&!navigator.webdriver&&!/[?&]nosplash/.test(q)))){var r=document.documentElement,h=new Date().getHours(),n="";try{n=(localStorage.getItem("${NAME_KEY}")||"").slice(0,24)}catch(e){}try{var z=localStorage.getItem("${TZ_KEY}");if(z)h=+new Intl.DateTimeFormat("en-US",{hour:"numeric",hourCycle:"h23",timeZone:z}).format(new Date())%24}catch(e){}var mo="";try{if(z)mo=(${SKY_MOMENT})(z,new Date().getTime())}catch(e){}mo=mo||(h<5||h>=21?"moon":h<7?"dawn":h<16?"ray":h<17?"goldie":"star");r.setAttribute("data-lf-moment",mo);r.style.setProperty("--lf-greet",JSON.stringify(({dawn:"Rise and shine",ray:"Sun's up",goldie:"Golden hour",star:"Stars are out",moon:"Up with the moon"}[mo]||"Hello")+(n?", "+n:"")));r.classList.add("lf-splash");s.setItem("${SESSION_KEY}","1")}}catch(e){}`;
 
 const MIN_VISIBLE_MS = 1500;
 /** Never longer than this, even on a very slow connection. */
@@ -104,8 +104,8 @@ export function Splash() {
       <div className="lf-splash-inner">
         <SplashScene />
         <div className="lf-splash-ground text-center">
-          <p className="lf-greet lf-greet-1 text-[0.9375rem] tracking-[0.18em] uppercase opacity-80" />
-          <p className="lf-greet lf-greet-2 mt-2 font-display text-[2.5rem] leading-none font-medium tracking-tight" />
+          {/* one short hello by the sky, with their first name (owner, 2026-11-11), e.g. "Rise and shine, Ali" */}
+          <p className="lf-greet lf-greet-2 px-6 font-display text-[2.25rem] leading-[1.1] font-medium tracking-tight text-balance" />
           <span className="lf-greet-line mt-5 h-px w-16 bg-white/50" />
         </div>
       </div>
