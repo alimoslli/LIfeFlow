@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHmac, hkdfSync, randomBytes } from "node:crypto";
 
 /**
  * AES-256-GCM for integration credentials (Plaid access tokens, Canvas tokens...).
@@ -24,6 +24,16 @@ export function decryptSecret(payload: string, rawKey?: string): string {
   const decipher = createDecipheriv("aes-256-gcm", key(rawKey), Buffer.from(iv, "base64"));
   decipher.setAuthTag(Buffer.from(tag, "base64"));
   return Buffer.concat([decipher.update(Buffer.from(ct, "base64")), decipher.final()]).toString("utf8");
+}
+
+/**
+ * A keyed hash for values that must be matched but never read back (an email's referral key): HMAC-SHA256 under a key
+ * derived from ENCRYPTION_KEY with a fixed label per use, so a leaked table can't be guessed against a list of emails.
+ * The same label and value always give the same hash; a different label gives an unrelated one.
+ */
+export function keyedHash(label: string, value: string): string {
+  const derived = Buffer.from(hkdfSync("sha256", key(), Buffer.alloc(0), `lifeflow:${label}`, 32));
+  return createHmac("sha256", derived).update(value).digest("hex");
 }
 
 /**

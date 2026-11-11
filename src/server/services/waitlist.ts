@@ -1,4 +1,4 @@
-import { and, asc, count, eq, inArray, isNull, lt, notInArray, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNotNull, isNull, lt, notInArray, or, sql, type SQL } from "drizzle-orm";
 import { adminEmails } from "../auth/admin";
 import type { Database } from "../db/client";
 import { appAccess, users, waitlistReferrals } from "../db/schema";
@@ -146,7 +146,7 @@ export type FrontRow = { place: number; label: string; companion: string; me: bo
 export async function waitlistPage(db: Database, userId: string) {
   const [settings, place, waiting] = [await accessSettings(db), await waitlistPlace(db, userId), await waitingCount(db)];
   const front = await db.select({ id: users.id }).from(users).where(inLine()).orderBy(asc(users.waitlistRank)).limit(10);
-  const [{ friends }] = await db.select({ friends: count() }).from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, userId));
+  const [{ friends }] = await db.select({ friends: count() }).from(waitlistReferrals).where(and(eq(waitlistReferrals.inviterId, userId), isNotNull(waitlistReferrals.creditedAt)));
   // Signed up with this link but haven't confirmed their email yet (a friend who confirmed is in "friends").
   const [{ pending }] = await db
     .select({ pending: count() })

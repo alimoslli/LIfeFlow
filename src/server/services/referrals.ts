@@ -1,7 +1,7 @@
-import { createHash } from "node:crypto";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, count, eq, gte, isNull } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { users, waitlistReferrals } from "../db/schema";
+import { keyedHash } from "../crypto";
 import type { Tx } from "../db/with-user";
 import { lockQueue, moveUpOne } from "./waitlist";
 
@@ -13,7 +13,24 @@ import { lockQueue, moveUpOne } from "./waitlist";
  */
 
 export const normalizeEmail = (email: string) => email.trim().toLowerCase();
-export const emailHash = (email: string) => createHash("sha256").update(normalizeEmail(email)).digest("hex");
+
+/**
+ * The key a friend's email is counted under, so aliases of one inbox count once (the stored email is never changed):
+ * lower case, "+tag" removed on every domain, dots removed in the local part and googlemail.com read as gmail.com for Gmail.
+ */
+export function referralEmailKey(email: string): string {
+  const [rawLocal, rawDomain = ""] = normalizeEmail(email).split("@");
+  const domain = rawDomain === "googlemail.com" ? "gmail.com" : rawDomain;
+  let local = rawLocal.split("+")[0];
+  if (domain === "gmail.com") local = local.replaceAll(".", "");
+  return `${local || rawLocal}@${domain}`;
+}
+
+/** The unique, keyed (HMAC) hash stored for a friend's email: never guessable offline from the table. */
+export const emailHash = (email: string) => keyedHash("waitlist-referral-email", referralEmailKey(email));
+
+/** Moves one inviter can earn in a day (a rolling 24 hours); more friends are still recorded, without a move. */
+export const MAX_CREDITS_PER_DAY = 10;
 
 export type Credit = { recorded: boolean; moved: boolean };
 export type VerifyResult = Credit & { verified: boolean };
@@ -58,12 +75,18 @@ export async function creditReferral(tx: Tx, inviteeId: string, now = new Date()
   const hash = emailHash(me.email);
   if (hash === emailHash(inviter.email)) return none;
   // The unique hash decides, even when two confirmations (or a deleted and re-made account) arrive together.
+  // Over the daily cap the friend is recorded without being credited (and without a move), so it can't be retried for one.
+  const [{ n: today }] = await tx
+    .select({ n: count() })
+    .from(waitlistReferrals)
+    .where(and(eq(waitlistReferrals.inviterId, inviter.id), gte(waitlistReferrals.creditedAt, new Date(now.getTime() - 24 * 3600_000))));
+  const capped = today >= MAX_CREDITS_PER_DAY;
   const inserted = await tx
     .insert(waitlistReferrals)
-    .values({ inviterId: inviter.id, inviteeId, inviteeEmailHash: hash, creditedAt: now })
+    .values({ inviterId: inviter.id, inviteeId, inviteeEmailHash: hash, creditedAt: capped ? null : now })
     .onConflictDoNothing({ target: waitlistReferrals.inviteeEmailHash })
     .returning({ id: waitlistReferrals.id });
   if (!inserted.length) return none;
   // Moves only someone still waiting; an inviter already let in, or first in line, stays put.
-  return { recorded: true, moved: await moveUpOne(tx, inviter.id) };
+  return { recorded: true, moved: capped ? false : await moveUpOne(tx, inviter.id) };
 }

@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
 import { completeAppleSignIn } from "@/server/auth/apple";
@@ -8,7 +8,7 @@ import { closeDb, getDb } from "@/server/db/client";
 import { emailConfirmations, users, waitlistReferrals } from "@/server/db/schema";
 import { confirmEmailCode, CONFIRM_CODE_TTL_MS, sendConfirmCode } from "@/server/services/email-confirm";
 import { inviteCodeFor, recordInvite, validInviteCode } from "@/server/services/invites";
-import { creditReferral, emailHash, normalizeEmail, verifyEmail } from "@/server/services/referrals";
+import { creditReferral, emailHash, MAX_CREDITS_PER_DAY, normalizeEmail, referralEmailKey, verifyEmail } from "@/server/services/referrals";
 import { acceptUsers, waitlistPage, waitlistPlace } from "@/server/services/waitlist";
 import { makeUser as makeAnyUser } from "../helpers";
 
@@ -267,6 +267,77 @@ describe("referral credit", () => {
     await sendConfirmCode(db, friend.id, ip, { send: out.send, config: CFG });
     expect(await confirmEmailCode(db, friend.id, out.code(), ip)).toEqual({ ok: true, verified: true, recorded: true, moved: true });
     expect(await place(inviter.id)).toBe(1);
+  });
+});
+
+describe("alias farming, the keyed hash and the daily cap", () => {
+  it("reads plus and dot aliases of one Gmail inbox as one address, and leaves other domains' dots alone", () => {
+    const key = referralEmailKey("Sam.Lee+promo@Gmail.com");
+    expect(key).toBe("samlee@gmail.com");
+    expect(referralEmailKey("s.a.m.l.e.e@googlemail.com")).toBe(key);
+    expect(referralEmailKey("samlee+a+b@gmail.com")).toBe(key);
+    expect(referralEmailKey("sam.lee+x@school.edu")).toBe("sam.lee@school.edu");
+    expect(referralEmailKey("sam.lee@school.edu")).not.toBe(referralEmailKey("samlee@school.edu"));
+    expect(emailHash("a.b+c@gmail.com")).toBe(emailHash("ab@googlemail.com"));
+  });
+
+  it("stores a keyed hash, not a plain sha256 of the email", () => {
+    const plain = createHash("sha256").update("ab@gmail.com").digest("hex");
+    expect(emailHash("ab@gmail.com")).not.toBe(plain);
+    expect(emailHash("ab@gmail.com")).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("aliases of one Gmail inbox credit the inviter once", async () => {
+    await clearLine();
+    await makeUser("First");
+    const inviter = (await makeUser("Inviter")).user;
+    const box = `box${randomUUID().slice(0, 8)}`;
+    const emails = [`${box}@gmail.com`, `${box.slice(0, 4)}.${box.slice(4)}+promo@gmail.com`, `${box}@googlemail.com`];
+    const friends: string[] = [];
+    for (const email of emails) {
+      const [f] = await db.insert(users).values({ name: "Alias", email, passwordHash: "x", invitedBy: inviter.id }).returning({ id: users.id });
+      made.push(f.id);
+      friends.push(f.id);
+    }
+    const results = [];
+    for (const id of friends) results.push(await verifyEmail(db, id));
+    expect(results.filter((r) => r.recorded)).toHaveLength(1);
+    expect(await place(inviter.id)).toBe(1);
+  });
+
+  it("caps moves at 10 a day: the 11th friend is recorded without a move and not counted", async () => {
+    await clearLine();
+    for (let i = 0; i < 11; i++) await makeUser(`Filler${i}`);
+    const inviter = (await makeUser("Inviter")).user;
+    expect(await place(inviter.id)).toBe(12);
+    const code = await inviteCodeFor(db, inviter.id);
+    const friends = [];
+    for (let i = 0; i < MAX_CREDITS_PER_DAY + 1; i++) {
+      const f = (await makeUser(`F${i}`)).user;
+      await recordInvite(db, f.id, code);
+      friends.push(f.id);
+    }
+    for (const id of friends.slice(0, MAX_CREDITS_PER_DAY)) expect(await verifyEmail(db, id)).toMatchObject({ recorded: true, moved: true });
+    expect(await place(inviter.id)).toBe(2);
+    expect(await verifyEmail(db, friends[MAX_CREDITS_PER_DAY])).toEqual({ verified: true, recorded: true, moved: false });
+    expect(await place(inviter.id)).toBe(2);
+    const rows = await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id));
+    expect(rows).toHaveLength(11);
+    expect(rows.filter((r) => r.creditedAt)).toHaveLength(10);
+    expect((await waitlistPage(db, inviter.id)).friends).toBe(10);
+  });
+
+  it("parallel wrong guesses never exceed 5 tries", async () => {
+    const { user } = await makeUser("Sam");
+    const ip = newIp();
+    const out = outbox();
+    await sendConfirmCode(db, user.id, ip, { send: out.send, config: CFG });
+    const wrong = out.code() === "000000" ? "111111" : "000000";
+    const results = await Promise.all(Array.from({ length: 12 }, () => confirmEmailCode(db, user.id, wrong, ip)));
+    expect(results.filter((r) => !r.ok && r.reason === "wrong").length).toBeLessThanOrEqual(4);
+    expect(results.filter((r) => !r.ok && r.reason === "locked").length).toBeGreaterThanOrEqual(1);
+    // The code is gone: even the right one fails now.
+    expect(await confirmEmailCode(db, user.id, out.code(), ip)).toEqual({ ok: false, reason: "expired" });
   });
 });
 
