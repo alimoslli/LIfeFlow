@@ -6,8 +6,8 @@ import { withUser } from "@/server/db/with-user";
 import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { officeText, sniffMime } from "@/server/uploads";
 
-export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-export const MAX_TEXT_BYTES = 1024 * 1024;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_TEXT_BYTES = 1024 * 1024;
 
 /** Uploads a file for Jarvis. Type is decided by content sniffing, never trusted from the client. */
 export async function POST(req: Request) {

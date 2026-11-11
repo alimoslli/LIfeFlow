@@ -22,7 +22,7 @@ const CSV_HEADER = ["date", "description", "merchant", "amount", "kind", "catego
  * be skipped once, because its (date, createdAt) key can move between pages. The session and the Money lock are
  * checked once, before the stream starts, not again on every page.
  */
-export function transactionsCsvStream(userId: string) {
+function transactionsCsvStream(userId: string) {
   const enc = new TextEncoder();
   let cursor: PageCursor | undefined;
   let started = false;
