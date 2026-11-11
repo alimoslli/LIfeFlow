@@ -1,5 +1,5 @@
 import { GRID, pixels } from "@/components/day-clock/companion";
-import { COMPANION_KEYS, companionOf, type CompanionKey } from "@/lib/companions";
+import { COMPANION_KEYS, companionOf, type CompanionKey, ownsNight } from "@/lib/companions";
 
 /**
  * The opening screen's scene (owner, 2026-11-10: "show this timing's skyling, same with the whole vibe"): the skyling
@@ -9,11 +9,11 @@ import { COMPANION_KEYS, companionOf, type CompanionKey } from "@/lib/companions
  * the water. Decorative only.
  */
 
-/** A skyling as a few paths (one per colour, runs merged), light enough to keep all six in every page. */
+/** A skyling as a few paths (one per colour, runs merged), light enough to keep all five in every page. */
 function Skyling({ k }: { k: CompanionKey }) {
   // later pixels paint over earlier ones (the eyes over the body), so keep only the top colour of each cell
   const top = new Map<string, [number, number, string]>();
-  for (const p of pixels(companionOf(k), "idle", 0, k === "star")) top.set(`${p[0]}:${p[1]}`, p);
+  for (const p of pixels(companionOf(k), "idle", 0, ownsNight(k))) top.set(`${p[0]}:${p[1]}`, p);
   const rows = new Map<string, Map<number, number[]>>();
   for (const [x, y, col] of top.values()) {
     const byRow = rows.get(col) ?? new Map<number, number[]>();

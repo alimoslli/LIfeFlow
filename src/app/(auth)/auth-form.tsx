@@ -99,7 +99,7 @@ export function AuthForm({
       )}
       {next && <input type="hidden" name="next" value={next} />}
       {invite && <input type="hidden" name="invite" value={invite} />}
-      <SkyButton type="submit" loading={pending} skyling={mode === "login" ? "dusk" : "dawn"} className="mt-2 w-full justify-between pl-6">
+      <SkyButton type="submit" loading={pending} skyling={mode === "login" ? "star" : "dawn"} className="mt-2 w-full justify-between pl-6">
         {mode === "login" ? "Sign in" : "Create account"}
       </SkyButton>
       <p className="mt-2 text-center text-sm text-muted">

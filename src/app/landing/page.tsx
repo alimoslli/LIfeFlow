@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ownsNight } from "@/lib/companions";
 import Link from "next/link";
 import { Check, ChevronDown } from "lucide-react";
 import { BrandLockup } from "@/components/brand/brand-mark";
@@ -13,7 +14,7 @@ import { inviterFor } from "@/server/services/invites";
 
 /**
  * The front page for anyone who isn't signed in (signed-in visitors never see it, see proxy.ts). Remade 2026-11-09 at the
- * owner's word: the page is one night turning into morning. It opens on the skylings' night (all six, together), meets the
+ * owner's word: the page is one night turning into morning. It opens on the skylings. night (all five, together), meets the
  * cast, shows what a skyling does before you ask, and the sun comes up over the trust and the questions.
  */
 export const metadata: Metadata = {
@@ -127,7 +128,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
   const signupHref = inviter ? `/signup?invite=${encodeURIComponent(code)}` : "/signup";
   return (
     <div className="min-h-dvh overflow-x-clip bg-night-0 text-white">
-      {/* ---------- The night: all six skylings, together ---------- */}
+      {/* ---------- The night: all five skylings, together ---------- */}
       <section className="relative isolate flex flex-col lg:min-h-[max(100svh,720px)]">
         {/* laptop: the whole section is the sky; phone: still stars over the words, the live sky under them */}
         <NightSky stage="hero" className="max-lg:hidden" />
@@ -222,7 +223,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
         <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)] lg:gap-14">
           <div className="lg:sticky lg:top-16 lg:self-start">
             <p className={`${kicker} text-star-gold`}>The skylings</p>
-            <h2 className={`mt-3 ${h2}`}>Six little ones. One of them is yours.</h2>
+            <h2 className={`mt-3 ${h2}`}>Five little ones. One of them is yours.</h2>
             <p className="mt-5 max-w-[40ch] text-[1.0625rem] leading-relaxed text-white/75">
               Each skyling is named for a moment of the sky and helps in its own way. Pick one, give it a name, and it lives on top of your day: awake with the
               sun, asleep with you.
@@ -248,7 +249,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               <li key={m.tag} className="flex min-w-0 flex-col rounded-[1.75rem] bg-white/[0.06] p-5 ring-1 ring-white/12 sm:p-6">
                 <div className="flex items-center gap-3">
                   <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/[0.07] ring-1 ring-white/10">
-                    <CompanionGlyph companion={m.who} night={m.who === "star"} className="lf-pixel h-12 w-12" />
+                    <CompanionGlyph companion={m.who} night={ownsNight(m.who)} className="lf-pixel h-12 w-12" />
                   </span>
                   <div>
                     <p className="font-display text-[1.1875rem] leading-none font-medium">{m.name}</p>

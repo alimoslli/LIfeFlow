@@ -464,7 +464,7 @@ describe("onboarding", () => {
 
   it("'Changes with the sky' keeps their own name and their way of talking (only the look follows the time)", async () => {
     const { user, run } = await makeUser("Sky Picker");
-    await run((s) => saveWelcomeProgress(s, "UTC", { assistant: { name: "Pip", style: "direct", companion: "noon" } }));
+    await run((s) => saveWelcomeProgress(s, "UTC", { assistant: { name: "Pip", style: "direct", companion: "goldie" } }));
     expect(await setCompanion(getDb(), user.id, "sky")).toEqual({ name: "Changes with the sky" });
     expect(await prefs(user.id)).toMatchObject({ companion: "sky", assistantName: "Pip", assistantStyle: "direct" });
     // the welcome accepts it too

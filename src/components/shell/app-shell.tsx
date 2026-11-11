@@ -32,7 +32,7 @@ import { BrandMark } from "@/components/brand/brand-mark";
 import { SkyScene } from "@/components/sky/sky-scene";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
 import { useSkyling } from "@/components/skylings/use-skyling";
-import { companionOf, type CompanionKey } from "@/lib/companions";
+import { companionOf, type CompanionKey, ownsNight } from "@/lib/companions";
 
 type ShellCtx = {
   openJarvis: (prompt?: string, opts?: { send?: boolean }) => void;
@@ -41,7 +41,7 @@ type ShellCtx = {
   aiConsent: boolean;
   /** The user's time zone (Settings), for anything that depends on their local time. */
   tz: string;
-  /** Their skyling choice (lib/companions): one of the six, or "sky". */
+  /** Their skyling choice (lib/companions): one of the five, or "sky". */
   companion?: string | null;
   /** The skyling to draw now: the one picked, or whoever's moment it is for "Changes with the sky". */
   skyling?: CompanionKey | null;
@@ -202,7 +202,7 @@ export function AppShell({
                       )}
                     >
                       {item.href === "/jarvis" ? (
-                        <CompanionGlyph companion={skyling} night={skyling === "star"} className="h-6 w-6" />
+                        <CompanionGlyph companion={skyling} night={ownsNight(skyling)} className="h-6 w-6" />
                       ) : (
                         <Icon className={cn("h-5 w-5", active && "text-accent")} strokeWidth={active ? 2 : 1.6} />
                       )}
@@ -284,7 +284,7 @@ export function AppShell({
                     >
                       {sky ? (
                         <span className="relative" data-icon>
-                          <CompanionGlyph companion={skyling} night={skyling === "star"} className="h-[22px] w-[22px]" />
+                          <CompanionGlyph companion={skyling} night={ownsNight(skyling)} className="h-[22px] w-[22px]" />
                           {unread > 0 && <span className="absolute -top-0.5 -right-1 h-2.5 w-2.5 rounded-full bg-danger ring-2 ring-surface" />}
                         </span>
                       ) : (
@@ -343,7 +343,7 @@ function TopBar({ demo, settingsActive, onToday }: { demo: boolean; settingsActi
           onClick={() => openJarvis()}
           className="mx-auto flex h-11 w-full max-w-md items-center gap-2.5 rounded-full bg-surface px-4 text-sm text-muted shadow-soft transition-colors hover:text-text"
         >
-          <CompanionGlyph companion={skyling} night={skyling === "star"} className="lf-pixel h-6 w-6" />
+          <CompanionGlyph companion={skyling} night={ownsNight(skyling)} className="lf-pixel h-6 w-6" />
           Ask {assistantName} anything…
           <kbd className="ml-auto rounded-md bg-surface-3 px-1.5 py-0.5 font-sans text-[0.6875rem] text-muted">⌘J</kbd>
         </button>
@@ -414,7 +414,7 @@ function AssistantHeader({ name, skyling }: { name: string; skyling: CompanionKe
       </Link>
       <Link href="/jarvis/profile" aria-label="Skyling profile" className="lf-hop flex h-11 w-11 items-center justify-center">
         <span className="lf-chip-night h-9 w-9 overflow-hidden rounded-[0.75rem]">
-          <CompanionGlyph companion={skyling} night={skyling === "star"} className="lf-pixel h-8 w-8 translate-y-[3px]" />
+          <CompanionGlyph companion={skyling} night={ownsNight(skyling)} className="lf-pixel h-8 w-8 translate-y-[3px]" />
         </span>
       </Link>
     </header>

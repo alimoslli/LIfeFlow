@@ -24,9 +24,7 @@ const BASE = 20;
 const SHAPES: Record<CompanionInfo["look"]["shape"], { L: number; R: number; inset: number[] }> = {
   round: { L: 4, R: 19, inset: [5, 3, 2, 1, 1, 0, 0, 0, 0, 1, 1, 2, 3, 5] },
   tall: { L: 5, R: 18, inset: [5, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 4] },
-  boxy: { L: 4, R: 19, inset: [2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2] },
   pear: { L: 4, R: 19, inset: [6, 4, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 1, 3] },
-  drop: { L: 4, R: 19, inset: [7, 6, 5, 4, 3, 2, 1, 1, 0, 0, 0, 0, 1, 3] },
   hood: { L: 4, R: 19, inset: [7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0, 1, 3] },
 };
 
@@ -131,7 +129,7 @@ export function formOf(c: CompanionInfo, night: boolean): Form {
 }
 
 /** The pixels of a skyling in a pose at a frame (frames wrap), by day or at night. */
-export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: boolean): Pixel[] {
+export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: boolean, glow = false): Pixel[] {
   const c = formOf(info, night);
   const list = FRAMES[pose];
   const f = list[((frame % list.length) + list.length) % list.length];
@@ -173,21 +171,46 @@ export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: bo
     }
   }
   if (c.band && !f.crouch) {
-    // Goldie's scarf, Dusk's sunset stripe
-    const rows = c.key === "goldie" ? [9] : [8, 9];
-    for (const r of rows) {
-      const i = S.inset[r];
-      for (let x = S.L + i + 1; x <= S.R - i - 1; x++) put(x, t + r, c.key === "dusk" && r === 8 ? c.trim2 : c.band);
-    }
-    if (c.key === "goldie") {
-      put(S.L + S.inset[10] + 1, t + 10, c.band);
-      put(S.L + S.inset[11] + 1, t + 11, c.band);
-    }
+    // Goldie's scarf
+    const i = S.inset[9];
+    for (let x = S.L + i + 1; x <= S.R - i - 1; x++) put(x, t + 9, c.band);
+    put(S.L + S.inset[10] + 1, t + 10, c.band);
+    put(S.L + S.inset[11] + 1, t + 11, c.band);
   }
   put(S.L + S.inset[1] + 1, t + 1, c.light);
   put(S.L + S.inset[1] + 2, t + 1, c.light);
   put(S.L + S.inset[2] + 1, t + 2, c.light);
   if (c.key === "dawn" && !c.pin) for (let r = 2; r <= 8; r++) put(S.R - S.inset[r] - 1, t + r, c.trim2);
+  // the moon's craters
+  // the moon: its night side in deep blue down the right (a phase, so it reads as the moon at a glance), craters on the lit side
+  if (c.key === "moon") {
+    const K = [0, 2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 3, 2, 0];
+    for (let r = 1; r < H - 1; r++) {
+      const right = S.R - S.inset[r] - 1;
+      for (let k = 0; k < K[r]; k++)
+        if (inside(right - k + 1, t + r) && inside(right - k, t + r + 1)) put(right - k, t + r, k === K[r] - 1 ? "#9fb0cf" : "#33497c");
+    }
+    for (const [x, y] of [
+      [7, t + 2],
+      [8, t + 2],
+      [7, t + 3],
+      [12, t + 2],
+      [10, t + 10],
+      [11, t + 10],
+      [6, t + 9],
+    ] as const)
+      put(x, y, c.trim);
+  }
+  // Star in its first hour after sunset still wears the last of it low on its body (Dusk turning into Star)
+  if (glow) {
+    const interior = (x: number, y: number) => inside(x - 1, y) && inside(x + 1, y) && inside(x, y - 1) && inside(x, y + 1);
+    for (const [r, col] of [
+      [H - 4, "#ffc08a"],
+      [H - 3, "#ff9a6b"],
+      [H - 2, "#f07a6a"],
+    ] as const)
+      for (let x = S.L; x <= S.R; x++) if (interior(x, t + r)) put(x, t + r, col);
+  }
   if (c.key === "star" && !c.squint) {
     put(9, t + 9, c.trim2);
     put(12, t + 11, c.trim2);
@@ -334,7 +357,7 @@ export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: bo
   if (eyes !== "closed" || pose === "idle") {
     const i = S.inset[7];
     put(S.L + i + 2, t + 7, c.cheek);
-    put(S.R - i - 2, t + 7, c.cheek);
+    if (c.key !== "moon") put(S.R - i - 2, t + 7, c.cheek);
   }
 
   // little mittens, swinging as it walks, up when it cheers
@@ -473,7 +496,6 @@ export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: bo
       [20, t + 2, T],
       [21, t + 2, T2],
     ],
-    halo: [...[9, 10, 13, 14].map((x): Pixel => [x, t - 3, T]), [11, t - 3, T2], [12, t - 3, T2], ...[7, 8, 15, 16].map((x): Pixel => [x, t - 2, T])],
     lowsun: [
       ...[9, 10, 13, 14].map((x): Pixel => [x, t - 3, T]),
       [11, t - 3, T2],
@@ -483,12 +505,14 @@ export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: bo
       [13, t - 2, T2],
       ...[7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((x): Pixel => [x, t - 1, T]),
     ],
-    firststar: [
-      [17, t - 3, "#ffffff"],
-      [16, t - 3, c.light],
-      [18, t - 3, c.light],
-      [17, t - 4, c.light],
-      [17, t - 2, c.light],
+    // two little stars beside the moon
+    sparkles: [
+      [20, t - 1, "#ffffff"],
+      [19, t - 1, c.light],
+      [21, t - 1, c.light],
+      [20, t - 2, c.light],
+      [20, t, c.light],
+      [22, t + 3, c.trim2],
     ],
     antenna: [
       [12, t - 1, INK],
@@ -579,16 +603,16 @@ export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: bo
 const painted = new Map<string, ImageData>();
 
 /** Paint a skyling onto a 24 x 24 canvas (facing right; `flip` faces it left). */
-export function drawCompanion(canvas: HTMLCanvasElement, c: CompanionInfo, pose: Pose, frame: number, night: boolean, flip = false) {
+export function drawCompanion(canvas: HTMLCanvasElement, c: CompanionInfo, pose: Pose, frame: number, night: boolean, flip = false, glow = false) {
   const g = canvas.getContext("2d");
   if (!g) return;
   if (canvas.width !== GRID) canvas.width = canvas.height = GRID;
   const n = FRAMES[pose].length;
-  const key = `${c.key}|${pose}|${((frame % n) + n) % n}|${night}|${flip}`;
+  const key = `${c.key}|${pose}|${((frame % n) + n) % n}|${night}|${flip}|${glow}`;
   const kept = painted.get(key);
   if (kept) return g.putImageData(kept, 0, 0);
   g.clearRect(0, 0, GRID, GRID);
-  const px = pixels(c, pose, frame, night);
+  const px = pixels(c, pose, frame, night, glow);
   if (c.key === "star" && night) {
     // Star is the night's own colour: on the night sky a pale moonlit rim keeps it from disappearing (LF Marketing,
     // 2026-11-10: with "Changes with the sky" it's in front of everyone every night)

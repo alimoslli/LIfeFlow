@@ -1,16 +1,16 @@
 import type { AssistantStyle } from "@/lib/assistant";
 
 /**
- * The cast (owner, 2026-11-09; docs/design/companions/cast.md): six companions named for moments of the sky. The one the
+ * The cast (owner, 2026-11-09, made five on 2026-11-11; docs/design/companions/cast.md): five companions named for moments of the sky. The one the
  * person picks is their assistant: it takes the skyling's name unless they type their own, and its tone sets how the
  * assistant talks. Pure data, shared by the server (onboarding, the prompt) and the drawing engine
  * (components/day-clock/companion.ts). Words here are user-facing: plain, short, no em dashes.
  */
-export const COMPANION_KEYS = ["dawn", "ray", "noon", "goldie", "dusk", "star"] as const;
+export const COMPANION_KEYS = ["dawn", "ray", "goldie", "star", "moon"] as const;
 export type CompanionKey = (typeof COMPANION_KEYS)[number];
 
-export type CompanionShape = "round" | "tall" | "boxy" | "pear" | "drop" | "hood";
-export type CompanionCrown = "wisp" | "rays" | "halo" | "lowsun" | "firststar" | "antenna";
+export type CompanionShape = "round" | "tall" | "pear" | "hood";
+export type CompanionCrown = "wisp" | "rays" | "lowsun" | "antenna" | "sparkles";
 
 export type CompanionInfo = {
   key: CompanionKey;
@@ -75,7 +75,7 @@ export const COMPANIONS: CompanionInfo[] = [
   {
     key: "ray",
     name: "Ray",
-    moment: "Morning sun",
+    moment: "Daytime sun",
     line: "All go, and it rubs off on you.",
     traits: ["energetic", "honest", "cheerful"],
     skill: "Planning the week and keeping it moving: the big thing first, momentum after.",
@@ -93,30 +93,6 @@ export const COMPANIONS: CompanionInfo[] = [
       trim: "#f9a63a",
       trim2: "#ffe08a",
       cheek: "#f0937a",
-      eye: INK,
-    },
-  },
-  {
-    key: "noon",
-    name: "Noon",
-    moment: "Midday",
-    line: "Few words. Clear light. Nothing wasted.",
-    traits: ["focused", "calm", "exact"],
-    skill: "Protecting focus time: the right task, the phone face down, the clock watched.",
-    tone: "direct",
-    voiceNote: "Brief. Leads with the task and the time. No filler.",
-    sample: "Today: class at 10, then 90 free minutes. Use them for the lab.",
-    look: {
-      shape: "boxy",
-      crown: "halo",
-      eyes: "focused",
-      mouth: "line",
-      body: "#ffdc6e",
-      dark: "#dcae35",
-      light: "#fff6d0",
-      trim: "#fff6cf",
-      trim2: "#ffe9a0",
-      cheek: "#f3a88c",
       eye: INK,
     },
   },
@@ -146,35 +122,10 @@ export const COMPANIONS: CompanionInfo[] = [
     },
   },
   {
-    key: "dusk",
-    name: "Dusk",
-    moment: "After sunset",
-    line: "Soft voice, slow breath, the day set down.",
-    traits: ["calm", "kind", "unhurried"],
-    skill: "Winding down: closing the day, a kind look at tomorrow, and off to sleep.",
-    tone: "friend",
-    voiceNote: "Quiet and kind, short sentences, one thing at a time.",
-    sample: "Easy start. One thing before noon, the rest later.",
-    look: {
-      shape: "drop",
-      crown: "firststar",
-      eyes: "lidded",
-      mouth: "soft",
-      body: "#5f87c4",
-      dark: "#3f5f99",
-      light: "#bcd3f1",
-      trim: "#ff8a45",
-      trim2: "#ffc08a",
-      band: "#ff8a45",
-      cheek: "#c98b8b",
-      eye: INK,
-    },
-  },
-  {
     key: "star",
     name: "Star",
-    moment: "Night",
-    line: "The night owl who sees far and says little.",
+    moment: "Evening",
+    line: "Out with the first stars. Sees far and says little.",
     traits: ["far-sighted", "quiet", "dependable"],
     skill: "Deadlines far ahead: counts back from the due date, so the last night is never the whole project.",
     tone: "coach",
@@ -195,12 +146,42 @@ export const COMPANIONS: CompanionInfo[] = [
       shy: true,
     },
   },
+  {
+    key: "moon",
+    name: "Moon",
+    moment: "Late night",
+    line: "Up late with you, calm and in no hurry.",
+    traits: ["calm", "kind", "unhurried"],
+    skill: "Late nights: what's left for tonight, a kind look at tomorrow, and when to call it a night.",
+    tone: "friend",
+    voiceNote: "Quiet and kind, short sentences, one thing at a time. Never scolds anyone for being up late.",
+    sample: "Easy start. One thing before noon, the rest later.",
+    look: {
+      shape: "round",
+      crown: "sparkles",
+      eyes: "lidded",
+      mouth: "smirk",
+      body: "#f4eed8",
+      dark: "#dcd3b6",
+      light: "#fffef6",
+      trim: "#d8cda8",
+      trim2: "#fff3c4",
+      cheek: "#f0bfa6",
+      eye: INK,
+      shy: true,
+    },
+  },
 ];
 
 /** Until someone picks, the wheel shows Ray, the morning sun Today has always had (owner may swap: cast.md decision 3). */
 export const DEFAULT_COMPANION: CompanionKey = "ray";
 
+/** Choices saved before the cast became five (owner, 2026-11-11): Noon became Ray, Dusk became Moon. */
+const RETIRED: Record<string, CompanionKey> = { noon: "ray", dusk: "moon" };
+
 export const isCompanionKey = (k: unknown): k is CompanionKey => typeof k === "string" && (COMPANION_KEYS as readonly string[]).includes(k);
+/** A saved choice as one of today's five (a retired one maps to who took its place). */
+export const currentKey = (k: string | null | undefined): CompanionKey | null => (k ? RETIRED[k] : undefined) ?? (isCompanionKey(k) ? k : null);
 
 /**
  * "Changes with the sky" (owner, 2026-11-10): a seventh choice where only the look follows the time, whoever's moment
@@ -211,27 +192,34 @@ export type CompanionChoice = CompanionKey | typeof SKY_CHOICE;
 export const isCompanionChoice = (k: unknown): k is CompanionChoice => k === SKY_CHOICE || isCompanionKey(k);
 export const SKY_CHOICE_LABEL = {
   name: "Changes with the sky",
-  moment: "All six, by the time",
-  line: "Whoever's up: Dawn at first light, Ray in the morning, Star at night.",
+  moment: "All five, by the time",
+  line: "Whoever's up: Dawn at first light, Ray through the day, Moon late at night.",
 };
 
 /**
- * Whose moment it is at a minute of the day (0 to 1440), from that day's sunrise and sunset in minutes. Midday is
- * halfway between; the windows follow the sky's own light (lib/sky.ts darkness): first light from 70 minutes before
- * sunrise, golden hour from 90 minutes before sunset, and night wraps past midnight.
+ * Whose moment it is at a minute of the day (0 to 1440), from that day's sunrise and sunset in minutes (owner,
+ * 2026-11-11: five, following the real sky): Dawn from 70 minutes before sunrise, Ray through the day, Goldie from 90
+ * minutes before sunset, Star from just after sunset into the evening, and Moon from 9 PM (or two hours after sunset,
+ * when that's later) until first light, so Moon turns back into Dawn.
  */
 export function skylingAt(minute: number, rise: number, set: number): CompanionKey {
   const m = ((minute % 1440) + 1440) % 1440;
-  const noon = (rise + set) / 2;
+  const moon = Math.min(Math.max(21 * 60, set + 120), 1439);
   if (m >= rise - 70 && m < rise + 45) return "dawn";
-  if (m >= rise + 45 && m < noon - 60) return "ray";
-  if (m >= noon - 60 && m < set - 90) return "noon";
+  if (m >= rise + 45 && m < set - 90) return "ray";
   if (m >= set - 90 && m < set + 5) return "goldie";
-  if (m >= set + 5 && m < set + 70) return "dusk";
-  return "star";
+  if (m >= set + 5 && m < moon) return "star";
+  return "moon";
 }
+
+/** Star wears the last of the sunset low on its body for its first hour after sunset (Dusk turning into Star). */
+export const starGlowAt = (minute: number, set: number) => minute >= set + 5 && minute < set + 65;
+
+/** Star and Moon are the night's own: drawn in their own colours at night and pale by day. */
+export const ownsNight = (key: string | null | undefined) => key === "star" || key === "moon";
 
 /** The skyling for a saved choice (or the default when none was made). */
 export function companionOf(key: string | null | undefined): CompanionInfo {
-  return COMPANIONS.find((c) => c.key === key) ?? COMPANIONS.find((c) => c.key === DEFAULT_COMPANION)!;
+  const k = (key ? RETIRED[key] : undefined) ?? key;
+  return COMPANIONS.find((c) => c.key === k) ?? COMPANIONS.find((c) => c.key === DEFAULT_COMPANION)!;
 }

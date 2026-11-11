@@ -10,8 +10,8 @@ describe("assistant profile", () => {
     expect(assistantProfile(undefined)).toEqual({ name: "Ray", named: false, style: "friend", notes: null, voice: "marin" });
     expect(assistantProfile({ companion: "star" })).toMatchObject({ name: "Star", named: false });
     // "Changes with the sky": whoever is up where they are
-    expect(skylingName("sky", "America/Chicago", new Date("2026-06-21T05:00:00Z"))).toBe("Star"); // midnight in Chicago
-    expect(skylingName("sky", "America/Chicago", new Date("2026-06-21T19:00:00Z"))).toBe("Noon"); // 2 PM in Chicago
+    expect(skylingName("sky", "America/Chicago", new Date("2026-06-21T05:00:00Z"))).toBe("Moon"); // midnight in Chicago
+    expect(skylingName("sky", "America/Chicago", new Date("2026-06-21T19:00:00Z"))).toBe("Ray"); // 2 PM in Chicago
     expect(assistantProfile({ companion: "sky" }, "America/Chicago").named).toBe(false);
     // the old product name "Dev" is never shown as theirs (owner, 2026-11-10)
     expect(assistantProfile({ assistantName: "Dev", companion: "goldie" })).toMatchObject({ name: "Goldie", named: false });

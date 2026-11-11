@@ -3,7 +3,7 @@ import { useState, useTransition } from "react";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
 import { useSkyling } from "@/components/skylings/use-skyling";
 import { ASSISTANT_STYLES } from "@/lib/assistant";
-import { COMPANIONS, companionOf, SKY_CHOICE, SKY_CHOICE_LABEL, type CompanionChoice } from "@/lib/companions";
+import { COMPANIONS, companionOf, SKY_CHOICE, SKY_CHOICE_LABEL, type CompanionChoice, ownsNight } from "@/lib/companions";
 import { cn } from "@/lib/utils";
 import { setCompanionAction } from "../actions";
 
@@ -41,7 +41,7 @@ export function CompanionPicker({ current, tz }: { current: CompanionChoice | nu
       <div className="flex items-center gap-4">
         <CompanionGlyph
           companion={sky ? now : picked}
-          night={(sky ? now : picked) === "star"}
+          night={ownsNight(sky ? now : picked)}
           pose={pending ? "celebrate" : "idle"}
           frame={pending ? 1 : 0}
           className="h-16 w-16"
@@ -59,7 +59,7 @@ export function CompanionPicker({ current, tz }: { current: CompanionChoice | nu
           </p>
         </div>
       </div>
-      <div role="radiogroup" aria-label="Your skyling" className="grid grid-cols-3 gap-2 sm:grid-cols-7">
+      <div role="radiogroup" aria-label="Your skyling" className="grid grid-cols-3 gap-2 sm:grid-cols-6">
         {COMPANIONS.map((c) => (
           <button
             key={c.key}
@@ -70,7 +70,7 @@ export function CompanionPicker({ current, tz }: { current: CompanionChoice | nu
             onClick={() => pick(c.key)}
             className={tile(picked === c.key)}
           >
-            <CompanionGlyph companion={c.key} night={c.key === "star"} className="h-12 w-12" />
+            <CompanionGlyph companion={c.key} night={ownsNight(c.key)} className="h-12 w-12" />
             <span className="text-sm font-medium">{c.name}</span>
             <span className={cn("text-xs", picked === c.key ? "text-hero-text" : "text-muted")}>{c.moment}</span>
           </button>
@@ -83,7 +83,7 @@ export function CompanionPicker({ current, tz }: { current: CompanionChoice | nu
           onClick={() => pick(SKY_CHOICE)}
           className={cn(tile(sky), "col-span-3 sm:col-span-1")}
         >
-          <CompanionGlyph companion={now} night={now === "star"} className="h-12 w-12" />
+          <CompanionGlyph companion={now} night={ownsNight(now)} className="h-12 w-12" />
           <span className="text-center text-sm leading-tight font-medium">{SKY_CHOICE_LABEL.name}</span>
           <span className={cn("text-xs", sky ? "text-hero-text" : "text-muted")}>{SKY_CHOICE_LABEL.moment}</span>
         </button>

@@ -1,11 +1,11 @@
 import { GRID, pixels, type Pose } from "@/components/day-clock/companion";
-import { companionOf, type CompanionKey } from "@/lib/companions";
+import { companionOf, type CompanionKey, ownsNight } from "@/lib/companions";
 
 /**
  * The skylings' night (owner, 2026-11-09: "all the characters ... together, interacting together in the sky at night"):
- * one pixel canvas, drawn small and scaled up crisp. Star stands on the moon and lights new stars, Ray and Noon toss a
- * fallen star across the hill, Goldie walks the ridge with a lantern, Dawn naps on a cloud while Dusk draws a
- * constellation, and when a shooting star crosses, everyone looks up and cheers. Tap the sky for a shooting star; tap a
+ * one pixel canvas, drawn small and scaled up crisp. Star stands on the moon and lights new stars, Ray and Goldie toss a
+ * fallen star across the hill, Dawn naps on a cloud while Moon keeps watch and draws a constellation (Moon turns into
+ * Dawn), and when a shooting star crosses, everyone looks up and cheers. Tap the sky for a shooting star; tap a
  * skyling and it hops. The art comes from the same engine as Today's wheel (day-clock/companion.ts).
  * Real-sky colours only (no purple). Reduced motion gets one still frame.
  */
@@ -69,7 +69,7 @@ function sprite(key: CompanionKey, pose: Pose, frame: number, flip: boolean) {
   c = document.createElement("canvas");
   c.width = c.height = GRID;
   const g = c.getContext("2d")!;
-  const px = pixels(companionOf(key), pose, frame, key === "star").filter(([, y]) => y !== 23); // no ground shadow in the sky
+  const px = pixels(companionOf(key), pose, frame, ownsNight(key)).filter(([, y]) => y !== 23); // no ground shadow in the sky
   if (key === "star") {
     // Star is the night's own colour, so the moon gives it a pale rim to stand out on the dark
     const filled = new Set(px.map(([x, y]) => `${x},${y}`));
@@ -168,7 +168,7 @@ export function mountNight(canvas: HTMLCanvasElement, opts: NightOptions): Night
       sy0,
       sh,
       moon: { x: Math.round(sx0 + sw * 0.8), y: Math.round(sy0 + 26 + r), r },
-      // the cloud floats well clear of Ray and Noon's heads, even on a short strip
+      // the cloud floats well clear of Ray and Goldie's heads, even on a short strip
       cloud: { x: Math.round(sx0 + sw * 0.06), y: Math.round(Math.max(sy0 + 20, Math.min(sy0 + sh * 0.42, groundBase - bump - 46))) },
       ray: Math.round(cx - d),
       noon: Math.round(cx + d),
@@ -177,7 +177,7 @@ export function mountNight(canvas: HTMLCanvasElement, opts: NightOptions): Night
       nearY,
       stars: [],
     };
-    // Dusk's constellation, above the cloud: a little heart of stars
+    // Moon's constellation, above the cloud: a little heart of stars
     const ox = L.cloud.x + 12;
     const oy = Math.max(6, L.cloud.y - 34);
     L.stars = (
@@ -427,7 +427,7 @@ export function mountNight(canvas: HTMLCanvasElement, opts: NightOptions): Night
         ] as const)
           dot(s.x + sh + dx, s.y + dy, "#ffd77a", 0.9 - age);
     }
-    // Dusk's constellation: drawn star by star, held, faded
+    // Moon's constellation: drawn star by star, held, faded
     const cyc = (t % 13) / 13;
     if (cyc > 0.35) {
       const k = clamp((cyc - 0.35) / 0.15, 0, 1);
@@ -483,20 +483,20 @@ export function mountNight(canvas: HTMLCanvasElement, opts: NightOptions): Night
     }
     put("star", lighting ? ["celebrate", 2] : pose("star", t, blink(t, 0.6)), m.x - 11 + sh, m.y - m.r - 21);
 
-    // Dawn naps on the cloud; Dusk sits beside her and draws the constellation (arm up while drawing)
+    // Dawn naps on the cloud; Moon sits beside her, keeps watch and draws the constellation (arm up while drawing)
     const cb = Math.round(Math.sin(t * 0.9) * 1.2);
     const cx0 = L.cloud.x + Math.round(px * 2);
     const cy0 = L.cloud.y + cb;
     put("dawn", pose("dawn", t, ["sleep", Math.floor(t * 1.1) % 2]), cx0 + 4, cy0 - 17);
     const drawing = cyc > 0.33 && cyc < 0.52;
-    put("dusk", pose("dusk", t, drawing ? ["celebrate", 3] : blink(t, 1.7)), cx0 + 26, cy0 - 19);
+    put("moon", pose("moon", t, drawing ? ["celebrate", 3] : blink(t, 1.7)), cx0 + 26, cy0 - 19);
     if (cloud) g.drawImage(cloud, cx0, cy0);
 
-    // Ray and Noon play catch with a fallen star over the hill
+    // Ray and Goldie play catch with a fallen star over the hill
     const rayY = L.nearY(L.ray) - 21;
     const noonY = L.nearY(L.noon) - 21;
     const lap = 3.2;
-    const phase = (t % (lap * 2)) / lap; // 0..2: Ray throws, Noon throws
+    const phase = (t % (lap * 2)) / lap; // 0..2: Ray throws, Goldie throws
     const toNoon = phase < 1;
     const k = toNoon ? phase : phase - 1;
     const flying = k < 0.42;
@@ -504,14 +504,14 @@ export function mountNight(canvas: HTMLCanvasElement, opts: NightOptions): Night
     const [ax, ay] = toNoon ? [L.ray + 18, rayY + 8] : [L.noon + 6, noonY + 8];
     const [bx, by] = toNoon ? [L.noon + 6, noonY + 8] : [L.ray + 18, rayY + 8];
     const arc = Math.max(18, Math.abs(bx - ax) * 0.5);
-    const caught = (who: "ray" | "noon"): [Pose, number] | null => {
-      const catcher = toNoon ? "noon" : "ray";
+    const caught = (who: "ray" | "goldie"): [Pose, number] | null => {
+      const catcher = toNoon ? "goldie" : "ray";
       if (who === catcher && !flying && k < 0.62) return ["celebrate", 1 + (Math.floor(t * 8) % 2)];
       if (who !== catcher && flying && fly < 0.25) return ["celebrate", 3];
       return null;
     };
     put("ray", pose("ray", t, caught("ray") ?? blink(t, 0.2)), L.ray + nx, rayY);
-    put("noon", pose("noon", t, caught("noon") ?? blink(t, 2.3)), L.noon + nx, noonY, true);
+    put("goldie", pose("goldie", t, caught("goldie") ?? blink(t, 2.3)), L.noon + nx, noonY, true);
     if (flying) {
       const bxNow = ax + (bx - ax) * fly + nx;
       const byNow = ay + (by - ay) * fly - arc * 4 * fly * (1 - fly);
@@ -530,34 +530,6 @@ export function mountNight(canvas: HTMLCanvasElement, opts: NightOptions): Night
     }
 
     if (front) g.drawImage(front, -4 + Math.round(px * 5), 0);
-    // Goldie walks the near ridge with a lantern
-    const [w0, w1] = L.walk;
-    const span = Math.max(1, w1 - w0);
-    const pos = (t * 9) % (span * 2);
-    const right = pos < span;
-    const gx = w0 + (right ? pos : span * 2 - pos) + Math.round(px * 5);
-    const gy = L.frontY - 22;
-    const flick = 0.85 + 0.15 * Math.sin(t * 13) * Math.sin(t * 7.3);
-    const lx = right ? gx + 20 : gx + 1;
-    const ly = gy + 13;
-    if (glow) {
-      g.globalAlpha = flick;
-      g.drawImage(glow, lx - 11, ly - 10);
-      g.globalAlpha = 1;
-    }
-    put("goldie", pose("goldie", t, ["walk", Math.floor(t * 7) % 4]), gx, gy, !right);
-    for (const [dx, dy, c] of [
-      [0, -1, "#3b2a1c"],
-      [1, -1, "#3b2a1c"],
-      [0, 0, "#ffe08a"],
-      [1, 0, "#ffe08a"],
-      [0, 1, "#fff6d0"],
-      [1, 1, "#ffe08a"],
-      [0, 2, "#3b2a1c"],
-      [1, 2, "#3b2a1c"],
-    ] as const)
-      dot(lx + dx, ly + dy, c);
-
     // hearts from a poke
     for (let i = hearts.length - 1; i >= 0; i--) {
       const h = hearts[i];

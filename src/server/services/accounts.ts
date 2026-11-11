@@ -173,7 +173,7 @@ export async function setCompanion(db: Database, userId: string, key: unknown): 
       .where(eq(users.id, userId));
     return { name: SKY_CHOICE_LABEL.name };
   }
-  if (!isCompanionKey(key)) throw new ServiceError("Pick one of the six, or let the sky choose.");
+  if (!isCompanionKey(key)) throw new ServiceError("Pick one of the five, or let the sky choose.");
   const c = companionOf(key);
   const [current] = await db.select().from(users).where(eq(users.id, userId));
   const name = current.preferences.assistantName?.trim();

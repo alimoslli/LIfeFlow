@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
 import { SkyButton } from "@/components/skylings/sky-button";
-import { COMPANIONS, companionOf } from "@/lib/companions";
+import { COMPANIONS, companionOf, ownsNight } from "@/lib/companions";
 import { cn } from "@/lib/utils";
 import { nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
 import { gsap, MOTION, prefersReducedMotion } from "./gsap";
@@ -75,7 +75,7 @@ function findTarget(name: string): HTMLElement | null {
  * are skipped. Skip, Esc and the close are always available; arrow keys move between steps.
  */
 export function Tour({ onDone, assistantName = UNNAMED_ASSISTANT, companion }: { onDone: () => void; assistantName?: string; companion?: string | null }) {
-  // the person's skyling shows them around (the six together say hi first); a slow beat drives their frames
+  // the person's skyling shows them around (the five together say hi first); a slow beat drives their frames
   const guide = companionOf(companion).key;
   const [beat, setBeat] = useState(0);
   useEffect(() => {
@@ -207,13 +207,13 @@ export function Tour({ onDone, assistantName = UNNAMED_ASSISTANT, companion }: {
         className="absolute top-0 left-0 rounded-[1.75rem] bg-[linear-gradient(180deg,#123058,#0b1d42_45%,#07132c)] p-6 text-white opacity-0 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6)] ring-1 ring-white/15"
       >
         {welcome ? (
-          // the six say hi, each on its own beat
+          // the five say hi, each on its own beat
           <div data-anim className="-mt-14 mb-3 flex items-end justify-center gap-0.5" aria-hidden>
             {COMPANIONS.map((c, n) => (
               <CompanionGlyph
                 key={c.key}
                 companion={c.key}
-                night={c.key === "star"}
+                night={ownsNight(c.key)}
                 pose={(beat + n * 3) % 14 < 4 ? "celebrate" : "idle"}
                 frame={(beat + n * 3) % 14 < 4 ? (beat + n * 3) % 4 : 0}
                 className="lf-pixel h-12 w-12 drop-shadow-[0_6px_10px_rgba(0,0,0,0.35)]"
@@ -224,7 +224,7 @@ export function Tour({ onDone, assistantName = UNNAMED_ASSISTANT, companion }: {
           // your skyling sits on the card's edge and shows you around
           <CompanionGlyph
             companion={guide}
-            night={guide === "star"}
+            night={ownsNight(guide)}
             pose={last ? "celebrate" : beat % 22 < 3 ? "celebrate" : "idle"}
             frame={last ? beat % 4 : beat % 22 < 3 ? beat % 4 : beat % 30 === 0 ? 1 : 0}
             className="lf-pixel absolute -top-11 right-6 h-14 w-14 drop-shadow-[0_6px_10px_rgba(0,0,0,0.35)]"

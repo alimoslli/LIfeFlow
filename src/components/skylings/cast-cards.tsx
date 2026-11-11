@@ -2,10 +2,10 @@
 import { useEffect, useState } from "react";
 import { prefersReducedMotion } from "@/components/motion/gsap";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
-import { COMPANIONS, type CompanionKey } from "@/lib/companions";
+import { COMPANIONS, type CompanionKey, ownsNight } from "@/lib/companions";
 
 /**
- * The six skylings as cards on the landing page: each blinks on its own beat and hops when you point at it (or tap it).
+ * The five skylings as cards on the landing page: each blinks on its own beat and hops when you point at it (or tap it).
  * Words come from lib/companions, the same the welcome and Settings use.
  */
 export function CastCards() {
@@ -17,7 +17,8 @@ export function CastCards() {
     return () => clearInterval(id);
   }, []);
   return (
-    <ul className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+    // five: two by two on a phone with the last one centred, all in a row on a laptop
+    <ul className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5 max-lg:[&>li:last-child]:col-span-2 max-lg:[&>li:last-child]:w-[calc(50%-0.5rem)] max-lg:[&>li:last-child]:justify-self-center">
       {COMPANIONS.map((c, i) => {
         const on = hot === c.key;
         const frame = on ? tick % 4 : (tick + i * 7) % 26 === 0 ? 1 : 0;
@@ -31,12 +32,12 @@ export function CastCards() {
           >
             <span
               className="pointer-events-none absolute -top-16 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full opacity-45 blur-2xl transition-opacity duration-300 group-hover:opacity-80"
-              style={{ background: c.key === "star" ? "#ffd77a" : c.look.trim }}
+              style={{ background: c.key === "star" ? "#ffd77a" : c.key === "moon" ? "#fff3c4" : c.look.trim }}
               aria-hidden
             />
             <CompanionGlyph
               companion={c.key}
-              night={c.key === "star"}
+              night={ownsNight(c.key)}
               pose={on ? "celebrate" : "idle"}
               frame={frame}
               className="lf-pixel relative h-20 w-20 sm:h-24 sm:w-24"

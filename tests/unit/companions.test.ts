@@ -6,9 +6,9 @@ const INK = "#262320";
 const POSES = Object.keys(FRAMES) as Pose[];
 
 describe("the cast (docs/design/companions/cast.md)", () => {
-  it("has the six, each once, named for the sky", () => {
+  it("has the five, each once, named for the sky (owner, 2026-11-11)", () => {
     expect(COMPANIONS.map((c) => c.key)).toEqual([...COMPANION_KEYS]);
-    expect(COMPANIONS.map((c) => c.name)).toEqual(["Dawn", "Ray", "Noon", "Goldie", "Dusk", "Star"]);
+    expect(COMPANIONS.map((c) => c.name)).toEqual(["Dawn", "Ray", "Goldie", "Star", "Moon"]);
   });
 
   it("never says Jarvis, never uses an em dash, and every tone is a real one", () => {
@@ -47,7 +47,7 @@ describe("the cast (docs/design/companions/cast.md)", () => {
           });
   });
 
-  it("has a night form that differs from its day form, and Star is the other way round", () => {
+  it("has a night form that differs from its day form, and Star and Moon are the other way round", () => {
     for (const c of COMPANIONS) {
       const day = JSON.stringify(pixels(c, "idle", 0, false));
       const night = JSON.stringify(pixels(c, "idle", 0, true));
@@ -56,7 +56,15 @@ describe("the cast (docs/design/companions/cast.md)", () => {
     const star = companionOf("star");
     expect(formOf(star, true)).toMatchObject({ pin: false, squint: false, body: star.look.body });
     expect(formOf(star, false)).toMatchObject({ squint: true });
+    const moon = companionOf("moon");
+    expect(formOf(moon, true)).toMatchObject({ pin: false, body: moon.look.body });
     expect(formOf(companionOf("dawn"), true).pin).toBe(true);
+  });
+
+  it("Star can wear the sunset glow, and the moon shows its night side", () => {
+    const star = companionOf("star");
+    expect(pixels(star, "idle", 0, true, true)).not.toEqual(pixels(star, "idle", 0, true));
+    expect(pixels(companionOf("moon"), "idle", 0, true).some(([, , col]) => col === "#33497c")).toBe(true);
   });
 
   it("walks in four frames and cheers in four, so a frame number past the end wraps", () => {

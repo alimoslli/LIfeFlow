@@ -50,8 +50,8 @@ describe("splash greeting", () => {
 
   it("greets by the hour in the user's time zone, not the device clock", () => {
     const out = runSplash({ [TZ_KEY]: "America/Los_Angeles", [NAME_KEY]: "Alex" }, lateEveningLA, 7);
-    // 11 PM: the evening greeting, under the night sky (the moment picks which skyling rises on the opening screen)
-    expect(out).toEqual({ greeting: "Good evening", name: "Alex", shown: true, moment: "star" });
+    // 11 PM: the evening greeting, under the night sky, and Moon rises (the moment picks which skyling rises on the opening screen)
+    expect(out).toEqual({ greeting: "Good evening", name: "Alex", shown: true, moment: "moon" });
     expect(runSplash({ [TZ_KEY]: "America/New_York" }, new Date("2026-11-05T17:30:00Z"), 23).greeting).toBe("Good afternoon");
     expect(runSplash({ [TZ_KEY]: "Asia/Tokyo" }, new Date("2026-11-05T17:30:00Z"), 17).greeting).toBe("Up late");
   });

@@ -12,7 +12,7 @@ import { FormError, Input } from "@/components/ui/field";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
 import { ASSISTANT_STYLES, nameAtStart, type AssistantStyle } from "@/lib/assistant";
 import { AGE_LINE, BIRTHDAY_NEEDED, birthDateProblem } from "@/lib/birthday";
-import { COMPANIONS, companionOf, SKY_CHOICE, SKY_CHOICE_LABEL, type CompanionChoice, type CompanionKey } from "@/lib/companions";
+import { COMPANIONS, companionOf, SKY_CHOICE, SKY_CHOICE_LABEL, type CompanionChoice, type CompanionKey, ownsNight } from "@/lib/companions";
 import { useSkyling } from "@/components/skylings/use-skyling";
 import type { ClockData } from "@/lib/day-clock";
 import type { LifeStage } from "@/lib/life";
@@ -28,7 +28,7 @@ import { completeOnboardingAction, saveWelcomeAction, skipOnboardingAction, skyN
  * First run (owner, 2026-11-09: "catered to the new app"; "they won't have to add their classes, syncing their school
  * calendar does that, we want to show them how easy it is to sync and connect, and get some info on them like their
  * birth date"):
- *   1. skyling: meet the six on the night sky, pick one and name it (research 2026-11-09: the character comes first);
+ *   1. skyling: meet the five on the night sky, pick one and name it (research 2026-11-09: the character comes first);
  *   2. about: it says hi and gets to know them: what to call them, their birthday, what fills their week, their school
  *      or work;
  *   3. connect: their real sky, opened into the week, and one tap each for Canvas, Google Calendar and Outlook; what a
@@ -330,7 +330,7 @@ export function Onboarding({
                     >
                       <CompanionGlyph
                         companion={c.key}
-                        night={c.key === "star"}
+                        night={ownsNight(c.key)}
                         pose={companion === c.key ? "celebrate" : "idle"}
                         frame={companion === c.key ? 1 : 0}
                         className="h-12 w-12"
@@ -351,7 +351,7 @@ export function Onboarding({
                         : "bg-surface shadow-soft hover:-translate-y-0.5",
                     )}
                   >
-                    <CompanionGlyph companion={skyNow} night={skyNow === "star"} className="h-10 w-10" />
+                    <CompanionGlyph companion={skyNow} night={ownsNight(skyNow)} className="h-10 w-10" />
                     <span className="text-left">
                       <span className="block text-[0.9375rem] font-medium">{SKY_CHOICE_LABEL.name}</span>
                       <span className={cn("block text-xs", companion === SKY_CHOICE ? "text-ink-night/75" : "text-muted")}>{SKY_CHOICE_LABEL.moment}</span>
@@ -397,7 +397,7 @@ export function Onboarding({
           {step === "about" && (
             <>
               <div data-anim className="flex items-end gap-3">
-                <CompanionGlyph companion={drawn} night={drawn === "star"} pose="celebrate" frame={3} className="lf-breathe h-14 w-14" />
+                <CompanionGlyph companion={drawn} night={ownsNight(drawn)} pose="celebrate" frame={3} className="lf-breathe h-14 w-14" />
                 <h1 className="font-display text-[2.75rem] leading-[1.05] font-medium tracking-tight">Hi{cleanYou ? ` ${cleanYou.split(" ")[0]}` : ""}.</h1>
               </div>
               <p data-anim className="mt-3 text-[1.0625rem] leading-relaxed text-text-2">

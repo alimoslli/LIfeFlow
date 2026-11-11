@@ -1,4 +1,4 @@
-import { isCompanionKey, skylingAt, SKY_CHOICE, type CompanionKey } from "./companions";
+import { currentKey, skylingAt, SKY_CHOICE, type CompanionKey } from "./companions";
 import { sunTimes } from "./day-clock";
 import { todayIn } from "./dates";
 
@@ -14,7 +14,7 @@ export function minuteIn(tz: string, now: Date = new Date()): number {
  * their time zone. Null when nothing was picked (callers fall back to the default, Ray).
  */
 export function resolveSkyling(choice: string | null | undefined, tz: string, now: Date = new Date()): CompanionKey | null {
-  if (choice !== SKY_CHOICE) return isCompanionKey(choice) ? choice : null;
+  if (choice !== SKY_CHOICE) return currentKey(choice);
   const { rise, set } = sunTimes(todayIn(tz, now), tz);
   return skylingAt(minuteIn(tz, now), rise, set);
 }

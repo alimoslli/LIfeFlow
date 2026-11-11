@@ -149,3 +149,14 @@ Nothing here is built; it needs the owner's yes (a design change to Today, onboa
    time) for Dusk. Three companions on `friend` is a lot; Calm would also suit Goldie's money voice.
 3. Default when nothing is picked: Dawn on the wheel (proposed), or keep the current Sol-like look until a pick.
 4. Retire the `avatar` setting (spark, orb, initial) in favour of the companion.
+
+## The cast becomes five (owner, 2026-11-11)
+
+The owner asked whether the skylings look like their part of the day, wanted night to get the morning's attention
+("alot of nightowls out there"), and settled on five that follow the real sky, like the five times the sun marks
+(the app never mentions prayer times): **Dawn** (first light), **Ray** (the day; Noon folded into it), **Goldie**
+(golden hour), **Star** (sunset into the evening; Dusk folded into it, so Star wears the last sunset glow for its first
+hour) and **Moon** (new: from 9 PM, or two hours after sunset when later, until first light, when it turns into Dawn).
+Moon is a moon: its night side in deep blue down one side, craters, half-closed eyes and a small smirk, two little stars
+beside it; calm late-night company that never scolds anyone for being up. Saved choices of Noon become Ray and of Dusk
+become Moon. Pictures: `five-skylings.png` (drawn first, approved), `cast-by-moment.png` (the six before).

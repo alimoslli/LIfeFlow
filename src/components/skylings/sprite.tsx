@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { ownsNight } from "@/lib/companions";
 import { prefersReducedMotion } from "@/components/motion/gsap";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
 import { useShell } from "@/components/shell/app-shell";
@@ -18,7 +19,7 @@ const HOP = 8; // two hops
  */
 export function SkylingSprite({
   companion,
-  night = companion === "star",
+  night = ownsNight(companion),
   busy = false,
   sleeping = false,
   still = false,
@@ -82,7 +83,7 @@ export function SkylingSprite({
 /** The person's own skyling (from the app shell), for server pages that can't read it themselves. */
 export function MySkyling(props: Omit<Parameters<typeof SkylingSprite>[0], "companion" | "night">) {
   const { skyling } = useShell();
-  return <SkylingSprite companion={skyling} night={skyling === "star"} {...props} />;
+  return <SkylingSprite companion={skyling} night={ownsNight(skyling)} {...props} />;
 }
 
 /**
@@ -91,5 +92,5 @@ export function MySkyling(props: Omit<Parameters<typeof SkylingSprite>[0], "comp
  */
 export function SkylingIcon({ className }: { className?: string }) {
   const { skyling } = useShell();
-  return <CompanionGlyph companion={skyling} night={skyling === "star"} className={cn("lf-pixel", className)} />;
+  return <CompanionGlyph companion={skyling} night={ownsNight(skyling)} className={cn("lf-pixel", className)} />;
 }

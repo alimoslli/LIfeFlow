@@ -16,7 +16,7 @@
  */
 import { isExam, pileOf, sunTimes, type ClockData, type ClockItem } from "@/lib/day-clock";
 import { css, darkness, mix, skyAt, type RGB } from "@/lib/sky";
-import { companionOf, skylingAt, SKY_CHOICE, type CompanionKey } from "@/lib/companions";
+import { companionOf, skylingAt, SKY_CHOICE, starGlowAt, type CompanionKey } from "@/lib/companions";
 import { drawCompanion, FRAMES, type Pose } from "./companion";
 import { onSkylingDoes, skylingDoing } from "@/components/skylings/activity";
 import { createVisitors, type VisitorKind } from "./visitors";
@@ -427,13 +427,23 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   // the skyling (the person's pick, in its night form after sunset) on the wheel, and standing on the open line
   // "Changes with the sky": whoever's moment it is at the time on show (turn Today to tonight and Star is there)
   let viewKey: CompanionKey = "ray";
+  // Star's first hour after sunset, when it still wears the last of the sunset
+  let glowing = false;
   const paintWho = () => {
     const choice = root.dataset.companion;
     const c = companionOf(choice === SKY_CHOICE ? viewKey : choice);
     if (root.dataset.skylingNow !== c.key) root.dataset.skylingNow = c.key;
     const cheering = performance.now() < cheerUntil;
     for (const cv of [who, ...root.querySelectorAll<HTMLCanvasElement>(".dc-now-who")])
-      drawCompanion(cv, c, cheering ? "celebrate" : pose, cheering ? Math.floor((performance.now() - cheerFrom) / 150) : step, night);
+      drawCompanion(
+        cv,
+        c,
+        cheering ? "celebrate" : pose,
+        cheering ? Math.floor((performance.now() - cheerFrom) / 150) : step,
+        night,
+        false,
+        glowing && c.key === "star",
+      );
   };
   // it jogs in place (a frame about every 180 ms, never with reduced motion); asleep it breathes slowly; at rest it blinks
   let tick = 0;
@@ -538,6 +548,10 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     const follow = Math.abs(view - now) < 0.5;
     const vm = mod(view);
     night = !(vm >= rise && vm < set);
+    if (starGlowAt(vm, set) !== glowing) {
+      glowing = !glowing;
+      paintWho();
+    }
     const nextKey = skylingAt(vm, rise, set);
     if (nextKey !== viewKey) {
       // the next one hops in (a cheer is skipped under reduced motion)

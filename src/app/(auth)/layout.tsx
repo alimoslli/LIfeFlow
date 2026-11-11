@@ -47,7 +47,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 p-12">
           <p className="text-[0.75rem] font-semibold tracking-[0.14em] text-star-gold uppercase">The skylings</p>
           <p className="mt-3 max-w-[18ch] font-display text-[2.75rem] leading-[1.02] font-medium tracking-[-0.035em] text-balance text-white">
-            Six little ones, keeping your sky in order.
+            Five little ones, keeping your sky in order.
           </p>
           <p className="mt-4 max-w-[38ch] text-[1.0625rem] leading-relaxed text-white/75">Tap the sky. They like visitors.</p>
         </div>

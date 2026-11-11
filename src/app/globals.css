@@ -480,16 +480,6 @@ html[data-lf-moment="dawn"] .lf-splash-inner {
   --glow: 255 190 170;
   --hot: #ffe6d4;
 }
-html[data-lf-moment="noon"] .lf-splash-inner {
-  --sky1: #1868e6;
-  --sky2: #3b8ef3;
-  --sky3: #8cc6fb;
-  --sky4: #dff1ff;
-  --sea1: #2468d6;
-  --sea2: #0c3486;
-  --glow: 255 246 205;
-  --hot: #ffffff;
-}
 html[data-lf-moment="goldie"] .lf-splash-inner {
   --sky1: #2556b4;
   --sky2: #5b86cf;
@@ -500,7 +490,7 @@ html[data-lf-moment="goldie"] .lf-splash-inner {
   --glow: 255 196 110;
   --hot: #ffe2a8;
 }
-html[data-lf-moment="dusk"] .lf-splash-inner {
+html[data-lf-moment="star"] .lf-splash-inner {
   --sky1: #11265c;
   --sky2: #2f4c8c;
   --sky3: #d9867a;
@@ -510,7 +500,7 @@ html[data-lf-moment="dusk"] .lf-splash-inner {
   --glow: 248 170 140;
   --hot: #ffd9c2;
 }
-html[data-lf-moment="star"] .lf-splash-inner {
+html[data-lf-moment="moon"] .lf-splash-inner {
   --sky1: #030817;
   --sky2: #0a1838;
   --sky3: #15305e;
@@ -557,10 +547,9 @@ html[data-lf-moment="star"] .lf-splash-inner {
 }
 html[data-lf-moment="dawn"] .lf-splash-sk-dawn,
 html[data-lf-moment="ray"] .lf-splash-sk-ray,
-html[data-lf-moment="noon"] .lf-splash-sk-noon,
 html[data-lf-moment="goldie"] .lf-splash-sk-goldie,
-html[data-lf-moment="dusk"] .lf-splash-sk-dusk,
-html[data-lf-moment="star"] .lf-splash-sk-star {
+html[data-lf-moment="star"] .lf-splash-sk-star,
+html[data-lf-moment="moon"] .lf-splash-sk-moon {
   display: block;
 }
 .lf-splash-rays {
@@ -571,7 +560,6 @@ html[data-lf-moment="star"] .lf-splash-sk-star {
 }
 html[data-lf-moment="dawn"] .lf-splash-rays,
 html[data-lf-moment="ray"] .lf-splash-rays,
-html[data-lf-moment="noon"] .lf-splash-rays,
 html[data-lf-moment="goldie"] .lf-splash-rays {
   display: block;
 }
@@ -581,13 +569,13 @@ html[data-lf-moment="goldie"] .lf-splash-rays {
   transform: scale(0);
   animation: lf-ray 0.3s steps(3, end) calc(0.7s + var(--i) * 70ms) forwards;
 }
-/* after sunset: a pixel moon and stars that twinkle */
+/* after sunset: stars that twinkle, and in Star's evening a pixel moon (later the Moon is the skyling itself) */
 .lf-splash-moon,
 .lf-splash-stars {
   display: none;
 }
-html[data-lf-moment="dusk"] .lf-splash-stars,
 html[data-lf-moment="star"] .lf-splash-stars,
+html[data-lf-moment="moon"] .lf-splash-stars,
 html[data-lf-moment="star"] .lf-splash-moon {
   display: block;
 }

@@ -108,7 +108,8 @@ export type UserPreferences = {
   /** The user's assistant: its name, personality and live voice (see src/lib/assistant.ts). */
   assistantName?: string;
   /** Who runs on top of Today and is the skyling (lib/companions; the cast). Unset = not picked yet. */
-  companion?: "dawn" | "ray" | "noon" | "goldie" | "dusk" | "star" | "sky";
+  /** "noon" and "dusk" are choices saved before the cast became five; read through companionOf / currentKey. */
+  companion?: "dawn" | "ray" | "goldie" | "star" | "moon" | "sky" | "noon" | "dusk";
   /** coach | friend | direct (older values are mapped in lib/assistant). */
   assistantStyle?: "coach" | "friend" | "direct" | "balanced" | "warm" | "playful" | "professional";
   /** Free-text personality notes, at most 300 characters. Changes tone only, never the rules. */
