@@ -5,6 +5,7 @@ import { addDaysStr, daysBetween, formatIn, localDateOf } from "@/lib/dates";
 import { EVENT_KINDS, createEvent, findConflicts, freeSlots, getAgenda, getEvent, updateEvent, type AgendaItem } from "../../services/calendar";
 import { dateArg, defineTool, idArg, timeArg, type ToolContext } from "../tool";
 import { lifeLoad } from "../../services/life-load";
+import { courseArg, withCourseIds } from "./course-arg";
 
 export function presentAgendaItem(i: AgendaItem, ctx: ToolContext) {
   const fmt = (d: Date) => formatIn(d, ctx.tz, "yyyy-MM-dd HH:mm");
@@ -40,7 +41,7 @@ const eventArgs = z.object({
   location: z.string().max(300).optional(),
   description: z.string().max(5000).optional(),
   recurrence: recurrence.optional(),
-  courseId: idArg("Course").optional(),
+  course: courseArg,
 });
 
 export const calendarTools = [
@@ -111,8 +112,9 @@ export const calendarTools = [
       "Add calendar events (classes, study sessions, appointments, exams...). Supports weekly/daily recurrence. Returns any conflicts with existing commitments — never silently double-book; mention conflicts to the user.",
     schema: z.object({ events: z.array(eventArgs).min(1).max(40) }),
     mutates: true,
-    async execute({ events }, ctx) {
+    async execute(args, ctx) {
       return ctx.run(async (s) => {
+        const events = await withCourseIds(s, args.events);
         const created = [];
         const conflicts: { event: string; conflictsWith: string; at: string }[] = [];
         for (const e of events) {
@@ -155,8 +157,11 @@ export const calendarTools = [
     description: "Replace an event's details. Provide the full set of fields (fetch with get_agenda first).",
     schema: eventArgs.extend({ id: idArg("Event") }),
     mutates: true,
-    async execute({ id, ...e }, ctx) {
-      const row = await ctx.run((s) => updateEvent(s, ctx.tz, id, { ...e, allDay: e.allDay ?? !e.startTime }));
+    async execute({ id, ...args }, ctx) {
+      const row = await ctx.run(async (s) => {
+        const [e] = await withCourseIds(s, [args]);
+        return updateEvent(s, ctx.tz, id, { ...e, allDay: e.allDay ?? !e.startTime });
+      });
       return { updated: { id: row.id, title: row.title, start: formatIn(row.startsAt, ctx.tz, "yyyy-MM-dd HH:mm") } };
     },
   }),

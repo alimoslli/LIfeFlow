@@ -131,3 +131,48 @@ async function expectInOrder(page: Page) {
     )
     .toBeLessThanOrEqual(0);
 }
+
+// COO, 2026-11-11 (seen while filming, 432x768): Undo lay over the answer's lines after "✓ Event added"; and the owner:
+// "when I send a lot of text into the chat box, especially on the phone, I can't see the rest of it". The answer scrolls
+// under its top row with its buttons after the words; the bar grows to three lines and then scrolls, without covering the answer or
+// moving the sky, and Enter still sends. The chat page's box grows too.
+test("432x768: Undo never lies on the answer, and a long message grows the bar without covering anything", async ({ page }) => {
+  await page.setViewportSize({ width: 432, height: 768 });
+  await signUp(page, "Gus Grow");
+  await page.goto("/");
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
+  const form = page.locator(".dc-dock form");
+  const box = form.getByRole("textbox", { name: "Message Ray" });
+  const reply = page.locator('[data-testid="today-reply"]:visible');
+
+  await box.fill('/tool create_events {"events":[{"title":"Dentist checkup","date":"2026-11-13","startTime":"15:00","location":"Main Street Dental"}]}');
+  await box.press("Enter");
+  const undo = reply.getByRole("button", { name: "Undo" });
+  await expect(undo).toBeVisible({ timeout: 15_000 });
+  const body = (await reply.getByTestId("today-reply-body").boundingBox())!;
+  expect(body.y + body.height).toBeLessThanOrEqual((await undo.boundingBox())!.y);
+
+  // a long message: the bar grows, the sky doesn't move, and the bar stays under the answer
+  const sky = (await page.getByTestId("day-clock").boundingBox())!;
+  const oneLine = (await box.boundingBox())!.height;
+  await box.fill("Can you move my study block to after work on Thursday? ".repeat(3));
+  await expect.poll(async () => (await box.boundingBox())!.height).toBeGreaterThan(oneLine * 2);
+  const card = (await reply.boundingBox())!;
+  expect(card.y + card.height).toBeLessThanOrEqual((await form.boundingBox())!.y + 1);
+  expect((await page.getByTestId("day-clock").boundingBox())!.y).toBe(sky.y);
+  // far more than three lines scrolls inside the box, and Send is still there
+  await box.fill("Plan my week around my shifts and the BIO exam please. ".repeat(12));
+  expect((await box.boundingBox())!.height).toBeLessThanOrEqual(3 * 24 + 20 + 1);
+  expect(await box.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+  await expect(form.getByRole("button", { name: "Send" })).toBeInViewport();
+  await box.press("Enter");
+  await expect(reply).toContainText("You said: Plan my week", { timeout: 15_000 });
+  await expect.poll(async () => (await box.boundingBox())!.height).toBe(oneLine);
+
+  // the chat page's box grows the same way
+  await page.goto("/jarvis");
+  const chatBox = page.getByRole("textbox", { name: "Message Ray" });
+  const chatOne = (await chatBox.boundingBox())!.height;
+  await chatBox.fill("One more thing about Thursday. ".repeat(6));
+  await expect.poll(async () => (await chatBox.boundingBox())!.height).toBeGreaterThan(chatOne * 2);
+});

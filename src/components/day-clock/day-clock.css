@@ -24,7 +24,9 @@
   }
 }
 .dc-middle {
-  height: var(--mid);
+  /* a long message makes the docked chat bar taller (day-plan.tsx sets --bar-grow); the middle gives up that height so
+     the bar never lies over the answer, and the sky above stays where it is */
+  height: calc(var(--mid) - var(--bar-grow, 0px));
 }
 /* while the day is open as a line, its tiles, "Pin something" and a stop's card use the middle */
 .dc-today:has(.dc:is([data-state="moving"], [data-state="timeline"])) .dc-middle {

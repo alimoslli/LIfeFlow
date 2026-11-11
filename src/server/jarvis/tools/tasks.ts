@@ -4,6 +4,7 @@ import { localDateOf, localTimeOf, startOfLocalDay, addDaysStr } from "@/lib/dat
 import { createTask, getTask, listTasks, updateTask } from "../../services/tasks";
 import { createProject, listProjects } from "../../services/notes";
 import { dateArg, defineTool, idArg, timeArg, type ToolContext } from "../tool";
+import { courseArg, withCourseIds } from "./course-arg";
 
 const priority = z.enum(["low", "medium", "high", "urgent"]);
 
@@ -41,7 +42,7 @@ const newTask = z.object({
   priority: priority.optional(),
   dueDate: dateArg().optional(),
   dueTime: timeArg().optional(),
-  courseId: idArg("Course").optional(),
+  course: courseArg,
   projectId: idArg("Project").optional(),
   parentId: idArg("Parent task (makes this a subtask)").optional(),
   subtasks: z.array(z.string().min(1).max(300)).max(30).optional().describe("Titles of subtasks to create under this task"),
@@ -76,7 +77,7 @@ export const taskTools = [
     async execute(a, ctx) {
       const created = await ctx.run(async (s) => {
         const out = [];
-        for (const t of a.tasks) {
+        for (const t of await withCourseIds(s, a.tasks)) {
           const task = await createTask(s, ctx.tz, t, "jarvis");
           const subs = [];
           for (const title of t.subtasks ?? [])

@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { SkylingSprite } from "@/components/skylings/sprite";
 import { IdeaClouds } from "@/components/skylings/idea-clouds";
 import type { IdeaCloud } from "@/lib/idea-clouds";
 import { useShell } from "@/components/shell/app-shell";
+import { useAutoGrow } from "@/components/ui/auto-grow";
 import { askOnToday, FILL_BAR, TodayReplyCard } from "./today-chat";
 
 const CHIPS = [
@@ -76,7 +77,14 @@ export function AskBar({
   const { skyling } = useShell();
   const router = useRouter();
   const [text, setText] = useState("");
-  const box = useRef<HTMLInputElement>(null);
+  const box = useRef<HTMLTextAreaElement>(null);
+  // a long message grows the bar up to three lines, then scrolls inside it (owner, 2026-11-11); on a phone the bar is docked
+  // over the bottom of Today, so the middle above it gives up that height and the answer is never under the bar
+  const grow = useCallback((px: number) => {
+    const el = box.current;
+    if (el?.closest(".dc-dock")) el.closest<HTMLElement>(".dc-today")?.style.setProperty("--bar-grow", `${px}px`);
+  }, []);
+  useAutoGrow(box, text, grow);
   // a cloud in the middle of Today puts its words here, ready to send
   useEffect(() => {
     const fill = (e: Event) => {
@@ -123,17 +131,25 @@ export function AskBar({
               void askOnToday(typed, () => router.refresh());
             } else router.push("/jarvis?voice=1");
           }}
-          className="flex min-h-14 w-full items-center gap-3 rounded-[1.5rem] bg-surface py-2 pr-2 pl-5 shadow-lift ring-1 ring-border/70 focus-within:ring-2 focus-within:ring-accent"
+          className="lf-ask flex min-h-14 w-full items-end gap-3 rounded-[1.5rem] bg-surface py-1.5 pr-2 pl-5 shadow-lift ring-1 ring-border/70 focus-within:ring-2 focus-within:ring-accent"
         >
-          <input
+          <textarea
             ref={box}
+            rows={1}
             value={text}
             onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              // Enter sends, as before; Shift+Enter starts a new line
+              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                e.currentTarget.form?.requestSubmit();
+              }
+            }}
             maxLength={500}
             enterKeyHint="send"
             aria-label={`Message ${name}`}
             placeholder={hint ? `Ask or tell ${name} anything` : `Message ${name}…`}
-            className="min-w-0 flex-1 bg-transparent text-[1rem] outline-none placeholder:text-muted"
+            className="max-h-[5.75rem] min-w-0 flex-1 resize-none bg-transparent py-2.5 text-[1rem] leading-6 outline-none placeholder:text-muted"
           />
           <button
             type="submit"

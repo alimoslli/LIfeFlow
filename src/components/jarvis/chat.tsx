@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition, type CSSProperties } from "react";
 import { useAppBusy } from "@/lib/app-busy";
 import { Plug, Brain, CircleAlert, ImageIcon, Loader2, Square } from "lucide-react";
+import { useAutoGrow } from "@/components/ui/auto-grow";
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
 import { cn } from "@/lib/utils";
 import { isAppPath, viewAtName } from "@/lib/app-routes";
@@ -124,6 +125,8 @@ export function JarvisChat({
   const pokeRef = useRef<(() => void) | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // grows with a long message up to six lines, then scrolls inside (owner, 2026-11-11), on an iPhone too
+  useAutoGrow(inputRef, input);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -803,7 +806,7 @@ export function JarvisChat({
                 readOnly={refreshing}
                 aria-busy={refreshing || undefined}
                 aria-label={`Message ${assistantName}`}
-                className="max-h-48 min-h-11 flex-1 resize-none bg-transparent px-1.5 py-2.5 text-[1rem] leading-6 placeholder:text-muted [field-sizing:content]"
+                className="max-h-[9.75rem] min-h-11 flex-1 resize-none bg-transparent px-1.5 py-2.5 text-[1rem] leading-6 placeholder:text-muted"
               />
               {!busy && <VoiceButton assistantName={assistantName} disabled={!canSend || refreshing} onStart={() => setTalking(true)} />}
               {busy ? (

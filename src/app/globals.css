@@ -1357,8 +1357,9 @@ input[type="checkbox"].lf-switch:focus-visible {
   background-color: color-mix(in oklab, var(--text) 4.5%, transparent);
 }
 
-/* Jarvis composer: the field sits inside a pill that shows focus itself. */
-.lf-composer textarea:focus-visible {
+/* Jarvis composer and Today's bar: the field sits inside a pill that shows focus itself. */
+.lf-composer textarea:focus-visible,
+.lf-ask textarea:focus-visible {
   outline: none;
 }
 /* The voice call: a soft halo behind the mark. */

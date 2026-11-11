@@ -194,11 +194,12 @@ export function TodayReplyCard({ name, refresh, fill = false }: { name: string; 
       data-testid="today-reply"
       className={cn(
         "lf-reply flex flex-col rounded-[1.25rem] bg-surface px-4 py-3 shadow-soft ring-1 ring-border/60",
-        // in the middle of a phone's Today the card keeps the middle's height and the answer scrolls inside it
-        fill && "h-full overflow-y-auto overscroll-contain py-2",
+        // in the middle of a phone's Today the card keeps the middle's height and, under its top row, the answer and its
+        // buttons scroll together, the buttons always after the words (COO, 2026-11-11, 432x768: Undo lay over the answer)
+        fill && "h-full overflow-hidden py-2",
       )}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-3">
         {/* what you asked, unless it's in the middle of Today, where there's no room to say it twice */}
         {fill ? <span className="flex-1" /> : <p className="min-w-0 flex-1 truncate text-xs text-muted">You: {reply.question}</p>}
         {conversationId && (
@@ -215,90 +216,92 @@ export function TodayReplyCard({ name, refresh, fill = false }: { name: string; 
           <PixelIcon name="close" className="h-4 w-4" />
         </button>
       </div>
-      <div className="min-h-0">
-        {saved.length > 0 && (
-          <ul className="mt-1.5 flex flex-col gap-1" aria-label="Saved">
-            {saved.map((t) => (
-              <li key={t.callId} className="flex items-start gap-2 text-sm font-medium">
-                <PixelIcon name="check" className="mt-0.5 h-4 w-4" />
-                <span className="min-w-0 [overflow-wrap:anywhere]">{t.summary || t.label}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {reply.text ? (
-          <p className="mt-1.5 line-clamp-6 text-[0.9375rem] leading-snug whitespace-pre-line [overflow-wrap:anywhere]">{reply.text}</p>
-        ) : (
-          reply.streaming && (
-            <p className="mt-1.5 text-sm text-muted" role="status">
-              {reply.tools.some((t) => t.status === "running") ? reply.tools.find((t) => t.status === "running")!.label || "Saving…" : `${name} is thinking…`}
-            </p>
-          )
-        )}
-        {reply.undoNote && <p className="mt-1.5 text-sm text-text-2">{reply.undoNote}</p>}
-        {reply.confirmations.map((c) => (
-          <div key={c.actionId} className="mt-2 rounded-xl bg-surface-2 px-3 py-2">
-            <p className="text-sm whitespace-pre-line">{c.summary}</p>
-            {c.status === "pending" ? (
-              <div className="mt-2 flex gap-2">
-                <button type="button" onClick={() => void decide(c.actionId, "confirm", refresh)} className="lf-sb lf-sb-sun lf-sb-sm">
-                  Confirm
-                </button>
-                <button type="button" onClick={() => void decide(c.actionId, "cancel", refresh)} className="lf-sb lf-sb-app lf-sb-sm">
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <p className="mt-1 text-sm text-text-2">{c.status === "working" ? "Working…" : c.result}</p>
-            )}
-            {c.status === "pending" && c.result && <p className="mt-1 text-sm text-danger">{c.result}</p>}
-          </div>
-        ))}
-        {reply.askAi && (
-          <div className="mt-2">
-            <p className="text-sm text-text-2">
-              To answer, {name} sends your message and the parts of your LifeFlow data it needs to OpenAI, our AI provider. They don&apos;t use it to train
-              their models. You can turn this off anytime in Settings.
-            </p>
-            <button
-              type="button"
-              onClick={async () => {
-                await setAiConsentAction(true);
-                await askOnToday(reply.question, refresh);
-              }}
-              className="lf-sb lf-sb-sun lf-sb-sm mt-2"
-            >
-              Allow and send
-            </button>
-          </div>
-        )}
-        {reply.error && (
-          <p role="alert" className="mt-1.5 text-sm text-danger [overflow-wrap:anywhere]">
-            {reply.error}
-          </p>
-        )}
-      </div>
-      {(offer || undoable.length > 0) && (
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          {offer &&
-            OFFER_REPLIES.map((o) => (
+      <div className={cn(fill && "min-h-0 flex-1 overflow-y-auto overscroll-contain")}>
+        <div data-testid="today-reply-body">
+          {saved.length > 0 && (
+            <ul className="mt-1.5 flex flex-col gap-1" aria-label="Saved">
+              {saved.map((t) => (
+                <li key={t.callId} className="flex items-start gap-2 text-sm font-medium">
+                  <PixelIcon name="check" className="mt-0.5 h-4 w-4" />
+                  <span className="min-w-0 [overflow-wrap:anywhere]">{t.summary || t.label}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {reply.text ? (
+            <p className="mt-1.5 line-clamp-6 text-[0.9375rem] leading-snug whitespace-pre-line [overflow-wrap:anywhere]">{reply.text}</p>
+          ) : (
+            reply.streaming && (
+              <p className="mt-1.5 text-sm text-muted" role="status">
+                {reply.tools.some((t) => t.status === "running") ? reply.tools.find((t) => t.status === "running")!.label || "Saving…" : `${name} is thinking…`}
+              </p>
+            )
+          )}
+          {reply.undoNote && <p className="mt-1.5 text-sm text-text-2">{reply.undoNote}</p>}
+          {reply.confirmations.map((c) => (
+            <div key={c.actionId} className="mt-2 rounded-xl bg-surface-2 px-3 py-2">
+              <p className="text-sm whitespace-pre-line">{c.summary}</p>
+              {c.status === "pending" ? (
+                <div className="mt-2 flex gap-2">
+                  <button type="button" onClick={() => void decide(c.actionId, "confirm", refresh)} className="lf-sb lf-sb-sun lf-sb-sm">
+                    Confirm
+                  </button>
+                  <button type="button" onClick={() => void decide(c.actionId, "cancel", refresh)} className="lf-sb lf-sb-app lf-sb-sm">
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <p className="mt-1 text-sm text-text-2">{c.status === "working" ? "Working…" : c.result}</p>
+              )}
+              {c.status === "pending" && c.result && <p className="mt-1 text-sm text-danger">{c.result}</p>}
+            </div>
+          ))}
+          {reply.askAi && (
+            <div className="mt-2">
+              <p className="text-sm text-text-2">
+                To answer, {name} sends your message and the parts of your LifeFlow data it needs to OpenAI, our AI provider. They don&apos;t use it to train
+                their models. You can turn this off anytime in Settings.
+              </p>
               <button
-                key={o}
                 type="button"
-                disabled={busy}
-                onClick={() => (o === "Do it" ? void askOnToday(o, refresh) : patch((r) => void (r.settled = true)))}
-                className={o === "Do it" ? "lf-sb lf-sb-sun lf-sb-sm" : "lf-sb lf-sb-app lf-sb-sm"}
+                onClick={async () => {
+                  await setAiConsentAction(true);
+                  await askOnToday(reply.question, refresh);
+                }}
+                className="lf-sb lf-sb-sun lf-sb-sm mt-2"
               >
-                {o}
+                Allow and send
               </button>
-            ))}
-          {undoable.length > 0 && (
-            <button type="button" onClick={() => void undoLast(undoable, refresh)} className="lf-sb lf-sb-app lf-sb-sm">
-              <PixelIcon name="undo" className="h-4 w-4" /> Undo
-            </button>
+            </div>
+          )}
+          {reply.error && (
+            <p role="alert" className="mt-1.5 text-sm text-danger [overflow-wrap:anywhere]">
+              {reply.error}
+            </p>
           )}
         </div>
-      )}
+        {(offer || undoable.length > 0) && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {offer &&
+              OFFER_REPLIES.map((o) => (
+                <button
+                  key={o}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => (o === "Do it" ? void askOnToday(o, refresh) : patch((r) => void (r.settled = true)))}
+                  className={o === "Do it" ? "lf-sb lf-sb-sun lf-sb-sm" : "lf-sb lf-sb-app lf-sb-sm"}
+                >
+                  {o}
+                </button>
+              ))}
+            {undoable.length > 0 && (
+              <button type="button" onClick={() => void undoLast(undoable, refresh)} className="lf-sb lf-sb-app lf-sb-sm">
+                <PixelIcon name="undo" className="h-4 w-4" /> Undo
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

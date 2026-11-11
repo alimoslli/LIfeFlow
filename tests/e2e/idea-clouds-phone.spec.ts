@@ -65,7 +65,7 @@ test("idea clouds: short, from real data, a tap fills the box and sends nothing"
   await page.goto("/");
   await page.emulateMedia({ reducedMotion: "reduce" });
   await today.getByRole("button").first().click();
-  const bar = page.locator('input[aria-label="Message Ray"]:visible').first();
+  const bar = page.locator('textarea[aria-label="Message Ray"]:visible').first();
   await expect(bar).toHaveValue(ANY);
   const typed = await bar.inputValue();
   await expect(page.getByRole("dialog")).toHaveCount(0);
