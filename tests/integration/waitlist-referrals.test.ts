@@ -17,7 +17,8 @@ import {
 import { inviteCodeFor, recordInvite, validInviteCode } from "@/server/services/invites";
 import { creditReferral, emailHash, MAX_CREDITS_PER_DAY, referralEmailKey, verifyEmail } from "@/server/services/referrals";
 import { saveWelcomeProgress } from "@/server/services/onboarding";
-import { acceptUsers, moveUpOne, nextInLine, waitingCount, waitlistPage, waitlistPlace } from "@/server/services/waitlist";
+import { deleteAccount } from "@/server/services/accounts";
+import { acceptUsers, lockQueue, moveUpOne, nextInLine, waitingCount, waitlistPage, waitlistPlace } from "@/server/services/waitlist";
 import { inviterFor } from "@/server/services/invites";
 import { makeUser as makeAnyUser } from "../helpers";
 
@@ -568,6 +569,33 @@ describe("Google and Apple sign-up", () => {
     const link = await startGoogleSignIn(db, cfg, { mode: "link", invite: "abcdefgh23", userId: (await makeUser("L")).user.id });
     expect(parseGoogleState((await takeChallenge(db, "google", link.token))!.challenge).invite).toBeNull();
     expect(validInviteCode("abc")).toBeNull();
+  });
+});
+
+describe("deleting an account follows the queue-lock order", () => {
+  it("waits for a move in progress instead of landing inside it", async () => {
+    await clearLine();
+    const person = (await makeUser("Leaving")).user;
+    // no password to check (a Google sign-up), so the only thing that can make the deletion wait is the queue lock
+    await db.update(users).set({ passwordHash: "!google" }).where(eq(users.id, person.id));
+    let release!: () => void;
+    const held = new Promise<void>((r) => (release = r));
+    let locked!: () => void;
+    const gotLock = new Promise<void>((r) => (locked = r));
+    const mover = db.transaction(async (tx) => {
+      await lockQueue(tx);
+      locked();
+      await held;
+    });
+    await gotLock;
+    let done = false;
+    const deleting = deleteAccount(db, person.id, "").then(() => (done = true));
+    await new Promise((r) => setTimeout(r, 400));
+    expect(done).toBe(false);
+    release();
+    await mover;
+    await deleting;
+    expect(await db.select().from(users).where(eq(users.id, person.id))).toEqual([]);
   });
 });
 

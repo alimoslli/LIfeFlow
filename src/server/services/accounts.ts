@@ -10,6 +10,7 @@ import { revokeRememberedDevices } from "../auth/remembered-devices";
 import type { Database } from "../db/client";
 import { users, type UserPreferences } from "../db/schema";
 import { withUser } from "../db/with-user";
+import { lockQueue } from "./waitlist";
 import { seedDefaultCategories } from "./finance/categories";
 import { audit } from "./audit";
 import { DeletionBlockedError, revokeOutsideAccess, type CleanupDeps } from "./account-cleanup";
@@ -265,5 +266,9 @@ export async function deleteAccount(db: Database, userId: string, password: stri
     if (e instanceof DeletionBlockedError) throw new AuthError(e.message);
     throw e;
   }
-  await db.delete(users).where(eq(users.id, userId));
+  // Queue lock first (like every change to the queue), so the deletion can't land between a referral move's read and its swap.
+  await db.transaction(async (tx) => {
+    await lockQueue(tx);
+    await tx.delete(users).where(eq(users.id, userId));
+  });
 }

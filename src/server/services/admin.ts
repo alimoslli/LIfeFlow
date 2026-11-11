@@ -312,6 +312,7 @@ export async function deleteUser(db: Database, actor: Admin, userId: string, con
     throw e;
   }
   await db.transaction(async (tx) => {
+    await lockQueue(tx);
     const u = await target(tx, actor, userId);
     await log(tx, actor, "user.delete", u, { createdAt: u.createdAt.toISOString() });
     await tx.delete(users).where(eq(users.id, u.id));
