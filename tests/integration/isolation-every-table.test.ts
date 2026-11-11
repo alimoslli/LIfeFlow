@@ -34,7 +34,8 @@ const LOOKED_UP_BEFORE_SIGN_IN = new Set([
 
 // Tables that point at a user by a column NOT called user_id (found by their foreign key to users, so a new one is caught too).
 // Each is account data read before and after sign-in (like login_challenges) or owner operations data, reached only through
-// services; none holds a user's own content, so none has row-level security. Reviewed here with the reason.
+// services, so none has row-level security: they hold hashes, links between accounts and owner copies, never a person's own content.
+// Reviewed here with the reason. `waitlist_fingerprints` has no foreign key (it keeps only a one-way hash), so it isn't found by this guard.
 const POINTS_AT_USER_BY_OTHER_NAME: Record<string, string> = {
   email_confirmations: "account data: the hashed confirm code, read before and after sign-in (like login_challenges); only email-confirm.ts reaches it",
   waitlist_referrals: "account data: who invited whom for the waitlist (keyed email hash), read by the queue services before and after sign-in",

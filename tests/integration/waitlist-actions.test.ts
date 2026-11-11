@@ -23,7 +23,7 @@ const { sendEmailCode, confirmEmail } = await import("@/app/(onboarding)/waitlis
 afterAll(closeDb);
 
 describe("the waitlist page's email actions", () => {
-  it("a person still waiting, with the switch on, can send and confirm their code", async () => {
+  it("a person still waiting, with the switch on, can send and confirm their code through the page's actions, and stays waiting", async () => {
     const db = getDb();
     const { user } = await makeUser("Waiting Wendy");
     h.user = { id: user.id, email: user.email, name: user.name, timezone: user.timezone, accountKind: "standard", preferences: {} };
@@ -69,7 +69,7 @@ describe("the waitlist page's email actions", () => {
     expect(h.sent.length).toBe(sentBefore + 1);
   });
 
-  it("a resend within the limit replaces the code and is refused after three", async () => {
+  it("three sends are allowed and the fourth is refused with a plain message; the newest code is the one that works", async () => {
     const { user } = await makeUser("Sam Resend");
     h.user = { id: user.id, email: user.email, name: user.name, timezone: user.timezone, accountKind: "standard", preferences: {} };
     h.ip = `10.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}.2`;

@@ -219,8 +219,10 @@ export const users = pgTable("users", {
 });
 
 /**
- * The code for "Confirm your email": one row per person (the column is `account_id`, so it is not a "user content" table in the export and RLS checks), only the hash (bound to the user), 10 minutes, 5 tries. Taking the
- * row deletes it, so a code works once. Account data like `login_challenges`: no RLS, reached only through services/email-confirm.ts.
+ * The code for "Confirm your email": one row per person, only a keyed hash bound to the user, kept up to 10 minutes, at most 5
+ * wrong tries a code. Taking the row deletes it, so a code works once. The column is `account_id` (not `user_id`), and the guards
+ * find the table by its foreign key to users. Account data like `login_challenges`: no RLS, reached only through
+ * services/email-confirm.ts.
  */
 export const emailConfirmations = pgTable("email_confirmations", {
   userId: uuid("account_id")
@@ -244,10 +246,11 @@ export const waitlistFingerprints = pgTable("waitlist_fingerprints", {
 });
 
 /**
- * One row per friend who confirmed their email from someone's invite link (owner, 2026-11-11). The keyed HMAC (never a plain hash) of the
- * friend's email key (`referralEmailKey`: no +tag, no Gmail dots) is unique, so deleting an account and signing up again with the same email never credits twice. No RLS: account
- * data like `users`, reached only through services/referrals.ts. Either link is cleared if that account is deleted;
- * the hash stays so the email can't be credited again.
+ * One row per friend who confirmed their email from someone's invite link (owner, 2026-11-11). The keyed HMAC (never a plain
+ * hash) of the friend's email key (`referralEmailKey`: no +tag, no Gmail dots) is unique, so one address is credited once. The
+ * rows go with the inviter's account (cascade) and with the friend's: when a friend deletes their account the row is removed and
+ * only a one-way fingerprint stays in `waitlist_fingerprints`. No RLS: account data like `users`, reached only through
+ * services/referrals.ts.
  */
 export const waitlistReferrals = pgTable(
   "waitlist_referrals",

@@ -491,7 +491,8 @@ describe("alias farming, the keyed hash and the daily cap", () => {
 
   it("the daily cap holds when many friends confirm at once: exactly 10 moves, the rest recorded without one", async () => {
     await clearLine();
-    for (let i = 0; i < 14; i++) await makeUser(`Filler${i}`);
+    const fillers: string[] = [];
+    for (let i = 0; i < 14; i++) fillers.push((await makeUser(`Filler${i}`)).user.id);
     const inviter = (await makeUser("Inviter")).user;
     expect(await place(inviter.id)).toBe(15);
     const code = await inviteCodeFor(db, inviter.id);
@@ -504,8 +505,9 @@ describe("alias farming, the keyed hash and the daily cap", () => {
     const results = await Promise.all(friends.map((id) => verifyEmail(db, id)));
     expect(results.filter((r) => r.moved)).toHaveLength(MAX_CREDITS_PER_DAY);
     expect(results.filter((r) => r.recorded)).toHaveLength(13);
+    // the places, not only the count: the inviter passed exactly the ten people just above, each of whom moved down one
     expect(await place(inviter.id)).toBe(5);
-    const rows = await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id));
+    expect(await Promise.all(fillers.map((id) => place(id)))).toEqual([1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
     expect(await movesToday(inviter.id)).toBe(MAX_CREDITS_PER_DAY);
   });
 
