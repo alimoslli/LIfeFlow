@@ -14,10 +14,10 @@ export type NicknameCheck = { ok: true; nickname: string } | { ok: false; error:
 export function checkNickname(raw: string): NicknameCheck {
   const nickname = raw.trim().replace(/\s+/g, " ");
   if (nickname.length < NICKNAME_MIN || nickname.length > NICKNAME_MAX) return { ok: false, error: `Use ${NICKNAME_MIN} to ${NICKNAME_MAX} characters.` };
-  if (!/^[\p{L}\p{N} _'.-]+$/u.test(nickname)) return { ok: false, error: "Use letters, numbers, spaces and - _ ' . only." };
   const lower = nickname.toLowerCase();
   if (nickname.includes("@") || lower.includes("://") || lower.includes("www.") || /\.[a-z]{2,}/.test(lower))
     return { ok: false, error: "A nickname can't be an email or a web address." };
   if (/\d(?:[\s._'-]*\d){6}/.test(nickname)) return { ok: false, error: "A nickname can't hold a phone number." };
+  if (!/^[\p{L}\p{N} _'.-]+$/u.test(nickname)) return { ok: false, error: "Use letters, numbers, spaces and - _ ' . only." };
   return { ok: true, nickname };
 }

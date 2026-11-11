@@ -128,7 +128,7 @@ test("someone waiting can set, see and clear an optional nickname at phone width
   await pool.query("update app_access set waitlist_on = true");
   await page.goto("/waitlist");
   const front = page.getByRole("region", { name: "The front of the line" });
-  const input = front.getByLabel("Nickname");
+  const input = front.getByRole("textbox", { name: "Nickname" });
   await expect(input).toBeVisible();
   // Reachable by keyboard: Tab from the heading area lands on the field, then Save.
   await input.focus();
