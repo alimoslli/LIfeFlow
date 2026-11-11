@@ -421,6 +421,13 @@
       "when": 1798200000000,
       "tag": "0063_sky_rewards",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1798300000000,
+      "tag": "0064_email_verified",
+      "breakpoints": true
     }
   ]
 }
