@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import Link from "next/link";
 import { ClaimStars } from "./_today/claim-stars";
 import { cookies } from "next/headers";
@@ -32,11 +33,14 @@ export default async function TodayPage() {
   const me = await requireUser();
   // With the Face ID lock on, nothing about money is said here until Money is unlocked.
   const locked = await moneyLocked(me);
-  // The skyling takes its scheduled look (morning, midday, evening) the first time Today opens in each. Its own
-  // transaction, so a failure can't break Today.
+  // The skyling takes its scheduled look (morning, midday, evening) the first time Today opens in each. It runs right
+  // after the page is sent, never before it: the morning look can read Gmail and check prices, which took Today ~15 s to
+  // appear (owner, 2026-11-11). What it finds shows on the next look; the 10-minute cron runs the same slots anyway.
   if (me.accountKind !== "demo")
-    await withUser(me.id, (scope) => runDueSlot(scope, me.timezone, me.preferences)).catch((e) =>
-      console.error("proactive slot failed", e instanceof Error ? e.name : e),
+    after(() =>
+      withUser(me.id, (scope) => runDueSlot(scope, me.timezone, me.preferences)).catch((e) =>
+        console.error("proactive slot failed", e instanceof Error ? e.name : e),
+      ),
     );
   // Promises whose time has come get their one "Did you?" as soon as the app opens (the 30-minute cron does it when it's closed).
   if (me.accountKind !== "demo")
