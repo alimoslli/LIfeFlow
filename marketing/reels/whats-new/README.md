@@ -70,3 +70,12 @@ retired), Today is one screen with the answer in the middle, the skyling has its
   course id ("That course link failed…" shows in the card). Ali's request (2026-11-11): the chat box should grow to show a
   long message; sent to the COO.
 Download: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/8a0d2d39-2c78-4547-ae0d-6140145878b3.zip
+
+## v4 (2026-11-11): retaken on the fixes (main e84c411)
+LF Main fixed what filming found (71b6ddd): Undo never lies on the answer, courses by name, and Ali's request that a long
+message grows the chat bar (three lines on Today). Every shot was refilmed on e84c411 (the phone's top bar lost its logo).
+- The real take used Ali's 5th and last approved message: "Best clean block is 2:45 to 4:00 before your library shift, so
+  I'm putting the reading response there." / "Done. I blocked 2:45 to 4:00 today ... no conflicts." Event added directly.
+  The test chat history was cleared first so Ray didn't see the earlier take. No real messages are left on that approval.
+- The chat bar is a textarea now; `cap_ask` finds either. Its wait ignores "Ray is thinking" so it holds for the real answer.
+Download: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/b4ef8605-1775-4085-b5e0-27633c56e52b.zip

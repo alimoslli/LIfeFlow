@@ -12,7 +12,7 @@ const Q = process.env.REHEARSE
   await p.goto("http://localhost:3100/", { waitUntil: "networkidle", timeout: 240000 }).catch(() => {});
   await f.until(p.locator('[data-testid="day-clock"]'), 90000); await f.until(p.locator('[data-dc="hit"]'), 10000);
   await p.clock.runFor(1500); await p.evaluate(() => window.__step(1500)); await f.tidy();
-  const box = p.locator('input[aria-label^="Message"]:visible').first();
+  const box = p.locator('textarea[aria-label^="Message"]:visible, input[aria-label^="Message"]:visible').first();
   f.anchors.bar = await f.rect(box.locator("xpath=ancestor::form[1]"));
   await f.hold("today", 24);
   await f.tap("tapbar", box); await box.focus().catch(() => {});
@@ -24,14 +24,14 @@ const Q = process.env.REHEARSE
   for (let i = 0; i < 600; i++) {
     await f.frame("reply"); if (i % 8 === 0) await f.tidy();
     const t = await p.evaluate(() => { const c = document.querySelector('[data-testid="today-reply"]'); return c ? c.innerText : ""; });
-    if (t.length > 30) seen = true;
+    if (t.length > 30 && !/is thinking/.test(t)) seen = true;
     if (seen && t === last) same++; else same = 0; last = t;
-    if (same > 30) break;
+    if (same > 45) break; // the answer has stopped changing for 1.5 s (not just "thinking")
   }
   f.anchors.reply = await p.evaluate(() => { const c = document.querySelector('[data-testid="today-reply"]'); if (!c) return null; const r = c.getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; });
   console.log("REPLY:\n" + last);
   console.log("do it?", await p.getByRole("button", { name: "Do it", exact: true }).isVisible({ timeout: 200 }).catch(() => false));
-  await f.hold("read", 45);
+  await f.hold("read", 60);
   const settle = async (tag) => { let last = "", same = 0; for (let i = 0; i < 600; i++) { await f.frame(tag); if (i % 8 === 0) await f.tidy(); const t = await p.evaluate(() => { const c = document.querySelector('[data-testid="today-reply"]'); return c ? c.innerText : ""; }); if (t === last && t.length > 30) same++; else same = 0; last = t; if (same > 30) break; } return last; };
   const doIt = p.getByRole("button", { name: "Do it", exact: true });
   if (process.env.DOIT && (await doIt.isVisible({ timeout: 200 }).catch(() => false))) {

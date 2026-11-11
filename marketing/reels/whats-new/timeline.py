@@ -1,4 +1,4 @@
-# "What's new in LifeFlow" v3 (refilmed 2026-11-11 on main dc32257: five skylings, Today as one screen, the skyling's tab):
+# "What's new in LifeFlow" v4 (refilmed 2026-11-11 on main e84c411: five skylings, Today as one screen, the skyling's tab):
 # the edit as data. Each segment plays real frames from one capture; captions, spotlights, taps and sounds share its clock.
 import json
 R = lambda a, b: list(range(a, b + 1))
@@ -7,9 +7,9 @@ SEGS = [
   dict(key="sky", src="/whatsnew/cap/sky", frames=R(1, 30) + R(76, 140),
        caps=[(0.15, None, "Your day,", "drawn as the sky.", 1150)]),
   dict(key="ask", src="/whatsnew/cap/ask",
-       frames=R(10, 24) + [25] + R(26, 59) + R(60, 71) + [72] + R(73, 95) + R(110, 139) + [139] * 30 + [143] * 12 + R(151, 220),
-       caps=[(0.05, 2.1, "Ask right under the sky.", None, 1830), (2.9, 4.85, "It finds the time around your shift.", None, 1830),
-             (4.9, None, "It's on your day, right before work.", None, 1830)]),
+       frames=R(8, 24) + [25] + R(26, 59) + R(60, 71) + [72] + R(73, 95) + R(136, 140) + R(141, 200) + [200] * 15 + R(257, 326),
+       caps=[(0.05, 2.1, "Ask right under the sky.", None, 1830), (2.93, 5.45, "It finds the time around your shift.", None, 1830),
+             (5.5, None, "It's on your day, right before work.", None, 1830)]),
   dict(key="tick", src="/whatsnew/cap/follow_tick", frames=R(5, 30) + R(47, 87) + R(104, 106) + R(107, 132) + R(143, 183),
        caps=[(0.05, None, "Done? Tick it off,", "and a star pops up.", 190)]),
   dict(key="night", src="/whatsnew/cap/follow_night", frames=R(1, 78),
