@@ -207,6 +207,8 @@ export const users = pgTable("users", {
   waitlistRank: bigint("waitlist_rank", { mode: "number" })
     .notNull()
     .default(sql`nextval('waitlist_rank_seq')`),
+  /** Optional public nickname shown on the waitlist's front of the line (null = the anonymous skyling label). Rules in lib/nickname.ts. */
+  waitlistNickname: text("waitlist_nickname"),
   /** When the owner let this person in. */
   acceptedAt: tstz("accepted_at"),
   createdAt: createdAt(),

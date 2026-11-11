@@ -421,6 +421,13 @@
       "when": 1798200000000,
       "tag": "0063_sky_rewards",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1798400000000,
+      "tag": "0065_waitlist_nickname",
+      "breakpoints": true
     }
   ]
 }

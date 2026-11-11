@@ -3,6 +3,8 @@ import { adminEmails } from "../auth/admin";
 import type { Database } from "../db/client";
 import { appAccess, users } from "../db/schema";
 import { COMPANION_KEYS } from "@/lib/companions";
+import { checkNickname } from "@/lib/nickname";
+import { ServiceError } from "./errors";
 
 /**
  * The waitlist (owner, 2026-11-11; docs/backlog/2026-11-11-audit-and-waitlist.md). Everyone is "waiting" in sign-up
@@ -128,19 +130,45 @@ export function anonLabel(id: string): { label: string; companion: (typeof COMPA
   return { label: `${name} ${String(1000 + (h % 9000))}`, companion };
 }
 
-export type FrontRow = { place: number; label: string; companion: string; me: boolean };
+/**
+ * Sets, changes or (empty) clears this person's public nickname. Writes only that column, so a place never moves.
+ * Only people in line have one; the rules are in lib/nickname.ts. Nicknames aren't unique and aren't moderated yet.
+ */
+export async function setWaitlistNickname(db: Database, userId: string, raw: string): Promise<string | null> {
+  let nickname: string | null = null;
+  if (raw.trim()) {
+    const c = checkNickname(raw);
+    if (!c.ok) throw new ServiceError(c.error);
+    nickname = c.nickname;
+  }
+  const rows = await db
+    .update(users)
+    .set({ waitlistNickname: nickname })
+    .where(and(eq(users.id, userId), inLine()))
+    .returning({ id: users.id });
+  if (!rows.length) throw new ServiceError("Nicknames are for people waiting in line.");
+  return nickname;
+}
+
+export type FrontRow = { place: number; label: string; companion: string; me: boolean; nickname: boolean };
 
 /** What the waitlist page shows one person: their place, the front of the line (anonymous), and friends from their link. */
 export async function waitlistPage(db: Database, userId: string) {
   const [settings, place, waiting] = [await accessSettings(db), await waitlistPlace(db, userId), await waitingCount(db)];
-  const front = await db.select({ id: users.id }).from(users).where(inLine()).orderBy(asc(users.waitlistRank)).limit(10);
+  // Only an id (to pick the skyling and mark "you"; it never leaves this function) and the nickname: no email, no name.
+  const front = await db.select({ id: users.id, nickname: users.waitlistNickname }).from(users).where(inLine()).orderBy(asc(users.waitlistRank)).limit(10);
+  const [mine] = await db.select({ nickname: users.waitlistNickname }).from(users).where(eq(users.id, userId));
   const [{ friends }] = await db.select({ friends: count() }).from(users).where(eq(users.invitedBy, userId));
   return {
     ...settings,
     place,
     waiting,
     friends,
-    front: front.map((r, i): FrontRow => ({ place: i + 1, ...anonLabel(r.id), me: r.id === userId })),
+    myNickname: mine?.nickname ?? null,
+    front: front.map((r, i): FrontRow => {
+      const a = anonLabel(r.id);
+      return { place: i + 1, label: r.nickname ?? a.label, companion: a.companion, me: r.id === userId, nickname: !!r.nickname };
+    }),
   };
 }
 

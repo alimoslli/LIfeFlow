@@ -12,6 +12,7 @@ import { getDb } from "@/server/db/client";
 import { inviteCodeFor } from "@/server/services/invites";
 import { canUseApp, waitlistPage } from "@/server/services/waitlist";
 import { InviteShare } from "../../(app)/settings/invite/invite-share";
+import { NicknameForm } from "./nickname-form";
 import "./waitlist.css";
 
 export const metadata: Metadata = { title: "Your place in line" };
@@ -93,7 +94,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
           <h2 id="wl-front" className={h2}>
             The front of the line
           </h2>
-          <p className="mt-1 text-sm text-white/65">Names stay private. Everyone waits under a skyling name.</p>
+          <p className="mt-1 text-sm text-white/65">Real names stay private. Everyone waits under a skyling name, or a nickname they chose.</p>
           {w.front.length === 0 ? (
             <p className="mt-4 text-sm text-white/60">Nobody is waiting yet.</p>
           ) : (
@@ -123,10 +124,14 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
               <p className="mt-1 flex min-h-12 items-center gap-3 rounded-2xl bg-star-gold/15 px-3 text-[0.9375rem] ring-1 ring-star-gold/50">
                 <span className="tabular w-8 shrink-0 text-white/70">#{place}</span>
                 <CompanionGlyph companion={mine.key} night={ownsNight(mine.key)} className="lf-pixel h-8 w-8 shrink-0" />
-                <span className="min-w-0 flex-1">You{preview ? " (example)" : ""}</span>
+                <span className="min-w-0 flex-1 truncate">
+                  {w.myNickname ?? "You"}
+                  {preview ? " (example)" : ""}
+                </span>
               </p>
             </>
           )}
+          {w.place && <NicknameForm current={w.myNickname} />}
         </section>
 
         <section className={glass} aria-labelledby="wl-how">
