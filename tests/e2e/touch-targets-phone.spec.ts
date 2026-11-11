@@ -83,7 +83,7 @@ test("393px: every control on onboarding and the main screens is at least 44x44"
   const email = await signUp(page, "Tara Target", { onboarding: "stay" });
   await check("welcome/skyling");
   await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByLabel("What should I call you?").fill("Tara");
+  await page.getByLabel("What should your skyling call you?").fill("Tara");
   await fillBirthday(page, "2004-03-15");
   await page.getByRole("radio", { name: /Both/ }).click();
   await check("welcome/about");

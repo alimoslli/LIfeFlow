@@ -1,5 +1,8 @@
 import { getAccountUser } from "@/server/auth/current-user";
 import { moneyLocked } from "@/server/auth/money-lock";
+import { getDb } from "@/server/db/client";
+import { users } from "@/server/db/schema";
+import { eq } from "drizzle-orm";
 import { withUser } from "@/server/db/with-user";
 import { enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { audit } from "@/server/services/audit";
@@ -92,7 +95,8 @@ export async function GET(req: Request) {
     }
     if (exportBusy(user.id)) throw new HttpError(429, "A download of your data is already running. Wait for it to finish, then try again.");
     await withUser(user.id, (s) => audit(s, "user", "data.export.json"));
-    return new Response(exportStream(user.id, user), {
+    const [me] = await getDb().select({ fullName: users.fullName }).from(users).where(eq(users.id, user.id));
+    return new Response(exportStream(user.id, { ...user, fullName: me?.fullName ?? null }), {
       headers: {
         "content-type": "application/json; charset=utf-8",
         "content-disposition": `attachment; filename="lifeflow-export-${stamp}.json"`,

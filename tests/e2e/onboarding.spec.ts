@@ -19,8 +19,8 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
   // 2. About you: Nova says hi and gets to know them (sign-up took only email and password).
   await expect(page.getByRole("heading", { name: /^Hi/ })).toBeVisible();
   await expect(page.getByText("I'm Nova.", { exact: false })).toBeVisible();
-  expect(Math.round((await page.getByLabel("What should I call you?").boundingBox())!.height)).toBeGreaterThanOrEqual(44); // 43.99997 is 44 px
-  await page.getByLabel("What should I call you?").fill("Maya");
+  expect(Math.round((await page.getByLabel("What should your skyling call you?").boundingBox())!.height)).toBeGreaterThanOrEqual(44); // 43.99997 is 44 px
+  await page.getByLabel("What should your skyling call you?").fill("Maya");
   await expect(page.getByRole("heading", { name: "Hi Maya." })).toBeVisible();
   // no plan or price line in setup: people come in from the waitlist (owner, 2026-11-11)
   await expect(page.getByText(/free while we're testing/)).toHaveCount(0);
@@ -144,7 +144,7 @@ test("reduced motion: never a splash, even when requested", async ({ page }) => 
 test("the app follows what fills your week: tabs and pills adapt", async ({ page }) => {
   await signUp(page, "Sam Ortiz", { onboarding: "stay" });
   await page.getByRole("button", { name: "Continue" }).click(); // picking a skyling is optional
-  await page.getByLabel("What should I call you?").fill("Sam");
+  await page.getByLabel("What should your skyling call you?").fill("Sam");
   await fillBirthday(page, "2001-09-30");
   await page.getByRole("radio", { name: /^Work/ }).click();
   await page.getByRole("button", { name: "Connect my sky" }).click();
@@ -181,7 +181,7 @@ test("setup needs a birthday: Skip goes to About you first", async ({ page }) =>
   await page.getByRole("button", { name: "Skip setup" }).click();
   await expect(page.getByRole("heading", { name: /^Hi/ })).toBeVisible();
   await expect(page.getByText("Add your birthday to finish setting up.")).toBeVisible();
-  await page.getByLabel("What should I call you?").fill("Lee");
+  await page.getByLabel("What should your skyling call you?").fill("Lee");
   await fillBirthday(page, "2002-02-02");
   await page.getByRole("radio", { name: /^Neither/ }).click();
   await page.getByRole("button", { name: "Connect my sky" }).click();
@@ -237,7 +237,7 @@ test("a finished account answering under 13 on Today is locked the same way (own
 test("under 13: one calm line, the welcome stays locked, and an older year later doesn't get through", async ({ page }) => {
   const email = await signUp(page, "Kai Young", { onboarding: "stay" });
   await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByLabel("What should I call you?").fill("Kai");
+  await page.getByLabel("What should your skyling call you?").fill("Kai");
   await fillBirthday(page, `${new Date().getFullYear() - 9}-03-03`);
   await page.getByRole("radio", { name: /^Classes/ }).click();
   await page.getByRole("button", { name: "Connect my sky" }).click();

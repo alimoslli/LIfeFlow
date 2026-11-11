@@ -1,3 +1,4 @@
+import { fullNameSchema } from "@/lib/full-name";
 import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { AGE_LINE, CHECK_YEAR, birthDateProblem, isUnderAge } from "@/lib/birthday";
@@ -69,6 +70,8 @@ export async function authenticate(db: Database, email: string, password: string
 
 export const profileSchema = z.object({
   name: z.string().trim().min(1).max(80),
+  /** Optional and private; "" clears it; left out keeps what's saved. */
+  fullName: fullNameSchema.optional(),
   timezone: z.string().max(64).refine(isValidTimeZone, "Unknown time zone"),
   studyTime: z.enum(["morning", "afternoon", "evening", "night"]).optional(),
   weekStartsOn: z.coerce
@@ -105,6 +108,7 @@ export async function updateProfile(db: Database, userId: string, input: z.input
     .update(users)
     .set({
       name: d.name,
+      ...(d.fullName !== undefined ? { fullName: d.fullName || null } : {}),
       timezone: d.timezone,
       preferences: {
         ...current.preferences,

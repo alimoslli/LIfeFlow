@@ -129,7 +129,7 @@ function exportablePreferences(prefs: schema.UserPreferences | undefined) {
   return { ...rest, sms: smsRest };
 }
 
-export type ExportProfile = { name: string; email: string; timezone: string; preferences?: schema.UserPreferences };
+export type ExportProfile = { name: string; email: string; timezone: string; fullName?: string | null; preferences?: schema.UserPreferences };
 
 /**
  * One read-only REPEATABLE READ transaction for a whole export, as this user (`withUser`, so row-level security
@@ -210,7 +210,13 @@ export async function* exportChunks(
 async function* exportBody(userId: string, profile: ExportProfile, batch: number, idleMs: number, deadlineMs: number): AsyncGenerator<string> {
   const head = {
     exportedAt: new Date().toISOString(),
-    profile: { name: profile.name, email: profile.email, timezone: profile.timezone, preferences: exportablePreferences(profile.preferences) },
+    profile: {
+      name: profile.name,
+      fullName: profile.fullName ?? null,
+      email: profile.email,
+      timezone: profile.timezone,
+      preferences: exportablePreferences(profile.preferences),
+    },
   };
   yield JSON.stringify(head).slice(0, -1); // the object stays open for the tables
   const snapshot = openSnapshot(userId, idleMs, deadlineMs);

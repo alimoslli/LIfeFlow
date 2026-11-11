@@ -44,6 +44,8 @@ export async function updateProfileAction(_p: ActionState, fd: FormData): Promis
   const r = await mutate("profile.update", async (_s, u) => {
     await updateProfile(getDb(), u.id, {
       name: f.name ?? "",
+      // the field is on the form: empty removes it
+      fullName: fd.has("fullName") ? (f.fullName ?? "") : undefined,
       timezone: f.timezone ?? "UTC",
       studyTime: f.studyTime as "morning",
       weekStartsOn: f.weekStartsOn as unknown as 0,

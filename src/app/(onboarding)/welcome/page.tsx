@@ -11,6 +11,8 @@ import { plaidConfig } from "@/server/integrations/plaid";
 import { dayClockData } from "@/server/services/day-clock";
 import { integrationStatus } from "@/server/services/integrations";
 import { getDb } from "@/server/db/client";
+import { users } from "@/server/db/schema";
+import { eq } from "drizzle-orm";
 import { accountHasPassword } from "@/server/services/accounts";
 import { AgeBlocked } from "./age-blocked";
 import { Onboarding, type Saved } from "./onboarding";
@@ -44,6 +46,7 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
     birthDate: p.birthDate ?? "",
     school: p.school ?? "",
     job: p.welcomeJob ?? "",
+    fullName: (await getDb().select({ f: users.fullName }).from(users).where(eq(users.id, user.id)))[0]?.f ?? "",
   };
   const { connected, result } = await searchParams;
   const back =

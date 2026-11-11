@@ -11,6 +11,7 @@ import { cheerSkylings } from "@/components/skylings/night";
 import { SkyButton } from "@/components/skylings/sky-button";
 import { FormError, Input } from "@/components/ui/field";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
+import { FULL_NAME_MAX } from "@/lib/full-name";
 import { ASSISTANT_STYLES, nameAtStart, type AssistantStyle } from "@/lib/assistant";
 import { AGE_LINE, BIRTHDAY_NEEDED, birthDateProblem } from "@/lib/birthday";
 import { COMPANIONS, companionOf, SKY_CHOICE, SKY_CHOICE_LABEL, type CompanionChoice, type CompanionKey, ownsNight } from "@/lib/companions";
@@ -64,6 +65,7 @@ export type Saved = {
   birthDate: string;
   school: string;
   job: string;
+  fullName: string;
 };
 type Source = { available: boolean; connected: boolean };
 /** What can be connected right in the welcome; "shifts" is a photo of the work schedule read by the skyling. */
@@ -137,6 +139,7 @@ export function Onboarding({
   // 2. about you
   const [yourName, setYourName] = useState(firstName === "there" ? "" : firstName);
   const cleanYou = yourName.trim().replace(/\s+/g, " ");
+  const [fullName, setFullName] = useState(saved.fullName);
   const [birthDate, setBirthDate] = useState(saved.birthDate);
   const [stage, setStage] = useState<LifeStage | null>(saved.lifeStage);
   const isSchool = stage === "student" || stage === "both";
@@ -193,6 +196,7 @@ export function Onboarding({
       const r = await saveWelcomeAction({
         assistant: { name: cleanName || undefined, style, companion: companion ?? undefined },
         name: cleanYou !== firstName ? cleanYou : undefined,
+        fullName,
         birthDate,
         lifeStage: stage ?? undefined,
       });
@@ -414,15 +418,26 @@ export function Onboarding({
                 I&apos;m {shown ?? "your skyling"}. Tell me a little about you, and then we&apos;ll connect your sky.
               </p>
               <div className="mt-6 flex flex-col gap-5">
-                <Group label="What should I call you?">
+                <Group label="What should your skyling call you?">
                   <Input
-                    aria-label="What should I call you?"
+                    aria-label="What should your skyling call you?"
                     value={yourName}
                     onChange={(e) => setYourName(e.target.value)}
                     maxLength={80}
                     autoComplete="given-name"
                     className="min-h-11"
                   />
+                </Group>
+                <Group label="Full name (optional)">
+                  <Input
+                    aria-label="Full name (optional)"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    maxLength={FULL_NAME_MAX}
+                    autoComplete="name"
+                    className="min-h-11"
+                  />
+                  <p className="mt-1.5 text-xs text-muted">Private to your account. Never shown to other people.</p>
                 </Group>
                 <Group label="Your birthday">
                   <BirthdayField value={birthDate} onChange={setBirthDate} invalid={!!birthProblem} />

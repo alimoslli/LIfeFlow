@@ -11,7 +11,7 @@ test("the first minute: the real welcome ends on Today with the told week on the
   await page.getByRole("radio", { name: /^Ray/ }).click();
   await page.getByRole("button", { name: "Continue" }).click();
   // 2. about you
-  await page.getByLabel("What should I call you?").fill("Maya");
+  await page.getByLabel("What should your skyling call you?").fill("Maya");
   await page.getByRole("radio", { name: /^Both/ }).click();
   await fillBirthday(page, "2005-04-12");
   await page.getByRole("button", { name: "Connect my sky" }).click();

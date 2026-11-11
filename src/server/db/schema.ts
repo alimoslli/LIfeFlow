@@ -207,6 +207,11 @@ export const users = pgTable("users", {
   waitlistRank: bigint("waitlist_rank", { mode: "number" })
     .notNull()
     .default(sql`nextval('waitlist_rank_seq')`),
+  /**
+   * Their full name, asked in setup and Settings, optional. Private: never shown to other people (waitlist, admin, invite page,
+   * emails) and never put in the skyling's context. Cleared by the under-13 lock; deleted with the account.
+   */
+  fullName: text("full_name"),
   /** When the owner let this person in. */
   acceptedAt: tstz("accepted_at"),
   createdAt: createdAt(),

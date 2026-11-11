@@ -62,7 +62,7 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   await expectNoJarvis(page, "welcome: the skylings");
   await page.getByRole("button", { name: "Continue" }).click();
   await expectNoJarvis(page, "welcome: about you");
-  await page.getByLabel("What should I call you?").fill("Riley");
+  await page.getByLabel("What should your skyling call you?").fill("Riley");
   await fillBirthday(page, "2003-07-21");
   await page.getByRole("radio", { name: /Both/ }).click();
   await page.getByRole("button", { name: "Connect my sky" }).click();

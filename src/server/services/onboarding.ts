@@ -1,3 +1,4 @@
+import { fullNameSchema } from "@/lib/full-name";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { COMPANION_KEYS, SKY_CHOICE } from "@/lib/companions";
@@ -113,6 +114,8 @@ export const welcomeProgressSchema = z.object({
     })
     .optional(),
   name: z.string().trim().min(1, "Tell your skyling what to call you").max(80).optional(),
+  /** Optional and private; empty clears it. */
+  fullName: fullNameSchema.optional(),
   birthDate: z.string().trim().optional(),
   lifeStage: z.enum(["student", "working", "both", "life"]).optional(),
   school: z.string().trim().max(120).optional(),
@@ -195,6 +198,7 @@ async function blockUnderAge(scope: UserScope, prefs: Prefs) {
       timezone: "UTC",
       inboxToken: null,
       smsPhone: null,
+      fullName: null,
       preferences: { onboarding: prefs.onboarding, ageBlockedAt: at, ...(outside.length ? { ageLockClosing: true } : {}) },
     })
     .where(eq(users.id, scope.userId));
@@ -332,7 +336,11 @@ export async function saveWelcomeProgress(scope: UserScope, tz: string, input: z
   };
   await scope.tx
     .update(users)
-    .set({ preferences: prefs, ...(d.name ? { name: d.name.replace(/\s+/g, " ") } : {}) })
+    .set({
+      preferences: prefs,
+      ...(d.name ? { name: d.name.replace(/\s+/g, " ") } : {}),
+      ...(d.fullName !== undefined ? { fullName: d.fullName || null } : {}),
+    })
     .where(and(eq(users.id, scope.userId), notLocked));
   return { blocked: false };
 }
