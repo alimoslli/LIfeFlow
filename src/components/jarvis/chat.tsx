@@ -15,6 +15,7 @@ import { jsonOf, PlainError, serverWords } from "@/lib/plain-error";
 import { nameAtStart } from "@/lib/assistant";
 import { SkylingSprite } from "@/components/skylings/sprite";
 import { IdeaClouds } from "@/components/skylings/idea-clouds";
+import { skylingDoes, skylingDoing } from "@/components/skylings/activity";
 import { cloudStyle } from "@/components/skylings/cloud-tile";
 import type { IdeaCloud } from "@/lib/idea-clouds";
 import { CLOUD, PixelArt, SkyWindow } from "@/components/skylings/sky-window";
@@ -100,6 +101,11 @@ export function JarvisChat({
   const [messages, setMessages] = useState<UiMessage[]>(initialMessages);
   const [input, setInput] = useState(initialPrompt ?? "");
   const [busy, setBusy] = useState(false);
+  // the skyling thinks while it works on your answer (owner, 2026-11-11)
+  useEffect(() => {
+    if (busy) skylingDoes("think");
+    else if (skylingDoing() === "think") skylingDoes(null);
+  }, [busy]);
   // A reply that changed data refreshes the page. In a new conversation that refresh also moves to /jarvis/<id>, and the
   // page keys this chat by conversation, so it is rebuilt when the refresh lands. Until then nothing can be typed or
   // sent here, or it would be wiped with the old chat.

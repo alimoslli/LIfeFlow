@@ -7,7 +7,13 @@ import type { CompanionInfo } from "@/lib/companions";
  * `image-rendering: pixelated`.
  */
 export const GRID = 24;
-export type Pose = "idle" | "walk" | "celebrate" | "sleep";
+export type Pose = "idle" | "walk" | "celebrate" | "sleep" | Activity;
+/**
+ * A skyling's little life (owner, 2026-11-11: "show some love and attention to the skylings"): it waves when you come,
+ * stretches in the morning, reads through your class, sips coffee on your shift, thinks while it works on your answer and
+ * looks surprised at a clash. Always from your real day, never random (skylings/activity.ts picks one).
+ */
+export type Activity = "wave" | "stretch" | "read" | "sip" | "think" | "surprised";
 type Pixel = [x: number, y: number, col: string];
 
 const INK = "#262320";
@@ -27,13 +33,24 @@ const SHAPES: Record<CompanionInfo["look"]["shape"], { L: number; R: number; ins
 type Frame = {
   lift: number;
   feet: [number, number] | null;
-  arms: number | "up";
-  eyes: "open" | "closed" | "happy";
-  mouth?: "open" | "tiny";
+  /** "wave" raises one arm with its hand high, "stretch" both, "mug" holds a mug, "book" a book, "chin" a hand to the chin */
+  arms: number | "up" | "wave" | "stretch" | "mug" | "book" | "chin";
+  eyes: "open" | "closed" | "happy" | "content" | "squeeze" | "focus" | "look" | "big";
+  mouth?: "open" | "tiny" | "smile" | "line" | "o" | "yawn" | "hmm";
+  /** brows: both raised (surprised) or the right one (thinking) */
+  brows?: "up" | "one";
   crouch?: boolean;
   air?: boolean;
   sparkle?: boolean;
   zzz?: number;
+  /** a book held in front (the frame turns a page) */
+  book?: number;
+  /** a cup by the face (the frame moves the steam) */
+  cup?: number;
+  /** "..." above the head, this many dots */
+  dots?: number;
+  /** a "!" above the head */
+  bang?: boolean;
 };
 /** idle 2 (the second a blink), walk 4, celebrate 4, sleep 2. */
 export const FRAMES: Record<Pose, Frame[]> = {
@@ -56,6 +73,31 @@ export const FRAMES: Record<Pose, Frame[]> = {
   sleep: [
     { lift: 1, feet: null, arms: 0, eyes: "closed", mouth: "tiny", zzz: 0 },
     { lift: 1, feet: null, arms: 0, eyes: "closed", mouth: "tiny", zzz: 1 },
+  ],
+  wave: [
+    { lift: 0, feet: [0, 0], arms: "wave", eyes: "happy", mouth: "open" },
+    { lift: -1, feet: [0, 0], arms: "wave", eyes: "happy", mouth: "open" },
+  ],
+  stretch: [
+    { lift: -1, feet: [0, 0], arms: "stretch", eyes: "squeeze", mouth: "yawn" },
+    { lift: 0, feet: [0, 0], arms: "stretch", eyes: "content", mouth: "smile" },
+  ],
+  read: [
+    { lift: 0, feet: [0, 0], arms: "book", eyes: "focus", book: 0 },
+    { lift: 0, feet: [0, 0], arms: "book", eyes: "focus", book: 1 },
+  ],
+  sip: [
+    { lift: 0, feet: [0, 0], arms: "mug", eyes: "open", mouth: "tiny", cup: 0 },
+    { lift: 0, feet: [0, 0], arms: "mug", eyes: "content", mouth: "smile", cup: 1 },
+  ],
+  think: [
+    { lift: 0, feet: [0, 0], arms: 0, eyes: "look", mouth: "hmm", brows: "one", dots: 1 },
+    { lift: 0, feet: [0, 0], arms: 0, eyes: "look", mouth: "hmm", brows: "one", dots: 2 },
+    { lift: 0, feet: [0, 0], arms: 0, eyes: "look", mouth: "hmm", brows: "one", dots: 3 },
+  ],
+  surprised: [
+    { lift: -2, feet: [0, 0], arms: "up", eyes: "big", mouth: "o", brows: "up", bang: true },
+    { lift: 0, feet: [0, 0], arms: 0, eyes: "big", mouth: "o", brows: "up", bang: true },
   ],
 };
 
@@ -155,9 +197,39 @@ export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: bo
 
   // the face
   const ey = t + 5;
-  const eyes = f.eyes === "closed" || (c.squint && f.eyes !== "happy") ? "closed" : f.eyes;
+  const eyes = f.eyes === "closed" || (c.squint && f.eyes === "open") ? "closed" : f.eyes;
   for (const x of [8, 13]) {
-    if (eyes === "happy") {
+    const left = x === 8;
+    if (eyes === "content") {
+      // closed and pleased: a little "u"
+      put(x, ey, INK);
+      put(x + 1, ey + 1, INK);
+      put(x + 2, ey, INK);
+    } else if (eyes === "squeeze") {
+      // a big yawn's squeezed eyes: > <
+      put(left ? x : x + 1, ey - 1, INK);
+      put(left ? x + 1 : x, ey, INK);
+      put(left ? x : x + 1, ey + 1, INK);
+    } else if (eyes === "focus") {
+      // reading: lids low, eyes on the page
+      put(x, ey, INK);
+      put(x + 1, ey, INK);
+      put(x, ey + 1, c.eye);
+      put(x + 1, ey + 1, c.eye);
+    } else if (eyes === "look") {
+      // thinking: eyes up and to the side
+      put(x + 1, ey - 1, c.eye);
+      put(x + 1, ey, c.eye);
+      put(x, ey - 1, c.eye);
+    } else if (eyes === "big") {
+      // surprised: tall round eyes with a shine
+      put(x, ey - 1, c.eye);
+      put(x + 1, ey - 1, "#ffffff");
+      put(x, ey, c.eye);
+      put(x + 1, ey, c.eye);
+      put(x, ey + 1, c.eye);
+      put(x + 1, ey + 1, c.eye);
+    } else if (eyes === "happy") {
       put(x, ey + 1, INK);
       put(x + 1, ey, INK);
       put(x + 2, ey + 1, INK);
@@ -180,6 +252,17 @@ export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: bo
       put(x + 1, ey + 1, c.eye);
       put(x + 1, ey, c.eyes === "glow" ? "#ffffff" : c.light);
     }
+  }
+  if (f.brows === "up")
+    for (const x of [8, 13]) {
+      put(x, ey - 3, INK);
+      put(x + 1, ey - 3, INK);
+    }
+  if (f.brows === "one") {
+    put(13, ey - 3, INK);
+    put(14, ey - 3, INK);
+    put(8, ey - 2, INK);
+    put(9, ey - 2, INK);
   }
   const mouths: Record<string, Pixel[]> = {
     smile: [
@@ -210,6 +293,36 @@ export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: bo
       [13, ey + 2, INK],
     ],
     tiny: [[12, ey + 3, INK]],
+    yawn: [
+      [11, ey + 2, INK],
+      [12, ey + 2, INK],
+      [10, ey + 3, INK],
+      [11, ey + 3, "#7a2a2a"],
+      [12, ey + 3, "#7a2a2a"],
+      [13, ey + 3, INK],
+      [10, ey + 4, INK],
+      [11, ey + 4, "#e07a7a"],
+      [12, ey + 4, "#e07a7a"],
+      [13, ey + 4, INK],
+      [11, ey + 5, INK],
+      [12, ey + 5, INK],
+    ],
+    hmm: [
+      [10, ey + 4, INK],
+      [11, ey + 4, INK],
+      [12, ey + 3, INK],
+      [13, ey + 3, INK],
+    ],
+    o: [
+      [11, ey + 3, INK],
+      [12, ey + 3, INK],
+      [10, ey + 4, INK],
+      [13, ey + 4, INK],
+      [11, ey + 4, "#e07a7a"],
+      [12, ey + 4, "#e07a7a"],
+      [11, ey + 5, INK],
+      [12, ey + 5, INK],
+    ],
     open: [
       [11, ey + 3, INK],
       [12, ey + 3, INK],
@@ -217,7 +330,7 @@ export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: bo
       [12, ey + 4, "#e07a7a"],
     ],
   };
-  for (const [x, y, col] of mouths[f.mouth ?? c.mouth]) put(x, y, col);
+  if (f.book == null) for (const [x, y, col] of mouths[f.mouth ?? c.mouth]) put(x, y, col);
   if (eyes !== "closed" || pose === "idle") {
     const i = S.inset[7];
     put(S.L + i + 2, t + 7, c.cheek);
@@ -235,6 +348,60 @@ export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: bo
     }
     put(S.L + S.inset[1] - 2, t, INK);
     put(S.R - S.inset[1] + 2, t, INK);
+  } else if (typeof f.arms === "string") {
+    // the arms that aren't at the sides: one or both up high, or holding something in front
+    const mitten = (mx: number, my: number) => {
+      for (let y = my; y <= my + 1; y++) for (let x = mx; x <= mx + 1; x++) put(x, y, c.body);
+      for (const [x, y] of [
+        [mx, my - 1],
+        [mx + 1, my - 1],
+        [mx - 1, my],
+        [mx + 2, my],
+        [mx - 1, my + 1],
+        [mx + 2, my + 1],
+        [mx, my + 2],
+        [mx + 1, my + 2],
+      ])
+        put(x, y, INK);
+    };
+    const arm = (ax: number, from: number, to: number) => {
+      for (let y = from; y <= to; y++) {
+        put(ax, y, c.body);
+        put(ax - 1, y, INK);
+        put(ax + 1, y, INK);
+      }
+    };
+    const xR = S.R - S.inset[3] + 1;
+    const xL = S.L + S.inset[3] - 1;
+    const side = (sideX: number, outer: number) => {
+      for (const r of [7, 8]) {
+        put(sideX, t + r, c.body);
+        put(sideX + outer, t + r, INK);
+      }
+    };
+    if (f.arms === "wave") {
+      // the right arm up, a whole hand above the head, waving (it rocks with the frame)
+      arm(xR, t - 1, t + 3);
+      mitten(xR - 1 + (frame % 2), t - 4);
+      put(xR + 3 - (frame % 2) * 6, t - 3, "#9fb6d8");
+      put(xR + 3 - (frame % 2) * 6, t - 2, "#9fb6d8");
+      side(S.L + S.inset[7] - 1, -1);
+    } else if (f.arms === "stretch") {
+      arm(xL, t - 2, t + 3);
+      arm(xR, t - 2, t + 3);
+      mitten(xL - 1, t - 5);
+      mitten(xR - 1, t - 5);
+    } else if (f.arms === "mug") {
+      side(S.L + S.inset[7] - 1, -1);
+      mitten(15, t + 8);
+    } else if (f.arms === "chin") {
+      // a hand to the chin, the other at its side
+      mitten(8, ey + 4);
+      side(S.R - S.inset[7] + 1, 1);
+    } else if (f.arms === "book") {
+      mitten(1, ey + 4);
+      mitten(21, ey + 4);
+    }
   } else {
     const d = f.arms === 1 ? -1 : f.arms === -1 ? 1 : 0;
     for (const r of [7, 8]) {
@@ -244,6 +411,48 @@ export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: bo
       put(S.R - i + 1, t + r - d, c.body);
       put(S.R - i + 2, t + r - d, INK);
     }
+  }
+  // an open book held up in front, only the eyes over it; a page turns
+  if (f.book != null) {
+    const by = ey + 2;
+    const cover = "#3a64a8";
+    for (let x = 3; x <= 20; x++) {
+      const spine = x === 11 || x === 12;
+      const edge = x === 3 || x === 20;
+      if (!spine) put(x, by, INK);
+      for (let r = 1; r <= 4; r++) put(x, by + r, edge || spine ? INK : "#fff8e7");
+      put(x, by + 5, edge ? INK : cover);
+    }
+    for (const r of [2, 4]) for (const x of [5, 6, 7, 8, 9, 14, 15, 16, 17, 18]) if (r === 2 || x % 5) put(x, by + r, "#b9c6dc");
+    // a page lifting at the corner, one side then the other
+    const px = f.book ? 18 : 5;
+    put(px, by + 1, "#ffffff");
+    put(px + (f.book ? 1 : -0), by, "#ffffff");
+  }
+  // a mug of coffee in its hand, steam curling up
+  if (f.cup != null) {
+    const mx = 17;
+    const my = t + 6;
+    for (let x = mx; x <= mx + 4; x++) {
+      put(x, my, INK);
+      put(x, my + 6, INK);
+    }
+    for (let y = my + 1; y <= my + 5; y++) {
+      put(mx, y, INK);
+      put(mx + 4, y, INK);
+      for (let x = mx + 1; x <= mx + 3; x++) put(x, y, y === my + 1 ? "#7a4a24" : y === my + 3 ? c.trim : "#ffffff");
+    }
+    put(mx + 5, my + 2, INK);
+    put(mx + 6, my + 3, INK);
+    put(mx + 6, my + 4, INK);
+    put(mx + 5, my + 5, INK);
+    const steam = "#e3ebf7";
+    const s1 = f.cup ? 1 : 0;
+    put(mx + 1 + s1, my - 1, steam);
+    put(mx + 2 - s1, my - 2, steam);
+    put(mx + 1 + s1, my - 3, steam);
+    put(mx + 3 - s1, my - 2, steam);
+    put(mx + 3 + s1, my - 4, steam);
   }
 
   // what sits above each head
@@ -329,6 +538,40 @@ export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: bo
       put(22, zy - 2, z);
     }
   }
+  // a thought growing: one small bubble, then two, then a big one
+  if (f.dots) {
+    const bubble = (bx: number, by: number, n: number) => {
+      for (let y = by; y < by + n; y++) for (let x = bx; x < bx + n; x++) put(x, y, "#ffffff");
+      for (let i = 0; i < n; i++) {
+        put(bx + i, by - 1, INK);
+        put(bx + i, by + n, INK);
+        put(bx - 1, by + i, INK);
+        put(bx + n, by + i, INK);
+      }
+    };
+    // beside the head, up and out to the right, inside the picture
+    if (f.dots >= 1) bubble(18, t + 2, 1);
+    if (f.dots >= 2) bubble(19, t - 1, 2);
+    if (f.dots >= 3) bubble(20, t - 5, 3);
+  }
+  if (f.bang)
+    // a "!" just off the head's right side
+    for (const [x, y, col] of [
+      [21, t - 2, "#f5a524"],
+      [21, t - 1, "#f5a524"],
+      [21, t, "#f5a524"],
+      [21, t + 1, "#f5a524"],
+      [21, t + 3, "#f5a524"],
+      [22, t - 2, INK],
+      [22, t - 1, INK],
+      [22, t, INK],
+      [22, t + 1, INK],
+      [22, t + 3, INK],
+      [21, t - 3, INK],
+      [21, t + 2, INK],
+      [21, t + 4, INK],
+    ] as Pixel[])
+      put(x, y, col);
   return out;
 }
 

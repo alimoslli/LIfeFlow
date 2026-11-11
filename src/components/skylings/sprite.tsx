@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { prefersReducedMotion } from "@/components/motion/gsap";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
 import { useShell } from "@/components/shell/app-shell";
-import type { Pose } from "@/components/day-clock/companion";
+import { FRAMES, type Pose } from "@/components/day-clock/companion";
+import { onSkylingDoes, skylingDoing } from "./activity";
 import type { CompanionKey } from "@/lib/companions";
 import { cn } from "@/lib/utils";
 import "./skylings.css";
@@ -49,12 +50,20 @@ export function SkylingSprite({
     window.addEventListener("lf-skylings-cheer", cheer);
     return () => window.removeEventListener("lf-skylings-cheer", cheer);
   }, [still]);
+  // what the page says it's doing (waving hello, thinking about your answer, surprised at a clash)
+  const [, redraw] = useState(0);
+  useEffect(() => (still ? undefined : onSkylingDoes(() => redraw((n) => n + 1))), [still]);
+  const doing = still ? null : skylingDoing();
 
   let pose: Pose = "idle";
   let frame = tick > 0 && tick % 26 === 0 ? 1 : 0;
   if (hopping) {
     pose = "celebrate";
     frame = (tick - hopAt!) % 4;
+  } else if (doing) {
+    // slower than a walk: a page turns, a sip, a thought, every second or so
+    pose = doing;
+    frame = Math.floor(tick / (doing === "wave" ? 2 : 6)) % FRAMES[doing].length;
   } else if (busy) {
     pose = "walk";
     frame = tick % 4;

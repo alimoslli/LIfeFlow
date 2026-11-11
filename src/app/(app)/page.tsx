@@ -65,7 +65,7 @@ export default async function TodayPage() {
     const ranked = insights.filter((i) => !/^(overdraft|budget-|pace-|overdue)/.test(i.id));
     const top = ranked.find((i) => i.tone === "attention") ?? ranked.find((i) => i.tone === "heads-up") ?? null;
     const note: AssistantNote | null = top
-      ? { text: top.text, tone: top.tone, href: top.action?.href, prompt: top.action?.prompt, label: top.action?.label }
+      ? { id: top.id, text: top.text, tone: top.tone, href: top.action?.href, prompt: top.action?.prompt, label: top.action?.label }
       : null;
     return {
       clock,
@@ -88,7 +88,7 @@ export default async function TodayPage() {
       {/* what the skyling passed while they were away: a star each, claimed once (owner, 2026-11-10) */}
       <ClaimStars />
       <section aria-label="Your day" data-tour="today-page" className="-mx-5 sm:-mx-8 md:mx-0">
-        <DayClock data={clock} mode={mode} companion={me.preferences?.companion}>
+        <DayClock data={clock} mode={mode} companion={me.preferences?.companion} clash={!!note?.id?.startsWith("conflict")}>
           {/* a laptop's and a tablet's sky have these under the wheel; a phone has them in the middle (TodayMiddle) */}
           <div className="max-md:hidden">
             {/* accounts made before the birthday was required are asked once, first (owner, 2026-11-10; not a lockout) */}

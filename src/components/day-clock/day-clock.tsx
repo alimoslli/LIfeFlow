@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { prefersReducedMotion } from "@/components/motion/gsap";
+import { isSplashActive, onSplashEnd } from "@/components/motion/intro";
+import { skylingDoes } from "@/components/skylings/activity";
 import { celebrate, hop } from "@/components/motion/burst";
 import type { ClockData } from "@/lib/day-clock";
 import type { TodayMode } from "@/lib/theme";
@@ -28,9 +30,12 @@ export function DayClock({
   mode = "full",
   companion,
   open,
+  clash = false,
   children,
 }: {
   data: ClockData;
+  /** Today's note is a clash: after its hello, the skyling looks surprised for a moment. */
+  clash?: boolean;
   /** Set to pour the sky into the week (true) or fold it back (false); left out, only the person opens it. */
   open?: boolean;
   mode?: TodayMode;
@@ -40,6 +45,21 @@ export function DayClock({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const engine = useRef<DayClockHandle | null>(null);
+  // the skyling says hello when you come (after the opening screen), and looks surprised at a clash (owner, 2026-11-11)
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+    let later = 0;
+    const hello = () => {
+      skylingDoes("wave", 2400);
+      if (clash) later = window.setTimeout(() => skylingDoes("surprised", 2200), 2800);
+    };
+    if (isSplashActive()) {
+      const off = onSplashEnd(hello);
+      return () => (off(), window.clearTimeout(later));
+    }
+    const t = window.setTimeout(hello, 500);
+    return () => (window.clearTimeout(t), window.clearTimeout(later));
+  }, [clash]);
   const router = useRouter();
   const first = useRef(data);
   // Where a new pin goes (minutes from the start of today), while its sheet is open.

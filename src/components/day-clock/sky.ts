@@ -18,6 +18,7 @@ import { isExam, pileOf, sunTimes, type ClockData, type ClockItem } from "@/lib/
 import { css, darkness, mix, skyAt, type RGB } from "@/lib/sky";
 import { companionOf, skylingAt, SKY_CHOICE, type CompanionKey } from "@/lib/companions";
 import { drawCompanion, FRAMES, type Pose } from "./companion";
+import { onSkylingDoes, skylingDoing } from "@/components/skylings/activity";
 import { createVisitors, type VisitorKind } from "./visitors";
 import { iconSvgInto, pixelize } from "./pixel-icons";
 
@@ -357,6 +358,26 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   let night = false;
   let pose: Pose = "idle";
   let step = 0;
+  // what the skyling's day looks like right now (set by draw), so the timer can pick its pose without redrawing the sky
+  let poseCtx: { follow: boolean; moved: boolean; sleep: boolean; live?: string; morning: boolean } | null = null;
+  /**
+   * Its little life (owner, 2026-11-11): asleep late at night; at rest, whatever the page says it's doing (waving hello,
+   * thinking about your answer, surprised at a clash), else reading through a class, a coffee on a shift, a stretch now
+   * and then in the morning; otherwise it jogs in place. Turning the wheel, it runs.
+   */
+  const pickPose = (): Pose => {
+    const c = poseCtx;
+    if (!c) return "idle";
+    // it wakes up to say hello or to think about your answer, even at night
+    const doing = c.follow && !c.moved ? skylingDoing() : null;
+    if (doing) return doing;
+    if (c.sleep) return "sleep";
+    if (!c.follow || c.moved) return reduce && !c.moved ? "idle" : "walk";
+    if (c.live === "class") return "read";
+    if (c.live === "work") return "sip";
+    if (c.morning && Math.floor(Date.now() / 6000) % 4 === 0) return "stretch";
+    return reduce ? "idle" : "walk";
+  };
   // a cheer (something done, a visitor) plays the celebrate frames over whatever it was doing
   let cheerFrom = 0;
   let cheerUntil = 0;
@@ -422,6 +443,15 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         if (document.hidden) return;
         tick++;
         const cheering = performance.now() < cheerUntil;
+        const next = pickPose();
+        if (next !== pose) {
+          pose = next;
+          step = 0;
+          paintWho();
+          return;
+        }
+        // a page turns, a sip, a thought about every second; a wave quicker
+        if (!cheering && pose !== "walk" && pose !== "idle" && pose !== "sleep" && pose !== "celebrate" && tick % (pose === "wave" ? 2 : 6)) return;
         if (!cheering && pose === "sleep" && tick % 6) return;
         if (!cheering && pose === "idle") {
           // a blink every few seconds
@@ -978,7 +1008,15 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       { cx: wx.toFixed(1), cy: (wy - size * 0.42).toFixed(1), r: (size * (night ? 0.8 : 1.05)).toFixed(1), fill: glow, opacity: fade.toFixed(3) },
       glowAt,
     );
-    pose = follow && night && (mod(now) >= 23 * 60 || mod(now) < rise) ? "sleep" : reduce && !moved ? "idle" : "walk";
+    const liveNow = follow ? timed.find((it) => it.end != null && it.start <= now && it.end > now) : undefined;
+    poseCtx = {
+      follow,
+      moved,
+      sleep: follow && night && (mod(now) >= 23 * 60 || mod(now) < rise),
+      live: liveNow?.cat,
+      morning: follow && !night && mod(now) >= rise && mod(now) < rise + 150,
+    };
+    pose = pickPose();
     if (pose !== "walk" && step >= FRAMES[pose].length) step = 0;
     who.style.width = who.style.height = `${size}px`;
     who.style.transformOrigin = `${size / 2}px ${size / 2}px`;
@@ -994,6 +1032,14 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     if (last) draw(last);
   };
   window.addEventListener("resize", onResize);
+  // the page says what it's doing (waving, thinking, surprised): show it now, not at the next tick (no timer with reduced motion)
+  const offDoes = onSkylingDoes(() => {
+    const next = pickPose();
+    if (next === pose) return;
+    pose = next;
+    step = 0;
+    paintWho();
+  });
   return {
     draw,
     /** Diagnostics (?debug=1): a visitor now. */
@@ -1001,6 +1047,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     cheer,
     destroy() {
       visitors?.destroy();
+      offDoes();
       window.clearInterval(timer);
       delete html.dataset.sky;
       window.removeEventListener("resize", onResize);

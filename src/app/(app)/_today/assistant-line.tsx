@@ -4,7 +4,7 @@ import { SkylingIcon } from "@/components/skylings/sprite";
 import { useShell } from "@/components/shell/app-shell";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 
-export type AssistantNote = { text: string; tone: "attention" | "heads-up" | "good"; href?: string; prompt?: string; label?: string };
+export type AssistantNote = { id?: string; text: string; tone: "attention" | "heads-up" | "good"; href?: string; prompt?: string; label?: string };
 
 /**
  * Under the clock: the one thing the skyling noticed by joining the dots (an exam and tonight's study,

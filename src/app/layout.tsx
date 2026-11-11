@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },
 };
 
-const THEME_COLORS = { light: "#f6f8fb", dark: "#07101f" };
+const THEME_COLORS = { light: "#f6f8fb", dark: "#152643" };
 
 /** Browser chrome color follows the chosen theme (or the device setting). */
 export async function generateViewport(): Promise<Viewport> {

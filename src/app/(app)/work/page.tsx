@@ -150,7 +150,13 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
                 aria-hidden
                 className={cn(
                   "flex items-center justify-center rounded-full",
-                  w.done ? "h-9 w-9 bg-night text-sun" : w.today ? "h-9 w-9 bg-sun/25 ring-2 ring-sun" : w.planned ? "h-6 w-6 bg-sun/25" : "h-6 w-6 bg-border",
+                  w.done
+                    ? "h-9 w-9 bg-night text-sun"
+                    : w.today
+                      ? "h-9 w-9 bg-[color-mix(in_oklab,var(--sun)_35%,white)] ring-2 ring-sun"
+                      : w.planned
+                        ? "h-6 w-6 bg-[color-mix(in_oklab,var(--sun)_35%,white)]"
+                        : "h-6 w-6 bg-border",
                 )}
               >
                 {w.done && <PixelIcon name="check" className="h-4 w-4" />}

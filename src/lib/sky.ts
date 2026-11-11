@@ -17,8 +17,8 @@ const seg = (p: number, a: number, b: number) => clamp((p - a) / (b - a), 0, 1);
 // [minutes from sunrise or sunset, which, top, middle, horizon]
 type Key = [number, "rise" | "set" | "noon", string, string, string];
 const KEYS: Key[] = [
-  [-100, "rise", "#03060f", "#071226", "#0e1f3d"], // night
-  [-55, "rise", "#06102a", "#13284d", "#2d4470"], // first light
+  [-100, "rise", "#142451", "#233c6e", "#3a5a8f"], // night: moonlit, not black (owner, 2026-11-11: "very dark")
+  [-55, "rise", "#182b55", "#2b4677", "#4a6699"], // first light
   [-22, "rise", "#13284f", "#3f5d8c", "#d98a62"], // dawn
   [4, "rise", "#2e5791", "#7d9cc7", "#ffb27a"], // sunrise
   [60, "rise", "#3f7fc8", "#9dc3e8", "#f8dcbc"], // morning
@@ -28,8 +28,8 @@ const KEYS: Key[] = [
   [-45, "set", "#4a7fbf", "#a6bfd8", "#ffd391"], // golden hour
   [-5, "set", "#36578f", "#c98f78", "#ff8a45"], // sunset
   [22, "set", "#1b3263", "#6a5a7a", "#e2643f"], // after sunset
-  [50, "set", "#0b1a3a", "#1f3155", "#4b4560"], // dusk
-  [100, "set", "#03060f", "#071226", "#0e1f3d"], // night
+  [50, "set", "#1a2d5a", "#344c7c", "#5a6588"], // dusk
+  [100, "set", "#142451", "#233c6e", "#3a5a8f"], // night
 ];
 
 /** The sky's top, middle and horizon colours at a minute of the day. */
@@ -68,7 +68,7 @@ export function darkness(minute: number, rise: number, set: number): number {
  */
 export function skyWash(minute: number, rise: number, set: number, dark: boolean): { a: string; b: string } {
   const [top, mid] = skyAt(minute, rise, set);
-  const page: RGB = dark ? [7, 16, 31] : [246, 248, 251];
+  const page: RGB = dark ? [21, 38, 67] : [246, 248, 251];
   const k = dark ? 0.45 : 0.62;
   return { a: css(mix(top, page, k)), b: css(mix(mid, page, k + 0.12)) };
 }

@@ -6,6 +6,7 @@ import { setAiConsentAction } from "@/app/(app)/settings/actions";
 import { undoChatToolsAction } from "@/app/(app)/jarvis/actions";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { cheerSkylings } from "@/components/skylings/night";
+import { skylingDoes } from "@/components/skylings/activity";
 import { OFFER_REPLIES, offersToAct, UNDOABLE_TOOLS } from "@/components/jarvis/suggestions";
 import { AI_CONSENT_NEEDED } from "@/lib/ai-consent";
 import { isNarration } from "@/lib/narration";
@@ -69,6 +70,8 @@ export async function askOnToday(message: string, refresh: () => void) {
   const text = message.trim();
   if (!text || state.busy) return;
   const conversationId = state.conversationId;
+  // it thinks while it works on your answer (owner, 2026-11-11: faces that react to your day)
+  skylingDoes("think");
   set({ busy: true, reply: { question: text, text: "", kept: false, tools: [], confirmations: [], streaming: true } });
   let saved = false;
   try {
@@ -142,6 +145,7 @@ export async function askOnToday(message: string, refresh: () => void) {
   } finally {
     patch((r) => void (r.streaming = false));
     set({ busy: false });
+    skylingDoes(null);
     if (saved) {
       refresh();
       cheerSkylings();
