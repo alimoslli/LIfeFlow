@@ -6,6 +6,7 @@ import { isValidTimeZone } from "../services/accounts";
 import type { Database } from "../db/client";
 import { recordError } from "../services/error-reports";
 import { saveChallenge } from "./challenges";
+import { validInviteCode } from "../services/invites";
 import {
   completeOAuthSignIn,
   consumePendingOAuthLink,
@@ -66,16 +67,26 @@ export async function appleClientSecret(cfg: AppleConfig, now = new Date()) {
 export const APPLE_STATE_COOKIE = "lf_apple_state";
 export const APPLE_LINK_COOKIE = OAUTH_LINK_COOKIE;
 
-const stateSchema = z.object({ nonce: z.string(), mode: z.enum(["signin", "link"]), tz: z.string().max(64), next: z.string().max(200) });
+const stateSchema = z.object({
+  nonce: z.string(),
+  mode: z.enum(["signin", "link"]),
+  tz: z.string().max(64),
+  next: z.string().max(200),
+  invite: z.string().max(32).nullish(),
+});
 
 /** Step 1: where to send the browser, plus the token for the state cookie. */
-export async function startAppleSignIn(db: Database, cfg: AppleConfig, opts: { mode: "signin" | "link"; tz?: string; next?: string; userId?: string | null }) {
+export async function startAppleSignIn(
+  db: Database,
+  cfg: AppleConfig,
+  opts: { mode: "signin" | "link"; tz?: string; next?: string; userId?: string | null; invite?: string | null },
+) {
   const nonce = randomBytes(16).toString("base64url");
   const tz = opts.tz && isValidTimeZone(opts.tz) ? opts.tz : "UTC";
   const { token, expiresAt } = await saveChallenge(
     db,
     "apple",
-    JSON.stringify({ nonce, mode: opts.mode, tz, next: opts.next ?? "/" }),
+    JSON.stringify({ nonce, mode: opts.mode, tz, next: opts.next ?? "/", invite: opts.mode === "signin" ? validInviteCode(opts.invite) : null }),
     opts.userId ?? null,
     10 * 60_000,
   );
@@ -172,7 +183,7 @@ export type AppleOutcome = OAuthOutcome;
 export const completeAppleSignIn = (
   db: Database,
   claims: AppleClaims,
-  state: { mode: "signin" | "link"; tz: string; userId: string | null },
+  state: { mode: "signin" | "link"; tz: string; userId: string | null; invite?: string | null },
   name: string | null,
   refreshToken: string | null = null,
 ) => completeOAuthSignIn(db, "apple", claims, state, name, AppleSignInError, refreshToken);

@@ -56,7 +56,7 @@ export function AuthForm({
         </p>
       )}
       <FormError message={state?.error} />
-      <SignInOptions mode={mode} apple={apple} google={google} next={next} />
+      <SignInOptions mode={mode} apple={apple} google={google} next={next} invite={invite} />
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-text-2">Email</span>
         <input

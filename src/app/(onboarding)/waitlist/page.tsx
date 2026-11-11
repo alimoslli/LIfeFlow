@@ -11,6 +11,7 @@ import { getAccountUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
 import { inviteCodeFor } from "@/server/services/invites";
 import { canUseApp, waitlistPage } from "@/server/services/waitlist";
+import { ConfirmEmail } from "./confirm-email";
 import { InviteShare } from "../../(app)/settings/invite/invite-share";
 import "./waitlist.css";
 
@@ -89,6 +90,8 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
       </section>
 
       <main className="relative z-10 mx-auto flex w-full max-w-2xl flex-col gap-4 px-5 pt-6 pb-16">
+        {!w.emailVerified && !preview && <ConfirmEmail invited={w.invited} className={`${glass} wl-ticket`} />}
+
         <section className={glass} aria-labelledby="wl-front">
           <h2 id="wl-front" className={h2}>
             The front of the line
@@ -166,10 +169,22 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
             Each friend who joins with your link and confirms their email moves you ahead one place.
           </p>
           <InviteShare link={link} firstName={firstName} dark />
-          <p className="mt-4 flex items-center gap-2 text-sm text-white/70">
-            <span className="h-1.5 w-1.5 bg-star-gold" aria-hidden />
-            Friends who joined with your link: <span className="tabular font-medium text-white">{w.friends}</span>
-          </p>
+          <ul role="list" className="mt-4 flex flex-col gap-1 text-sm text-white/70">
+            <li className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 bg-star-gold" aria-hidden />
+              Friends counted:{" "}
+              <span className="tabular font-medium text-white" data-testid="wl-friends">
+                {w.friends}
+              </span>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 bg-white/40" aria-hidden />
+              Waiting to confirm their email:{" "}
+              <span className="tabular font-medium text-white" data-testid="wl-pending">
+                {w.pending}
+              </span>
+            </li>
+          </ul>
         </section>
 
         <p className={`${kicker} mt-2 text-center leading-relaxed text-star-gold/90`}>{w.launchNote ?? DEFAULT_LAUNCH}</p>

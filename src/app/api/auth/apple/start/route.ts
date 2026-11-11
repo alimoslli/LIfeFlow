@@ -29,6 +29,7 @@ export async function GET(req: Request) {
     tz: url.searchParams.get("tz") ?? undefined,
     next: safeNext(url.searchParams.get("next")),
     userId: user?.id ?? null,
+    invite: url.searchParams.get("invite"),
   });
   // Apple posts the result back from its own site, so this cookie must be SameSite=None (and therefore Secure).
   (await cookies()).set(APPLE_STATE_COOKIE, token, { httpOnly: true, secure: true, sameSite: "none", path: "/api/auth/apple", expires: expiresAt });

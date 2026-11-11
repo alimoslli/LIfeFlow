@@ -13,6 +13,12 @@ import { users } from "../db/schema";
 const ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
 const CODE_RE = /^[a-z0-9]{6,16}$/;
 
+/** The code in lower case when it has the right shape, else null (carried through Google and Apple sign-up). */
+export function validInviteCode(code: string | null | undefined): string | null {
+  const clean = (code ?? "").trim().toLowerCase();
+  return CODE_RE.test(clean) ? clean : null;
+}
+
 export function newInviteCode() {
   return Array.from(randomBytes(10), (b) => ALPHABET[b % ALPHABET.length]).join("");
 }

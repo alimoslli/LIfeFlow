@@ -414,6 +414,13 @@
       "when": 1798100000000,
       "tag": "0062_voice_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1798200000000,
+      "tag": "0063_email_verified",
+      "breakpoints": true
     }
   ]
 }

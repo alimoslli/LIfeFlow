@@ -5,6 +5,7 @@ import { isValidTimeZone } from "../services/accounts";
 import type { Database } from "../db/client";
 import { googleConfig } from "../integrations/google";
 import { saveChallenge } from "./challenges";
+import { validInviteCode } from "../services/invites";
 import { completeOAuthSignIn, identityFor, unlinkIdentity, type OAuthClaims } from "./oauth";
 
 /**
@@ -31,13 +32,20 @@ export function googleSignInConfig(env: Record<string, string | undefined> = pro
 }
 
 export const GOOGLE_STATE_COOKIE = "lf_google_state";
-const stateSchema = z.object({ nonce: z.string(), verifier: z.string(), mode: z.enum(["signin", "link"]), tz: z.string().max(64), next: z.string().max(200) });
+const stateSchema = z.object({
+  nonce: z.string(),
+  verifier: z.string(),
+  mode: z.enum(["signin", "link"]),
+  tz: z.string().max(64),
+  next: z.string().max(200),
+  invite: z.string().max(32).nullish(),
+});
 export const parseGoogleState = (raw: string) => stateSchema.parse(JSON.parse(raw));
 
 export async function startGoogleSignIn(
   db: Database,
   cfg: GoogleSignInConfig,
-  opts: { mode: "signin" | "link"; tz?: string; next?: string; userId?: string | null },
+  opts: { mode: "signin" | "link"; tz?: string; next?: string; userId?: string | null; invite?: string | null },
 ) {
   const nonce = randomBytes(16).toString("base64url");
   const verifier = randomBytes(48).toString("base64url");
@@ -45,7 +53,7 @@ export async function startGoogleSignIn(
   const { token, expiresAt } = await saveChallenge(
     db,
     "google",
-    JSON.stringify({ nonce, verifier, mode: opts.mode, tz, next: opts.next ?? "/" }),
+    JSON.stringify({ nonce, verifier, mode: opts.mode, tz, next: opts.next ?? "/", invite: opts.mode === "signin" ? validInviteCode(opts.invite) : null }),
     opts.userId ?? null,
     10 * 60_000,
   );
@@ -110,7 +118,7 @@ export async function verifyGoogleIdToken(
 export const completeGoogleSignIn = (
   db: Database,
   claims: OAuthClaims,
-  state: { mode: "signin" | "link"; tz: string; userId: string | null },
+  state: { mode: "signin" | "link"; tz: string; userId: string | null; invite?: string | null },
   name: string | null,
 ) => completeOAuthSignIn(db, "google", claims, state, name, GoogleSignInError);
 export const googleIdentityFor = (db: Database, userId: string) => identityFor(db, userId, "google");

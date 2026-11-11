@@ -209,9 +209,48 @@ export const users = pgTable("users", {
     .default(sql`nextval('waitlist_rank_seq')`),
   /** When the owner let this person in. */
   acceptedAt: tstz("accepted_at"),
+  /**
+   * When the person proved the email is theirs: a 6-digit code we emailed, or Google/Apple saying it is verified at sign-up
+   * (owner, 2026-11-11). A friend's invite counts only after this. Existing accounts stay null.
+   */
+  emailVerifiedAt: tstz("email_verified_at"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
+
+/**
+ * The code for "Confirm your email": one row per person (the column is `account_id`, so it is not a "user content" table in the export and RLS checks), only the hash (bound to the user), 10 minutes, 5 tries. Taking the
+ * row deletes it, so a code works once. Account data like `login_challenges`: no RLS, reached only through services/email-confirm.ts.
+ */
+export const emailConfirmations = pgTable("email_confirmations", {
+  userId: uuid("account_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  codeHash: text("code_hash").notNull(),
+  expiresAt: tstz("expires_at").notNull(),
+  attempts: integer("attempts").notNull().default(0),
+  createdAt: createdAt(),
+});
+
+/**
+ * One row per friend who confirmed their email from someone's invite link (owner, 2026-11-11). The hash of the normalized
+ * email is unique, so deleting an account and signing up again with the same email never credits twice. No RLS: account
+ * data like `users`, reached only through services/referrals.ts. The invitee link is cleared if that account is deleted.
+ */
+export const waitlistReferrals = pgTable(
+  "waitlist_referrals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    inviterId: uuid("inviter_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    inviteeId: uuid("invitee_id").references(() => users.id, { onDelete: "set null" }),
+    inviteeEmailHash: text("invitee_email_hash").notNull(),
+    creditedAt: tstz("credited_at"),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("waitlist_referrals_email_uniq").on(t.inviteeEmailHash), index("waitlist_referrals_inviter_idx").on(t.inviterId)],
+);
 
 /** One row: whether the waitlist is closing the app (the owner's switch in HQ, off until he flips it) and the tentative launch line. */
 export const appAccess = pgTable("app_access", {

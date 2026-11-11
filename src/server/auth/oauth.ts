@@ -6,6 +6,8 @@ import { withUser } from "../db/with-user";
 import { encryptSecret } from "../crypto";
 import { audit } from "../services/audit";
 import { seedDefaultCategories } from "../services/finance/categories";
+import { recordInvite } from "../services/invites";
+import { creditReferral } from "../services/referrals";
 import { adminFor } from "./admin";
 import { saveChallenge, takeChallenge } from "./challenges";
 
@@ -50,7 +52,7 @@ export async function completeOAuthSignIn(
   db: Database,
   provider: OAuthProvider,
   claims: OAuthClaims,
-  state: { mode: "signin" | "link"; tz: string; userId: string | null },
+  state: { mode: "signin" | "link"; tz: string; userId: string | null; /** an invite code carried from /signup?invite=… */ invite?: string | null },
   name: string | null,
   ErrorClass: new (m: string) => Error = OAuthSignInError,
   refreshToken: string | null = null,
@@ -100,6 +102,8 @@ export async function completeOAuthSignIn(
       passwordHash: `!${provider}`,
       timezone: state.tz,
       preferences: { onboarding: "pending" },
+      // The provider says this email is verified (checked above), so a friend's invite counts at once (owner, 2026-11-11).
+      emailVerifiedAt: new Date(),
     })
     .returning({ id: users.id });
   await withUser(
@@ -111,6 +115,14 @@ export async function completeOAuthSignIn(
     db,
   );
   await linkIdentity(db, provider, user.id, claims, refreshToken ? encryptSecret(refreshToken) : null);
+  // Signed up from a friend's link: record who invited them and credit that friend. Never blocks sign-up.
+  if (state.invite) {
+    try {
+      if (await recordInvite(db, user.id, state.invite)) await db.transaction((tx) => creditReferral(tx, user.id));
+    } catch (e) {
+      console.warn("invite credit skipped:", e instanceof Error ? e.name : "unknown");
+    }
+  }
   return { kind: "created", userId: user.id };
 }
 
