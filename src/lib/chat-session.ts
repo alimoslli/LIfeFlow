@@ -40,22 +40,32 @@ const attrs = () => `; path=/; samesite=lax${location.protocol === "https:" ? ";
 
 /** This app's chat: undefined until it's first asked, then the browser's last chat for today (or null for a new visit). */
 let visit: string | null | undefined;
+/** When that chat became this app's (epoch ms): a chat that began on another day is not carried on. */
+let visitAt = 0;
 
 /** Makes this chat the one this app is in (started or opened); the browser's last chat follows it. */
 export function rememberChat(id: string) {
   if (typeof document === "undefined" || !ID.test(id)) return;
+  const at = Date.now();
   visit = id;
-  document.cookie = `${CHAT_COOKIE}=${id}~${Date.now()}${attrs()}`;
+  visitAt = at;
+  document.cookie = `${CHAT_COOKIE}=${id}~${at}${attrs()}`;
 }
 
-/** The next message starts a new chat (New chat, a new visit). */
+/** The next message starts a new chat (New chat, a new visit, a new day). */
 export function forgetChat() {
   visit = null;
+  visitAt = 0;
   if (typeof document === "undefined") return;
   document.cookie = `${CHAT_COOKIE}=; max-age=0${attrs()}`;
 }
 
-/** The chat this app is in right now. */
+/** Whether `at` (epoch ms) is the same day as `now` in the person's time zone. */
+export function sameDay(at: number, tz: string, now: Date = new Date()): boolean {
+  return localDateOf(new Date(at), tz) === localDateOf(now, tz);
+}
+
+/** The chat this app is in right now: its own, or the browser's for today when it has none yet. */
 export function currentChat(tz: string): string | null {
   if (visit === undefined) {
     const value =
@@ -66,8 +76,35 @@ export function currentChat(tz: string): string | null {
             .find((c) => c.startsWith(`${CHAT_COOKIE}=`))
             ?.slice(CHAT_COOKIE.length + 1);
     visit = chatOfToday(value, tz);
-  }
+    visitAt = parseChatCookie(value)?.at ?? 0;
+  } else if (visit !== null && !sameDay(visitAt, tz)) forgetChat();
   return visit;
+}
+
+/** Takes the chat a fresh render of the page shows as this app's own (the browser's copy already says the same): no cookie write. */
+export function adoptChat(id: string | null) {
+  visit = id;
+  visitAt = id ? Date.now() : 0;
+}
+
+let asked = false;
+/**
+ * Whether a page rendered with `server` as its chat is behind the chat this app is in. A page shown again from the browser's
+ * copy (back or forward) can be: a chat started on Today after it was left. Such a page is rendered again once; if the fresh
+ * render still disagrees, the server's chat is the one this app takes, so the two never split.
+ */
+export function pageIsStale(server: string | null, tz: string): boolean {
+  if (currentChat(tz) === server) {
+    asked = false;
+    return false;
+  }
+  if (!asked) {
+    asked = true;
+    return true;
+  }
+  asked = false;
+  adoptChat(server);
+  return false;
 }
 
 let decided = false;

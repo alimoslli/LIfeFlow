@@ -40,9 +40,9 @@ export type TodayReply = {
   settled?: boolean;
   undoNote?: string;
 };
-type State = { reply: TodayReply | null; conversationId: string | null; busy: boolean; owner: string | null };
+type State = { reply: TodayReply | null; conversationId: string | null; busy: boolean; owner: string | null; tz: string };
 
-let state: State = { reply: null, conversationId: null, busy: false, owner: null };
+let state: State = { reply: null, conversationId: null, busy: false, owner: null, tz: "UTC" };
 const listeners = new Set<() => void>();
 const set = (next: Partial<State>) => {
   state = { ...state, ...next };
@@ -58,7 +58,7 @@ const subscribe = (l: () => void) => {
   listeners.add(l);
   return () => listeners.delete(l);
 };
-const SERVER: State = { reply: null, conversationId: null, busy: false, owner: null };
+const SERVER: State = { reply: null, conversationId: null, busy: false, owner: null, tz: "UTC" };
 
 /**
  * Whoever's Today this is. The answer lives in this app session's memory, which outlasts a sign-out and a sign-in, so an
@@ -70,6 +70,10 @@ export function TodayOwner({ userId }: { userId: string }) {
   useLayoutEffect(() => {
     if (state.owner !== userId) set({ owner: userId, reply: null });
   }, [userId]);
+  // the bar's sends read the chat this app is in, by the person's day (currentChat)
+  useLayoutEffect(() => {
+    if (state.tz !== tz) set({ tz });
+  }, [tz]);
   // a chat is one day's: when the day changes while Today is open, the next message starts another
   useNewDay(tz, () => {
     forgetChat();
@@ -90,7 +94,8 @@ const plainWords = async (res: Response) => ((await res.json().catch(() => null)
 export async function askOnToday(message: string, refresh: () => void) {
   const text = message.trim();
   if (!text || state.busy) return;
-  const conversationId = state.conversationId;
+  // the chat this app is in, not the one this bar showed last: a chat started elsewhere in the app is the one it carries on
+  const conversationId = currentChat(state.tz);
   // it thinks while it works on your answer (owner, 2026-11-11: faces that react to your day)
   skylingDoes("think");
   set({ busy: true, reply: { question: text, text: "", kept: false, tools: [], confirmations: [], streaming: true } });
