@@ -36,7 +36,7 @@ Goal: close public access while building excitement for a tentative January 2027
 3. **Offline reliability and privacy.** Replay in creation order, batches within the server's 100-operation limit, keep dependencies, retry temporary failures instead of dropping unsaved work, scope operations to the account and refuse replay after an account switch, await transactions and close IndexedDB, handle blocked deletion and several tabs at sign-out. Review private-page caching, session expiry, account switches and the Money lock. A clear way to recover failed changes.
 4. **AI costs.** One usage ledger for chat, SMS, voice, web search, document reading and transaction tidying; per-account allowances, global spending thresholds and atomic budget reservations before paid work; unknown costs stay unknown; reconcile with provider billing; voice limits enforced server or provider side. Keep cheaper-model routing, caching, bounded loops and deterministic math. Check "unlimited" claims.
 5. **Scale and operations.** Crons as durable bounded work units with retries, idempotency, progress and failure reports; chat history bounded in SQL with incremental recovery polling; profile Today and Money with realistic histories and prefetch cost; fewer network waits inside transactions; review connection budgets, log retention and monitoring. Keep the architecture unless measurements say otherwise.
-6. **Verification and maintenance.** The two full-suite failures in `plaid-cron-webhook.test.ts` (all six pass alone: order or isolation). CI checks; stale docs. Focused checks per step, broader checks at milestones, exact results.
+6. **Verification and maintenance.** The two full-suite failures in `plaid-cron-webhook.test.ts` (all six pass alone: order or isolation; on 2026-11-11 the full suite passed, 179 files, so it's intermittent). CI checks; stale docs. Focused checks per step, broader checks at milestones, exact results.
 7. **Product and UX proposals** (separately, as pictures, before any design change): useful outcomes earlier in onboarding, product proof above the long mascot section, a clearer Today agenda and action view, prominent manual entry, balance freshness and forecast explanations, visible sync and reconnect states, contrast fixes. Correct claims like "always asks before changing anything" to match what happens. Later: activation, cohort retention and cost per active user in the existing analytics, focused on working students and classes, shifts and bills. No speculative growth features.
 
 ## Working rules for this backlog
@@ -47,4 +47,5 @@ Keep it intact and say what's deferred; one small step per session; concise expl
 
 | Step | Branch | Status |
 | --- | --- | --- |
-| Waitlist 1. Foundation | `claude/waitlist` | in progress (2026-11-11) |
+| Waitlist 1. Foundation | `claude/waitlist` | done 2026-11-11, not merged: `users.access`/`waitlist_rank`/`accepted_at`, `app_access.waitlist_on` (off), `services/waitlist.ts`, migration 0061 (`when` 1798000000000, safe to re-run). Tests: `tests/integration/waitlist.test.ts` (7), full suite 179 files, 1,423 tests passed |
+| Waitlist 2. HQ: accept people | | next |
