@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { closeDb, getDb } from "@/server/db/client";
-import { errorReports, integrations, ownerInbox, users } from "@/server/db/schema";
+import { adminActions, errorReports, integrations, ownerInbox, users } from "@/server/db/schema";
+import { emailHash } from "@/server/services/referrals";
 import { encryptSecret } from "@/server/crypto";
 import { deleteAccount } from "@/server/services/accounts";
 import { saveGoogleConnection } from "@/server/integrations/google";
@@ -259,6 +260,42 @@ describe("deleting an account removes the owner's copies of its feedback", () =>
     } finally {
       process.env.ADMIN_EMAILS = saved;
     }
+  });
+});
+
+describe("deleting an account takes the plain email out of the owner's action log", () => {
+  const rowsFor = (id: string) => getDb().select().from(adminActions).where(eq(adminActions.targetUserId, id));
+
+  it("the owner's deletion keeps every row, with the email replaced by its keyed fingerprint, deletion row included", async () => {
+    const owner = await makeUser("Owner");
+    await getDb().update(users).set({ totpEnabledAt: new Date() }).where(eq(users.id, owner.user.id));
+    const saved = process.env.ADMIN_EMAILS;
+    process.env.ADMIN_EMAILS = [saved, owner.user.email].filter(Boolean).join(",");
+    try {
+      const admin = (await adminFor(getDb(), owner.user.id, { ADMIN_EMAILS: owner.user.email }))!;
+      const u = await setup();
+      await getDb()
+        .insert(adminActions)
+        .values({ actorUserId: admin.id, actorEmail: admin.email, action: "waitlist.accept", targetUserId: u.user.id, targetEmail: u.user.email });
+      await deleteUser(getDb(), admin, u.user.id, u.user.email, { fetch: fakeWorld().f });
+      const rows = await rowsFor(u.user.id);
+      expect(rows.map((r) => r.action).sort()).toEqual(["user.delete", "waitlist.accept"]);
+      expect(rows.every((r) => r.targetEmail === emailHash(u.user.email))).toBe(true);
+      expect(await getDb().select().from(adminActions).where(eq(adminActions.targetEmail, u.user.email))).toEqual([]);
+    } finally {
+      process.env.ADMIN_EMAILS = saved;
+    }
+  });
+
+  it("the person's own deletion does the same for earlier actions about them", async () => {
+    const u = await setup();
+    await getDb()
+      .insert(adminActions)
+      .values({ actorEmail: "owner@example.com", action: "waitlist.accept", targetUserId: u.user.id, targetEmail: u.user.email });
+    await deleteAccount(getDb(), u.user.id, PASSWORD, { fetch: fakeWorld().f });
+    const rows = await rowsFor(u.user.id);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].targetEmail).toBe(emailHash(u.user.email));
   });
 });
 

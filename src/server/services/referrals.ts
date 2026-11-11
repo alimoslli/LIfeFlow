@@ -1,6 +1,6 @@
 import { and, count, eq, gte, isNull } from "drizzle-orm";
 import type { Database } from "../db/client";
-import { users, waitlistReferrals } from "../db/schema";
+import { adminActions, users, waitlistReferrals } from "../db/schema";
 import { keyedHash } from "../crypto";
 import type { Tx } from "../db/with-user";
 import { lockQueue, moveUpOne } from "./waitlist";
@@ -96,4 +96,16 @@ export async function creditReferral(tx: Tx, inviteeId: string, now = new Date()
   const moved = await moveUpOne(tx, inviter.id);
   if (moved) await tx.update(waitlistReferrals).set({ movedAt: now }).where(eq(waitlistReferrals.id, inserted[0].id));
   return { recorded: true, moved };
+}
+
+/**
+ * On deleting an account: the owner's action log keeps its rows about that person (and their `target_user_id`), but the
+ * plain email in them is replaced by the same one-way keyed fingerprint kept for the referral rule. Run it in the deletion
+ * transaction, after the last row about them is written (the deletion row itself is included).
+ */
+export async function fingerprintAdminLogEmail(tx: Tx, userId: string, email: string) {
+  await tx
+    .update(adminActions)
+    .set({ targetEmail: emailHash(email) })
+    .where(eq(adminActions.targetUserId, userId));
 }

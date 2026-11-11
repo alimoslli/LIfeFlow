@@ -11,6 +11,7 @@ import type { Database } from "../db/client";
 import { ownerInbox, users, type UserPreferences } from "../db/schema";
 import { withUser } from "../db/with-user";
 import { lockQueue } from "./waitlist";
+import { fingerprintAdminLogEmail } from "./referrals";
 import { seedDefaultCategories } from "./finance/categories";
 import { audit } from "./audit";
 import { DeletionBlockedError, revokeOutsideAccess, type CleanupDeps } from "./account-cleanup";
@@ -271,6 +272,7 @@ export async function deleteAccount(db: Database, userId: string, password: stri
     await lockQueue(tx);
     // copies of their feedback in the owner's inbox go too: that table has no user_id, so nothing else would remove them
     await tx.delete(ownerInbox).where(eq(ownerInbox.senderUserId, userId));
+    await fingerprintAdminLogEmail(tx, userId, user.email);
     await tx.delete(users).where(eq(users.id, userId));
   });
 }

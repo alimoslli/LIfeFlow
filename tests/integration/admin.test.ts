@@ -5,6 +5,7 @@ import { createSession, validateSession } from "@/server/auth/sessions";
 import { closeDb, getDb } from "@/server/db/client";
 import { adminActions, errorReports, passkeys, sessions, users } from "@/server/db/schema";
 import { AdminError, clearError, deleteUser, getUser, health, listUsers, overview, setPlan, setSuspended, signOutEverywhere } from "@/server/services/admin";
+import { emailHash } from "@/server/services/referrals";
 import { makeUser } from "../helpers";
 
 afterAll(closeDb);
@@ -183,7 +184,9 @@ describe("admin actions", () => {
     await deleteUser(db(), admin, user.id, `  ${user.email.toUpperCase()} `);
     expect(await getUser(db(), user.id)).toBeNull();
     const [row] = await db().select().from(adminActions).where(eq(adminActions.targetUserId, user.id));
-    expect(row).toMatchObject({ action: "user.delete", targetEmail: user.email });
+    // the log keeps the action and who did it, but the plain email is replaced by the one-way fingerprint
+    expect(row).toMatchObject({ action: "user.delete", targetEmail: emailHash(user.email) });
+    expect(row.targetEmail).not.toBe(user.email);
   });
 
   it("never acts on the admin, another admin, or the demo account", async () => {
