@@ -18,6 +18,8 @@ export type SessionUser = {
   accountKind: "standard" | "demo";
   preferences?: UserPreferences;
   plan?: "free" | "pro";
+  /** Waitlist access (services/waitlist.ts); only matters while the owner's switch is on. */
+  access?: "waiting" | "in";
 };
 
 /** Creates a session and returns the raw token for the cookie. Only its hash is stored. */
@@ -46,6 +48,7 @@ export async function validateSession(db: Database, token: string): Promise<Sess
         accountKind: users.accountKind,
         preferences: users.preferences,
         plan: users.plan,
+        access: users.access,
       },
     })
     .from(sessions)

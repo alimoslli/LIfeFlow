@@ -82,7 +82,7 @@ test("One admin area: five places and a gear, old URLs land on their new page, a
 
   // People and App hold their sections; the gear opens settings and is the active place.
   await op.goto("/admin/people");
-  await expect(op.getByRole("heading", { level: 2 })).toHaveText(["Accounts", "Feedback", "Announcements"]);
+  await expect(op.getByRole("heading", { level: 2 })).toHaveText(["Waitlist", "Accounts", "Feedback", "Announcements"]);
 
   // "Active today" opens People with only the accounts seen in the last 24 hours (the owner is signed in, so listed); "Show everyone" clears it.
   const away = `away-${Date.now()}@example.com`;
@@ -96,11 +96,13 @@ test("One admin area: five places and a gear, old URLs land on their new page, a
   await expect(op).toHaveURL(/\/admin\/people\?seen=today#people$/);
   await expect(op.getByLabel("Last seen")).toHaveValue("today");
   await expect(op.getByText(/seen in the last 24 hours$/)).toBeVisible();
-  await expect(op.getByText(ADMIN_EMAIL, { exact: true })).toBeVisible();
-  await expect(op.getByText(away, { exact: true })).toHaveCount(0);
-  await op.getByRole("link", { name: "Show everyone" }).click();
+  // The accounts list (the waitlist above it lists everyone waiting, whatever the filter).
+  const accounts = op.getByRole("region", { name: "Accounts" });
+  await expect(accounts.getByText(ADMIN_EMAIL, { exact: true })).toBeVisible();
+  await expect(accounts.getByText(away, { exact: true })).toHaveCount(0);
+  await accounts.getByRole("link", { name: "Show everyone" }).click();
   await expect(op.getByLabel("Last seen")).toHaveValue("");
-  await expect(op.getByText(away, { exact: true })).toBeVisible();
+  await expect(accounts.getByText(away, { exact: true })).toBeVisible();
   await pool.query("delete from users where email = $1", [away]);
   await op.goto("/admin/users?seen=today");
   expect(here(op).replace(/#.*$/, "")).toBe("/admin/people?seen=today");

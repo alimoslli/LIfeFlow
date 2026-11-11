@@ -1,7 +1,8 @@
-import { and, asc, count, eq, inArray, isNull, lt, notInArray, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNull, lt, notInArray, or, sql, type SQL } from "drizzle-orm";
 import { adminEmails } from "../auth/admin";
 import type { Database } from "../db/client";
 import { appAccess, users } from "../db/schema";
+import { COMPANION_KEYS } from "@/lib/companions";
 
 /**
  * The waitlist (owner, 2026-11-11; docs/backlog/2026-11-11-audit-and-waitlist.md). Everyone is "waiting" in sign-up
@@ -17,7 +18,7 @@ export async function accessSettings(db: Database): Promise<AccessSettings> {
   return { waitlistOn: r?.on ?? false, launchNote: r?.note ?? null };
 }
 
-type Person = { email: string; accountKind: "standard" | "demo"; access: "waiting" | "in" };
+type Person = { email: string; accountKind: "standard" | "demo"; access?: "waiting" | "in" };
 
 /** Admins and the demo account are always in, whatever their row says. */
 export function alwaysIn(u: Pick<Person, "email" | "accountKind">, env: Record<string, string | undefined> = process.env) {
@@ -30,7 +31,7 @@ export function canUseApp(u: Person, waitlistOn: boolean, env: Record<string, st
 }
 
 /** Who holds a place in line: waiting, not suspended, not the demo account, not an admin. */
-function inLine(): SQL {
+export function inLine(): SQL {
   const admins = adminEmails();
   return and(
     eq(users.access, "waiting"),
@@ -116,4 +117,46 @@ export async function moveUpOne(db: Database, userId: string): Promise<boolean> 
       .where(inArray(users.id, [userId, above.id]));
     return true;
   });
+}
+
+/** A stable, anonymous name for someone in line: a skyling and four digits from their id. Never their name or email. */
+export function anonLabel(id: string): { label: string; companion: (typeof COMPANION_KEYS)[number] } {
+  let h = 0;
+  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const companion = COMPANION_KEYS[h % COMPANION_KEYS.length];
+  const name = companion.charAt(0).toUpperCase() + companion.slice(1);
+  return { label: `${name} ${String(1000 + (h % 9000))}`, companion };
+}
+
+export type FrontRow = { place: number; label: string; companion: string; me: boolean };
+
+/** What the waitlist page shows one person: their place, the front of the line (anonymous), and friends from their link. */
+export async function waitlistPage(db: Database, userId: string) {
+  const [settings, place, waiting] = [await accessSettings(db), await waitlistPlace(db, userId), await waitingCount(db)];
+  const front = await db.select({ id: users.id }).from(users).where(inLine()).orderBy(asc(users.waitlistRank)).limit(10);
+  const [{ friends }] = await db.select({ friends: count() }).from(users).where(eq(users.invitedBy, userId));
+  return {
+    ...settings,
+    place,
+    waiting,
+    friends,
+    front: front.map((r, i): FrontRow => ({ place: i + 1, ...anonLabel(r.id), me: r.id === userId })),
+  };
+}
+
+/**
+ * For jobs and intake that run without a session (crons, texts, Apple Health, forwarded email): the people the app is
+ * open to right now. Undefined while the switch is off (everyone), so callers can pass it straight to `and(...)`.
+ */
+export async function openToApp(db: Database): Promise<SQL | undefined> {
+  if (!(await accessSettings(db)).waitlistOn) return undefined;
+  const admins = adminEmails();
+  return or(eq(users.access, "in"), eq(users.accountKind, "demo"), admins.length ? inArray(sql`lower(${users.email})`, admins) : undefined);
+}
+
+/** Whether one account may use the app right now (the same rule as `canUseApp`, read from the database). */
+export async function appOpenFor(db: Database, userId: string): Promise<boolean> {
+  const [u] = await db.select({ email: users.email, accountKind: users.accountKind, access: users.access }).from(users).where(eq(users.id, userId));
+  if (!u) return false;
+  return canUseApp(u, (await accessSettings(db)).waitlistOn);
 }

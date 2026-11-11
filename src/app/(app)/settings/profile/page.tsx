@@ -17,7 +17,7 @@ import { BirthdayField } from "@/components/ui/birthday-field";
 export const metadata: Metadata = { title: "You and the look" };
 
 export default async function ProfileSettings() {
-  const session = await requireUser();
+  const session = await requireUser({ account: true });
   const [u] = await getDb()
     .select({ name: users.name, email: users.email, timezone: users.timezone, preferences: users.preferences })
     .from(users)

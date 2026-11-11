@@ -2,8 +2,22 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export function Card({ children, className, as: As = "section" }: { children: ReactNode; className?: string; as?: "section" | "div" | "article" }) {
-  return <As className={cn("rounded-3xl bg-surface shadow-soft", className)}>{children}</As>;
+export function Card({
+  children,
+  className,
+  as: As = "section",
+  "data-testid": testId,
+}: {
+  children: ReactNode;
+  className?: string;
+  as?: "section" | "div" | "article";
+  "data-testid"?: string;
+}) {
+  return (
+    <As className={cn("rounded-3xl bg-surface shadow-soft", className)} data-testid={testId}>
+      {children}
+    </As>
+  );
 }
 
 export function CardHeader({ title, action, subtitle, className }: { title: ReactNode; subtitle?: ReactNode; action?: ReactNode; className?: string }) {

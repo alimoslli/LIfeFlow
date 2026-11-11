@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { APPLE_STATE_COOKIE, appleConfig, startAppleSignIn } from "@/server/auth/apple";
-import { clientIp, getSessionUser } from "@/server/auth/current-user";
+import { clientIp, getAccountUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
 import { rateLimit } from "@/server/rate-limit";
 
@@ -18,7 +18,7 @@ export async function GET(req: Request) {
   const db = getDb();
   if (!(await rateLimit(db, `apple-start:ip:${await clientIp()}`, 30, 900)).allowed) return back("/login?error=rate-limited");
   const mode = url.searchParams.get("mode") === "link" ? "link" : "signin";
-  const user = mode === "link" ? await getSessionUser() : null;
+  const user = mode === "link" ? await getAccountUser() : null;
   if (mode === "link" && !user) return back("/login");
   const {
     url: appleUrl,

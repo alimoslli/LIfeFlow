@@ -5,6 +5,7 @@ import { getDb } from "@/server/db/client";
 import { withJobLock, withPlaidSyncLock } from "@/server/db/job-lock";
 import { connectionRegistry, users } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
+import { openToApp } from "@/server/services/waitlist";
 import { errorResponse, HttpError } from "@/server/http";
 import { syncGoogleCalendar, syncGoogleEmail } from "@/server/integrations/google";
 import { microsoftNeedsReauth, syncMicrosoftConnection } from "@/server/integrations/microsoft";
@@ -40,7 +41,9 @@ async function runSync() {
     .select({ userId: connectionRegistry.userId, integrationId: connectionRegistry.integrationId, provider: connectionRegistry.provider, tz: users.timezone })
     .from(connectionRegistry)
     // an account locked under 13 never syncs (its connections are being closed, below)
-    .innerJoin(users, and(eq(users.id, connectionRegistry.userId), sql`not (${users.preferences} ? 'ageBlockedAt')`));
+    .innerJoin(users, and(eq(users.id, connectionRegistry.userId), sql`not (${users.preferences} ? 'ageBlockedAt')`))
+    // nothing syncs for someone on the waitlist until they're let in
+    .where(await openToApp(getDb()));
   let ok = 0;
   let failed = 0;
   let skipped = 0;

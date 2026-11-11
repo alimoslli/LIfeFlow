@@ -55,7 +55,10 @@ export function proxy(req: NextRequest) {
     url.search = pathname === "/" ? "" : `?next=${encodeURIComponent(pathname)}`;
     return NextResponse.redirect(url);
   }
-  return NextResponse.next();
+  // The path, for the app layout's waitlist check (a request header set here, so a browser can't supply its own).
+  const headers = new Headers(req.headers);
+  headers.set("x-lf-path", pathname);
+  return NextResponse.next({ request: { headers } });
 }
 
 export const config = {

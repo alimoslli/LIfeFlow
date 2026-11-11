@@ -4,6 +4,7 @@ import { getDb } from "@/server/db/client";
 import { withJobLock } from "@/server/db/job-lock";
 import { users } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
+import { openToApp } from "@/server/services/waitlist";
 import { errorResponse, HttpError } from "@/server/http";
 import { purgeUnusedPreviews } from "@/server/services/hq-files";
 import { purgeOldRateLimits } from "@/server/rate-limit";
@@ -37,7 +38,11 @@ export async function GET(req: Request) {
 
 async function runNotify() {
   const send = await webPushSender();
-  const all = await getDb().select({ id: users.id, tz: users.timezone, prefs: users.preferences, kind: users.accountKind }).from(users);
+  // people on the waitlist get nothing from the jobs until they're let in (services/waitlist.ts)
+  const all = await getDb()
+    .select({ id: users.id, tz: users.timezone, prefs: users.preferences, kind: users.accountKind })
+    .from(users)
+    .where(await openToApp(getDb()));
   let messages = 0;
   let sent = 0;
   for (const u of all) {

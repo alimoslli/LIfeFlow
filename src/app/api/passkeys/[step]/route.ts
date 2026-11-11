@@ -1,7 +1,7 @@
 import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 import type { AuthenticationResponseJSON, RegistrationResponseJSON } from "@simplewebauthn/server";
-import { getSessionUser } from "@/server/auth/current-user";
+import { getAccountUser } from "@/server/auth/current-user";
 import { setChallengeCookie, takeChallengeCookie } from "@/server/auth/passkey-http";
 import {
   finishPasskeyAuthentication,
@@ -25,7 +25,7 @@ export const dynamic = "force-dynamic";
 /** GET /api/passkeys/status → how many passkeys this account has (for the "Use Face ID next time?" prompt). */
 export async function GET(_req: Request, { params }: { params: Promise<{ step: string }> }) {
   try {
-    const user = await getSessionUser();
+    const user = await getAccountUser();
     if (!user) throw new HttpError(401, "Not signed in");
     if ((await params).step !== "status") throw new HttpError(404, "Not found");
     const [{ n }] = await getDb()
@@ -46,7 +46,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ step: s
 export async function POST(req: Request, { params }: { params: Promise<{ step: string }> }) {
   try {
     assertSameOrigin(req);
-    const user = await getSessionUser();
+    const user = await getAccountUser();
     if (!user) throw new HttpError(401, "Not signed in");
     const { step } = await params;
     const db = getDb();

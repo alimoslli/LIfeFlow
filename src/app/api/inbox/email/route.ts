@@ -1,3 +1,4 @@
+import { appOpenFor } from "@/server/services/waitlist";
 import { NextResponse } from "next/server";
 import { todayIn } from "@/lib/dates";
 import { getDb } from "@/server/db/client";
@@ -56,6 +57,8 @@ export async function POST(req: Request) {
     for (const r of recipients) if ((user = await userForAddress(db, r))) break;
     // Unknown address: accept and drop, so senders can't probe which addresses exist.
     if (!user) return NextResponse.json({ ok: true });
+    // someone on the waitlist: accept and drop, like an unknown address
+    if (!(await appOpenFor(db, user.id))) return NextResponse.json({ ok: true });
     const from = (mail.FromFull?.Email ?? mail.From ?? "").trim().toLowerCase();
     const subject = (mail.Subject ?? "").slice(0, 300);
     const today = todayIn(user.timezone);

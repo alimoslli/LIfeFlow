@@ -42,6 +42,9 @@ function messageOf(e: unknown) {
  * Wraps a mutation: authenticates, runs it in the user's RLS scope, audits
  * it, revalidates pages, and converts errors to a form-friendly state.
  */
+/** Account, security and privacy changes stay open to people on the waitlist (everything else waits; see current-user.ts). */
+const ACCOUNT_ACTIONS = new Set(["profile.update", "ai.consent"]);
+
 export async function mutate(
   name: string,
   fn: (scope: UserScope, user: SessionUser) => Promise<MutationResult>,
@@ -49,12 +52,15 @@ export async function mutate(
 ): Promise<ActionState> {
   try {
     const done: { user?: SessionUser } = {};
-    const message = await withCurrentUser(async (scope, user) => {
-      const m = await fn(scope, user);
-      await audit(scope, "user", name);
-      done.user = user;
-      return m;
-    });
+    const message = await withCurrentUser(
+      async (scope, user) => {
+        const m = await fn(scope, user);
+        await audit(scope, "user", name);
+        done.user = user;
+        return m;
+      },
+      { account: name.startsWith("auth.") || ACCOUNT_ACTIONS.has(name) },
+    );
     if (done.user) proactiveAfterMutation(name, done.user);
     for (const p of opts.revalidate ?? ["/"]) revalidatePath(p, "layout");
     if (message && typeof message === "object") return { ok: true, message: message.message, undo: message.undo, at: Date.now() };

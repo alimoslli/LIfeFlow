@@ -1,4 +1,4 @@
-import { getSessionUser } from "@/server/auth/current-user";
+import { getAccountUser } from "@/server/auth/current-user";
 import { moneyLocked } from "@/server/auth/money-lock";
 import { withUser } from "@/server/db/with-user";
 import { enforceRateLimit, errorResponse, HttpError } from "@/server/http";
@@ -19,7 +19,7 @@ const MONEY_LOCKED = "Unlock Money first, then download your data again.";
  */
 export async function GET(req: Request) {
   try {
-    const user = await getSessionUser();
+    const user = await getAccountUser();
     if (!user) throw new HttpError(401, "Not signed in");
     if (await moneyLocked(user)) return new Response(MONEY_LOCKED, { status: 403, headers: { "content-type": "text/plain; charset=utf-8" } });
     await enforceRateLimit(`export:${user.id}`, 10, 3600);

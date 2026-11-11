@@ -93,7 +93,7 @@ export async function forgetDevicesAction(): Promise<ActionState> {
 }
 
 export async function deleteAccountAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser();
+  const user = await requireUser({ account: true });
   if (!typedDelete(fd.get("confirm"))) return { ok: false, error: "Type DELETE to confirm.", at: Date.now() };
   try {
     await deleteAccount(getDb(), user.id, String(fd.get("password") ?? ""));

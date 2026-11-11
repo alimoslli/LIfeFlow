@@ -15,10 +15,10 @@ import { PixelIcon } from "@/components/pixel/pixel-icon";
 export const metadata: Metadata = { title: "Privacy and your data" };
 
 export default async function DataSettings() {
-  const user = await requireUser();
+  const user = await requireUser({ account: true });
   const withPassword = await accountHasPassword(getDb(), user.id);
   // Recently deleted lives here now (it was its own page; owner's page map 2026-11-10).
-  const trash = await withCurrentUser(async (s, u) => ({ items: await listTrash(s), tz: u.timezone }));
+  const trash = await withCurrentUser(async (s, u) => ({ items: await listTrash(s), tz: u.timezone }), { account: true });
   return (
     <div className="flex flex-col gap-5">
       <SettingsHeader title="Privacy and your data" />

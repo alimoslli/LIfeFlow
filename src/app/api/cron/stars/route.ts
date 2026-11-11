@@ -4,6 +4,7 @@ import { getDb } from "@/server/db/client";
 import { withJobLock } from "@/server/db/job-lock";
 import { users } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
+import { openToApp } from "@/server/services/waitlist";
 import { errorResponse, HttpError } from "@/server/http";
 import { recordError } from "@/server/services/error-reports";
 import { webPushSender } from "@/server/services/push";
@@ -34,7 +35,11 @@ export async function GET(req: Request) {
 async function runStars() {
   const send = await webPushSender();
   if (!send) return { users: 0, sent: 0, push: "VAPID keys not configured" };
-  const all = await getDb().select({ id: users.id, tz: users.timezone, prefs: users.preferences, kind: users.accountKind }).from(users);
+  // people on the waitlist get nothing from the jobs until they're let in (services/waitlist.ts)
+  const all = await getDb()
+    .select({ id: users.id, tz: users.timezone, prefs: users.preferences, kind: users.accountKind })
+    .from(users)
+    .where(await openToApp(getDb()));
   let sent = 0;
   let failed = 0;
   for (const u of all) {

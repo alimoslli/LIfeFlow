@@ -25,7 +25,7 @@ type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
 
 /** Runs a two-factor change for the signed-in user with a per-user attempt limit and an audit entry. */
 async function guarded<T>(event: string, fn: (userId: string) => Promise<T>): Promise<Result<T>> {
-  const user = await requireUser();
+  const user = await requireUser({ account: true });
   const limit = await rateLimit(getDb(), `mfa-settings:${user.id}`, 10, 900);
   if (!limit.allowed) return { ok: false, error: "Too many attempts. Please wait a few minutes." };
   try {
@@ -101,7 +101,7 @@ export async function finishRestart(code: string) {
     const keep = own ? createHash("sha256").update(own).digest("hex") : null;
     await finishTwoFactorRestart(getDb(), userId, jar.get(RESTART_COOKIE)?.value ?? "", String(code).slice(0, 40), keep);
     jar.delete({ name: RESTART_COOKIE, path: "/settings/security" });
-    const user = await requireUser();
+    const user = await requireUser({ account: true });
     const cfg = emailConfig();
     if (cfg)
       after(() =>

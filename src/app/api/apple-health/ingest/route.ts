@@ -1,3 +1,4 @@
+import { appOpenFor } from "@/server/services/waitlist";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { getDb } from "@/server/db/client";
@@ -32,6 +33,8 @@ export async function POST(req: Request) {
       throw new HttpError(401, NO_KEY);
     }
     await enforceRateLimit(`health-ingest:${owner.tokenId}`, 60, 3600);
+    // nothing comes in for someone on the waitlist until they're let in
+    if (!(await appOpenFor(getDb(), owner.userId))) throw new HttpError(403, "This account is on the waitlist.");
     const text = await readLimitedBody(req, MAX_BODY);
     let body: unknown;
     try {

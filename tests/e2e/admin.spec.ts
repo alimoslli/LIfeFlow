@@ -79,7 +79,10 @@ test("admin page: 404 for everyone but the owner, and the owner can manage users
   await op.goto("/admin/people");
   await op.getByLabel("Search users").fill("rhea");
   await op.getByRole("button", { name: "Search" }).click();
-  await op.getByRole("link", { name: /Regular Rhea/ }).click();
+  await op
+    .getByRole("region", { name: "Accounts" })
+    .getByRole("link", { name: /Regular Rhea/ })
+    .click();
   await expect(op.getByText(normalEmail)).toBeVisible();
   await expect(op.getByText("private and aren't shown here")).toBeVisible();
 

@@ -5,6 +5,7 @@ import { cache } from "react";
 import { getDb } from "../db/client";
 import { withUser, type UserScope } from "../db/with-user";
 import { SESSION_COOKIE, SESSION_TTL_MS, createSession, deleteSession, validateSession, type SessionUser } from "./sessions";
+import { accessSettings, canUseApp } from "../services/waitlist";
 
 const sessionUser = cache(async (): Promise<SessionUser | null> => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
@@ -18,16 +19,39 @@ const sessionUser = cache(async (): Promise<SessionUser | null> => {
  */
 export const ageLocked = (u: SessionUser | null | undefined) => !!u?.preferences?.ageBlockedAt;
 
-/** Current user for this request (memoized per render), or null (also for an age-locked account). */
+const settingsNow = cache(() => accessSettings(getDb()));
+
+/** Setup (and a tour that's running) comes first; the waitlist starts once it's finished or skipped (owner, 2026-11-11). */
+const setUp = (u: SessionUser) => u.preferences?.onboarding !== "pending" && u.preferences?.tour !== "pending";
+
+/**
+ * True while this person waits to be let in (docs/backlog/2026-11-11-audit-and-waitlist.md): the owner's switch is on, they
+ * aren't accepted, an admin or the demo account, and their setup is done. They then reach only /waitlist and their account,
+ * security and privacy controls; every page, action and API that asks for the user gets none.
+ */
+export async function waitingNow(u: SessionUser | null | undefined): Promise<boolean> {
+  if (!u || !setUp(u)) return false;
+  return !canUseApp(u, (await settingsNow()).waitlistOn);
+}
+
+/** Current user for this request (memoized per render), or null (also for an age-locked account, or one on the waitlist). */
 export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
+  const user = await sessionUser();
+  if (!user || ageLocked(user)) return null;
+  return (await waitingNow(user)) ? null : user;
+});
+
+/** Account, security and privacy controls only (and the waitlist page): the signed-in user even while they wait. */
+export const getAccountUser = cache(async (): Promise<SessionUser | null> => {
   const user = await sessionUser();
   return ageLocked(user) ? null : user;
 });
 
-export async function requireUser(): Promise<SessionUser> {
+export async function requireUser(opts: { account?: boolean } = {}): Promise<SessionUser> {
   const user = await sessionUser();
   if (!user) redirect("/login");
   if (ageLocked(user)) redirect("/welcome");
+  if (!opts.account && (await waitingNow(user))) redirect("/waitlist");
   return user;
 }
 
@@ -39,8 +63,8 @@ export async function requireUserForWelcome(): Promise<SessionUser> {
 }
 
 /** Runs `fn` in the signed-in user's RLS scope. */
-export async function withCurrentUser<T>(fn: (scope: UserScope, user: SessionUser) => Promise<T>): Promise<T> {
-  const user = await requireUser();
+export async function withCurrentUser<T>(fn: (scope: UserScope, user: SessionUser) => Promise<T>, opts: { account?: boolean } = {}): Promise<T> {
+  const user = await requireUser(opts);
   return withUser(user.id, (scope) => fn(scope, user));
 }
 

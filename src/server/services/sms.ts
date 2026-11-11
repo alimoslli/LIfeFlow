@@ -4,6 +4,7 @@ import type { Database } from "../db/client";
 import { users, type UserPreferences } from "../db/schema";
 import { normalizePhone, sendSms, smsConfig, type SmsConfig } from "../integrations/twilio";
 import { ServiceError } from "./errors";
+import { appOpenFor } from "./waitlist";
 
 /**
  * Texting Jarvis (ADR 0017). The user links a phone by entering a code we text it;
@@ -82,7 +83,9 @@ export async function userForPhone(db: Database, raw: string) {
   const phone = normalizePhone(raw);
   if (!phone) return null;
   const [u] = await db.select({ id: users.id }).from(users).where(eq(users.smsPhone, phone));
-  return u?.id ?? null;
+  // someone on the waitlist gets no reply until they're let in (services/waitlist.ts)
+  if (!u || !(await appOpenFor(db, u.id))) return null;
+  return u.id;
 }
 
 /**

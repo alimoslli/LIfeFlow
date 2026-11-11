@@ -4,7 +4,7 @@ import { Share } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 /** The invite link, with Copy and (where the phone supports it) Share. */
-export function InviteShare({ link, firstName }: { link: string; firstName: string }) {
+export function InviteShare({ link, firstName, dark = false }: { link: string; firstName: string; /** on the night sky (the waitlist) */ dark?: boolean }) {
   const [copied, setCopied] = useState(false);
   // Known only in the browser, so it's checked after the first render.
   const [canShare, setCanShare] = useState(false);
@@ -31,7 +31,7 @@ export function InviteShare({ link, firstName }: { link: string; firstName: stri
       .catch(() => {});
   return (
     <div className="mt-5 flex flex-col gap-3">
-      <label htmlFor="invite-link" className="text-sm font-medium text-text-2">
+      <label htmlFor="invite-link" className={dark ? "text-sm font-medium text-white/70" : "text-sm font-medium text-text-2"}>
         Your link
       </label>
       <input
@@ -39,7 +39,11 @@ export function InviteShare({ link, firstName }: { link: string; firstName: stri
         readOnly
         value={link}
         onFocus={(e) => e.currentTarget.select()}
-        className="h-12 w-full min-w-0 rounded-2xl bg-surface-2 px-4 text-[0.9375rem] text-text"
+        className={
+          dark
+            ? "h-12 w-full min-w-0 rounded-2xl bg-white/10 px-4 text-[0.9375rem] text-white ring-1 ring-white/15"
+            : "h-12 w-full min-w-0 rounded-2xl bg-surface-2 px-4 text-[0.9375rem] text-text"
+        }
       />
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={copy} className="lf-sb lf-sb-sun lf-sb-sm">
@@ -47,7 +51,7 @@ export function InviteShare({ link, firstName }: { link: string; firstName: stri
           {copied ? "Copied" : "Copy link"}
         </button>
         {canShare && (
-          <button type="button" onClick={share} className="lf-sb lf-sb-app lf-sb-sm">
+          <button type="button" onClick={share} className={dark ? "lf-sb lf-sb-glass lf-sb-sm" : "lf-sb lf-sb-app lf-sb-sm"}>
             <Share className="h-4 w-4" />
             Share
           </button>

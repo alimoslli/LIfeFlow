@@ -1,0 +1,93 @@
+/* The waitlist's night (see page.tsx). Transform and opacity only for motion; still under reduced motion. */
+@layer components {
+  .wl-glow {
+    background: radial-gradient(ellipse 60% 55% at 78% 70%, rgb(255 215 122 / 0.16), transparent 70%);
+  }
+
+  /* the scene: a deep night with the gate's warm light on the right */
+  .wl-scene {
+    background: radial-gradient(circle at 88% 78%, rgb(255 215 122 / 0.28), transparent 38%), linear-gradient(to bottom, #0b1a3a, #142a55 70%, #1b3768);
+  }
+
+  /* a stepped pixel cloud bridge they walk on */
+  .wl-bridge {
+    background:
+      linear-gradient(to bottom, transparent 0 6px, rgb(178 196 232 / 0.9) 6px 10px, rgb(120 144 196 / 0.95) 10px),
+      repeating-linear-gradient(to right, transparent 0 14px, rgb(178 196 232 / 0.9) 14px 22px);
+    background-size:
+      100% 100%,
+      100% 6px;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+  }
+
+  /* the gate: a pixel arch filled with morning light, and a small sign above it */
+  .wl-gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+  }
+  .wl-gate-sign {
+    color: #ffe9a8;
+    background: rgb(4 10 24 / 0.55);
+    padding: 0.125rem 0.375rem;
+    box-shadow: inset 0 0 0 1px rgb(255 215 122 / 0.45);
+  }
+  .wl-gate-arch {
+    display: block;
+    width: 4.5rem;
+    height: 5.5rem;
+    border-radius: 2.25rem 2.25rem 0 0;
+    background: linear-gradient(to bottom, #fff1c2, #fbb24a);
+    box-shadow:
+      0 0 0 4px #2a467a,
+      0 0 0 8px #10203c,
+      0 0 36px 8px rgb(255 215 122 / 0.45);
+    animation: wl-breathe 3.2s ease-in-out infinite alternate;
+  }
+
+  /* the line bobs gently, a little out of step, as if waiting on their toes */
+  .wl-walker {
+    animation: wl-bob 1.6s ease-in-out infinite alternate;
+  }
+  .wl-me {
+    animation-duration: 1.2s;
+  }
+  .wl-pin {
+    box-shadow: 0 0 14px rgb(255 215 122 / 0.6);
+  }
+
+  /* the invite card reads like a ticket: a dashed gold edge inside the glass */
+  .wl-ticket::after {
+    content: "";
+    position: absolute;
+    inset: 0.5rem;
+    border-radius: 1.375rem;
+    border: 1px dashed rgb(255 215 122 / 0.35);
+    pointer-events: none;
+  }
+
+  @keyframes wl-bob {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(-3px);
+    }
+  }
+  @keyframes wl-breathe {
+    from {
+      opacity: 0.85;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .wl-walker,
+    .wl-gate-arch {
+      animation: none;
+    }
+  }
+}

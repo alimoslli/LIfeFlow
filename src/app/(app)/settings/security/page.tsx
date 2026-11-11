@@ -27,30 +27,33 @@ export const metadata: Metadata = { title: "Sign-in and locks" };
 
 export default async function SecuritySettings({ searchParams }: { searchParams: Promise<{ apple?: string; google?: string }> }) {
   const { apple: appleResult, google: googleResult } = await searchParams;
-  const d = await withCurrentUser(async (s, u) => {
-    const active = await getDb()
-      .select({ createdAt: sessions.createdAt, lastSeenAt: sessions.lastSeenAt, userAgent: sessions.userAgent })
-      .from(sessions)
-      .where(eq(sessions.userId, u.id))
-      .orderBy(desc(sessions.lastSeenAt));
-    const tf = await twoFactorStatus(getDb(), u.id);
-    const passkeys = await listPasskeys(getDb(), u.id);
-    const apple = await appleIdentityFor(getDb(), u.id);
-    const google = await googleIdentityFor(getDb(), u.id);
-    const withPassword = await accountHasPassword(getDb(), u.id);
-    return {
-      active,
-      tz: u.timezone,
-      user: { name: u.name, email: u.email },
-      tf,
-      passkeys,
-      apple,
-      google,
-      withPassword,
-      lock: moneyLockSettings(u.preferences),
-      demo: u.accountKind === "demo",
-    };
-  });
+  const d = await withCurrentUser(
+    async (s, u) => {
+      const active = await getDb()
+        .select({ createdAt: sessions.createdAt, lastSeenAt: sessions.lastSeenAt, userAgent: sessions.userAgent })
+        .from(sessions)
+        .where(eq(sessions.userId, u.id))
+        .orderBy(desc(sessions.lastSeenAt));
+      const tf = await twoFactorStatus(getDb(), u.id);
+      const passkeys = await listPasskeys(getDb(), u.id);
+      const apple = await appleIdentityFor(getDb(), u.id);
+      const google = await googleIdentityFor(getDb(), u.id);
+      const withPassword = await accountHasPassword(getDb(), u.id);
+      return {
+        active,
+        tz: u.timezone,
+        user: { name: u.name, email: u.email },
+        tf,
+        passkeys,
+        apple,
+        google,
+        withPassword,
+        lock: moneyLockSettings(u.preferences),
+        demo: u.accountKind === "demo",
+      };
+    },
+    { account: true },
+  );
   const day = (x: Date) => formatIn(x, d.tz, "MMM d, yyyy");
   return (
     <div className="flex flex-col gap-5">

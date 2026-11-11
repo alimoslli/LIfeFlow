@@ -1,7 +1,7 @@
 import { and, count, desc, eq, ilike, inArray, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
 import { microsoftConfig } from "../integrations/microsoft";
 import type { Database } from "../db/client";
-import { adminActions, announcements, errorReports, ownerInbox, passkeys, rateLimitBuckets, rememberedDevices, sessions, users } from "../db/schema";
+import { adminActions, announcements, appAccess, errorReports, ownerInbox, passkeys, rateLimitBuckets, rememberedDevices, sessions, users } from "../db/schema";
 import { isAdminEmail, type Admin } from "../auth/admin";
 import { billingConfig, inTestingPhase, LIMIT_MONTH_SECONDS, TESTING_LIMITS } from "../billing";
 import { emailConfig } from "../integrations/email";
@@ -10,6 +10,7 @@ import { plaidConfig } from "../integrations/plaid";
 import { smsConfig } from "../integrations/twilio";
 import { rateLimit } from "../rate-limit";
 import { DeletionBlockedError, revokeOutsideAccess, type CleanupDeps } from "./account-cleanup";
+import { acceptUsers, inLine, nextInLine } from "./waitlist";
 
 /**
  * Owner admin page (ADR 0022). Accounts and operations only: per-user content is protected by row-level security
@@ -644,4 +645,147 @@ export async function usersCsv(db: Database, actor: Admin): Promise<string> {
     [u.name, u.email, u.plan, u.joined, u.lastSeen ? new Date(u.lastSeen) : "", u.suspended ?? "", u.invitedBy ?? ""].map(csvCell).join(","),
   );
   return [head.map(csvCell).join(","), ...lines].join("\r\n") + "\r\n";
+}
+
+// ---------------------------------------------------------------------------
+// the waitlist (owner, 2026-11-11; docs/backlog/2026-11-11-audit-and-waitlist.md)
+
+export type WaitlistRow = { id: string; place: number; name: string; email: string; createdAt: Date; friends: number };
+
+export type WaitlistView = {
+  on: boolean;
+  launchNote: string | null;
+  waiting: number;
+  inApp: number;
+  rows: WaitlistRow[];
+  /** People matching the search (all waiting people without one). */
+  total: number;
+  page: number;
+  pages: number;
+};
+
+const BATCH_SIZES = [5, 10, 25, 50, 100] as const;
+export const waitlistBatchSizes = BATCH_SIZES;
+
+/** The line in order, with each person's true place even when searching, and how many friends signed up with their link. */
+export async function waitlistView(db: Database, f: { q?: string; page?: number } = {}): Promise<WaitlistView> {
+  const page = Math.max(1, Math.floor(f.page ?? 1));
+  const q = f.q?.trim().slice(0, 100);
+  return timed(db, async (tx) => {
+    const [settings] = await tx.select({ on: appAccess.waitlistOn, note: appAccess.launchNote }).from(appAccess).where(eq(appAccess.id, "app"));
+    const [{ waiting }] = await tx.select({ waiting: count() }).from(users).where(inLine());
+    const [{ inApp }] = await tx
+      .select({ inApp: count() })
+      .from(users)
+      .where(and(eq(users.accountKind, "standard"), eq(users.access, "in")));
+    const line = tx.$with("line").as(
+      tx
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          createdAt: users.createdAt,
+          place: sql<number>`row_number() over (order by ${users.waitlistRank})`.as("place"),
+        })
+        .from(users)
+        .where(inLine()),
+    );
+    const match = q ? or(ilike(line.email, likePattern(q)), ilike(line.name, likePattern(q))) : undefined;
+    const [{ total }] = await tx.with(line).select({ total: count() }).from(line).where(match);
+    const list = await tx
+      .with(line)
+      .select({
+        id: line.id,
+        name: line.name,
+        email: line.email,
+        createdAt: line.createdAt,
+        place: line.place,
+        friends: sql<number>`(select count(*)::int from ${users} f where f.invited_by = ${line.id})`,
+      })
+      .from(line)
+      .where(match)
+      .orderBy(line.place)
+      .limit(PAGE_SIZE)
+      .offset((page - 1) * PAGE_SIZE);
+    return {
+      on: settings?.on ?? false,
+      launchNote: settings?.note ?? null,
+      waiting,
+      inApp,
+      rows: list.map((r) => ({ ...r, place: Number(r.place), friends: Number(r.friends) })),
+      total,
+      page,
+      pages: Math.max(1, Math.ceil(total / PAGE_SIZE)),
+    };
+  });
+}
+
+/** The next people in line, for the batch preview. Only sizes the page offers. */
+export async function waitlistNext(db: Database, size: number) {
+  const n = (BATCH_SIZES as readonly number[]).includes(size) ? size : 10;
+  return timed(db, (tx) => nextInLine(tx as unknown as Database, n));
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Lets the exact people the owner confirmed in (one, or a previewed batch of up to 100). Safe to retry: anyone already in
+ * is reported, not changed. Each person let in gets an admin_actions row with the batch id, so history shows who and when.
+ * App access only: never a plan, never a message (notices are prepared separately and not sent).
+ */
+export async function acceptFromWaitlist(db: Database, actor: Admin, ids: string[], confirmed: boolean) {
+  if (!confirmed) throw new AdminError("Tick the box to confirm. Nobody was let in.");
+  const want = [...new Set(ids.filter((id) => UUID.test(id)))];
+  if (!want.length) throw new AdminError("Nobody was chosen.");
+  if (want.length > 100) throw new AdminError("At most 100 people at a time.");
+  await limited(db, actor);
+  return db.transaction(async (tx) => {
+    const people = await tx.select({ id: users.id, email: users.email, kind: users.accountKind }).from(users).where(inArray(users.id, want));
+    const allowed = people.filter((p) => p.id !== actor.id && !isAdminEmail(p.email) && p.kind === "standard").map((p) => p.id);
+    const { accepted, already } = await acceptUsers(tx as unknown as Database, allowed);
+    const batch = crypto.randomUUID();
+    const byId = new Map(people.map((p) => [p.id, p]));
+    for (const id of accepted) {
+      await log(tx, actor, "waitlist.accept", { id, email: byId.get(id)!.email }, { batch, size: accepted.length });
+    }
+    return { accepted: accepted.length, already: already.length + (want.length - allowed.length) };
+  });
+}
+
+/** The owner's switch and the launch line. Turning it on needs a confirm, because everyone not let in starts waiting. */
+export async function setWaitlist(db: Database, actor: Admin, opts: { on: boolean; confirmed: boolean; launchNote?: string | null }) {
+  const note = opts.launchNote == null ? undefined : opts.launchNote.replace(/\s+/g, " ").trim().slice(0, 200) || null;
+  if (opts.on && !opts.confirmed) throw new AdminError("Tick the box to confirm. The waitlist is still off.");
+  await limited(db, actor);
+  await db.transaction(async (tx) => {
+    const [was] = await tx.select({ on: appAccess.waitlistOn, note: appAccess.launchNote }).from(appAccess).where(eq(appAccess.id, "app"));
+    const values = { waitlistOn: opts.on, ...(note !== undefined ? { launchNote: note } : {}), updatedByEmail: actor.email, updatedAt: new Date() };
+    await tx
+      .insert(appAccess)
+      .values({ id: "app", ...values })
+      .onConflictDoUpdate({ target: appAccess.id, set: values });
+    if ((was?.on ?? false) !== opts.on) await log(tx, actor, opts.on ? "waitlist.on" : "waitlist.off", null);
+    if (note !== undefined && note !== (was?.note ?? null)) await log(tx, actor, "waitlist.note", null, { note });
+  });
+}
+
+export type WaitlistEvent = { id: string; action: string; actorEmail: string; targetEmail: string | null; createdAt: Date; metadata: Record<string, unknown> };
+
+/** Who was let in and when the switch moved, newest first. */
+export async function waitlistHistory(db: Database, limit = 30): Promise<WaitlistEvent[]> {
+  return timed(db, (tx) =>
+    tx
+      .select({
+        id: adminActions.id,
+        action: adminActions.action,
+        actorEmail: adminActions.actorEmail,
+        targetEmail: adminActions.targetEmail,
+        createdAt: adminActions.createdAt,
+        metadata: adminActions.metadata,
+      })
+      .from(adminActions)
+      .where(sql`${adminActions.action} like 'waitlist.%'`)
+      .orderBy(desc(adminActions.createdAt))
+      .limit(Math.min(Math.max(1, limit), 100)),
+  );
 }

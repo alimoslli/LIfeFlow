@@ -5,6 +5,7 @@ import { requireAdmin } from "@/server/auth/require-admin";
 import { getDb } from "@/server/db/client";
 import {
   AdminError,
+  acceptFromWaitlist,
   clearError,
   createAnnouncement,
   deleteUser,
@@ -13,6 +14,7 @@ import {
   setInboxHandled,
   setPlan,
   setSuspended,
+  setWaitlist,
   signOutEverywhere,
 } from "@/server/services/admin";
 
@@ -141,4 +143,32 @@ export async function endAnnouncementAction(fd: FormData) {
       return "Ended. The banner is gone.";
     },
   );
+}
+
+const waitlistBack = (msg: string, ok: boolean) => `/admin/people?${ok ? "done" : "error"}=${enc(msg)}#waitlist`;
+const plural = (n: number) => `${n} ${n === 1 ? "person" : "people"}`;
+
+/** Lets in one person or the previewed batch (the exact ids shown), after the confirm box. Safe to press twice. */
+export async function acceptWaitlistAction(fd: FormData) {
+  const admin = await requireAdmin();
+  const ids = fd
+    .getAll("id")
+    .map((v) => String(v).slice(0, 40))
+    .slice(0, 101);
+  await run(waitlistBack, async () => {
+    const r = await acceptFromWaitlist(getDb(), admin, ids, field(fd, "confirm") === "yes");
+    if (!r.accepted) return r.already ? "They were already in. Nothing changed." : "Nobody was let in.";
+    return `Let ${plural(r.accepted)} in.${r.already ? ` ${plural(r.already)} already had access.` : ""} Nobody was messaged.`;
+  });
+}
+
+/** The owner's switch and the launch line. */
+export async function waitlistSwitchAction(fd: FormData) {
+  const admin = await requireAdmin();
+  const on = field(fd, "on") === "1";
+  const note = fd.has("launchNote") ? String(fd.get("launchNote") ?? "").slice(0, 400) : undefined;
+  await run(waitlistBack, async () => {
+    await setWaitlist(getDb(), admin, { on, confirmed: field(fd, "confirm") === "yes", launchNote: note });
+    return on ? "The waitlist is on. People you haven't let in see their place in line." : "The waitlist is off. Everyone can use the app.";
+  });
 }
