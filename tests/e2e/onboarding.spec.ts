@@ -48,7 +48,7 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
   const google = page.getByRole("link", { name: "Connect Google" });
   if (await google.count()) await expect(google).toHaveAttribute("href", "/api/integrations/google/start?from=welcome");
   // Coming back from Google (its callback lands here): the same step, a plain line about what happened, and
-  // everything chosen before is still there (the skyling, and where they work, which is saved when setup finishes).
+  // everything chosen before is still there (the skyling and the birthday).
   await page.goto("/welcome?connected=google&result=missing_scopes");
   await expect(page.getByRole("heading", { name: "Connect your sky" })).toBeVisible();
   await expect(page.getByText("Google Calendar needs calendar access to fill your sky.", { exact: false })).toBeVisible();
@@ -91,7 +91,8 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
   await expect(page.getByRole("dialog", { name: "Nova" })).toHaveCount(0);
   await expect(clouds.first()).toBeVisible();
 
-  // Saved: their skyling, about them (birthday, school) and where they work.
+  // Saved: their skyling and about them (birthday). No school or workplace is typed in setup any more (owner,
+  // 2026-11-11): connecting fills those in, so nothing is made up here.
   const [prefs] = await queryAsUser<{
     p: { lifeStage?: string; assistantName?: string; assistantStyle?: string; companion?: string; birthDate?: string; school?: string };
   }>(email, "select preferences as p from users where email = $1", [email]);
@@ -101,9 +102,9 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
     assistantStyle: "coach",
     companion: "ray",
     birthDate: "2005-04-12",
-    school: "State University",
   });
-  expect(await queryAsUser(email, "select name from employers")).toEqual([{ name: "Target" }]);
+  expect(prefs.p.school).toBeUndefined();
+  expect(await queryAsUser(email, "select name from employers")).toEqual([]);
   // The name typed in the welcome was saved (the test's sign-up had set "Maya Chen").
   expect(await queryAsUser(email, "select name from users where email = $1", [email])).toEqual([{ name: "Maya" }]);
 
