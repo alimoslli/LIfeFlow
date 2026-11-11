@@ -9,7 +9,7 @@ import { summarizeCashflow } from "./finance/cashflow";
 import { expectedPay, upcomingBills } from "./finance/forecast";
 import { bankSeries, listGoals } from "./finance/planning";
 import { upcomingTrials } from "./finance/subscriptions";
-import { queryTransactions } from "./finance/transactions";
+import { queryAllTransactions } from "./finance/transactions";
 import { healthSummary } from "./health";
 import { lifeTimeline } from "./milestones";
 import { listPersonalGoals } from "./personal-goals";
@@ -173,7 +173,7 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
       () => expectedPay(scope, today, until, bank),
       () => listGoals(scope),
       () => upcomingTrials(scope, today, until),
-      () => queryTransactions(scope, { from, to: today, limit: 3000 }),
+      () => queryAllTransactions(scope, { from, to: today }),
     );
     const money = { kind: "due" as const, cat: "due" as const, end: null, allDay: true, subtitle: null };
     for (const b of bills)

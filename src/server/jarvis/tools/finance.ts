@@ -19,7 +19,7 @@ import {
   upcomingRecurring,
   updateRecurring,
 } from "../../services/finance/planning";
-import { TRANSACTION_KINDS, createTransaction, findTransactions, queryTransactions } from "../../services/finance/transactions";
+import { TRANSACTION_KINDS, createTransaction, findTransactions, queryAllTransactions } from "../../services/finance/transactions";
 import { scanTransactions } from "../../services/finance/findings";
 import { addDaysStr, formatIn } from "@/lib/dates";
 import { holdings } from "../../db/schema";
@@ -372,7 +372,7 @@ export const financeTools = [
     async execute(_a, ctx) {
       return ctx.run(async (s) => {
         const [txns, recurring] = await series(
-          () => queryTransactions(s, { from: addDaysStr(ctx.today, -400), to: ctx.today, limit: 20_000 }),
+          () => queryAllTransactions(s, { from: addDaysStr(ctx.today, -400), to: ctx.today }),
           () => suggestRecurring(s, ctx.today),
         );
         const scan = scanTransactions(txns, ctx.today);

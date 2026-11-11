@@ -10,7 +10,7 @@ import { goalsWithPlans } from "./goals";
 import { balancesOf } from "./overview";
 import { amountsClose } from "./bill-match";
 import { bankSeries, budgetStatus, listRecurring, seriesForItem, upcomingRecurring } from "./planning";
-import { queryTransactions } from "./transactions";
+import { queryAllTransactions } from "./transactions";
 
 /**
  * Coaching math. Everything here is computed from the user's records and
@@ -24,7 +24,7 @@ const yearlyFactor = { weekly: 52, biweekly: 26, monthly: 12, quarterly: 4, year
 async function lastThreeMonths(scope: UserScope, today: string) {
   const end = addDaysStr(monthStart(today), -1);
   const start = monthStart(addDaysStr(monthStart(addDaysStr(monthStart(end), -1)), -1));
-  const txns = await queryTransactions(scope, { from: start, to: end, limit: 20_000 });
+  const txns = await queryAllTransactions(scope, { from: start, to: end });
   const months = Math.max(1, new Set(txns.map((t) => t.date.slice(0, 7))).size);
   return { txns, months, from: start, to: end, hasData: txns.length > 0 };
 }
@@ -85,7 +85,7 @@ export async function subscriptionReport(scope: UserScope, today: string) {
   const [tracked, bank, recent] = await series(
     () => listRecurring(scope),
     () => bankSeries(scope, today),
-    () => queryTransactions(scope, { from: addDaysStr(today, -200), to: today, kinds: ["expense"], limit: 20_000 }),
+    () => queryAllTransactions(scope, { from: addDaysStr(today, -200), to: today, kinds: ["expense"] }),
   );
   const detected = bank.untracked;
   const words = (x: string) =>
@@ -293,7 +293,7 @@ export async function emergencyFundPlan(scope: UserScope, today: string, targetM
 /** What rounding every card/debit purchase up to the next dollar would have saved last month. Pure-ish (reads data). */
 export async function roundUps(scope: UserScope, today: string) {
   const from = monthStart(addDaysStr(monthStart(today), -1));
-  const txns = await queryTransactions(scope, { from, to: monthEnd(from), kinds: ["expense"], limit: 20_000 });
+  const txns = await queryAllTransactions(scope, { from, to: monthEnd(from), kinds: ["expense"] });
   const cents = txns.reduce((s, t) => s + ((100 - (Math.abs(t.amountCents) % 100)) % 100), 0);
   return { month: from.slice(0, 7), purchases: txns.length, roundUpCents: cents, yearlyCents: cents * 12 };
 }

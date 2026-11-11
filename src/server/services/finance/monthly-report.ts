@@ -7,7 +7,7 @@ import { rollupToParents, spendingByCategoryId, summarizeCashflow } from "./cash
 import { goalsWithPlans } from "./goals";
 import { netWorthTrend } from "./investing";
 import { budgetStatus } from "./planning";
-import { queryTransactions } from "./transactions";
+import { queryAllTransactions } from "./transactions";
 
 /** Daily: what you spent, what's safe today, and anything due soon. */
 /** Monthly: the full report, with net worth trend and goal progress. */
@@ -16,8 +16,8 @@ export async function monthlyReport(scope: UserScope, today: string, month?: str
   const end = monthEnd(m) > today ? today : monthEnd(m);
   const pm = monthStart(addDaysStr(m, -1));
   const [cur, prev, cats, budgets, goals, trend] = await series(
-    () => queryTransactions(scope, { from: m, to: end, limit: 20_000 }),
-    () => queryTransactions(scope, { from: pm, to: monthEnd(pm), limit: 20_000 }),
+    () => queryAllTransactions(scope, { from: m, to: end }),
+    () => queryAllTransactions(scope, { from: pm, to: monthEnd(pm) }),
     () => listCategories(scope),
     () => budgetStatus(scope, m),
     () => goalsWithPlans(scope, today),

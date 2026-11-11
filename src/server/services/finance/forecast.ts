@@ -9,7 +9,7 @@ import { balancesOf } from "./overview";
 import { nameRelation, trackedKeys, tracksSeries } from "./bill-match";
 import { bankSeries, budgetStatus, listRecurring, upcomingRecurring, type BankSeries } from "./planning";
 import { MIN_CONFIDENCE, detectRecurring, merchantKey, merchantKeys, nthOccurrence, occurrencesBetween, type RecurringCandidate } from "./recurring-detect";
-import { queryTransactions } from "./transactions";
+import { queryAllTransactions } from "./transactions";
 import { listEmployers } from "../work";
 
 /**
@@ -106,7 +106,7 @@ const trackedBills = (bank: BankSeries) => bank.trackedActive.filter((c) => c.la
 async function typicalDailySpend(scope: UserScope, today: string, billSeries: RecurringCandidate[] = []) {
   const from = addDaysStr(today, -56);
   const [txns, recurring] = await series(
-    () => queryTransactions(scope, { from, to: addDaysStr(today, -1), limit: 20_000 }),
+    () => queryAllTransactions(scope, { from, to: addDaysStr(today, -1) }),
     () => listRecurring(scope),
   );
   // A bill's own charges come out, never the rest of what that merchant sells: Prime is a bill, the other Amazon orders aren't.
@@ -208,7 +208,7 @@ export async function expectedPay(scope: UserScope, today: string, to: string, b
   const isSalaryPay = salaryPayOf(jobs);
   const tracked = (await upcomingRecurring(scope, today, to, bank)).filter((u) => u.amountCents > 0 && isSalaryPay(u.name));
   if (tracked.length) return tracked.map((t) => ({ date: t.date, amountCents: t.amountCents, name: t.name }));
-  const deposits = await queryTransactions(scope, { from: addDaysStr(today, -120), to: today, kinds: ["income"], limit: 2000 });
+  const deposits = await queryAllTransactions(scope, { from: addDaysStr(today, -120), to: today, kinds: ["income"] });
   const pattern = detectRecurring(deposits)
     .filter((c) => c.latestAmountCents > 0 && c.confidence >= MIN_CONFIDENCE && !c.variableAmount && isSalaryPay(c.name, [c.merchantKey]))
     .sort((a, b) => b.latestAmountCents - a.latestAmountCents)[0];
@@ -283,7 +283,7 @@ export function skippableMerchant(txns: { merchantName: string | null; descripti
 export async function budgetWarnings(scope: UserScope, today: string) {
   const [budgets, txns, cats] = await series(
     () => budgetStatus(scope, today),
-    () => queryTransactions(scope, { from: monthStart(today), to: today, kinds: ["expense"], limit: 20_000 }),
+    () => queryAllTransactions(scope, { from: monthStart(today), to: today, kinds: ["expense"] }),
     () => listCategories(scope),
   );
   const names = new Map(cats.map((c) => [c.id, c.name]));

@@ -24,7 +24,7 @@ import { cashForecast, upcomingBills } from "../finance/forecast";
 import { goalsWithPlans } from "../finance/goals";
 import { budgetStatus } from "../finance/planning";
 import { planPaycheck, subscriptionReport } from "../finance/coach";
-import { firstSpendDates, queryTransactions } from "../finance/transactions";
+import { firstSpendDates, queryAllTransactions } from "../finance/transactions";
 import { merchantKey } from "../finance/recurring-detect";
 import { listAssignments } from "../school";
 import { listShifts } from "../work";
@@ -93,7 +93,7 @@ const PACE_MIN_WEEKS = 3;
 const spendingPace: Detector = async ({ scope, today }) => {
   const wk = weekStart(today);
   const span = daysBetween(wk, today);
-  const txns = await queryTransactions(scope, { from: addDaysStr(wk, -56), to: today, kinds: ["expense"], limit: 5000 });
+  const txns = await queryAllTransactions(scope, { from: addDaysStr(wk, -56), to: today, kinds: ["expense"] });
   const byCat = new Map<string, { id: string; name: string; now: number; past: number[] }>();
   for (const t of txns) {
     if (!t.categoryId || !t.categoryName) continue;
@@ -417,7 +417,7 @@ const savedMore: Detector = async ({ scope, today }) => {
   if (Number(today.slice(8, 10)) > 7) return [];
   const last = monthStart(addDaysStr(monthStart(today), -1));
   const prev = monthStart(addDaysStr(last, -1));
-  const txns = await queryTransactions(scope, { from: prev, to: addDaysStr(monthStart(today), -1), kinds: ["expense", "income"], limit: 10000 });
+  const txns = await queryAllTransactions(scope, { from: prev, to: addDaysStr(monthStart(today), -1), kinds: ["expense", "income"] });
   const net = (from: string, to: string) => txns.filter((t) => t.date >= from && t.date < to).reduce((s, t) => s + t.amountCents, 0);
   const saved = net(last, monthStart(today));
   const before = net(prev, last);
@@ -472,7 +472,7 @@ const listOf = (xs: string[]) => (xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0
 export const FIRST_TIME_CENTS = 25_000;
 
 const unusualSpend: Detector = async ({ scope, today }) => {
-  const txns = await queryTransactions(scope, { from: addDaysStr(today, -120), to: today, kinds: ["expense"], limit: 5000 });
+  const txns = await queryAllTransactions(scope, { from: addDaysStr(today, -120), to: today, kinds: ["expense"] });
   const recent = txns.filter((t) => t.date >= addDaysStr(today, -2) && spendOf(t) >= 5000);
   const out: Candidate[] = [];
   for (const t of recent) {
@@ -508,7 +508,7 @@ const unusualSpend: Detector = async ({ scope, today }) => {
 
 /** Things people miss in their own bank feed: a possible double charge, and bank fees this month. */
 const moneyFinds: Detector = async ({ scope, today }) => {
-  const txns = await queryTransactions(scope, { from: addDaysStr(today, -120), to: today, limit: 5000 });
+  const txns = await queryAllTransactions(scope, { from: addDaysStr(today, -120), to: today });
   const r = scanTransactions(txns, today);
   const out: Candidate[] = [];
   for (const d of r.doubleCharges.slice(0, 1))

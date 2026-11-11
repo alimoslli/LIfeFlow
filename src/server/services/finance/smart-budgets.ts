@@ -7,7 +7,7 @@ import { listCategories } from "./categories";
 import { needOrWant } from "./categorize";
 import { rollupToParents, spendingByCategoryId, summarizeCashflow } from "./cashflow";
 import { listGoals, setBudget } from "./planning";
-import { queryTransactions } from "./transactions";
+import { queryAllTransactions } from "./transactions";
 
 /**
  * Budgets built from the user's real history (the last 3 full months).
@@ -29,7 +29,7 @@ export async function suggestBudgets(scope: UserScope, today: string, method: Bu
   const start = monthStart(addDaysStr(monthStart(addDaysStr(monthStart(end), -1)), -1));
   const [cats, txns, goals] = await series(
     () => listCategories(scope),
-    () => queryTransactions(scope, { from: start, to: monthEnd(end), limit: 20_000 }),
+    () => queryAllTransactions(scope, { from: start, to: monthEnd(end) }),
     () => listGoals(scope),
   );
   const months = new Set(txns.map((t) => t.date.slice(0, 7))).size;
