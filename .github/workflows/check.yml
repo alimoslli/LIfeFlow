@@ -1,0 +1,53 @@
+name: check
+
+# Typecheck, lint, format check, unit + integration tests. No secrets, no deploy steps.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Row-level security is skipped for superusers, so tests run as a plain role (see README quick start).
+      DATABASE_URL: postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow
+      TEST_DATABASE_URL: postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_test
+      # A fake model: no paid calls, nothing leaves the runner.
+      OPENAI_API_KEY: sk-none
+      OPENAI_BASE_URL: http://127.0.0.1:9/v1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Create the database role and databases
+        run: |
+          psql "postgresql://postgres:postgres@localhost:5432/postgres" <<'SQL'
+          CREATE ROLE budgetflow LOGIN PASSWORD 'budgetflow_dev' NOSUPERUSER NOBYPASSRLS;
+          CREATE DATABASE budgetflow OWNER budgetflow;
+          CREATE DATABASE budgetflow_test OWNER budgetflow;
+          SQL
+      - run: npm ci
+      - run: npm run check
