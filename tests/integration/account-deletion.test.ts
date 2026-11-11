@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { closeDb, getDb } from "@/server/db/client";
-import { errorReports, integrations, users } from "@/server/db/schema";
+import { errorReports, integrations, ownerInbox, users } from "@/server/db/schema";
 import { encryptSecret } from "@/server/crypto";
 import { deleteAccount } from "@/server/services/accounts";
 import { saveGoogleConnection } from "@/server/integrations/google";
@@ -224,6 +224,40 @@ describe("deleting an account closes what lives outside our database", () => {
     } finally {
       withoutStripe();
       process.env.ADMIN_EMAILS = savedAdmins;
+    }
+  });
+});
+
+describe("deleting an account removes the owner's copies of its feedback", () => {
+  const feedbackOf = async (id: string) => getDb().select().from(ownerInbox).where(eq(ownerInbox.senderUserId, id));
+  const send = (u: { id: string; name: string; email: string }) =>
+    getDb().insert(ownerInbox).values({ senderUserId: u.id, senderName: u.name, senderEmail: u.email, kind: "idea", message: "Please add dark mode" });
+
+  it("the person's own deletion", async () => {
+    const u = await setup();
+    const other = await makeUser("Keeps Theirs");
+    await send(u.user);
+    await send(other.user);
+    expect(await feedbackOf(u.user.id)).toHaveLength(1);
+    await deleteAccount(getDb(), u.user.id, PASSWORD, { fetch: fakeWorld().f });
+    expect(await feedbackOf(u.user.id)).toEqual([]);
+    expect(await getDb().select().from(ownerInbox).where(eq(ownerInbox.senderEmail, u.user.email))).toEqual([]);
+    expect(await feedbackOf(other.user.id)).toHaveLength(1);
+  });
+
+  it("the owner's deletion", async () => {
+    const owner = await makeUser("Owner");
+    await getDb().update(users).set({ totpEnabledAt: new Date() }).where(eq(users.id, owner.user.id));
+    const saved = process.env.ADMIN_EMAILS;
+    process.env.ADMIN_EMAILS = [saved, owner.user.email].filter(Boolean).join(",");
+    try {
+      const admin = (await adminFor(getDb(), owner.user.id, { ADMIN_EMAILS: owner.user.email }))!;
+      const u = await setup();
+      await send(u.user);
+      await deleteUser(getDb(), admin, u.user.id, u.user.email, { fetch: fakeWorld().f });
+      expect(await getDb().select().from(ownerInbox).where(eq(ownerInbox.senderEmail, u.user.email))).toEqual([]);
+    } finally {
+      process.env.ADMIN_EMAILS = saved;
     }
   });
 });

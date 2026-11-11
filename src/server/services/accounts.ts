@@ -8,7 +8,7 @@ import { ServiceError } from "./errors";
 import { hashPassword, verifyPassword } from "../auth/password";
 import { revokeRememberedDevices } from "../auth/remembered-devices";
 import type { Database } from "../db/client";
-import { users, type UserPreferences } from "../db/schema";
+import { ownerInbox, users, type UserPreferences } from "../db/schema";
 import { withUser } from "../db/with-user";
 import { lockQueue } from "./waitlist";
 import { seedDefaultCategories } from "./finance/categories";
@@ -269,6 +269,8 @@ export async function deleteAccount(db: Database, userId: string, password: stri
   // Queue lock first (like every change to the queue), so the deletion can't land between a referral move's read and its swap.
   await db.transaction(async (tx) => {
     await lockQueue(tx);
+    // copies of their feedback in the owner's inbox go too: that table has no user_id, so nothing else would remove them
+    await tx.delete(ownerInbox).where(eq(ownerInbox.senderUserId, userId));
     await tx.delete(users).where(eq(users.id, userId));
   });
 }

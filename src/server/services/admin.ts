@@ -315,6 +315,7 @@ export async function deleteUser(db: Database, actor: Admin, userId: string, con
     await lockQueue(tx);
     const u = await target(tx, actor, userId);
     await log(tx, actor, "user.delete", u, { createdAt: u.createdAt.toISOString() });
+    await tx.delete(ownerInbox).where(eq(ownerInbox.senderUserId, u.id));
     await tx.delete(users).where(eq(users.id, u.id));
   });
 }
