@@ -45,7 +45,20 @@ Keep it intact and say what's deferred; one small step per session; concise expl
 
 ## Progress
 
-| Step | Branch | Status |
+| Step | Where | Status |
 | --- | --- | --- |
-| Waitlist 1. Foundation | `claude/waitlist` | done 2026-11-11, not merged: `users.access`/`waitlist_rank`/`accepted_at`, `app_access.waitlist_on` (off), `services/waitlist.ts`, migration 0061 (`when` 1798000000000, safe to re-run). Tests: `tests/integration/waitlist.test.ts` (7), full suite 179 files, 1,423 tests passed |
-| Waitlist 2. HQ: accept people | | next |
+| Waitlist 1. Foundation | main | live 2026-11-11 (switch off until the owner turns it on in HQ) |
+| Waitlist 2. HQ: let people in | main | live: People › Waitlist (counts, the line, next batch with confirm, one at a time, switch, launch line, history) |
+| Waitlist 3. The gate | main | live: after setup, someone waiting reaches only /waitlist and their account, security and privacy pages; pages, APIs, actions, jobs, texts, Apple Health and forwarded email skip them |
+| Waitlist 4. The page | main | live: the night page with the line of skylings, the front of the line (anonymous), the rules, the invite card at the bottom; admin preview `?preview=1` |
+| Waitlist 5. Email code and referral boosts | `claude/waitlist-referrals` | being built |
+| Waitlist 6. Nicknames | | next (anonymous labels already live) |
+| Waitlist 7. Read-only preview | | next (picture first) |
+| Waitlist 8. Notification previews and the full check | | next |
+| Engineering 1. Money totals and exports | `claude/money-totals` | reviewed twice, fixes in; screen tests running |
+| Engineering 2. Voice and texting | `claude/voice-sms-guard` | reviewed, fixes in; full suite rerunning |
+| Engineering 3. Offline | main | live (reviewed; 23 screen tests) |
+| Engineering 4. AI costs | `docs/audits/2026-11-11-ai-cost-ledger-proposal.md` | proposal; 11 yes/no decisions for the owner |
+| Engineering 5. Scale | `docs/audits/2026-11-11-scale-measurements.md` | measured; recommendations listed |
+| Engineering 6. Tests and CI | main | live (flaky Plaid test fixed at the cause, GitHub check workflow) |
+| Engineering 7. UX proposals | `docs/design/2026-11-11-proposals/` | 7 pictures and 9 claims to correct, for the owner's yes |

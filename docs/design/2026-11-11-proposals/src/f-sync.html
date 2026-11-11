@@ -1,0 +1,17 @@
+<div style="height:852px;position:relative;overflow:hidden;background:var(--bg);padding:20px 18px 0">
+ <div style="display:flex;gap:10px;align-items:center;background:var(--warning-soft);border-radius:22px;padding:12px 14px;outline:2px dashed var(--warning);outline-offset:3px;margin-bottom:22px">
+  <span style="color:var(--warning)">{{ic:alert}}</span><div style="flex:1;font-size:14px"><b>Your bank needs reconnecting</b><div class="xs" style="color:var(--warning)">Money is as of Nov 8</div></div><span class="btn blue" style="min-height:40px;padding:0 16px;font-size:14px">Fix</span></div>
+ <p class="xs muted" style="font-weight:600;letter-spacing:.08em;text-transform:uppercase">The strip above shows on Today and Money, only when something needs you</p>
+ <h1 class="d" style="font-size:34px;margin-top:16px">Connections</h1>
+ <p class="muted" style="margin-top:4px;font-size:15px">What feeds your sky, and how fresh it is.</p>
+ <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+  <div class="card" style="padding:14px 16px;border-radius:24px;display:flex;gap:12px;align-items:center">{{ic:school}}<div style="flex:1"><b>Canvas</b><div class="xs muted">Checked 12 minutes ago</div></div><span class="tag" style="background:var(--success-soft);color:var(--success)"><i class="dot" style="background:var(--success)"></i>Up to date</span></div>
+  <div class="card" style="padding:14px 16px;border-radius:24px;display:flex;gap:12px;align-items:center">{{ic:calendar}}<div style="flex:1"><b>Google Calendar</b><div class="xs muted">Checking now&hellip;</div></div><span class="tag" style="background:var(--info-soft);color:var(--info)">{{ic:sync}} Syncing</span></div>
+  <div class="card" style="padding:14px 16px;border-radius:24px;display:flex;gap:12px;align-items:center;box-shadow:0 0 0 2px var(--warning),var(--shadow)">{{ic:money}}<div style="flex:1"><b>Bank</b><div class="xs" style="color:var(--warning)">Last updated Nov 8. Sign in again to refresh.</div></div><span class="btn blue" style="min-height:40px;padding:0 16px;font-size:14px">Reconnect</span></div>
+  <div class="card" style="padding:14px 16px;border-radius:24px;display:flex;gap:12px;align-items:center">{{ic:mail}}<div style="flex:1"><b>Gmail</b><div class="xs muted">Checked 2 hours ago</div></div><span class="tag" style="background:var(--success-soft);color:var(--success)"><i class="dot" style="background:var(--success)"></i>Up to date</span></div>
+  <div class="card" style="padding:14px 16px;border-radius:24px;display:flex;gap:12px;align-items:center;background:var(--surface-2);box-shadow:none">{{ic:plug}}<div style="flex:1"><b>Outlook and Teams</b><div class="xs muted">Not connected. Adds your meetings.</div></div><span class="btn" style="min-height:40px;padding:0 16px;font-size:14px;background:#fff;box-shadow:var(--shadow)">Connect</span></div>
+ </div>
+ <p class="xs muted" style="margin-top:14px">Three states only: up to date, syncing, needs you. Each says when, in words.</p>
+ <div class="tabs"><div>{{ic:today}}Today</div><div>{{ic:cloud}}Skyling</div><div>{{ic:money}}Money</div><div>{{ic:school}}School</div></div>
+ <div class="note">PROPOSAL (f) &middot; one state word per connection + a strip on Today and Money only when it needs you &middot; example</div>
+</div>
