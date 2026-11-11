@@ -72,7 +72,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Is my data private?",
-    a: "Your data is locked to your account, so no other user can see it. It's never sold, and it's never used to train AI without your clear permission. You can delete your account and everything in it from Settings.",
+    a: "Your data is locked to your account, so no other user can see it. It's never sold, and it's never used to train AI without your clear permission. You can delete your account from Settings. We remove everything in it, except a one-way fingerprint of your email address, kept so the same address can't earn a second invite credit.",
   },
   {
     q: "Can LifeFlow move my money?",

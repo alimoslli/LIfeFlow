@@ -154,7 +154,10 @@ export default async function AdminUser({
 
               <Card className="border border-danger/40 p-5">
                 <Head title="Delete user" />
-                <p className="mt-2 text-sm text-text-2">Permanently deletes this account and everything in it. This can&apos;t be undone.</p>
+                <p className="mt-2 text-sm text-text-2">
+                  Permanently deletes this account and everything in it, except a one-way fingerprint of the email address, kept so the same address can&apos;t
+                  earn a second invite credit. This can&apos;t be undone.
+                </p>
                 <details className="mt-3">
                   <summary className="cursor-pointer text-sm font-medium text-danger">Show delete</summary>
                   <form action={deleteAction} className="mt-3 flex flex-col gap-3">
