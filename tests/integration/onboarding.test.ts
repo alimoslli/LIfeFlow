@@ -143,7 +143,7 @@ describe("onboarding", () => {
     expect(undecidedTables(added, decidedForLock)).toEqual(["zz_new_table"]);
   });
 
-  it("under 13 also removes their referral row as a friend, unlinks the ones as an inviter, and removes a pending confirm code, but keeps the email", async () => {
+  it("under 13 also removes their referral row as a friend and the ones as an inviter (and keeps no fingerprint), and removes a pending confirm code, but keeps the email", async () => {
     const db = getDb();
     const kid = await makeUser("Kai Young");
     const inviter = await makeUser("Inviter");
@@ -165,8 +165,8 @@ describe("onboarding", () => {
     const rows = await db.select().from(waitlistReferrals);
     expect(rows.filter((r) => r.inviteeId === kid.user.id)).toEqual([]);
     expect(rows.filter((r) => r.inviterId === kid.user.id)).toEqual([]);
-    // the friend they invited keeps its row (a hash of the friend's email), now with no inviter
-    expect(rows.find((r) => r.inviteeId === friend.user.id && r.inviterId === null)).toBeTruthy();
+    // the friend they invited loses that row too (the friend keeps their own account)
+    expect(rows.filter((r) => r.inviteeId === friend.user.id && r.inviterId === kid.user.id)).toEqual([]);
     // someone else's referral is untouched
     expect(rows.filter((r) => r.inviteeEmailHash === other)).toHaveLength(1);
     expect(await db.select().from(emailConfirmations).where(eq(emailConfirmations.userId, kid.user.id))).toEqual([]);

@@ -7,7 +7,7 @@ import { completeAppleSignIn, parseAppleState, startAppleSignIn } from "@/server
 import { takeChallenge } from "@/server/auth/challenges";
 import { completeGoogleSignIn, parseGoogleState, startGoogleSignIn } from "@/server/auth/google-signin";
 import { closeDb, getDb } from "@/server/db/client";
-import { emailConfirmations, rateLimitBuckets, referralFingerprints, users, waitlistReferrals } from "@/server/db/schema";
+import { emailConfirmations, rateLimitBuckets, waitlistFingerprints, users, waitlistReferrals } from "@/server/db/schema";
 import { confirmEmailCode, CONFIRM_CODE_TTL_MS, purgeExpiredConfirmCodes, sendConfirmCode } from "@/server/services/email-confirm";
 import { inviteCodeFor, recordInvite, validInviteCode } from "@/server/services/invites";
 import { creditReferral, emailHash, MAX_CREDITS_PER_DAY, referralEmailKey, verifyEmail } from "@/server/services/referrals";
@@ -246,8 +246,8 @@ describe("referral credit", () => {
     expect(
       await db
         .select()
-        .from(referralFingerprints)
-        .where(eq(referralFingerprints.hash, emailHash(friend.email))),
+        .from(waitlistFingerprints)
+        .where(eq(waitlistFingerprints.hash, emailHash(friend.email))),
     ).toHaveLength(1);
     expect((await waitlistPage(db, inviter.id)).friends).toBe(0);
     const [again] = await db
@@ -629,30 +629,32 @@ describe("deleting an account follows the queue-lock order", () => {
   });
 });
 
-describe("the friend's dedupe row outlives the inviter", () => {
-  it("deleting the inviter keeps the friend's hash with no inviter, and that email can't be credited again through someone else", async () => {
+describe("deleting an inviter or a friend", () => {
+  it("an inviter's deletion removes their referral rows; a friend's later deletion keeps only the fingerprint, and that email earns nothing through someone else", async () => {
     const { inviter, friend } = await inviterAndFriend();
     await verifyEmail(db, friend.id);
-    await db.delete(users).where(eq(users.id, inviter.id));
-    const [row] = await db
-      .select()
-      .from(waitlistReferrals)
-      .where(eq(waitlistReferrals.inviteeEmailHash, emailHash(friend.email)));
-    expect(row).toMatchObject({ inviterId: null, inviteeId: friend.id });
-    // the friend deletes their account too (only the fingerprint stays) and signs up again through another person's link
-    await leave(friend.id);
+    await leave(inviter.id);
+    // the inviter's rows go with them; the friend still has their own account, so their email stays unique there
     expect(
       await db
         .select()
         .from(waitlistReferrals)
         .where(eq(waitlistReferrals.inviteeEmailHash, emailHash(friend.email))),
     ).toEqual([]);
+    expect(await db.select().from(users).where(eq(users.id, friend.id))).toHaveLength(1);
     expect(
       await db
         .select()
-        .from(referralFingerprints)
-        .where(eq(referralFingerprints.hash, emailHash(friend.email))),
-    ).toHaveLength(1);
+        .from(waitlistFingerprints)
+        .where(eq(waitlistFingerprints.hash, emailHash(friend.email))),
+    ).toEqual([]);
+    // now the friend deletes their account: only the fingerprint (hash and the day) stays
+    await leave(friend.id);
+    const [kept] = await db
+      .select()
+      .from(waitlistFingerprints)
+      .where(eq(waitlistFingerprints.hash, emailHash(friend.email)));
+    expect(Object.keys(kept).sort()).toEqual(["createdAt", "hash"]);
     const other = (await makeUser("Other")).user;
     const filler = (await makeUser("Filler")).user;
     const [again] = await db.insert(users).values({ name: "Friend", email: friend.email, passwordHash: "x", invitedBy: other.id }).returning({ id: users.id });

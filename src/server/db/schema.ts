@@ -233,12 +233,14 @@ export const emailConfirmations = pgTable("email_confirmations", {
 });
 
 /**
- * Kept when a friend deletes their account (owner, 2026-11-11): only the one-way keyed fingerprint of their email key, so the
- * same address can't earn a second credit. Nothing else (no inviter, no dates). Written by `forgetFriend` on deletion, checked
- * when a credit is made. Account data, no RLS; reached only through services/referrals.ts.
+ * Kept when a friend deletes their account (owner, 2026-11-11): only the one-way keyed fingerprint of their own email key and
+ * the day it was kept, so the same address can't earn a second credit. Nothing else (no inviter, no other dates). Written by
+ * `forgetFriend` on deletion and checked beside the referral rows when a credit is made. Account data, no RLS; reached only
+ * through services/referrals.ts.
  */
-export const referralFingerprints = pgTable("referral_fingerprints", {
+export const waitlistFingerprints = pgTable("waitlist_fingerprints", {
   hash: text("hash").primaryKey(),
+  createdAt: createdAt(),
 });
 
 /**
@@ -251,8 +253,10 @@ export const waitlistReferrals = pgTable(
   "waitlist_referrals",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    // Cleared (not deleted) when the inviter's account goes, so the friend's email hash keeps blocking a second credit.
-    inviterId: uuid("inviter_id").references(() => users.id, { onDelete: "set null" }),
+    // Rows go with the inviter's account. The friends keep their own accounts, so their emails stay unique there.
+    inviterId: uuid("inviter_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     inviteeId: uuid("invitee_id").references(() => users.id, { onDelete: "set null" }),
     inviteeEmailHash: text("invitee_email_hash").notNull(),
     creditedAt: tstz("credited_at"),

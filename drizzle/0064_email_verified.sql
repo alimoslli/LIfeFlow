@@ -18,7 +18,7 @@ END $$;
 -- One row per friend who confirmed their email from a link. The email hash is unique so a recycled email never credits twice.
 CREATE TABLE IF NOT EXISTS "waitlist_referrals" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"inviter_id" uuid,
+	"inviter_id" uuid NOT NULL,
 	"invitee_id" uuid,
 	"invitee_email_hash" text NOT NULL,
 	"credited_at" timestamp with time zone,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS "waitlist_referrals" (
 );
 --> statement-breakpoint
 DO $$ BEGIN
-	ALTER TABLE "waitlist_referrals" ADD CONSTRAINT "waitlist_referrals_inviter_id_users_id_fk" FOREIGN KEY ("inviter_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+	ALTER TABLE "waitlist_referrals" ADD CONSTRAINT "waitlist_referrals_inviter_id_users_id_fk" FOREIGN KEY ("inviter_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 --> statement-breakpoint
@@ -36,8 +36,9 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 --> statement-breakpoint
 -- Kept after a friend deletes their account: only the keyed fingerprint, so the same address can't earn a second credit.
-CREATE TABLE IF NOT EXISTS "referral_fingerprints" (
-	"hash" text PRIMARY KEY NOT NULL
+CREATE TABLE IF NOT EXISTS "waitlist_fingerprints" (
+	"hash" text PRIMARY KEY NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "waitlist_referrals_email_uniq" ON "waitlist_referrals" USING btree ("invitee_email_hash");

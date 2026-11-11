@@ -187,8 +187,8 @@ async function blockUnderAge(scope: UserScope, prefs: Prefs) {
   // row where they are the friend (it holds a hash of their email), the link on rows where they are the inviter, and a pending confirm code. Moves already
   // made in the queue stay (not personal data).
   await scope.tx.delete(waitlistReferrals).where(eq(waitlistReferrals.inviteeId, scope.userId));
-  // rows where they invited someone hold the friend's hash, not theirs: they stay (as when an inviter deletes their account), without the link to them
-  await scope.tx.update(waitlistReferrals).set({ inviterId: null }).where(eq(waitlistReferrals.inviterId, scope.userId));
+  // rows where they invited someone go too (as when an inviter deletes their account): the friends keep their own accounts
+  await scope.tx.delete(waitlistReferrals).where(eq(waitlistReferrals.inviterId, scope.userId));
   await scope.tx.delete(emailConfirmations).where(eq(emailConfirmations.userId, scope.userId));
   // every table that holds their rows, found from the database so a new one can't be missed: a new table with a user_id is
   // emptied unless it is listed in KEEP_ON_LOCK (tests/integration/onboarding.test.ts checks this). Only real tables: a view

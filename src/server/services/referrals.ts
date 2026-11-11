@@ -1,6 +1,6 @@
 import { and, count, eq, gte, isNull } from "drizzle-orm";
 import type { Database } from "../db/client";
-import { adminActions, referralFingerprints, users, waitlistReferrals } from "../db/schema";
+import { adminActions, waitlistFingerprints, users, waitlistReferrals } from "../db/schema";
 import { keyedHash } from "../crypto";
 import type { Tx } from "../db/with-user";
 import { rateLimit, rateLimitCount } from "../rate-limit";
@@ -80,7 +80,7 @@ export async function creditReferral(tx: Tx, inviteeId: string, now = new Date()
   const hash = emailHash(me.email);
   if (hash === emailHash(inviter.email)) return none;
   // A friend who deleted their account earlier left only this fingerprint: the same address can't earn a second credit.
-  const [seen] = await tx.select({ hash: referralFingerprints.hash }).from(referralFingerprints).where(eq(referralFingerprints.hash, hash));
+  const [seen] = await tx.select({ hash: waitlistFingerprints.hash }).from(waitlistFingerprints).where(eq(waitlistFingerprints.hash, hash));
   if (seen) return none;
   // The unique hash decides, even when two confirmations (or a deleted and re-made account) arrive together.
   // The daily cap counts real moves, with the rate-limit counter for this inviter (24 hours, 10 moves), so deleting or locking
@@ -113,12 +113,18 @@ export async function fingerprintAdminLogEmail(tx: Tx, userId: string, email: st
 }
 
 /**
- * On a friend's deletion (their own or the owner's): their referral row goes, and only its one-way fingerprint stays
- * (owner, 2026-11-11), so the same address can't earn a second credit. No inviter link, no dates. The inviter's count for this
- * friend drops; the place they already moved up stays. An under-13 lock does not call this: it keeps nothing, not even this.
+ * On an account's deletion (their own or the owner's): their referral row goes, and only a one-way fingerprint of their
+ * email stays (owner, 2026-11-11), so the same address can't earn a second credit. It is written for any account whose email
+ * was confirmed, because that is the moment a credit could have happened, even if the inviter is gone by now (their rows went
+ * with them). No inviter link, no dates, nothing else. The inviter's count for this friend drops; the place they moved up
+ * stays. An under-13 lock does not call this: it keeps nothing, not even this.
  */
 export async function forgetFriend(tx: Tx, userId: string) {
-  const rows = await tx.select({ hash: waitlistReferrals.inviteeEmailHash }).from(waitlistReferrals).where(eq(waitlistReferrals.inviteeId, userId));
-  if (rows.length) await tx.insert(referralFingerprints).values(rows).onConflictDoNothing();
+  const [me] = await tx.select({ email: users.email, verifiedAt: users.emailVerifiedAt }).from(users).where(eq(users.id, userId));
+  if (me?.verifiedAt)
+    await tx
+      .insert(waitlistFingerprints)
+      .values({ hash: emailHash(me.email) })
+      .onConflictDoNothing();
   await tx.delete(waitlistReferrals).where(eq(waitlistReferrals.inviteeId, userId));
 }
