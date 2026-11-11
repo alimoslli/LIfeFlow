@@ -204,6 +204,8 @@ async function blockUnderAge(scope: UserScope, prefs: Prefs) {
       await scope.tx.delete(integrations).where(and(eq(integrations.userId, scope.userId), sql`not (${inArray(integrations.provider, OUTSIDE_PROVIDERS)})`));
     else await scope.tx.execute(sql`delete from ${sql.identifier(table_name)} where user_id = ${scope.userId}`);
   }
+  // people they invited no longer point at them (they keep their own accounts)
+  await scope.tx.update(users).set({ invitedBy: null }).where(eq(users.invitedBy, scope.userId));
   await scope.tx
     .update(users)
     // nothing of theirs on the account row either: their time zone, forwarding address and texting number go too
@@ -215,6 +217,8 @@ async function blockUnderAge(scope: UserScope, prefs: Prefs) {
       // out of the waitlist (the queue ignores a locked account) and no invite link or inviter kept
       inviteCode: null,
       invitedBy: null,
+      acceptedAt: null,
+      emailVerifiedAt: null,
       preferences: { onboarding: prefs.onboarding, ageBlockedAt: at, ...(outside.length ? { ageLockClosing: true } : {}) },
     })
     .where(eq(users.id, scope.userId));

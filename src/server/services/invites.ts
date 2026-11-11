@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { and, count, eq, isNull } from "drizzle-orm";
+import { and, count, eq, isNull, sql } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { users } from "../db/schema";
 
@@ -31,14 +31,16 @@ const isUniqueViolation = (e: unknown) => {
 /** This person's invite code, made on first use. */
 export async function inviteCodeFor(db: Database, userId: string): Promise<string> {
   for (let attempt = 0; attempt < 5; attempt++) {
-    const [u] = await db.select({ code: users.inviteCode }).from(users).where(eq(users.id, userId));
+    const [u] = await db.select({ code: users.inviteCode, prefs: users.preferences }).from(users).where(eq(users.id, userId));
     if (!u) throw new Error("No such user");
+    // an account the under-13 lock closed has no invite link and never gets a new one
+    if (u.prefs.ageBlockedAt) throw new Error("This account has no invite link");
     if (u.code) return u.code;
     try {
       const [row] = await db
         .update(users)
         .set({ inviteCode: newInviteCode() })
-        .where(and(eq(users.id, userId), isNull(users.inviteCode)))
+        .where(and(eq(users.id, userId), isNull(users.inviteCode), sql`not (${users.preferences} ? 'ageBlockedAt')`))
         .returning({ code: users.inviteCode });
       if (row?.code) return row.code;
     } catch (e) {

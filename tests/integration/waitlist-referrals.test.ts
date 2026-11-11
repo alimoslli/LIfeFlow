@@ -767,7 +767,20 @@ describe("an under-13 lock takes the account out of the queue", () => {
       .set({ preferences: { onboarding: "pending" } })
       .where(eq(users.id, kid.user.id));
     await recordInvite(db, friend.id, await inviteCodeFor(db, kid.user.id));
+    await db.update(users).set({ acceptedAt: new Date(), emailVerifiedAt: new Date() }).where(eq(users.id, kid.user.id));
     await kid.run((s) => saveWelcomeProgress(s, "UTC", { birthDate: `${new Date().getFullYear() - 9}-03-03` }));
+    // the locked row keeps only what the privacy page lists: no acceptance or confirmed-email date, no invite link for anyone
+    const [locked] = await db
+      .select({ accepted: users.acceptedAt, verified: users.emailVerifiedAt, code: users.inviteCode })
+      .from(users)
+      .where(eq(users.id, kid.user.id));
+    expect(locked).toEqual({ accepted: null, verified: null, code: null });
+    // and the people they invited no longer point at them
+    const [theirs] = await db.select({ by: users.invitedBy }).from(users).where(eq(users.id, friend.id));
+    expect(theirs.by).toBeNull();
+    // a locked account never gets a new invite code either
+    await expect(inviteCodeFor(db, kid.user.id)).rejects.toThrow(/no invite link/);
+    expect((await db.select({ code: users.inviteCode }).from(users).where(eq(users.id, kid.user.id)))[0].code).toBeNull();
     expect((await verifyEmail(db, friend.id)).recorded).toBe(false);
     expect(await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, kid.user.id))).toEqual([]);
   });
