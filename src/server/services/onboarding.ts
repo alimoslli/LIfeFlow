@@ -1,10 +1,10 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { COMPANION_KEYS, SKY_CHOICE } from "@/lib/companions";
 import { AGE_LINE, BIRTHDAY_NEEDED, CHECK_YEAR, birthDateProblem, isUnderAge } from "@/lib/birthday";
 import { todayIn } from "@/lib/dates";
 import { ServiceError } from "./errors";
-import { integrations, ownerInbox, users } from "../db/schema";
+import { emailConfirmations, integrations, ownerInbox, users, waitlistReferrals } from "../db/schema";
 import { closeAtProvider, OUTSIDE_PROVIDERS } from "./account-cleanup";
 import { provisionalName } from "@/lib/provisional-name";
 import type { Database } from "../db/client";
@@ -173,6 +173,11 @@ async function blockUnderAge(scope: UserScope, prefs: Prefs) {
     .returning({ id: integrations.id });
   // copies of their feedback in the owner's inbox go too (that table has no user_id, so the sweep below can't see it)
   await scope.tx.delete(ownerInbox).where(eq(ownerInbox.senderUserId, scope.userId));
+  // the waitlist's account tables point at the user by other column names, so the sweep below can't see them: the referral
+  // rows where they are the friend (it holds a hash of their email) or the inviter, and a pending confirm code. Moves already
+  // made in the queue stay (not personal data).
+  await scope.tx.delete(waitlistReferrals).where(or(eq(waitlistReferrals.inviterId, scope.userId), eq(waitlistReferrals.inviteeId, scope.userId)));
+  await scope.tx.delete(emailConfirmations).where(eq(emailConfirmations.userId, scope.userId));
   // every table that holds their rows, found from the database so a new one can't be missed: a new table with a user_id is
   // emptied unless it is listed in KEEP_ON_LOCK (tests/integration/onboarding.test.ts checks this). Only real tables: a view
   // can't be deleted from, and one must never make this save throw.

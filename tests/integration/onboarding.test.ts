@@ -3,7 +3,7 @@ import { afterAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { closeDb, getDb } from "@/server/db/client";
 import { withUser } from "@/server/db/with-user";
-import { calendarEvents, errorReports, integrations, ownerInbox, users } from "@/server/db/schema";
+import { calendarEvents, emailConfirmations, errorReports, integrations, ownerInbox, users, waitlistReferrals } from "@/server/db/schema";
 import { sql } from "drizzle-orm";
 import { createTask } from "@/server/services/tasks";
 import { createCourse } from "@/server/services/school";
@@ -96,6 +96,34 @@ const born = (run: Awaited<ReturnType<typeof makeUser>>["run"]) => run((s) => sa
 const prefs = async (id: string) => (await getDb().select({ p: users.preferences }).from(users).where(eq(users.id, id)))[0].p;
 
 describe("onboarding", () => {
+  it("under 13 also removes their referral rows (as friend and as inviter) and a pending confirm code, but keeps the email", async () => {
+    const db = getDb();
+    const kid = await makeUser("Kai Young");
+    const inviter = await makeUser("Inviter");
+    const friend = await makeUser("Friend");
+    await db
+      .update(users)
+      .set({ preferences: { onboarding: "pending" } })
+      .where(eq(users.id, kid.user.id));
+    const hash = () => randomUUID().replaceAll("-", "").repeat(2);
+    const other = hash();
+    await db.insert(waitlistReferrals).values([
+      { inviterId: inviter.user.id, inviteeId: kid.user.id, inviteeEmailHash: hash(), creditedAt: new Date() },
+      { inviterId: kid.user.id, inviteeId: friend.user.id, inviteeEmailHash: hash(), creditedAt: new Date() },
+      { inviterId: inviter.user.id, inviteeId: friend.user.id, inviteeEmailHash: other, creditedAt: new Date() },
+    ]);
+    await db.insert(emailConfirmations).values({ userId: kid.user.id, codeHash: "h", expiresAt: new Date(Date.now() + 600_000) });
+    const year = new Date().getFullYear();
+    expect(await kid.run((s) => saveWelcomeProgress(s, "UTC", { birthDate: `${year - 9}-03-03` }))).toEqual({ blocked: true });
+    const rows = await db.select().from(waitlistReferrals);
+    expect(rows.filter((r) => r.inviterId === kid.user.id || r.inviteeId === kid.user.id)).toEqual([]);
+    // someone else's referral is untouched
+    expect(rows.filter((r) => r.inviteeEmailHash === other)).toHaveLength(1);
+    expect(await db.select().from(emailConfirmations).where(eq(emailConfirmations.userId, kid.user.id))).toEqual([]);
+    // the account keeps its email and sign-in
+    expect((await db.select({ email: users.email }).from(users).where(eq(users.id, kid.user.id)))[0].email).toBe(kid.user.email);
+  });
+
   it("saves everything through the regular services and queues the tour", async () => {
     const { user, run } = await makeUser("Nia Brooks");
     await born(run);
