@@ -3,7 +3,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { closeDb } from "@/server/db/client";
 import { pushSubscriptions, tasks, transactions, workShifts } from "@/server/db/schema";
 import { createManualAccount } from "@/server/services/finance/accounts";
-import { replayOp, offlineOpSchema } from "@/server/services/offline";
+import { failureOf, replayOp, offlineOpSchema } from "@/server/services/offline";
 import { listSubscriptions, runNotifications, saveSubscription, sendOnce, type PushMessage, type Sender } from "@/server/services/push";
 import { createTask } from "@/server/services/tasks";
 import { createEmployer } from "@/server/services/work";
@@ -119,5 +119,14 @@ describe("offline changes", () => {
     });
     await expect(b.run((s) => replayOp(s, TZ, op))).rejects.toThrow(/not found/i);
     expect(offlineOpSchema.safeParse({ kind: "task.create", id: "not-a-uuid", data: { title: "x" } }).success).toBe(false);
+  });
+});
+
+describe("offline replay failures", () => {
+  it("treats our own refusals as final and anything else as temporary, so unsaved work is kept", async () => {
+    const { ServiceError } = await import("@/server/services/errors");
+    expect(failureOf(new ServiceError("Account not found"))).toEqual({ status: "failed", error: "Account not found" });
+    expect(failureOf(new Error("connection terminated"))).toMatchObject({ status: "failed", retryable: true });
+    expect(failureOf(Object.assign(new Error("deadlock"), { code: "40P01" }))).toMatchObject({ retryable: true });
   });
 });

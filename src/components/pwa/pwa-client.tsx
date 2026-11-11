@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Share } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/toaster";
-import { flush, pending } from "@/lib/offline-queue";
+import { discardFailed, failedOps, flush, pending, retryFailed, setQueueOwner, wipeOfflineDatabase } from "@/lib/offline-queue";
 import { AppUpdater } from "./app-updater";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 
@@ -17,22 +17,38 @@ const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) && !/CriOS|FxiO
  * Everything that makes the web app behave like an installed one:
  * service worker, offline banner + queued changes, and the install prompt.
  */
-export function PwaClient() {
+export function PwaClient({ userId }: { userId: string }) {
   const router = useRouter();
   const [offline, setOffline] = useState(false);
   const [queued, setQueued] = useState(0);
+  const [failed, setFailed] = useState(0);
   const [install, setInstall] = useState<InstallPrompt | null>(null);
   const [showInstall, setShowInstall] = useState(false);
   const [iosSheet, setIosSheet] = useState(false);
 
-  const sync = async () => {
-    const r = await flush();
+  const count = async () => {
+    setQueued((await pending()).length);
+    setFailed((await failedOps()).length);
+  };
+
+  // The signed-in account: changes are saved under it and sent only while it is the one signed in.
+  // A different account on this device never sees pages kept for the last one.
+  useEffect(() => {
+    setQueueOwner(userId);
+    try {
+      const last = localStorage.getItem("lf-cache-owner");
+      if (last && last !== userId) void clearSavedPages();
+      localStorage.setItem("lf-cache-owner", userId);
+    } catch {}
+  }, [userId]);
+
+  const sync = async (force = false) => {
+    const r = force ? await retryFailed() : await flush();
     if (r.applied) {
       toast(`Synced ${r.applied} change${r.applied === 1 ? "" : "s"} you made offline.`);
       router.refresh();
     }
-    if (r.failed) toast(`${r.failed} offline change${r.failed === 1 ? "" : "s"} couldn't be saved.`, { tone: "danger" });
-    setQueued((await pending()).length);
+    await count();
   };
 
   // Service worker (production builds only, so development reloads stay simple).
@@ -49,7 +65,7 @@ export function PwaClient() {
   useEffect(() => {
     const update = async () => {
       setOffline(!navigator.onLine);
-      setQueued((await pending()).length);
+      await count();
     };
     const online = () => {
       setOffline(false);
@@ -60,11 +76,16 @@ export function PwaClient() {
       void update();
       if (navigator.onLine) void sync();
     }, 0);
+    // Temporary trouble (the server was busy) is tried again every minute while something is waiting.
+    const again = setInterval(() => {
+      if (navigator.onLine) void sync();
+    }, 60_000);
     window.addEventListener("online", online);
     window.addEventListener("offline", off);
     window.addEventListener("lf:queue-changed", update);
     return () => {
       clearTimeout(t);
+      clearInterval(again);
       window.removeEventListener("online", online);
       window.removeEventListener("offline", off);
       window.removeEventListener("lf:queue-changed", update);
@@ -114,6 +135,33 @@ export function PwaClient() {
             {offline ? "You're offline. Changes save on this phone." : `Syncing ${queued} change${queued === 1 ? "" : "s"}…`}
             {offline && queued > 0 && <span className="opacity-75">· {queued} waiting</span>}
           </span>
+        </div>
+      )}
+
+      {failed > 0 && !offline && (
+        <div
+          role="alert"
+          className="fixed inset-x-3 bottom-[calc(var(--tabbar-space)+8px)] z-40 mx-auto max-w-md rounded-3xl bg-surface p-4 shadow-lift md:bottom-6"
+        >
+          <p className="font-medium">
+            {failed === 1 ? "1 change you made offline couldn't be saved." : `${failed} changes you made offline couldn't be saved.`}
+          </p>
+          <p className="mt-0.5 text-sm text-text-2">Try again, or let them go.</p>
+          <div className="mt-3 flex gap-2">
+            <button type="button" className="lf-sb lf-sb-sun lf-sb-sm" onClick={() => void sync(true)}>
+              Try again
+            </button>
+            <button
+              type="button"
+              className="min-h-11 rounded-full px-4 text-sm text-muted"
+              onClick={async () => {
+                await discardFailed();
+                await count();
+              }}
+            >
+              Discard
+            </button>
+          </div>
         </div>
       )}
 
@@ -175,9 +223,18 @@ export function PwaClient() {
   );
 }
 
+/** Forgets the pages kept for offline reading (they hold the last account's data). */
+async function clearSavedPages() {
+  try {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter((k) => k.endsWith("-pages")).map((k) => caches.delete(k)));
+  } catch {}
+}
+
 /**
  * Before signing out: stops notifications for this account on this device and
  * clears everything saved for offline use, so the next person sees nothing.
+ * Changes still waiting are sent first when there is a connection.
  */
 export async function clearOfflineData() {
   try {
@@ -193,8 +250,10 @@ export async function clearOfflineData() {
   } catch {}
   try {
     navigator.serviceWorker?.controller?.postMessage({ type: "clear-user-data" });
-    indexedDB.deleteDatabase("lifeflow-offline");
+    await clearSavedPages();
+    await wipeOfflineDatabase();
     localStorage.removeItem("lf-quick-add");
     localStorage.removeItem("lf_first_name");
+    localStorage.removeItem("lf-cache-owner");
   } catch {}
 }
