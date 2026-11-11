@@ -429,6 +429,8 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   let viewKey: CompanionKey = "ray";
   // Star's first hour after sunset, when it still wears the last of the sunset
   let glowing = false;
+  // Moon at night on the closed wheel: bigger, floating like the real moon in that part of the sky (owner, 2026-11-11)
+  let floating = false;
   const paintWho = () => {
     const choice = root.dataset.companion;
     const c = companionOf(choice === SKY_CHOICE ? viewKey : choice);
@@ -443,6 +445,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         night,
         false,
         glowing && c.key === "star",
+        floating && cv === who,
       );
   };
   // it jogs in place (a frame about every 180 ms, never with reduced motion); asleep it breathes slowly; at rest it blinks
@@ -1014,12 +1017,23 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       if (!d.lane && Math.abs(wx - d.x) < d.w / 2 + 4 && wy > d.y - d.h / 2 - 6 && wy < d.y + d.h / 2 + 26) wy = Math.min(wy, d.y - d.h / 2 + 1);
     // the skyling's size: a good deal bigger than a tile, and bigger still on a big wheel; it shrinks onto the line.
     // Whole multiples of its 24 px sprite, so its pixels stay crisp (4x on a phone, 6x on a laptop's wheel)
-    const rest = Math.round(clamp(R * 0.62, 96, 144) / 24) * 24;
+    // Moon at night is the moon in the sky: a size bigger, hanging just above the rim in its own light, until the line
+    // opens and it drops down to stand on it like the others
+    const moonUp = night && root.dataset.skylingNow === "moon";
+    const rest = Math.round((clamp(R * 0.62, 96, 144) * (moonUp ? 1.25 : 1)) / 24) * 24;
     const size = k ? Math.round(lerp(rest, 48, k)) : rest;
+    const moonLift = moonUp ? size * 0.16 * (1 - k) : 0;
+    floating = moonUp && k < 0.5;
     const glow = `url(#${night ? "dc-glow-night" : "dc-glow-day"})`;
     el(
       "circle",
-      { cx: wx.toFixed(1), cy: (wy - size * 0.42).toFixed(1), r: (size * (night ? 0.8 : 1.05)).toFixed(1), fill: glow, opacity: fade.toFixed(3) },
+      {
+        cx: wx.toFixed(1),
+        cy: (wy - moonLift - size * 0.42).toFixed(1),
+        r: (size * (moonUp ? 1.1 : night ? 0.8 : 1.05)).toFixed(1),
+        fill: glow,
+        opacity: fade.toFixed(3),
+      },
       glowAt,
     );
     const liveNow = follow ? timed.find((it) => it.end != null && it.start <= now && it.end > now) : undefined;
@@ -1035,8 +1049,8 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     who.style.width = who.style.height = `${size}px`;
     who.style.transformOrigin = `${size / 2}px ${size / 2}px`;
     // its shadow (the sprite's last row) sits on the rim
-    who.style.transform = `translate(${(wx - size / 2).toFixed(1)}px, ${(wy - size * 0.97).toFixed(1)}px)${dir < 0 ? " scaleX(-1)" : ""}`;
-    whoAt = { x: wx - box.l, y: wy - box.t - size * 0.45 };
+    who.style.transform = `translate(${(wx - size / 2).toFixed(1)}px, ${(wy - moonLift - size * 0.97).toFixed(1)}px)${dir < 0 ? " scaleX(-1)" : ""}`;
+    whoAt = { x: wx - box.l, y: wy - moonLift - box.t - size * 0.45 };
     who.style.opacity = String(fade);
     paintWho();
   }

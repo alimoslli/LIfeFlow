@@ -603,16 +603,26 @@ export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: bo
 const painted = new Map<string, ImageData>();
 
 /** Paint a skyling onto a 24 x 24 canvas (facing right; `flip` faces it left). */
-export function drawCompanion(canvas: HTMLCanvasElement, c: CompanionInfo, pose: Pose, frame: number, night: boolean, flip = false, glow = false) {
+/** `float`: no boots and no ground shadow, hanging in the sky like the real moon (Moon on Today's wheel at night). */
+export function drawCompanion(
+  canvas: HTMLCanvasElement,
+  c: CompanionInfo,
+  pose: Pose,
+  frame: number,
+  night: boolean,
+  flip = false,
+  glow = false,
+  float = false,
+) {
   const g = canvas.getContext("2d");
   if (!g) return;
   if (canvas.width !== GRID) canvas.width = canvas.height = GRID;
   const n = FRAMES[pose].length;
-  const key = `${c.key}|${pose}|${((frame % n) + n) % n}|${night}|${flip}|${glow}`;
+  const key = `${c.key}|${pose}|${((frame % n) + n) % n}|${night}|${flip}|${glow}|${float}`;
   const kept = painted.get(key);
   if (kept) return g.putImageData(kept, 0, 0);
   g.clearRect(0, 0, GRID, GRID);
-  const px = pixels(c, pose, frame, night, glow);
+  const px = pixels(c, pose, frame, night, glow).filter(([, y]) => !float || y < 21);
   if (c.key === "star" && night) {
     // Star is the night's own colour: on the night sky a pale moonlit rim keeps it from disappearing (LF Marketing,
     // 2026-11-10: with "Changes with the sky" it's in front of everyone every night)
