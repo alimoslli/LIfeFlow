@@ -48,7 +48,8 @@ test("Today: the answer comes in the middle, what it saves lands on the sky, Und
   await expect(page).toHaveURL(/\/jarvis$/);
   await expect(page.locator(".lf-bubble-me", { hasText: "Do it" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Let's clear your sky." })).toBeVisible();
-  await expect(page.getByRole("link", { name: "New chat" })).toHaveCount(0);
+  // the same chat, and New chat is there to start another one when wanted (owner, 2026-11-11)
+  await expect(page.getByRole("button", { name: "New chat" })).toBeVisible();
   expect(await queryAsUser(email, "select id from conversations")).toHaveLength(1);
 });
 

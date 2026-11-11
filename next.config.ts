@@ -17,7 +17,8 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: { bodySizeLimit: "6mb" },
     // Tabs feel instant: a page you've seen in the last 2 minutes opens from the browser's copy, and fully
-    // prefetched tabs stay fresh for 5. Any save (server action) clears this cache, so changes always show.
+    // prefetched tabs stay fresh for 5. Any save (server action) clears this cache, so changes always show. The chat page
+    // opts out (unstable_dynamicStaleTime = 0): a chat changes without a save.
     staleTimes: { dynamic: 120, static: 300 },
   },
   turbopack: {

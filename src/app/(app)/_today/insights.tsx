@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { isChatPage } from "@/lib/app-routes";
 import { useRouter } from "next/navigation";
 import { VoiceButton } from "@/components/jarvis/voice-call";
 import { useShell } from "@/components/shell/app-shell";
@@ -45,6 +46,7 @@ export function InsightList({ insights }: { insights: Insight[] }) {
                   (action.href ? (
                     <Link
                       href={action.href}
+                      prefetch={isChatPage(action.href) ? false : undefined}
                       className="mt-1 -mb-2 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-accent transition-all hover:gap-2.5"
                     >
                       {action.label} <PixelIcon name="arrow" className="h-4 w-4" />

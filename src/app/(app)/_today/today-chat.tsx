@@ -1,7 +1,10 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useSyncExternalStore } from "react";
+import { useLayoutEffect, useSyncExternalStore } from "react";
+import { useShell } from "@/components/shell/app-shell";
+import { useNewDay } from "@/components/jarvis/use-new-day";
+import { currentChat, forgetChat, rememberChat, settleNewVisit, takeNewVisit } from "@/lib/chat-session";
 import { setAiConsentAction } from "@/app/(app)/settings/actions";
 import { undoChatToolsAction } from "@/app/(app)/jarvis/actions";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
@@ -37,9 +40,9 @@ export type TodayReply = {
   settled?: boolean;
   undoNote?: string;
 };
-type State = { reply: TodayReply | null; conversationId: string | null; busy: boolean };
+type State = { reply: TodayReply | null; conversationId: string | null; busy: boolean; owner: string | null };
 
-let state: State = { reply: null, conversationId: null, busy: false };
+let state: State = { reply: null, conversationId: null, busy: false, owner: null };
 const listeners = new Set<() => void>();
 const set = (next: Partial<State>) => {
   state = { ...state, ...next };
@@ -55,7 +58,25 @@ const subscribe = (l: () => void) => {
   listeners.add(l);
   return () => listeners.delete(l);
 };
-const SERVER: State = { reply: null, conversationId: null, busy: false };
+const SERVER: State = { reply: null, conversationId: null, busy: false, owner: null };
+
+/**
+ * Whoever's Today this is. The answer lives in this app session's memory, which outlasts a sign-out and a sign-in, so an
+ * answer from someone else is dropped here before anything shows it (owner's privacy rule: a shared device never shows the
+ * last person's words). Rendered once on Today, so it covers the bar on a phone and the one under the wheel on a laptop.
+ */
+export function TodayOwner({ userId }: { userId: string }) {
+  const { tz } = useShell();
+  useLayoutEffect(() => {
+    if (state.owner !== userId) set({ owner: userId, reply: null });
+  }, [userId]);
+  // a chat is one day's: when the day changes while Today is open, the next message starts another
+  useNewDay(tz, () => {
+    forgetChat();
+    set({ conversationId: null, reply: null });
+  });
+  return null;
+}
 export const useTodayChat = () =>
   useSyncExternalStore(
     subscribe,
@@ -74,6 +95,8 @@ export async function askOnToday(message: string, refresh: () => void) {
   skylingDoes("think");
   set({ busy: true, reply: { question: text, text: "", kept: false, tools: [], confirmations: [], streaming: true } });
   let saved = false;
+  // the chat this visit was in can be gone (deleted on another device): then the message starts a new chat, once
+  let gone = false;
   try {
     const res = await fetch("/api/jarvis/chat", {
       method: "POST",
@@ -109,8 +132,11 @@ export async function askOnToday(message: string, refresh: () => void) {
           actionId?: string;
           message?: string;
         };
-        if (ev.type === "conversation" && ev.id) set({ conversationId: ev.id });
-        else if (ev.type === "text")
+        if (ev.type === "conversation" && ev.id) {
+          // the stamp says when this chat became the app's: a chat that carries on keeps its stamp
+          if (ev.id !== conversationId) rememberChat(ev.id);
+          set({ conversationId: ev.id });
+        } else if (ev.type === "text")
           patch((r) => {
             if (r.kept) {
               r.text = `${r.text.trimEnd()}\n\n`;
@@ -137,7 +163,10 @@ export async function askOnToday(message: string, refresh: () => void) {
             r.tools = r.tools.filter((t) => t.callId !== ev.callId);
             r.confirmations.push({ actionId: ev.actionId!, summary: ev.summary ?? "", status: "pending" });
           });
-        else if (ev.type === "error") patch((r) => void (r.error = ev.message ?? "Something went wrong. Try again."));
+        else if (ev.type === "error") {
+          if (conversationId && /not found/i.test(ev.message ?? "")) gone = true;
+          else patch((r) => void (r.error = ev.message ?? "Something went wrong. Try again."));
+        }
       }
     }
   } catch {
@@ -150,6 +179,11 @@ export async function askOnToday(message: string, refresh: () => void) {
       refresh();
       cheerSkylings();
     }
+  }
+  if (gone) {
+    forgetChat();
+    set({ conversationId: null });
+    return askOnToday(text, refresh);
   }
 }
 
@@ -203,7 +237,7 @@ export function TodayReplyCard({ name, refresh, fill = false }: { name: string; 
         {/* what you asked, unless it's in the middle of Today, where there's no room to say it twice */}
         {fill ? <span className="flex-1" /> : <p className="min-w-0 flex-1 truncate text-xs text-muted">You: {reply.question}</p>}
         {conversationId && (
-          <Link href="/jarvis" className="shrink-0 text-sm font-medium text-accent">
+          <Link href="/jarvis" prefetch={false} className="shrink-0 text-sm font-medium text-accent">
             Open the chat
           </Link>
         )}
@@ -320,22 +354,23 @@ export function TodayMiddle({
   name,
   clouds,
   note,
-  conversationId,
   children,
 }: {
   name: string;
   clouds: IdeaCloud[];
   /** The skyling's one note: a link, a question it sends, or words it puts in the bar. */
   note: { text: string; href?: string; prompt?: string; fill?: string; attention?: boolean } | null;
-  conversationId: string | null;
   /** Something that must come first (the birthday question). */
   children?: React.ReactNode;
 }) {
   const router = useRouter();
   const { reply } = useTodayChat();
-  useEffect(() => {
-    if (conversationId && !state.conversationId) set({ conversationId });
-  }, [conversationId]);
+  // the chat this visit is in, read from the cookie (lib/chat-session.ts): a new visit starts without one
+  const { tz } = useShell();
+  useLayoutEffect(() => {
+    set({ conversationId: takeNewVisit() ? null : currentChat(tz) });
+    settleNewVisit();
+  }, [tz]);
   const refresh = () => router.refresh();
   if (reply) return <TodayReplyCard name={name} refresh={refresh} fill />;
   if (children) return <div className="h-full overflow-y-auto">{children}</div>;

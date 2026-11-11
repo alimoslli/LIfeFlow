@@ -6,7 +6,8 @@ import { MySkyling } from "@/components/skylings/sprite";
 import { SectionNav } from "@/components/shell/section-nav";
 import { QuickAddButton } from "@/components/shell/quick-add";
 import { ActionButton } from "@/components/action-form";
-import { JarvisChat } from "@/components/jarvis/chat";
+import { ChatHost } from "@/components/jarvis/chat-host";
+import { NewChatButton } from "@/components/jarvis/new-chat-button";
 import type { UiMessage } from "@/components/jarvis/types";
 import type { IdeaCloud } from "@/lib/idea-clouds";
 import type { SkyCounts } from "@/lib/sky-home";
@@ -55,7 +56,7 @@ export function JarvisPage({
           {items.length === 0 && <p className="px-3 py-2 text-sm text-muted">Your conversations will appear here.</p>}
           {items.map((c) => (
             <div key={c.id} className={cn("group flex items-center rounded-[1rem]", c.id === activeId ? "bg-surface shadow-soft" : "hover:bg-surface-2")}>
-              <Link href={`/jarvis?c=${c.id}`} className="min-w-0 flex-1 px-3.5 py-2.5">
+              <Link href={`/jarvis?c=${c.id}`} prefetch={false} className="min-w-0 flex-1 px-3.5 py-2.5">
                 <span className="line-clamp-2 break-words text-sm">{c.title}</span>
                 <span className="block text-xs text-muted">{c.when}</span>
               </Link>
@@ -80,6 +81,7 @@ export function JarvisPage({
           <p className="min-w-0 flex-1 truncate px-1 text-center text-[0.9375rem] font-semibold lg:text-left">
             <AssistantName start />
           </p>
+          <NewChatButton className="flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-2.5 text-[0.8125rem] font-semibold text-text-2 transition-colors hover:bg-surface-2 hover:text-text" />
           <SettingsGear className="flex h-11 w-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-surface-2 hover:text-text">
             <PixelIcon name="cog" className="h-6 w-6" />
           </SettingsGear>
@@ -95,7 +97,7 @@ export function JarvisPage({
           </QuickAddButton>
         </SectionNav>
         <div className="min-h-0 flex-1">
-          <JarvisChat
+          <ChatHost
             key={activeId ?? "new"}
             conversationId={activeId}
             initialMessages={messages}

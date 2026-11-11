@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { isChatPage } from "@/lib/app-routes";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { forwardRef, type ButtonHTMLAttributes, type PointerEvent, type ReactNode } from "react";
 import { prefersReducedMotion } from "@/components/motion/gsap";
@@ -99,7 +100,13 @@ export const SkyButton = forwardRef<HTMLButtonElement, Common & Omit<ButtonHTMLA
 /** The new button as a link. */
 export function SkyLink({ href, ...look }: Common & { href: string }) {
   return (
-    <Link href={href} className={classes(look)} onPointerDown={sparks} onPointerEnter={look.cheer ? () => cheerSkylings() : undefined}>
+    <Link
+      href={href}
+      prefetch={isChatPage(href) ? false : undefined}
+      className={classes(look)}
+      onPointerDown={sparks}
+      onPointerEnter={look.cheer ? () => cheerSkylings() : undefined}
+    >
       <Inner {...look} />
     </Link>
   );

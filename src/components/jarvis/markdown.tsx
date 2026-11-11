@@ -1,7 +1,7 @@
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { isAppPath, linkAppPaths } from "@/lib/app-routes";
+import { isAppPath, isChatPage, linkAppPaths } from "@/lib/app-routes";
 
 /** Renders model output as Markdown. Raw HTML is not rendered (react-markdown default). */
 export function Markdown({ text }: { text: string }) {
@@ -12,7 +12,12 @@ export function Markdown({ text }: { text: string }) {
         components={{
           a: ({ href, children }) => {
             const internal = !!href && isAppPath(href);
-            if (internal) return <Link href={href}>{children}</Link>;
+            if (href && internal)
+              return (
+                <Link href={href} prefetch={isChatPage(href) ? false : undefined}>
+                  {children}
+                </Link>
+              );
             return (
               <a href={href} target="_blank" rel="noopener noreferrer nofollow">
                 {children}

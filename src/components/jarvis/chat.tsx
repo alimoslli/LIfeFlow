@@ -5,10 +5,11 @@ import Link from "next/link";
 import { NotifyAsk } from "./notify-ask";
 import { ASK_EVENT, takeHandoff, type AskDetail } from "@/lib/ask-handoff";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useTransition, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useTransition, type CSSProperties } from "react";
 import { useAppBusy } from "@/lib/app-busy";
 import { Plug, Brain, CircleAlert, ImageIcon, Loader2, Square } from "lucide-react";
 import { useAutoGrow } from "@/components/ui/auto-grow";
+import { rememberChat, settleNewVisit, takeNewVisit } from "@/lib/chat-session";
 import { SkyHome, homeHeight } from "@/components/skylings/sky-home";
 import type { SkyCounts } from "@/lib/sky-home";
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
@@ -107,6 +108,20 @@ export function JarvisChat({
   const [messages, setMessages] = useState<UiMessage[]>(initialMessages);
   const [input, setInput] = useState(initialPrompt ?? "");
   const [busy, setBusy] = useState(false);
+  // set once the visit's chat is settled (below), so a question sent on mount is sent into the right chat
+  const [settled, setSettled] = useState(false);
+  // A new visit (the app was closed) starts without the chat from before, which stays in the list (lib/chat-session.ts).
+  // This runs before the first paint, so the old messages never show. A deep link (?c=) keeps its chat.
+  useLayoutEffect(() => {
+    const fresh = takeNewVisit();
+    const deepLink = new URLSearchParams(window.location.search).get("c");
+    if (fresh && !deepLink) {
+      setConversationId(null);
+      setMessages([]);
+    } else if (deepLink && initialId) rememberChat(initialId);
+    settleNewVisit();
+    setSettled(true);
+  }, [initialId]);
   // the skyling thinks while it works on your answer (owner, 2026-11-11)
   useEffect(() => {
     if (busy) skylingDoes("think");
@@ -165,7 +180,7 @@ export function JarvisChat({
 
   const autoSent = useRef(false);
   useEffect(() => {
-    if (autoSent.current) return;
+    if (!settled || autoSent.current) return;
     autoSent.current = true;
     // a question a button in the app handed over (lib/ask-handoff): sent when it said so, otherwise typed in the box
     const handed = takeHandoff();
@@ -177,7 +192,7 @@ export function JarvisChat({
     // a link's ?ask= only fills the box (initialPrompt); autoSend is for callers inside the app
     if (autoSend && initialPrompt && availability.available) void send(initialPrompt);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [settled]);
 
   // a question from elsewhere on this page (an idea, a heads-up) goes into this chat: typed in the box, or sent
   const sendRef = useRef(send);
@@ -245,6 +260,7 @@ export function JarvisChat({
     setMessages(withChoices(snap.messages));
     if (!conversationId && snap.conversationId) {
       setConversationId(snap.conversationId);
+      if (aliveRef.current) rememberChat(snap.conversationId);
       onConversation?.(snap.conversationId, snap.title);
       if (!compact) window.history.replaceState(null, "", `/jarvis?c=${snap.conversationId}`);
     }
@@ -382,8 +398,12 @@ export function JarvisChat({
             case "conversation":
               if (!conversationId) {
                 setConversationId(ev.id);
-                onConversation?.(ev.id, ev.title);
-                if (!compact) window.history.replaceState(null, "", `/jarvis?c=${ev.id}`);
+                // a chat left behind (New chat) must not take this visit or the address back
+                if (aliveRef.current) {
+                  rememberChat(ev.id);
+                  onConversation?.(ev.id, ev.title);
+                  if (!compact) window.history.replaceState(null, "", `/jarvis?c=${ev.id}`);
+                }
               }
               break;
             case "already":
@@ -683,43 +703,45 @@ export function JarvisChat({
               )}
             </div>
           }
-          {messages.map((m, i) =>
-            m.role === "user" ? (
-              <UserBubble key={m.id} m={m} />
-            ) : (
-              <AssistantBubble key={m.id} m={m} last={i === messages.length - 1} onDecide={decide} onMemory={decideMemory} onRetry={tryAgain} />
-            ),
-          )}
-          {!aiConsent && !empty && <AiConsentCard name={assistantName} />}
-          {followUps && aiConsent && (
-            <div className="flex flex-wrap gap-2">
-              {undoable.length > 0 && conversationId && (
-                <button
-                  onClick={undoLast}
-                  disabled={undoing}
-                  className="lf-hop inline-flex min-h-11 items-center gap-1.5 rounded-[0.9375rem] bg-surface px-4 py-2 text-[0.875rem] font-medium text-text-2 shadow-soft ring-1 ring-border/60 hover:text-text disabled:opacity-60"
-                >
-                  <PixelIcon name="undo" className="h-4 w-4" /> Undo
-                </button>
-              )}
-              {followUps.map((f, i) =>
-                offer ? (
-                  <button key={f} onClick={() => send(f)} className={cn("lf-sb lf-sb-sm", f === OFFER_REPLIES[0] ? "lf-sb-sun" : "lf-sb-app")}>
-                    {f}
+          <div data-chat-log className="flex flex-col gap-5">
+            {messages.map((m, i) =>
+              m.role === "user" ? (
+                <UserBubble key={m.id} m={m} />
+              ) : (
+                <AssistantBubble key={m.id} m={m} last={i === messages.length - 1} onDecide={decide} onMemory={decideMemory} onRetry={tryAgain} />
+              ),
+            )}
+            {!aiConsent && !empty && <AiConsentCard name={assistantName} />}
+            {followUps && aiConsent && (
+              <div className="flex flex-wrap gap-2">
+                {undoable.length > 0 && conversationId && (
+                  <button
+                    onClick={undoLast}
+                    disabled={undoing}
+                    className="lf-hop inline-flex min-h-11 items-center gap-1.5 rounded-[0.9375rem] bg-surface px-4 py-2 text-[0.875rem] font-medium text-text-2 shadow-soft ring-1 ring-border/60 hover:text-text disabled:opacity-60"
+                  >
+                    <PixelIcon name="undo" className="h-4 w-4" /> Undo
                   </button>
-                ) : (
-                  // what to say next, as the skyling's clouds (owner, 2026-11-10: clouds instead of suggestion boxes)
-                  <span key={f} className="lf-idea" style={{ "--i": i } as CSSProperties}>
-                    <button type="button" onClick={() => send(f)} className="lf-idea-cloud">
-                      <span className="lf-idea-body" style={cloudStyle(i) as CSSProperties}>
-                        <b>{f}</b>
-                      </span>
+                )}
+                {followUps.map((f, i) =>
+                  offer ? (
+                    <button key={f} onClick={() => send(f)} className={cn("lf-sb lf-sb-sm", f === OFFER_REPLIES[0] ? "lf-sb-sun" : "lf-sb-app")}>
+                      {f}
                     </button>
-                  </span>
-                ),
-              )}
-            </div>
-          )}
+                  ) : (
+                    // what to say next, as the skyling's clouds (owner, 2026-11-10: clouds instead of suggestion boxes)
+                    <span key={f} className="lf-idea" style={{ "--i": i } as CSSProperties}>
+                      <button type="button" onClick={() => send(f)} className="lf-idea-cloud">
+                        <span className="lf-idea-body" style={cloudStyle(i) as CSSProperties}>
+                          <b>{f}</b>
+                        </span>
+                      </button>
+                    </span>
+                  ),
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -759,6 +781,7 @@ export function JarvisChat({
               onConversation={(id) => {
                 if (conversationId) return;
                 setConversationId(id);
+                if (aliveRef.current) rememberChat(id);
                 onConversation?.(id, `Talking with ${assistantName}`);
                 if (!compact) window.history.replaceState(null, "", `/jarvis?c=${id}`);
               }}

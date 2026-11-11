@@ -1,6 +1,7 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { isChatPage } from "@/lib/app-routes";
 import { CashOutlook } from "@/components/finance/cash-outlook";
 import { CountUp } from "@/components/motion/count-up";
 import { addDaysStr, formatDateStr, formatIn, monthStart, todayIn } from "@/lib/dates";
@@ -225,7 +226,7 @@ export default async function MoneyPage() {
                   <div className="min-w-0 flex-1">
                     <p className="text-[0.9375rem] leading-snug font-medium">{a.text}</p>
                     {a.fix && <p className="mt-0.5 text-[0.8125rem] leading-snug text-text-2">{a.fix}</p>}
-                    <Link href={a.href} className="lf-sb-link -mb-2 text-[0.8125rem] font-semibold text-text">
+                    <Link href={a.href} prefetch={isChatPage(a.href) ? false : undefined} className="lf-sb-link -mb-2 text-[0.8125rem] font-semibold text-text">
                       {a.label} <PixelIcon name="arrow" className="h-4 w-4" />
                     </Link>
                   </div>
