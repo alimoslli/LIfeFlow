@@ -4,7 +4,7 @@
  * the sky with a hill for every day and a valley for every night, its stops, the day picker, the tiles, the card, and
  * every gesture. The motion is one progress value p (0 Today .. 1 timeline), so it can be played, pulled and reversed.
  */
-import { isExam, pileOf, sunTimes, type ClockData, type ClockItem } from "@/lib/day-clock";
+import { EXAM_WORDS, isExam, pileDue, pileOf, sunTimes, type ClockData, type ClockItem } from "@/lib/day-clock";
 import { isFinished, isLate, itemColor, paintStrip, stripDark, wheelR, type SkyFace, type SkyGeo, type SkyState } from "./sky";
 import { DECAY, NOTCH_MIN, minutesForPx, normalizeWheel, project, rubber, snapTarget, spring, velocity } from "./input";
 import { iconHtml } from "./pixel-icons";
@@ -177,7 +177,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   }
   const minDay = () => data.days[0]?.offset ?? 0;
   const maxDay = () => data.days[data.days.length - 1]?.offset ?? 0;
-  const timeOf = (it: ClockItem) => (it.allDay ? (it.kind === "due" ? "Due" : "All day") : fmt(it.start));
+  const timeOf = (it: ClockItem) => (it.allDay ? (it.kind === "due" ? (isExam(it) ? "Exam" : "Due") : "All day") : fmt(it.start));
   // what a money thing says beside its name: a bill due, a trial's first charge, pay expected (never counted), a money goal
   const billOf = (it: ClockItem) => {
     if (it.amountCents == null) return null;
@@ -377,13 +377,15 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const next = DATED.filter((it) => !it.allDay && it.start > now && it.start <= we).sort((a, b) => a.start - b.start)[0];
     if (next) {
       const pile = pileOf(DATED.filter((it) => !it.allDay && it.start === next.start));
-      return { tag: `${dayOf(next.start) > dayOf(now) ? "Tomorrow" : "Next"} · ${fmtShort(next.start)}`, text: pile ? `${pile} due` : next.title, it: next };
+      // exams happen, they aren't due (owner, 2026-11-11: "Exam 253 ... is due on ... day? That's not how it's supposed to be")
+      const text = pile ? pileDue(pile) : next.title;
+      return { tag: `${dayOf(next.start) > dayOf(now) ? "Tomorrow" : "Next"} · ${fmtShort(next.start)}`, text, it: next };
     }
     // Nothing in the next 24 hours: the next thing on the calendar, whenever it is (a deadline counts by its day).
     const later = DATED.filter((it) => (it.allDay ? (dayOf(it.start) + 1) * 1440 : it.start) > now).sort((a, b) => a.start - b.start)[0];
     if (later) {
       const d = dayOf(later.start);
-      const when = later.allDay ? (billOf(later) ?? (later.origin === "goal" ? "goal" : "due")) : fmtShort(later.start);
+      const when = later.allDay ? (billOf(later) ?? (later.origin === "goal" ? "goal" : isExam(later) ? "exam" : "due")) : fmtShort(later.start);
       const day = d === dayOf(now) ? "Later" : d === dayOf(now) + 1 ? "Tomorrow" : dayLong(d).split(",")[0];
       return { tag: `${day} · ${when}`, text: later.title, it: later };
     }
@@ -634,7 +636,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       else if (g.every((x) => isFinished(x, S.now))) b.classList.add("dc-fin");
       const pile = n.group ? pileOf(n.group) : null;
       const more = n.group && !pile ? n.group.length - 1 : 0;
-      const name = pile ? `${pile} due` : nodeName(it);
+      const name = pile ? pileDue(pile) : nodeName(it);
       const time = it.someday ? "No day yet" : (it.when ?? (Math.abs(dayOf(n.t)) > 6 ? dayLongOf(dayOf(n.t)) : timeOf(it)));
       b.innerHTML = `<span class="dc-n-ic" aria-hidden="true">${iconHtml(it.icon)}${more ? `<b class="dc-n-more">+${more}</b>` : ""}</span><span class="dc-n-dot"></span><span class="dc-n-t">${esc(time)}</span><span class="dc-n-n">${esc(name)}</span>`;
       const said = more ? `${name} and ${more} more` : name;
@@ -811,8 +813,12 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       const time = ahead ? dayShort(dayOf(t)) : (billOf(due) ?? (due.allDay ? "today" : fmtShort(t)));
       const pile = pileOf(DATED.filter((it) => it.cat === "due" && it.start === due.start && it.allDay === due.allDay));
       const what = pile ?? due.title;
-      const name = billOf(due) ? what : `${ahead ? "Next due" : "Due"}: ${what}`;
-      out.push({ it: due, icon: "due", name, time, label: `${what}, due ${dayLong(dayOf(t))}${due.allDay ? "" : ` at ${fmt(t)}`}`, ahead });
+      // an exam is on its day, never "due": "Bio midterm", "Next: Exam 2", "Exam: Unit 3" when the title doesn't say so
+      const exam = !billOf(due) && (pile ? pile.endsWith(" exams") : isExam(due));
+      const examName = pile || EXAM_WORDS.test(what) ? what : `Exam: ${what}`;
+      const name = billOf(due) ? what : exam ? (ahead ? `Next: ${examName}` : examName) : `${ahead ? "Next due" : "Due"}: ${what}`;
+      const when = `${dayLong(dayOf(t))}${due.allDay ? "" : ` at ${fmt(t)}`}`;
+      out.push({ it: due, icon: "due", name, time, label: exam ? `${examName}, ${when}` : `${what}, due ${when}`, ahead });
     }
     // in the order they happen; a deadline on a later day goes last
     return out.sort((a, b) => (a.ahead ? 1e9 : t0(a.it)) - (b.ahead ? 1e9 : t0(b.it)));

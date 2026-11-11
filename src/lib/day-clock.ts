@@ -38,6 +38,8 @@ export type ClockItem = {
   someday?: boolean;
   /** The date in words when only the month or the year is known ("Mar 2019", "2019"); the day is then a place only. */
   when?: string;
+  /** An exam (from its class or Canvas): it happens on its day, it's never "due". */
+  exam?: boolean;
 };
 
 export type ClockDay = { offset: number; date: string; short: string; long: string };
@@ -148,8 +150,10 @@ export function titleFor(title: string, origin: AgendaOrigin): { title: string; 
   return { title, subtitle: null };
 }
 
-/** An exam (or quiz, midterm, final, test), by its title. */
-export const isExam = (it: Pick<ClockItem, "title">) => /\b(exam|midterm|final|quiz|test)\b/i.test(it.title);
+/** Words that already say it's an exam. */
+export const EXAM_WORDS = /\b(exam|midterm|final|quiz|test)\b/i;
+/** An exam (or quiz, midterm, final, test): marked so by its class or Canvas, or by its title. */
+export const isExam = (it: Pick<ClockItem, "title"> & { exam?: boolean }) => !!it.exam || EXAM_WORDS.test(it.title);
 
 /**
  * A pile of one kind says what it is ("9 assignments", "3 to-dos", "2 bills"); a mixed pile is null and shows "+N"
@@ -173,6 +177,9 @@ export function pileOf(g: ClockItem[]): string | null {
               : null;
   return noun ? `${g.length} ${noun}` : null;
 }
+
+/** A pile's words on the sky: "9 assignments due", "2 bills due"; exams happen and done is done, so never "due". */
+export const pileDue = (pile: string) => (/ (exams|done)$/.test(pile) ? pile : `${pile} due`);
 
 /**
  * About when the sun rises and sets on a day, in minutes from that day's local midnight (Morrow: the day is the sky).

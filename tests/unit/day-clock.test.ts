@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { categoryFor, iconFor, sourceFor, splitEmoji, titleFor } from "@/lib/day-clock";
+import { categoryFor, iconFor, isExam, pileDue, sourceFor, splitEmoji, titleFor } from "@/lib/day-clock";
 import { toClockItem, wallMinutes } from "@/server/services/day-clock";
 import type { AgendaItem } from "@/server/services/calendar";
 
@@ -102,5 +102,21 @@ describe("day clock: where things sit in time", () => {
     expect(due).toMatchObject({ kind: "due", start: 2 * 1440 + 600, end: null, cat: "due", icon: "📝", subtitle: "BIO 110" });
     const allDay = toClockItem(item({ allDay: true, startsAt: new Date("2026-11-08T05:00:00Z"), endsAt: new Date("2026-11-09T05:00:00Z") }), TZ, "2026-11-07");
     expect(allDay).toMatchObject({ allDay: true, start: 1440, end: null, kind: "due" });
+  });
+});
+
+// Owner, 2026-11-11: "why does it say 'Exam 253 ... is due on ... day'? That's not how it's supposed to be." An exam
+// happens on its day; it's never "due".
+describe("exams are never due", () => {
+  it("knows an exam by its class or Canvas, or by its title", () => {
+    expect(isExam({ title: "MATH 253 Exam 2" })).toBe(true);
+    expect(isExam({ title: "Unit 3", exam: true })).toBe(true);
+    expect(isExam({ title: "Lab report" })).toBe(false);
+  });
+  it("a pile of exams or of done things isn't due; deadlines and bills are", () => {
+    expect(pileDue("2 exams")).toBe("2 exams");
+    expect(pileDue("3 done")).toBe("3 done");
+    expect(pileDue("9 assignments")).toBe("9 assignments due");
+    expect(pileDue("2 bills")).toBe("2 bills due");
   });
 });

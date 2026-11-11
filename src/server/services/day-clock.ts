@@ -49,6 +49,7 @@ export function toClockItem(a: AgendaItem, tz: string, today: string): ClockItem
     subtitle: subtitle ?? a.subtitle,
     origin: a.origin,
     ref: a.id,
+    ...(a.kind === "exam" && { exam: true }),
   };
 }
 
