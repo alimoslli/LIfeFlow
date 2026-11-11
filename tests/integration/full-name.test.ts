@@ -3,7 +3,6 @@ import { afterAll, describe, expect, it } from "vitest";
 import { createSession, validateSession } from "@/server/auth/sessions";
 import { closeDb, getDb } from "@/server/db/client";
 import { users } from "@/server/db/schema";
-import { withUser } from "@/server/db/with-user";
 import { updateProfile } from "@/server/services/accounts";
 import { exportStream } from "@/server/services/data-export";
 import { saveWelcomeProgress } from "@/server/services/onboarding";
