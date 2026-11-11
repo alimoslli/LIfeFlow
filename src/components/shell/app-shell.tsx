@@ -87,7 +87,7 @@ export function AppShell({
   companion?: string | null;
   /** The user allowed Jarvis to send their data to the AI provider. */
   aiConsent?: boolean;
-  user: { name: string; email: string; accountKind: "standard" | "demo"; timezone?: string };
+  user: { id: string; name: string; email: string; accountKind: "standard" | "demo"; timezone?: string };
   /** Show the guided tour (once, after onboarding or when replayed). */
   tour?: boolean;
   children: ReactNode;
@@ -314,7 +314,7 @@ export function AppShell({
         </div>
         <Toaster />
         <PullToRefresh />
-        <PwaClient />
+        <PwaClient userId={user.id} />
         <SettingsSheet />
         <EverythingSheet />
         <PasskeyOffer />

@@ -26,7 +26,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const renderedAt = currentInstant().getTime();
   return (
     <AppShell
-      user={{ name: user.name, email: user.email, accountKind: user.accountKind, timezone: user.timezone }}
+      user={{ id: user.id, name: user.name, email: user.email, accountKind: user.accountKind, timezone: user.timezone }}
       tour={user.preferences?.tour === "pending"}
       assistantName={assistantProfile(user.preferences, user.timezone).name}
       assistantNamed={assistantProfile(user.preferences, user.timezone).named}

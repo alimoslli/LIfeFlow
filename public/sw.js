@@ -1,11 +1,12 @@
 /* LifeFlow service worker: app-shell caching, offline reading, push notifications. */
-const VERSION = "lf-v4"; // v4: the offline page in our pixel look (cached at install, so a new version brings it)
+const VERSION = "lf-v5"; // v5: Money is never kept for offline reading (the lock); a new version also clears pages kept by v4
 const SHELL = `${VERSION}-shell`;
 const PAGES = `${VERSION}-pages`;
 const STATIC = `${VERSION}-static`;
 const OFFLINE_URL = "/offline";
 // Pages kept for reading offline (the latest version you opened).
-const READABLE = ["/", "/tasks", "/plan", "/money"];
+// Money is left out on purpose: it sits behind the Money lock, which a saved copy would bypass.
+const READABLE = ["/", "/tasks", "/plan"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

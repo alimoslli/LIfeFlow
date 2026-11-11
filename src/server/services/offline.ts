@@ -1,8 +1,9 @@
 import { and, eq } from "drizzle-orm";
-import { z } from "zod";
+import { z, ZodError } from "zod";
 import { DATE_RE, TIME_RE } from "@/lib/dates";
 import { tasks, workShifts } from "../db/schema";
 import type { UserScope } from "../db/with-user";
+import { ServiceError } from "./errors";
 import { createTransaction } from "./finance/transactions";
 import { createTask, updateTask } from "./tasks";
 import { createShift } from "./work";
@@ -48,7 +49,19 @@ export const offlineOpSchema = z.discriminatedUnion("kind", [
 ]);
 export type OfflineOp = z.infer<typeof offlineOpSchema>;
 
-export type ReplayResult = { id: string; status: "applied" | "already_applied" | "failed"; error?: string };
+/** `retryable`: a temporary problem on our side (the phone keeps the change and tries again); otherwise a failure is final. */
+export type ReplayResult = { id: string; status: "applied" | "already_applied" | "failed"; error?: string; retryable?: boolean };
+
+/**
+ * What a thrown error means for the change. Our own validation messages
+ * (not found, invalid) are final; anything else (database, timeout) is ours
+ * to fix, so the phone keeps the change and tries again.
+ */
+export function failureOf(e: unknown): Omit<ReplayResult, "id"> {
+  if (e instanceof ServiceError) return { status: "failed", error: e.message.slice(0, 200) };
+  if (e instanceof ZodError) return { status: "failed", error: "This change isn't valid." };
+  return { status: "failed", error: "This change couldn't be saved.", retryable: true };
+}
 
 export async function replayOp(scope: UserScope, tz: string, op: OfflineOp): Promise<Omit<ReplayResult, "id">> {
   switch (op.kind) {

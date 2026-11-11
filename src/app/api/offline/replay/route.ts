@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { z, ZodError } from "zod";
+import { z } from "zod";
 import { getSessionUser } from "@/server/auth/current-user";
 import { withUser } from "@/server/db/with-user";
 import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { audit } from "@/server/services/audit";
-import { ServiceError } from "@/server/services/errors";
-import { offlineOpSchema, replayOp, type ReplayResult } from "@/server/services/offline";
+import { OFFLINE_BATCH_MAX } from "@/lib/offline-limits";
+import { failureOf, offlineOpSchema, replayOp, type ReplayResult } from "@/server/services/offline";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +16,12 @@ export async function POST(req: Request) {
     const user = await getSessionUser();
     if (!user) throw new HttpError(401, "Not signed in");
     await enforceRateLimit(`offline-replay:${user.id}`, 30, 600);
-    const body = z.object({ ops: z.array(z.unknown()).max(100) }).safeParse(await req.json().catch(() => null));
+    const body = z
+      .object({ userId: z.string().uuid().optional(), ops: z.array(z.unknown()).max(OFFLINE_BATCH_MAX) })
+      .safeParse(await req.json().catch(() => null));
     if (!body.success) throw new HttpError(400, "Invalid request");
+    // Changes belong to the account that made them: never apply them to another one.
+    if (body.data.userId && body.data.userId !== user.id) throw new HttpError(409, "These changes were made in a different account.");
     const results: ReplayResult[] = [];
     for (const raw of body.data.ops) {
       const op = offlineOpSchema.safeParse(raw);
@@ -36,13 +40,14 @@ export async function POST(req: Request) {
       } catch (e) {
         // Only our own validation messages go back; database errors stay in the server log.
         // (Log the kind and error code only: query errors can include the user's text.)
-        if (!(e instanceof ServiceError || e instanceof ZodError))
+        const out = failureOf(e);
+        if (out.retryable)
           console.error(
             "offline replay failed",
             op.data.kind,
             (e as { code?: string; cause?: { code?: string } }).cause?.code ?? (e as { code?: string }).code ?? "unknown",
           );
-        results.push({ id: op.data.id, status: "failed", error: e instanceof ServiceError ? e.message.slice(0, 200) : "This change couldn't be saved." });
+        results.push({ id: op.data.id, ...out });
       }
     }
     return NextResponse.json({ results });
