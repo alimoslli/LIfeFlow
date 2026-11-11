@@ -79,4 +79,15 @@ describe("the waitlist page", () => {
     expect(html).toContain("a friend doesn&#x27;t move you");
     expect(html).not.toContain("puts you ahead of the person just above");
   });
+
+  it("the confirm card keeps one alert region and one status region in the page, and the thank-you line can take focus", async () => {
+    const { ConfirmEmail } = await import("@/app/(onboarding)/waitlist/confirm-email");
+    const { createElement } = await import("react");
+    const html = renderToStaticMarkup(createElement(ConfirmEmail, { invited: false, className: "x" }));
+    expect(html.match(/role="alert"/g)).toHaveLength(1);
+    expect(html.match(/role="status"/g)).toHaveLength(1);
+    expect(html).toContain('tabindex="-1"');
+    expect(html).toContain("Confirm your email");
+    expect(html).not.toContain("so your friend");
+  });
 });
