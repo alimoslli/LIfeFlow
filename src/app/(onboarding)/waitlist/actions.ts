@@ -32,8 +32,9 @@ export async function confirmEmail(_prev: ConfirmState, fd: FormData): Promise<C
   const error = {
     wrong: "That code didn't match. Check the newest email.",
     expired: "That code expired. Ask for a new one.",
+    none: "That code didn't work. Ask for a new one.",
     locked: "Too many wrong tries. Ask for a new code.",
-    too_many: "Too many tries. Please wait a few minutes.",
+    too_many: "You've tried too many times today. Try again tomorrow.",
   }[r.reason];
   return { error, at: Date.now() };
 }

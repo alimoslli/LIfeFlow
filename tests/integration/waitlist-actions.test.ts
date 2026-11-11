@@ -63,7 +63,7 @@ describe("the waitlist page's email actions", () => {
     fd.set("code", `${code.slice(0, 3)} ${code.slice(3)}`);
     expect(await confirmEmail(null, fd)).toMatchObject({ confirmed: true });
     // the same code again: it worked once
-    expect(await confirmEmail(null, fd)).toMatchObject({ error: "That code expired. Ask for a new one." });
+    expect(await confirmEmail(null, fd)).toMatchObject({ error: "That code didn't work. Ask for a new one." });
     // already confirmed: no new email, and the card is told
     expect(await sendEmailCode(null)).toMatchObject({ confirmed: true });
     expect(h.sent.length).toBe(sentBefore + 1);
@@ -83,6 +83,15 @@ describe("the waitlist page's email actions", () => {
     const fd = new FormData();
     fd.set("code", codes[2]);
     expect(await confirmEmail(null, fd)).toMatchObject({ confirmed: true });
+  });
+
+  it("after ten tries in a day it says to try tomorrow, not to wait a few minutes", async () => {
+    const { user } = await makeUser("Sam Tries");
+    h.user = { id: user.id, email: user.email, name: user.name, timezone: user.timezone, accountKind: "standard", preferences: {} };
+    const fd = new FormData();
+    fd.set("code", "123456");
+    for (let i = 0; i < 10; i++) await confirmEmail(null, fd);
+    expect(await confirmEmail(null, fd)).toMatchObject({ error: "You've tried too many times today. Try again tomorrow." });
   });
 
   it("nobody signed in gets a plain answer, not a send", async () => {

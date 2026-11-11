@@ -96,7 +96,7 @@ describe("confirm your email: the code", () => {
     const [u] = await db.select({ at: users.emailVerifiedAt }).from(users).where(eq(users.id, user.id));
     expect(u.at).not.toBeNull();
     // Single use.
-    expect(await confirmEmailCode(db, user.id, out.code())).toEqual({ ok: false, reason: "expired" });
+    expect(await confirmEmailCode(db, user.id, out.code())).toEqual({ ok: false, reason: "none" });
     // Already confirmed: no new code.
     expect(await sendConfirmCode(db, user.id, { send: out.send, config: CFG })).toEqual({ ok: false, reason: "already" });
   });
@@ -110,6 +110,23 @@ describe("confirm your email: the code", () => {
     expect(await purgeExpiredConfirmCodes(db)).toBeGreaterThanOrEqual(1);
     expect(await db.select().from(emailConfirmations).where(eq(emailConfirmations.userId, a.id))).toEqual([]);
     expect(await db.select().from(emailConfirmations).where(eq(emailConfirmations.userId, b.id))).toHaveLength(1);
+  });
+
+  it("a failed resend leaves the valid code the person already has", async () => {
+    const { user } = await makeUser("Sam");
+    const out = outbox();
+    await sendConfirmCode(db, user.id, { send: out.send, config: CFG, ...fixed("111111") });
+    const throwing = async () => {
+      throw new Error("refused");
+    };
+    expect(await sendConfirmCode(db, user.id, { send: throwing, config: CFG, ...fixed("222222") })).toEqual({ ok: false, reason: "failed" });
+    expect(await confirmEmailCode(db, user.id, "222222")).toEqual({ ok: false, reason: "wrong" });
+    expect(await confirmEmailCode(db, user.id, "111111")).toMatchObject({ ok: true });
+  });
+
+  it("a code typed when none was ever sent says it didn't work, not that it expired", async () => {
+    const { user } = await makeUser("Sam");
+    expect(await confirmEmailCode(db, user.id, "123456")).toEqual({ ok: false, reason: "none" });
   });
 
   it("says a send worked only when the provider returned an id, and leaves no code behind otherwise", async () => {
@@ -139,7 +156,7 @@ describe("confirm your email: the code", () => {
     await sendConfirmCode(db, user.id, { send: out.send, config: CFG, ...fixed() });
     for (let i = 0; i < 4; i++) expect(await confirmEmailCode(db, user.id, WRONG)).toEqual({ ok: false, reason: "wrong" });
     expect(await confirmEmailCode(db, user.id, WRONG)).toEqual({ ok: false, reason: "locked" });
-    expect(await confirmEmailCode(db, user.id, RIGHT)).toEqual({ ok: false, reason: "expired" });
+    expect(await confirmEmailCode(db, user.id, RIGHT)).toEqual({ ok: false, reason: "none" });
   });
 
   it("a code for one person never works for another, and a new code replaces the old one", async () => {

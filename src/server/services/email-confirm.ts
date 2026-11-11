@@ -34,8 +34,7 @@ export type SendResult = { ok: true; id: string } | { ok: false; reason: "alread
 export type SendEmailFn = (cfg: EmailConfig, msg: Parameters<typeof sendEmail>[1]) => Promise<{ id: string }>;
 
 /**
- * Makes a new code (replacing any earlier one) and emails it. If the send fails the new
- * code is removed, so nothing unsent is ever waiting to be guessed.
+ * Makes a new code and emails it; once the provider accepts it, it replaces any earlier one. If the send fails the earlier code is untouched.
  */
 export async function sendConfirmCode(
   db: Database,
@@ -51,10 +50,8 @@ export async function sendConfirmCode(
   const code = deps.code?.() ?? String(randomInt(0, 1_000_000)).padStart(6, "0");
   const expiresAt = new Date((deps.now ?? Date.now()) + CONFIRM_CODE_TTL_MS);
   const row = { codeHash: codeHash(userId, code), expiresAt, attempts: 0, createdAt: new Date(deps.now ?? Date.now()) };
-  await db
-    .insert(emailConfirmations)
-    .values({ userId, ...row })
-    .onConflictDoUpdate({ target: emailConfirmations.userId, set: row });
+  // Send first and store the new code only after the provider accepted it, so a failed resend never replaces the valid code the
+  // person already has (and nothing unsent is ever waiting to be guessed).
   try {
     const sent = await (deps.send ?? sendEmail)(cfg, {
       to: u.email,
@@ -63,14 +60,17 @@ export async function sendConfirmCode(
       html: `<p>Your LifeFlow code is</p><p style="font-size:28px;font-weight:600;letter-spacing:4px">${code}</p><p>It works once, for 10 minutes. If you didn't ask for it, you can ignore this email.</p>`,
     });
     if (!sent.id) throw new Error("no id");
+    await db
+      .insert(emailConfirmations)
+      .values({ userId, ...row })
+      .onConflictDoUpdate({ target: emailConfirmations.userId, set: row });
     return { ok: true, id: sent.id };
   } catch {
-    await db.delete(emailConfirmations).where(and(eq(emailConfirmations.userId, userId), eq(emailConfirmations.codeHash, row.codeHash)));
     return { ok: false, reason: "failed" };
   }
 }
 
-export type ConfirmResult = ({ ok: true } & VerifyResult) | { ok: false; reason: "wrong" | "expired" | "locked" | "too_many" };
+export type ConfirmResult = ({ ok: true } & VerifyResult) | { ok: false; reason: "wrong" | "expired" | "none" | "locked" | "too_many" };
 
 /**
  * Checks the code. Each wrong try counts and the fifth removes the code. A right one is taken (deleted) and the email is
@@ -88,8 +88,10 @@ export async function confirmEmailCode(db: Database, userId: string, code: strin
       .set({ attempts: sql`${emailConfirmations.attempts} + 1` })
       .where(eq(emailConfirmations.userId, userId))
       .returning();
-    if (!c || c.expiresAt.getTime() < now) {
-      if (c) await tx.delete(emailConfirmations).where(eq(emailConfirmations.userId, userId));
+    // No code at all (never sent, already used, or removed after too many tries) is not "expired": say it didn't work.
+    if (!c) return { ok: false, reason: "none" } as const;
+    if (c.expiresAt.getTime() < now) {
+      await tx.delete(emailConfirmations).where(eq(emailConfirmations.userId, userId));
       return { ok: false, reason: "expired" } as const;
     }
     if (c.attempts > CONFIRM_MAX_ATTEMPTS) {
@@ -108,7 +110,7 @@ export async function confirmEmailCode(db: Database, userId: string, code: strin
       .delete(emailConfirmations)
       .where(and(eq(emailConfirmations.userId, userId), eq(emailConfirmations.codeHash, c.codeHash)))
       .returning({ id: emailConfirmations.userId });
-    if (!taken.length) return { ok: false, reason: "expired" } as const;
+    if (!taken.length) return { ok: false, reason: "none" } as const;
     return { ok: true, ...(await verifyEmail(tx, userId, new Date(now))) } as const;
   });
 }
