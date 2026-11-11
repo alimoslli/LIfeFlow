@@ -1,4 +1,4 @@
-import { and, eq, inArray, or, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { COMPANION_KEYS, SKY_CHOICE } from "@/lib/companions";
 import { AGE_LINE, BIRTHDAY_NEEDED, CHECK_YEAR, birthDateProblem, isUnderAge } from "@/lib/birthday";
@@ -174,9 +174,11 @@ async function blockUnderAge(scope: UserScope, prefs: Prefs) {
   // copies of their feedback in the owner's inbox go too (that table has no user_id, so the sweep below can't see it)
   await scope.tx.delete(ownerInbox).where(eq(ownerInbox.senderUserId, scope.userId));
   // the waitlist's account tables point at the user by other column names, so the sweep below can't see them: the referral
-  // rows where they are the friend (it holds a hash of their email) or the inviter, and a pending confirm code. Moves already
+  // row where they are the friend (it holds a hash of their email), the link on rows where they are the inviter, and a pending confirm code. Moves already
   // made in the queue stay (not personal data).
-  await scope.tx.delete(waitlistReferrals).where(or(eq(waitlistReferrals.inviterId, scope.userId), eq(waitlistReferrals.inviteeId, scope.userId)));
+  await scope.tx.delete(waitlistReferrals).where(eq(waitlistReferrals.inviteeId, scope.userId));
+  // rows where they invited someone hold the friend's hash, not theirs: they stay (as when an inviter deletes their account), without the link to them
+  await scope.tx.update(waitlistReferrals).set({ inviterId: null }).where(eq(waitlistReferrals.inviterId, scope.userId));
   await scope.tx.delete(emailConfirmations).where(eq(emailConfirmations.userId, scope.userId));
   // every table that holds their rows, found from the database so a new one can't be missed: a new table with a user_id is
   // emptied unless it is listed in KEEP_ON_LOCK (tests/integration/onboarding.test.ts checks this). Only real tables: a view

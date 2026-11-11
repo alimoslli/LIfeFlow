@@ -241,9 +241,8 @@ export const waitlistReferrals = pgTable(
   "waitlist_referrals",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    inviterId: uuid("inviter_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+    // Cleared (not deleted) when the inviter's account goes, so the friend's email hash keeps blocking a second credit.
+    inviterId: uuid("inviter_id").references(() => users.id, { onDelete: "set null" }),
     inviteeId: uuid("invitee_id").references(() => users.id, { onDelete: "set null" }),
     inviteeEmailHash: text("invitee_email_hash").notNull(),
     creditedAt: tstz("credited_at"),

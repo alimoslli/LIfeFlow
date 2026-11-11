@@ -401,6 +401,31 @@ describe("Google and Apple sign-up", () => {
   });
 });
 
+describe("the friend's dedupe row outlives the inviter", () => {
+  it("deleting the inviter keeps the friend's hash with no inviter, and that email can't be credited again through someone else", async () => {
+    const { inviter, friend } = await inviterAndFriend();
+    await verifyEmail(db, friend.id);
+    await db.delete(users).where(eq(users.id, inviter.id));
+    const [row] = await db
+      .select()
+      .from(waitlistReferrals)
+      .where(eq(waitlistReferrals.inviteeEmailHash, emailHash(friend.email)));
+    expect(row).toMatchObject({ inviterId: null, inviteeId: friend.id });
+    // the friend deletes their account too and signs up again through another person's link
+    await db.delete(users).where(eq(users.id, friend.id));
+    const other = (await makeUser("Other")).user;
+    const filler = (await makeUser("Filler")).user;
+    const [again] = await db.insert(users).values({ name: "Friend", email: friend.email, passwordHash: "x", invitedBy: other.id }).returning({ id: users.id });
+    made.push(again.id);
+    const before = await place(other.id);
+    expect(await verifyEmail(db, again.id)).toEqual({ verified: true, recorded: false, moved: false });
+    expect(await place(other.id)).toBe(before);
+    expect(await place(filler.id)).toBeGreaterThan(before!);
+    expect(await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, other.id))).toEqual([]);
+    expect((await waitlistPage(db, other.id)).friends).toBe(0);
+  });
+});
+
 describe("an under-13 lock takes the account out of the queue", () => {
   it("a locked waiting child is out of the counts, the front, the moves, the acceptance and the invite code", async () => {
     await clearLine();
