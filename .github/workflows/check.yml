@@ -51,3 +51,48 @@ jobs:
           SQL
       - run: npm ci
       - run: npm run check
+
+  # The desktop screen tests (owner, 2026-11-11): the production build, a fake model server and its own database.
+  # Runs beside `check`, so it adds no wait to it. Phone projects still run locally.
+  desktop-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow
+      E2E_DATABASE_URL: postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Create the database role and databases
+        run: |
+          psql "postgresql://postgres:postgres@localhost:5432/postgres" <<'SQL'
+          CREATE ROLE budgetflow LOGIN PASSWORD 'budgetflow_dev' NOSUPERUSER NOBYPASSRLS;
+          CREATE DATABASE budgetflow OWNER budgetflow;
+          CREATE DATABASE budgetflow_e2e OWNER budgetflow;
+          SQL
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npx playwright test --project=desktop --trace off
+      - name: Keep the failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-e2e-results
+          path: test-results/
+          retention-days: 7
