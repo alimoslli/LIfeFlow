@@ -99,6 +99,7 @@ export function LiveVoice({
     timer: 0,
     started: 0,
     conversationId: "",
+    voiceSessionId: "",
     lastUserText: "",
     pending: [] as Promise<{ callId: string; output: string }>[],
     stats: { responses: 0, toolCalls: 0, toolErrors: 0, confirmations: 0, inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, usage: false },
@@ -157,7 +158,14 @@ export function LiveVoice({
       l.stats.toolCalls++;
       cb.current.onTool(name);
       try {
-        const res = await post("/api/jarvis/voice/tool", { conversationId: l.conversationId, callId, name, arguments: args, userText: l.lastUserText });
+        const res = await post("/api/jarvis/voice/tool", {
+          voiceSessionId: l.voiceSessionId,
+          conversationId: l.conversationId,
+          callId,
+          name,
+          arguments: args,
+          userText: l.lastUserText,
+        });
         const r = await res.json();
         if (!res.ok) throw new Error(r.error ?? "Tool failed");
         if (r.ok) l.mutated = true;
@@ -236,10 +244,11 @@ export function LiveVoice({
 
         const res = await post("/api/jarvis/voice/session", { module, conversationId: startConversation });
         if (!res.ok) throw new PlainError(await serverWords(res, "Couldn't start the call. Try again in a moment."));
-        const s = await jsonOf<{ conversationId: string; clientSecret: string; maxSeconds: number } & Record<string, never>>(res);
+        const s = await jsonOf<{ voiceSessionId: string; conversationId: string; clientSecret: string; maxSeconds: number } & Record<string, never>>(res);
         if (!s) throw new Error("bad reply");
         if (cancelled) return;
         l.conversationId = s.conversationId;
+        l.voiceSessionId = s.voiceSessionId;
         cb.current.onConversation(s.conversationId);
 
         const pc = new RTCPeerConnection();

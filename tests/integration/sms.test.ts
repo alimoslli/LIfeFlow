@@ -3,8 +3,21 @@ import { closeDb, getDb } from "@/server/db/client";
 import { normalizePhone, toSmsText, twilioSignature, validTwilioRequest, type SmsConfig } from "@/server/integrations/twilio";
 import { answerText } from "@/server/jarvis/sms";
 import { ScriptedProvider } from "@/server/jarvis/providers/scripted";
-import { smsDecision, smsHelpText, smsKeyword, smsStatus, startPhoneLink, unlinkPhone, userForPhone, verifyPhoneLink } from "@/server/services/sms";
+import {
+  claimInboundSms,
+  smsDecision,
+  smsHelpText,
+  smsKeyword,
+  smsStatus,
+  startPhoneLink,
+  unlinkPhone,
+  userForPhone,
+  verifyPhoneLink,
+} from "@/server/services/sms";
 import { createTask, listTasks } from "@/server/services/tasks";
+import { randomUUID } from "node:crypto";
+import { eq } from "drizzle-orm";
+import { users } from "@/server/db/schema";
 import { makeUser } from "../helpers";
 
 afterAll(closeDb);
@@ -133,5 +146,42 @@ describe("texting an email to send", () => {
     expect(out).toMatch(/Open LifeFlow to review and confirm/);
     const yes = await answerText(db, "+14045550199", "yes", { provider, send: async () => {} });
     expect(yes).not.toMatch(/^Confirmed and done/);
+  });
+});
+
+describe("who may text", () => {
+  it("a suspended or age-locked account's texts get no answer and never reach the model", async () => {
+    const db = getDb();
+    const { user } = await makeUser("Sus");
+    const t = twilio();
+    await startPhoneLink(db, user.id, "(404) 555-0166", CFG, t.fetchImpl);
+    await verifyPhoneLink(db, user.id, t.sent[0].body.match(/\d{6}/)![0]);
+    const sent: string[] = [];
+    let modelCalls = 0;
+    const deps = {
+      provider: () => {
+        modelCalls++;
+        return new ScriptedProvider();
+      },
+      send: async (_to: string, text: string) => void sent.push(text),
+    };
+    await db.update(users).set({ suspendedAt: new Date() }).where(eq(users.id, user.id));
+    expect(await answerText(db, "+14045550166", "hello", deps)).toBeNull();
+    await db
+      .update(users)
+      .set({ suspendedAt: null, preferences: { ...user.preferences, aiConsentAt: "2026-01-01T00:00:00.000Z", ageBlockedAt: "2026-11-10" } })
+      .where(eq(users.id, user.id));
+    expect(await answerText(db, "+14045550166", "hello", deps)).toBeNull();
+    expect(modelCalls).toBe(0);
+    expect(sent).toEqual([]);
+  });
+
+  it("claims a provider message id once, even when two deliveries arrive together", async () => {
+    const db = getDb();
+    const sid = `SM${randomUUID()}`;
+    const results = await Promise.all([claimInboundSms(db, sid), claimInboundSms(db, sid), claimInboundSms(db, sid)]);
+    expect(results.filter(Boolean)).toHaveLength(1);
+    expect(await claimInboundSms(db, sid)).toBe(false);
+    expect(await claimInboundSms(db, `SM${randomUUID()}`)).toBe(true);
   });
 });

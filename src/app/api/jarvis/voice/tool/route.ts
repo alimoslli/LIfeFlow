@@ -8,6 +8,7 @@ import { moneyLocked } from "@/server/auth/money-lock";
 export const dynamic = "force-dynamic";
 
 const body = z.object({
+  voiceSessionId: z.string().uuid(),
   conversationId: z.string().uuid(),
   callId: z.string().min(1).max(200),
   name: z.string().min(1).max(100),

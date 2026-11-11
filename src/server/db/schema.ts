@@ -1639,6 +1639,47 @@ export const jarvisRuns = pgTable(
   (t) => [index("jarvis_runs_user_created_idx").on(t.userId, t.createdAt), index("jarvis_runs_conversation_idx").on(t.conversationId), ownerPolicy()],
 );
 
+/**
+ * A live voice call the server started (migration 0062): created when the one-time client secret is issued, bound to the user and the
+ * conversation, short expiry. Tool calls from the browser are accepted only for a live row of their own user and conversation.
+ */
+export const voiceSessions = pgTable(
+  "voice_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    expiresAt: tstz("expires_at").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("voice_sessions_user_idx").on(t.userId, t.expiresAt), ownerPolicy()],
+);
+
+/** One row per voice tool call (session + the model's call id): the claim that makes a repeat return the first result instead of running again. */
+export const voiceToolCalls = pgTable(
+  "voice_tool_calls",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => voiceSessions.id, { onDelete: "cascade" }),
+    callId: text("call_id").notNull(),
+    userId: userRef(),
+    /** Null while the first run is still going. */
+    result: jsonb("result").$type<Record<string, unknown>>(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("voice_tool_calls_call_uq").on(t.sessionId, t.callId), ownerPolicy()],
+);
+
+/** Provider message ids already answered (Twilio MessageSid): a retry of the same text never runs a second turn. Operations data, no user content, no RLS. */
+export const smsInbound = pgTable("sms_inbound", {
+  messageSid: text("message_sid").primaryKey(),
+  createdAt: createdAt(),
+});
+
 /** Tool calls that change or delete data in bulk wait here for the user's explicit approval. */
 export const pendingActions = pgTable(
   "pending_actions",

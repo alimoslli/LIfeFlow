@@ -1,7 +1,7 @@
 import { createHash, randomInt, timingSafeEqual } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { eq, lt } from "drizzle-orm";
 import type { Database } from "../db/client";
-import { users, type UserPreferences } from "../db/schema";
+import { smsInbound, users, type UserPreferences } from "../db/schema";
 import { normalizePhone, sendSms, smsConfig, type SmsConfig } from "../integrations/twilio";
 import { ServiceError } from "./errors";
 
@@ -116,4 +116,14 @@ export function smsHelpText(contactEmail: string | null) {
   return `LifeFlow: text your skyling about your plans, school, work and money. Manage texts in the app under Settings, Text your skyling.${
     contactEmail ? ` Help: ${contactEmail}.` : ""
   } Msg & data rates may apply. Reply STOP to opt out.`;
+}
+
+/**
+ * Claims a provider message id (Twilio's MessageSid) before answering. True the first time, false for a retry of the same text,
+ * decided by one atomic insert, so two deliveries at once can't both run a turn. Old ids are cleared (providers retry within minutes).
+ */
+export async function claimInboundSms(db: Database, messageSid: string): Promise<boolean> {
+  await db.delete(smsInbound).where(lt(smsInbound.createdAt, new Date(Date.now() - 7 * 86_400_000)));
+  const rows = await db.insert(smsInbound).values({ messageSid }).onConflictDoNothing().returning({ sid: smsInbound.messageSid });
+  return rows.length > 0;
 }

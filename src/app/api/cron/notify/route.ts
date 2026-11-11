@@ -37,12 +37,15 @@ export async function GET(req: Request) {
 
 async function runNotify() {
   const send = await webPushSender();
-  const all = await getDb().select({ id: users.id, tz: users.timezone, prefs: users.preferences, kind: users.accountKind }).from(users);
+  const all = await getDb()
+    .select({ id: users.id, tz: users.timezone, prefs: users.preferences, kind: users.accountKind, suspended: users.suspendedAt })
+    .from(users);
   let messages = 0;
   let sent = 0;
   for (const u of all) {
     // the demo account, and an account locked under 13 (nothing of theirs is kept, and nothing is sent to them)
-    if (u.kind === "demo" || u.prefs?.ageBlockedAt) continue;
+    // A suspended account gets nothing either.
+    if (u.kind === "demo" || u.prefs?.ageBlockedAt || u.suspended) continue;
     // Separate transactions: one user's (or one step's) failure never blocks the rest.
     try {
       messages += (await withUser(u.id, (s) => runDueSlot(s, u.tz, u.prefs, new Date(), { scheduled: true }))).length;

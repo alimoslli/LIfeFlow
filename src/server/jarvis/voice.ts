@@ -1,9 +1,11 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
-import { inTestingPhase, TESTING_LIMITS } from "../billing";
+import { and, desc, eq, gt, inArray, lt } from "drizzle-orm";
+import { inTestingPhase, requirePro, TESTING_LIMITS } from "../billing";
+import { AI_CONSENT_NEEDED, aiAllowed } from "@/lib/ai-consent";
+import { HttpError } from "../http";
 import OpenAI from "openai";
 import { assistantProfile } from "@/lib/assistant";
 import type { SessionUser } from "../auth/sessions";
-import { conversations, messages, type JarvisModule, type ToolResultRecord } from "../db/schema";
+import { conversations, messages, voiceSessions, voiceToolCalls, type JarvisModule, type ToolResultRecord } from "../db/schema";
 import { withUser } from "../db/with-user";
 import { env } from "../env";
 import { listActiveMemories } from "../services/memory";
@@ -35,6 +37,8 @@ This is a live voice conversation. Keep replies short and natural, like talking 
 Never go silent while you work. When the user asks you to change something (edit assignments, move events, add tasks), first say one short sentence out loud about what you're doing ("Sure, moving all three to Friday now"), then call the tools in that same response. Make every change the request needs at once, in parallel, not one per turn. When the results come back, confirm in one sentence what actually changed, or say what didn't work.`;
 
 export const VOICE_SESSION_SECONDS = 15 * 60;
+/** Tool calls still land for a moment after the time is up (the last answer is being spoken). */
+const VOICE_GRACE_SECONDS = 60;
 
 /** The last few typed or spoken lines of the chat, so a call picks up where the conversation was. */
 async function recentLines(user: SessionUser, conversationId: string, limit = 12) {
@@ -108,14 +112,25 @@ export async function startVoiceSession(user: SessionUser, module: JarvisModule 
       },
     },
   });
-  const conversation = conversationId ? { id: conversationId } : await withUser(user.id, (s) => createConversation(s, module, `Talking with ${session.name}`));
+  const maxSeconds = inTestingPhase() ? TESTING_LIMITS.voiceCallMinutes * 60 : VOICE_SESSION_SECONDS;
+  // The server's own record of this call: tool calls are accepted only for a live row of this user and conversation.
+  const conversation = await withUser(user.id, async (s) => {
+    const c = conversationId ? { id: conversationId } : await createConversation(s, module, `Talking with ${session.name}`);
+    await s.tx.delete(voiceSessions).where(lt(voiceSessions.expiresAt, new Date(Date.now() - 3_600_000)));
+    const [vs] = await s.tx
+      .insert(voiceSessions)
+      .values({ userId: s.userId, conversationId: c.id, expiresAt: new Date(Date.now() + (maxSeconds + VOICE_GRACE_SECONDS) * 1000) })
+      .returning({ id: voiceSessions.id });
+    return { id: c.id, voiceSessionId: vs.id };
+  });
   return {
+    voiceSessionId: conversation.voiceSessionId,
     clientSecret: secret.value,
     expiresAt: secret.expires_at,
     model: e.OPENAI_REALTIME_MODEL,
     conversationId: conversation.id,
     // Shorter calls while LifeFlow is in testing (see TESTING_LIMITS).
-    maxSeconds: inTestingPhase() ? TESTING_LIMITS.voiceCallMinutes * 60 : VOICE_SESSION_SECONDS,
+    maxSeconds,
   };
 }
 
@@ -142,10 +157,65 @@ export type VoiceToolResult = {
 /** Runs one tool call from a live voice session, exactly like a typed chat tool call. */
 export async function relayVoiceTool(
   user: SessionUser,
-  input: { conversationId: string; callId: string; name: string; arguments: string; userText?: string },
+  input: { voiceSessionId: string; conversationId: string; callId: string; name: string; arguments: string; userText?: string },
   opts: { moneyLocked?: boolean } = {},
 ): Promise<VoiceToolResult> {
+  // The same gates as starting the call and as typed chat: plan and AI consent (sign-in, suspension and the age lock are in getSessionUser).
+  requirePro(user, "voice");
+  if (!aiAllowed(user.preferences)) throw new HttpError(403, AI_CONSENT_NEEDED);
   await ownedConversation(user, input.conversationId);
+  // A server-issued, unexpired call of this user and this conversation, and one claim per call id: a repeat gets the first result.
+  const claim = await withUser(user.id, async (s) => {
+    const [live] = await s.tx
+      .select({ id: voiceSessions.id })
+      .from(voiceSessions)
+      .where(
+        and(
+          eq(voiceSessions.id, input.voiceSessionId),
+          eq(voiceSessions.userId, s.userId),
+          eq(voiceSessions.conversationId, input.conversationId),
+          gt(voiceSessions.expiresAt, new Date()),
+        ),
+      );
+    if (!live) return "no-session" as const;
+    const [mine] = await s.tx
+      .insert(voiceToolCalls)
+      .values({ sessionId: live.id, callId: input.callId, userId: s.userId })
+      .onConflictDoNothing()
+      .returning({ callId: voiceToolCalls.callId });
+    if (mine) return "mine" as const;
+    const [first] = await s.tx
+      .select({ result: voiceToolCalls.result })
+      .from(voiceToolCalls)
+      .where(and(eq(voiceToolCalls.sessionId, live.id), eq(voiceToolCalls.callId, input.callId)));
+    return first?.result ? (first.result as unknown as VoiceToolResult) : ("running" as const);
+  });
+  if (claim === "no-session") throw new HttpError(403, "This call isn't active any more. Start a new one.");
+  if (claim === "running") throw new HttpError(409, "That step is already running.");
+  if (claim !== "mine") return claim;
+  try {
+    const result = await runVoiceTool(user, input, opts);
+    await withUser(user.id, (s) =>
+      s.tx
+        .update(voiceToolCalls)
+        .set({ result: result as unknown as Record<string, unknown> })
+        .where(and(eq(voiceToolCalls.sessionId, input.voiceSessionId), eq(voiceToolCalls.callId, input.callId))),
+    );
+    return result;
+  } catch (e) {
+    // Nothing was recorded as done: let the model's retry run.
+    await withUser(user.id, (s) =>
+      s.tx.delete(voiceToolCalls).where(and(eq(voiceToolCalls.sessionId, input.voiceSessionId), eq(voiceToolCalls.callId, input.callId))),
+    ).catch(() => undefined);
+    throw e;
+  }
+}
+
+async function runVoiceTool(
+  user: SessionUser,
+  input: { conversationId: string; callId: string; name: string; arguments: string; userText?: string },
+  opts: { moneyLocked?: boolean },
+): Promise<VoiceToolResult> {
   const ctx = makeToolContext(user, input.conversationId, new Date(), input.userText ?? "", opts.moneyLocked);
   const outcome = await executeToolCall(input.name, input.arguments, ctx, input.callId);
   let args: Record<string, unknown> = {};
