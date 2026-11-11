@@ -18,10 +18,24 @@ import { inviterFor } from "@/server/services/invites";
 import { makeUser as makeAnyUser } from "../helpers";
 
 // A switch so one test can make the inviter's move fail, to see the sign-up credit is all or nothing.
-const h = vi.hoisted(() => ({ failMove: false }));
+const h = vi.hoisted(() => ({ failMove: false, failInvite: 0 }));
 vi.mock("@/server/services/waitlist", async (orig) => {
   const real = await orig<typeof import("@/server/services/waitlist")>();
   return { ...real, moveUpOne: (...a: Parameters<typeof real.moveUpOne>) => (h.failMove ? Promise.reject(new Error("move failed")) : real.moveUpOne(...a)) };
+});
+// ... and a switch to make recording the invite fail: a number of calls that throw.
+vi.mock("@/server/services/invites", async (orig) => {
+  const real = await orig<typeof import("@/server/services/invites")>();
+  return {
+    ...real,
+    recordInvite: (...a: Parameters<typeof real.recordInvite>) => {
+      if (h.failInvite > 0) {
+        h.failInvite--;
+        return Promise.reject(new Error("invite failed"));
+      }
+      return real.recordInvite(...a);
+    },
+  };
 });
 const db = getDb();
 /** A person deleting their own account through the service (a Google-style account, so no password is asked). */
@@ -581,6 +595,34 @@ describe("Google and Apple sign-up", () => {
     await sendConfirmCode(db, u.id, { send: out.send, config: CFG, ...fixed() });
     expect(await confirmEmailCode(db, u.id, RIGHT)).toEqual({ ok: true, verified: true, recorded: true, moved: true });
     expect(await place(inviter.id)).toBe(1);
+  });
+
+  it("if recording the invite fails, the account is left unverified and the friend can still confirm the code later", async () => {
+    await clearLine();
+    await makeUser("First");
+    const inviter = (await makeUser("Inviter")).user;
+    const code = await inviteCodeFor(db, inviter.id);
+    // fails inside the sign-up transaction only: the invite is then recorded on its own, and the code credits later
+    const g = { sub: `g-${randomUUID()}`, email: `${randomUUID().slice(0, 8)}@gmail.com`, emailVerified: true, isPrivateEmail: false };
+    h.failInvite = 1;
+    expect((await completeGoogleSignIn(db, g, signin(code), "Ana")).kind).toBe("created");
+    const [u] = await db.select().from(users).where(eq(users.email, g.email));
+    expect(u.emailVerifiedAt).toBeNull();
+    expect(u.invitedBy).toBe(inviter.id);
+    expect(await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id))).toEqual([]);
+    await sendConfirmCode(db, u.id, { send: outbox().send, config: CFG, ...fixed() });
+    expect(await confirmEmailCode(db, u.id, RIGHT)).toEqual({ ok: true, verified: true, recorded: true, moved: true });
+
+    // the invite can't be recorded at all: still unverified, and the friend can still confirm (no inviter to credit)
+    const g2 = { sub: `g-${randomUUID()}`, email: `${randomUUID().slice(0, 8)}@gmail.com`, emailVerified: true, isPrivateEmail: false };
+    h.failInvite = 2;
+    expect((await completeGoogleSignIn(db, g2, signin(code), "Ben")).kind).toBe("created");
+    const [v] = await db.select().from(users).where(eq(users.email, g2.email));
+    expect(v.emailVerifiedAt).toBeNull();
+    expect(v.invitedBy).toBeNull();
+    await sendConfirmCode(db, v.id, { send: outbox().send, config: CFG, ...fixed() });
+    expect(await confirmEmailCode(db, v.id, RIGHT)).toMatchObject({ ok: true, verified: true, recorded: false });
+    h.failInvite = 0;
   });
 
   it("a provider sign-up without an invite, or with a bad one, is verified and credits nobody", async () => {

@@ -113,21 +113,18 @@ export async function completeOAuthSignIn(
     db,
   );
   await linkIdentity(db, provider, user.id, claims, refreshToken ? encryptSecret(refreshToken) : null);
-  // Signed up from a friend's link: record who invited them. Never blocks sign-up.
-  if (state.invite) {
-    try {
-      await recordInvite(db, user.id, state.invite);
-    } catch (e) {
-      console.warn("invite record skipped:", e instanceof Error ? e.name : "unknown");
-    }
-  }
-  // The provider verified this email (checked above), so it counts without a code (owner, 2026-11-11). All or nothing: the
-  // verified date and the inviter's credit are one transaction (`verifyEmail`), so an account is never verified and attributed
-  // but never credited. If it can't be done, the account stays unverified and the 6-digit code on /waitlist credits it later.
+  // The provider verified this email (checked above), so it counts without a code (owner, 2026-11-11). All or nothing: recording who
+  // invited them, the verified date and the inviter's credit are ONE transaction, so an account is never verified without its
+  // inviter being recorded and credited. If any step fails, none of it happens and the account stays unverified; the invite is
+  // then recorded on its own (best effort) so the 6-digit code on /waitlist can still credit it later. Never blocks sign-up.
   try {
-    await verifyEmail(db, user.id);
+    await db.transaction(async (tx) => {
+      if (state.invite) await recordInvite(tx as unknown as Database, user.id, state.invite);
+      await verifyEmail(tx, user.id);
+    });
   } catch (e) {
     console.warn("provider email left unverified:", e instanceof Error ? e.name : "unknown");
+    if (state.invite) await recordInvite(db, user.id, state.invite).catch(() => false);
   }
   return { kind: "created", userId: user.id };
 }
