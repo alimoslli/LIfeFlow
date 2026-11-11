@@ -706,7 +706,7 @@ export async function waitlistView(db: Database, f: { q?: string; page?: number 
         createdAt: line.createdAt,
         place: line.place,
         // the same rule as /waitlist and Settings (`friendCounts`): friends who confirmed their email and counted
-        friends: sql<number>`(select count(*)::int from waitlist_referrals r where r.inviter_id = ${line.id} and r.credited_at is not null)`,
+        friends: sql<number>`(select count(*)::int from waitlist_referrals r where r.inviter_id = "line"."id" and r.credited_at is not null)`,
       })
       .from(line)
       .where(match)
