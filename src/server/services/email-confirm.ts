@@ -19,7 +19,13 @@ export const CONFIRM_MAX_ATTEMPTS = 5;
 /** Every try counts per person per day, on top of the 5 per code, and a new code never resets it. */
 export const CONFIRM_TRIES_PER_DAY = 10;
 export const CONFIRM_SENDS_PER_HOUR = 3;
-export const CONFIRM_SENDS_PER_IP_HOUR = 10;
+/**
+ * Per-network limits are only a backstop (a campus or a school's shared address has many real students on it), so they're
+ * generous: the per-person limits above are the real guard. Sign-up itself is 10 an hour per network, so a network can't
+ * make many accounts to send to anyway.
+ */
+export const CONFIRM_SENDS_PER_IP_HOUR = 100;
+export const CONFIRM_TRIES_PER_IP_15MIN = 300;
 
 // Keyed (HMAC under a key derived from ENCRYPTION_KEY, its own label), so a stolen table can't be run against all million codes.
 const codeHash = (userId: string, code: string) => keyedHash("email-confirm-code", `${userId}:${code}`);
@@ -40,7 +46,7 @@ export async function sendConfirmCode(
   db: Database,
   userId: string,
   ip: string,
-  deps: { send?: SendEmailFn; config?: EmailConfig | null; now?: number } = {},
+  deps: { send?: SendEmailFn; config?: EmailConfig | null; now?: number; /** tests only: a fixed code */ code?: () => string } = {},
 ): Promise<SendResult> {
   const cfg = deps.config === undefined ? emailConfig() : deps.config;
   if (!cfg) return { ok: false, reason: "unavailable" };
@@ -52,7 +58,7 @@ export async function sendConfirmCode(
     await rateLimit(db, `email-confirm:send:ip:${ip}`, CONFIRM_SENDS_PER_IP_HOUR, 3600),
   ];
   if (!byUser.allowed || !byIp.allowed) return { ok: false, reason: "too_many" };
-  const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+  const code = deps.code?.() ?? String(randomInt(0, 1_000_000)).padStart(6, "0");
   const expiresAt = new Date((deps.now ?? Date.now()) + CONFIRM_CODE_TTL_MS);
   const row = { codeHash: codeHash(userId, code), expiresAt, attempts: 0, createdAt: new Date(deps.now ?? Date.now()) };
   await db
@@ -82,7 +88,7 @@ export type ConfirmResult = ({ ok: true } & VerifyResult) | { ok: false; reason:
  */
 export async function confirmEmailCode(db: Database, userId: string, code: string, ip: string, now = Date.now()): Promise<ConfirmResult> {
   const [byIp, byUser] = [
-    await rateLimit(db, `email-confirm:try:ip:${ip}`, 30, 900),
+    await rateLimit(db, `email-confirm:try:ip:${ip}`, CONFIRM_TRIES_PER_IP_15MIN, 900),
     await rateLimit(db, `email-confirm:try:user:${userId}`, CONFIRM_TRIES_PER_DAY, 86400),
   ];
   if (!byIp.allowed || !byUser.allowed) return { ok: false, reason: "too_many" };

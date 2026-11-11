@@ -1,14 +1,21 @@
 import { createHash, randomUUID } from "node:crypto";
 import { eq, inArray } from "drizzle-orm";
-import { afterAll, describe, expect, it } from "vitest";
-import { completeAppleSignIn } from "@/server/auth/apple";
+import { afterAll, describe, expect, it, vi } from "vitest";
+import { completeAppleSignIn, parseAppleState, startAppleSignIn } from "@/server/auth/apple";
 import { takeChallenge } from "@/server/auth/challenges";
 import { completeGoogleSignIn, parseGoogleState, startGoogleSignIn } from "@/server/auth/google-signin";
 import { closeDb, getDb } from "@/server/db/client";
-import { emailConfirmations, users, waitlistReferrals } from "@/server/db/schema";
-import { confirmEmailCode, CONFIRM_CODE_TTL_MS, purgeExpiredConfirmCodes, sendConfirmCode } from "@/server/services/email-confirm";
+import { emailConfirmations, rateLimitBuckets, users, waitlistReferrals } from "@/server/db/schema";
+import {
+  confirmEmailCode,
+  CONFIRM_CODE_TTL_MS,
+  CONFIRM_SENDS_PER_IP_HOUR,
+  CONFIRM_TRIES_PER_IP_15MIN,
+  purgeExpiredConfirmCodes,
+  sendConfirmCode,
+} from "@/server/services/email-confirm";
 import { inviteCodeFor, recordInvite, validInviteCode } from "@/server/services/invites";
-import { creditReferral, emailHash, MAX_CREDITS_PER_DAY, normalizeEmail, referralEmailKey, verifyEmail } from "@/server/services/referrals";
+import { creditReferral, emailHash, MAX_CREDITS_PER_DAY, referralEmailKey, verifyEmail } from "@/server/services/referrals";
 import { saveWelcomeProgress } from "@/server/services/onboarding";
 import { acceptUsers, moveUpOne, nextInLine, waitingCount, waitlistPage, waitlistPlace } from "@/server/services/waitlist";
 import { inviterFor } from "@/server/services/invites";
@@ -27,8 +34,21 @@ afterAll(async () => {
   await db.delete(users).where(inArray(users.id, made));
   await closeDb();
 });
+/** Codes are fixed in these tests, so no check ever has to skip a case where two random codes happen to match. */
+const RIGHT = "123456";
+const WRONG = "654321";
+const fixed = (c = RIGHT) => ({ code: () => c });
 const CFG = { apiKey: "test", from: "LifeFlow <test@example.com>" };
 const place = (id: string) => waitlistPlace(db, id);
+/** Fills a rate-limit bucket to its limit for the current window, so a limit can be tested without making hundreds of calls. */
+async function fillBucket(key: string, count: number, windowSeconds: number) {
+  const ms = windowSeconds * 1000;
+  const windowStart = new Date(Math.floor(Date.now() / ms) * ms);
+  await db
+    .insert(rateLimitBuckets)
+    .values({ key, windowStart, count })
+    .onConflictDoUpdate({ target: [rateLimitBuckets.key, rateLimitBuckets.windowStart], set: { count } });
+}
 const newIp = () => `10.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`;
 
 /** Everyone already in the test database is let in, so places count only the people a test makes. */
@@ -119,11 +139,10 @@ describe("confirm your email: the code", () => {
     const { user } = await makeUser("Sam");
     const ip = newIp();
     const out = outbox();
-    await sendConfirmCode(db, user.id, ip, { send: out.send, config: CFG });
-    const wrong = out.code() === "000000" ? "111111" : "000000";
-    for (let i = 0; i < 4; i++) expect(await confirmEmailCode(db, user.id, wrong, ip)).toEqual({ ok: false, reason: "wrong" });
-    expect(await confirmEmailCode(db, user.id, wrong, ip)).toEqual({ ok: false, reason: "locked" });
-    expect(await confirmEmailCode(db, user.id, out.code(), ip)).toEqual({ ok: false, reason: "expired" });
+    await sendConfirmCode(db, user.id, ip, { send: out.send, config: CFG, ...fixed() });
+    for (let i = 0; i < 4; i++) expect(await confirmEmailCode(db, user.id, WRONG, ip)).toEqual({ ok: false, reason: "wrong" });
+    expect(await confirmEmailCode(db, user.id, WRONG, ip)).toEqual({ ok: false, reason: "locked" });
+    expect(await confirmEmailCode(db, user.id, RIGHT, ip)).toEqual({ ok: false, reason: "expired" });
   });
 
   it("a code for one person never works for another, and a new code replaces the old one", async () => {
@@ -131,26 +150,45 @@ describe("confirm your email: the code", () => {
     const b = (await makeUser("B")).user;
     const ip = newIp();
     const out = outbox();
-    await sendConfirmCode(db, a.id, ip, { send: out.send, config: CFG });
-    const aCode = out.code();
-    await sendConfirmCode(db, b.id, ip, { send: out.send, config: CFG });
-    expect(await confirmEmailCode(db, b.id, aCode === out.code() ? "999999" : aCode, ip)).toMatchObject({ ok: false });
-    await sendConfirmCode(db, a.id, ip, { send: out.send, config: CFG });
-    const newest = out.code();
-    if (newest !== aCode) expect(await confirmEmailCode(db, a.id, aCode, ip)).toEqual({ ok: false, reason: "wrong" });
-    expect(await confirmEmailCode(db, a.id, newest, ip)).toMatchObject({ ok: true });
+    await sendConfirmCode(db, a.id, ip, { send: out.send, config: CFG, ...fixed("111111") });
+    await sendConfirmCode(db, b.id, ip, { send: out.send, config: CFG, ...fixed("222222") });
+    // A's code typed for B is wrong, and B's own works only for B
+    expect(await confirmEmailCode(db, b.id, "111111", ip)).toEqual({ ok: false, reason: "wrong" });
+    await sendConfirmCode(db, a.id, ip, { send: out.send, config: CFG, ...fixed("333333") });
+    expect(await confirmEmailCode(db, a.id, "111111", ip)).toEqual({ ok: false, reason: "wrong" });
+    expect(await confirmEmailCode(db, a.id, "333333", ip)).toMatchObject({ ok: true });
+    expect(await confirmEmailCode(db, b.id, "222222", ip)).toMatchObject({ ok: true });
   });
 
-  it("limits sends to 3 an hour for a person, and per network", async () => {
+  it("limits sends to 3 an hour for a person, whatever network they're on", async () => {
     const { user } = await makeUser("Sam");
     const out = outbox();
     for (let i = 0; i < 3; i++) expect(await sendConfirmCode(db, user.id, newIp(), { send: out.send, config: CFG })).toMatchObject({ ok: true });
     expect(await sendConfirmCode(db, user.id, newIp(), { send: out.send, config: CFG })).toEqual({ ok: false, reason: "too_many" });
     expect(out.sent).toHaveLength(3);
+  });
+
+  it("a shared network can send many codes, but not without end: the per-network limits are a generous backstop", async () => {
     const ip = newIp();
-    const results = [];
-    for (let i = 0; i < 11; i++) results.push((await sendConfirmCode(db, (await makeUser("N")).user.id, ip, { send: out.send, config: CFG })).ok);
-    expect(results.filter(Boolean)).toHaveLength(10);
+    const out = outbox();
+    // a campus: dozens of different students on one address, each sending a code, all get through
+    for (let i = 0; i < 30; i++)
+      expect(await sendConfirmCode(db, (await makeUser("S")).user.id, ip, { send: out.send, config: CFG })).toMatchObject({ ok: true });
+    // at the limit, the next one from that network is refused
+    await fillBucket(`email-confirm:send:ip:${ip}`, CONFIRM_SENDS_PER_IP_HOUR, 3600);
+    expect(await sendConfirmCode(db, (await makeUser("S")).user.id, ip, { send: out.send, config: CFG })).toEqual({ ok: false, reason: "too_many" });
+    // another network is unaffected
+    expect(await sendConfirmCode(db, (await makeUser("S")).user.id, newIp(), { send: out.send, config: CFG })).toMatchObject({ ok: true });
+  });
+
+  it("code tries are limited per network too, with a limit far above a class of students", async () => {
+    const { user } = await makeUser("Sam");
+    const ip = newIp();
+    await sendConfirmCode(db, user.id, ip, { send: outbox().send, config: CFG, ...fixed() });
+    await fillBucket(`email-confirm:try:ip:${ip}`, CONFIRM_TRIES_PER_IP_15MIN, 900);
+    expect(await confirmEmailCode(db, user.id, RIGHT, ip)).toEqual({ ok: false, reason: "too_many" });
+    // the same person from another network: the right code still works (their own limits are untouched)
+    expect(await confirmEmailCode(db, user.id, RIGHT, newIp())).toMatchObject({ ok: true });
   });
 });
 
@@ -228,7 +266,9 @@ describe("referral credit", () => {
       .insert(users)
       .values({ name: "Friend again", email: friend.email, passwordHash: "x", invitedBy: inviter.id })
       .returning({ id: users.id });
-    expect(normalizeEmail(` ${friend.email.toUpperCase()} `)).toBe(friend.email);
+    // the same email, in capitals and with spaces, is the same friend
+    expect(emailHash(` ${friend.email.toUpperCase()} `)).toBe(emailHash(friend.email));
+    expect(referralEmailKey(` ${friend.email.toUpperCase()} `)).toBe(referralEmailKey(friend.email));
     expect(await verifyEmail(db, again.id)).toEqual({ verified: true, recorded: false, moved: false });
     expect(await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id))).toHaveLength(1);
     // Moved up once only: first place was the other person, now the inviter.
@@ -283,7 +323,7 @@ describe("referral credit", () => {
     expect(await place(friend2.id)).toBe(f2Place);
   });
 
-  it("is atomic: if the move fails, the friend is not recorded", async () => {
+  it("the credit lives in the caller's transaction: if that transaction is rolled back, no friend is recorded and nobody moves", async () => {
     const { inviter, friend } = await inviterAndFriend();
     await expect(
       db.transaction(async (tx) => {
@@ -317,10 +357,18 @@ describe("alias farming, the keyed hash and the daily cap", () => {
     expect(emailHash("a.b+c@gmail.com")).toBe(emailHash("ab@googlemail.com"));
   });
 
-  it("stores a keyed hash, not a plain sha256 of the email", () => {
+  it("the stored hash is an HMAC under a key derived from ENCRYPTION_KEY: a known vector, and another key gives another hash", () => {
     const plain = createHash("sha256").update("ab@gmail.com").digest("hex");
-    expect(emailHash("ab@gmail.com")).not.toBe(plain);
-    expect(emailHash("ab@gmail.com")).toMatch(/^[0-9a-f]{64}$/);
+    vi.stubEnv("ENCRYPTION_KEY", Buffer.alloc(32, 7).toString("base64"));
+    try {
+      // computed once with HKDF-SHA256 (label "lifeflow:waitlist-referral-email") and HMAC-SHA256 over the alias key
+      expect(emailHash("ab@gmail.com")).toBe("ac3fef84dbd490b9859be2d33f6d35498403d0a42682376071201cdf2bf0ba23");
+      expect(emailHash("ab@gmail.com")).not.toBe(plain);
+      vi.stubEnv("ENCRYPTION_KEY", Buffer.alloc(32, 9).toString("base64"));
+      expect(emailHash("ab@gmail.com")).not.toBe("ac3fef84dbd490b9859be2d33f6d35498403d0a42682376071201cdf2bf0ba23");
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("aliases of one Gmail inbox credit the inviter once", async () => {
@@ -395,10 +443,10 @@ describe("alias farming, the keyed hash and the daily cap", () => {
     const { user } = await makeUser("Sam");
     const ip = newIp();
     const out = outbox();
-    const wrongFor = () => (out.code() === "000000" ? "111111" : "000000");
+    const wrongFor = () => WRONG;
     let tries = 0;
     for (const n of [4, 4, 2]) {
-      await sendConfirmCode(db, user.id, ip, { send: out.send, config: CFG });
+      await sendConfirmCode(db, user.id, ip, { send: out.send, config: CFG, ...fixed() });
       for (let i = 0; i < n; i++, tries++) expect(await confirmEmailCode(db, user.id, wrongFor(), ip)).toEqual({ ok: false, reason: "wrong" });
     }
     expect(tries).toBe(10);
@@ -408,12 +456,45 @@ describe("alias farming, the keyed hash and the daily cap", () => {
     expect(u.at).toBeNull();
   });
 
+  it("the daily cap looks only at the last 24 hours: moves older than that don't count", async () => {
+    await clearLine();
+    for (let i = 0; i < 3; i++) await makeUser(`Filler${i}`);
+    const inviter = (await makeUser("Inviter")).user;
+    const old = new Date(Date.now() - 25 * 3600_000);
+    for (let i = 0; i < MAX_CREDITS_PER_DAY; i++)
+      await db.insert(waitlistReferrals).values({ inviterId: inviter.id, inviteeEmailHash: `old-${randomUUID()}`, creditedAt: old, movedAt: old });
+    const f = (await makeUser("F")).user;
+    await recordInvite(db, f.id, await inviteCodeFor(db, inviter.id));
+    expect(await verifyEmail(db, f.id)).toEqual({ verified: true, recorded: true, moved: true });
+    expect(await place(inviter.id)).toBe(3);
+  });
+
+  it("the daily cap holds when many friends confirm at once: exactly 10 moves, the rest recorded without one", async () => {
+    await clearLine();
+    for (let i = 0; i < 14; i++) await makeUser(`Filler${i}`);
+    const inviter = (await makeUser("Inviter")).user;
+    expect(await place(inviter.id)).toBe(15);
+    const code = await inviteCodeFor(db, inviter.id);
+    const friends: string[] = [];
+    for (let i = 0; i < 13; i++) {
+      const f = (await makeUser(`F${i}`)).user;
+      await recordInvite(db, f.id, code);
+      friends.push(f.id);
+    }
+    const results = await Promise.all(friends.map((id) => verifyEmail(db, id)));
+    expect(results.filter((r) => r.moved)).toHaveLength(MAX_CREDITS_PER_DAY);
+    expect(results.filter((r) => r.recorded)).toHaveLength(13);
+    expect(await place(inviter.id)).toBe(5);
+    const rows = await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id));
+    expect(rows.filter((r) => r.movedAt)).toHaveLength(MAX_CREDITS_PER_DAY);
+  });
+
   it("parallel wrong guesses never exceed 5 tries", async () => {
     const { user } = await makeUser("Sam");
     const ip = newIp();
     const out = outbox();
-    await sendConfirmCode(db, user.id, ip, { send: out.send, config: CFG });
-    const wrong = out.code() === "000000" ? "111111" : "000000";
+    await sendConfirmCode(db, user.id, ip, { send: out.send, config: CFG, ...fixed() });
+    const wrong = WRONG;
     const results = await Promise.all(Array.from({ length: 12 }, () => confirmEmailCode(db, user.id, wrong, ip)));
     expect(results.filter((r) => !r.ok && r.reason === "wrong").length).toBeLessThanOrEqual(4);
     expect(results.filter((r) => !r.ok && r.reason === "locked").length).toBeGreaterThanOrEqual(1);
@@ -464,6 +545,16 @@ describe("Google and Apple sign-up", () => {
     expect((await db.select().from(waitlistReferrals)).length).toBe(before);
     // An unverified provider email never creates an account.
     await expect(completeGoogleSignIn(db, { ...g, sub: "x", email: "no@x.com", emailVerified: false }, signin(), null)).rejects.toThrow(/verified/);
+  });
+
+  it("Apple's start stores the invite in the single-use state too, in sign-in mode only", async () => {
+    const cfg = { clientId: "c", teamId: "t", keyId: "k", privateKey: "p", redirectUri: "https://app.example/api/auth/apple/callback" };
+    const r = await startAppleSignIn(db, cfg, { mode: "signin", invite: " AbCdEfGh23 " });
+    expect((await parseAppleState((await takeChallenge(db, "apple", r.token))!.challenge)).invite).toBe("abcdefgh23");
+    const bad = await startAppleSignIn(db, cfg, { mode: "signin", invite: "<script>" });
+    expect((await parseAppleState((await takeChallenge(db, "apple", bad.token))!.challenge)).invite).toBeNull();
+    const link = await startAppleSignIn(db, cfg, { mode: "link", invite: "abcdefgh23", userId: (await makeUser("L")).user.id });
+    expect((await parseAppleState((await takeChallenge(db, "apple", link.token))!.challenge)).invite).toBeNull();
   });
 
   it("the invite code survives the round trip in the single-use state, in sign-in mode only", async () => {
