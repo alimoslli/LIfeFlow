@@ -221,7 +221,8 @@ export function Onboarding({
       setLinked((l) => ({ ...l, canvas: true }));
       const sky = await skyNowAction();
       if (sky.ok) setClock(sky.clock);
-      celebrate(at, "big", "Connected");
+      // a star: the sun plays only when a sun is earned on the skyling's cloud (owner, 2026-11-11)
+      celebrate(at, "small", "Connected");
       cheerSkylings();
     });
 

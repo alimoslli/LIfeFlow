@@ -4,6 +4,7 @@ import { DATE_RE } from "@/lib/dates";
 import { financialGoals, lifeMilestones, MILESTONE_CATEGORIES, personalGoals, type MilestoneCategory } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { notFound, ServiceError } from "./errors";
+import { awardMilestoneSun, takeBack } from "./sky-home";
 
 /**
  * Life milestones: what the user has done ("Graduated high school", "First job", "Ran a 5K").
@@ -64,7 +65,9 @@ export async function createMilestone(scope: UserScope, input: MilestoneInput, s
     .insert(lifeMilestones)
     .values({ userId: scope.userId, title: d.title, category: d.category, note: d.note || null, source, ...whenFields(d.when) })
     .returning();
-  return row;
+  // a milestone that just happened is a sun on the skyling's cloud (never last year's, never an import)
+  const sun = await awardMilestoneSun(scope, row);
+  return Object.assign(row, { sun });
 }
 
 export async function updateMilestone(scope: UserScope, id: string, change: Partial<MilestoneInput>) {
@@ -90,6 +93,7 @@ export async function deleteMilestone(scope: UserScope, id: string) {
     .where(and(eq(lifeMilestones.id, id), eq(lifeMilestones.userId, scope.userId)))
     .returning({ id: lifeMilestones.id, title: lifeMilestones.title });
   if (!row) throw notFound("Milestone");
+  await takeBack(scope, `milestone:${id}`);
   return row;
 }
 

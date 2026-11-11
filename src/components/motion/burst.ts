@@ -136,6 +136,8 @@ export function celebrate(
   opts: { who?: Who; at?: number; silent?: boolean } = {},
 ) {
   if (typeof document === "undefined") return;
+  // said out loud for tests and anything listening: which one played, and its words
+  document.dispatchEvent(new CustomEvent("lf:celebrate", { detail: { size, label } }));
   const x = at ? ("width" in at ? at.left + at.width / 2 : at.x) : window.innerWidth / 2;
   const y = at ? ("height" in at ? at.top + at.height / 2 : at.y) : window.innerHeight / 2;
   vibrate(size === "big" ? [12, 50, 12, 50, 24] : [10, 40, 16]);

@@ -85,6 +85,7 @@ describe("Download my data", () => {
     "assignments.dedupe_key": "an id like canvas:123 so an assignment is imported once",
     "assistantMessages.dedupe_key": "an id like bill:<id>:<date> so a message isn't repeated",
     "notifications.key": "which reminder was sent, like task:<id>:<time>",
+    "skyRewards.key": "what earned a star or sun on the skyling's cloud, like task:<id> or milestone:<id>",
   };
 
   it("never exports a column named like a secret, key or hash", () => {

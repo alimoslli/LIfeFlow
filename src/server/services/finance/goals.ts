@@ -6,6 +6,7 @@ import type { UserScope } from "../../db/with-user";
 import { notFound, ServiceError } from "../errors";
 import { listGoals, monthlyContributionNeeded } from "./planning";
 import { goalProjection } from "@/lib/goal-math";
+import { awardSun } from "../sky-home";
 
 export { goalProjection, goalTradeoff } from "@/lib/goal-math";
 
@@ -41,11 +42,14 @@ export async function contributeToGoal(scope: UserScope, input: z.input<typeof c
     .insert(goalContributions)
     .values({ userId: scope.userId, goalId: d.goalId, amountCents: d.amountCents, date: d.date, note: d.note ?? null, source })
     .returning();
+  const reached = newSaved >= goal.targetCents && goal.status === "active";
   await scope.tx
     .update(financialGoals)
-    .set({ savedCents: newSaved, ...(newSaved >= goal.targetCents && goal.status === "active" && { status: "achieved" as const }) })
+    .set({ savedCents: newSaved, ...(reached && { status: "achieved" as const }) })
     .where(eq(financialGoals.id, goal.id));
-  return { contribution: row, savedCents: newSaved, targetCents: goal.targetCents, achieved: newSaved >= goal.targetCents };
+  // reaching a money goal is a sun on the skyling's cloud (owner, 2026-11-11)
+  const sun = reached ? await awardSun(scope, `money-goal:${goal.id}`) : false;
+  return { contribution: row, savedCents: newSaved, targetCents: goal.targetCents, achieved: newSaved >= goal.targetCents, sun };
 }
 
 export async function deleteContribution(scope: UserScope, id: string) {

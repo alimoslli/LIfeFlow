@@ -1377,6 +1377,24 @@ export const notificationLog = pgTable(
   (t) => [uniqueIndex("notification_log_user_key_uq").on(t.userId, t.key), ownerPolicy()],
 );
 
+/**
+ * The skyling's cloud (owner, 2026-11-11): one row per star or sun earned, so a count is real and each thing counts once.
+ * A star is a class, shift or plan the skyling passed (claimed on Today) or a to-do or assignment ticked; a sun is a goal
+ * reached or a milestone. `key` names the thing ("task:<id>", "sky:<agenda key>", "goal:<id>", "milestone:<id>"); undoing
+ * it (an untick, a goal set back, a milestone deleted) deletes its row. Never anything private: only the kind and the key.
+ */
+export const skyRewards = pgTable(
+  "sky_rewards",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    kind: text("kind").$type<"star" | "sun">().notNull(),
+    key: text("key").notNull(),
+    earnedAt: tstz("earned_at").notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("sky_rewards_user_key_uq").on(t.userId, t.key), index("sky_rewards_user_kind_idx").on(t.userId, t.kind, t.earnedAt), ownerPolicy()],
+);
+
 // ---------------------------------------------------------------------------
 // Proactive Jarvis: everything he says on his own, and how the user responded
 

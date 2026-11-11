@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { celebrate, hop } from "@/components/motion/burst";
 import { STAR_FACES, STAR_LOOKS } from "@/components/motion/celebration-art";
 import { isSplashActive, onSplashEnd } from "@/components/motion/intro";
-import { MAX_STARS, moreLabel, spokenStars, sunLabel } from "@/lib/stars";
+import { MAX_STARS, moreLabel, runLabel, spokenStars } from "@/lib/stars";
 import { claimStarsAction } from "./actions";
 
 /** Time between stars: each one has landed and is floating off before the next jumps out. */
@@ -28,8 +28,8 @@ function skylingAt(): DOMRect | null {
 
 /**
  * Coming back to Today (owner, 2026-11-10): every class, shift and plan the skyling passed while you were away is a
- * star to claim. They come one by one out of the skyling, each saying what it was for, and the sun finishes a run of
- * a few. Claimed once on the server, so another device or a reload never plays them again. After the opening screen and
+ * star to claim. They come one by one out of the skyling, each saying what it was for, and a run of a few ends with
+ * one more star that says how many (the sun is only for a sun earned on the skyling's cloud). Each is kept on the cloud. Claimed once on the server, so another device or a reload never plays them again. After the opening screen and
  * once the sky is drawn; not under automation unless the address asks (?stars=1), like the splash.
  */
 export function ClaimStars() {
@@ -55,8 +55,9 @@ export function ClaimStars() {
       );
       const after = 500 + shown.length * GAP_MS;
       if (more > 0) later(after, () => celebrate(skylingAt(), "small", moreLabel(more), { who: starNo(shown.length) }));
-      const sun = sunLabel(stars.length);
-      if (sun) later(after + (more > 0 ? GAP_MS : 0) + 200, () => celebrate(skylingAt(), "big", sun));
+      // a run of a few ends with one more star that says how many: the sun is only for a sun earned (owner, 2026-11-11)
+      const run = runLabel(stars.length);
+      if (run) later(after + (more > 0 ? GAP_MS : 0) + 200, () => celebrate(skylingAt(), "small", run, { who: starNo(shown.length + 1) }));
       setSaid(spokenStars(stars.map((s) => s.title)));
     };
     const start = () => void play();

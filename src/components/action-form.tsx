@@ -8,8 +8,13 @@ import { cn } from "@/lib/utils";
 import { celebrate } from "./motion/burst";
 import { primeSound } from "./motion/sound";
 
-/** A celebration when the action succeeds: a star (small) or the milestone sun (big), with its tag. Plain data, so a server page can ask for it. */
+/**
+ * A celebration when the action succeeds: a star (small) or the sun (big), with its tag. Plain data, so a server page can
+ * ask for it. The sun plays only when the action really earned a sun on the skyling's cloud (`sun` in its result; owner,
+ * 2026-11-11: "you see the sun animation ... when you complete the big stuff only"); otherwise it's a star.
+ */
 export type Cheer = { size: "small" | "big"; label?: string };
+const sizeOf = (cheer: Cheer, r: ActionState) => (cheer.size === "big" && r?.sun ? "big" : "small");
 
 type Action = (prev: ActionState, fd: FormData) => Promise<ActionState>;
 
@@ -96,7 +101,7 @@ export function ActionForm({
     if (reset) ref.current?.reset();
     // Every save gives feedback: inline when the form asks for it, otherwise a toast.
     if (!showSuccess) toast(r.message ?? "Saved.", { undo: r.undo });
-    if (cheer) celebrate(null, cheer.size, cheer.label);
+    if (cheer) celebrate(null, sizeOf(cheer, r), cheer.label);
     onSuccess?.();
   });
   const [state, formAction] = useActionState(reported, null);
@@ -153,7 +158,10 @@ export function ActionButton({
     if (!r) return;
     if (r.ok && r.message) toast(r.message, { undo: r.undo });
     if (!r.ok) toast(r.error ?? "Something went wrong.", { tone: "danger" });
-    if (r.ok && cheer) celebrate(cheer.size === "big" ? null : (spot.current?.getBoundingClientRect() ?? null), cheer.size, cheer.label);
+    if (r.ok && cheer) {
+      const size = sizeOf(cheer, r);
+      celebrate(size === "big" ? null : (spot.current?.getBoundingClientRect() ?? null), size, cheer.label);
+    }
     if (r.ok) onSuccess?.();
   });
   const [, formAction, pending] = useActionState(reported, null);

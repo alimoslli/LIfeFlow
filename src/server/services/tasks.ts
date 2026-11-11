@@ -5,6 +5,7 @@ import { courses, projects, tasks, type DataSource } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { assertOwned, notFound } from "./errors";
 import { parsePatch } from "./patch";
+import { awardStar, takeBack } from "./sky-home";
 
 export const PRIORITIES = ["low", "medium", "high", "urgent"] as const;
 export const WORK_STATUSES = ["todo", "in_progress", "done"] as const;
@@ -151,6 +152,11 @@ export async function updateTask(scope: UserScope, tz: string, id: string, patch
     .set(set)
     .where(and(eq(tasks.id, id), eq(tasks.userId, scope.userId)))
     .returning();
+  // A to-do ticked is a star on the skyling's cloud; unticking takes it back (owner, 2026-11-11)
+  if (data.status !== undefined && (data.status === "done") !== (before.status === "done")) {
+    if (data.status === "done") await awardStar(scope, `task:${id}`, tz);
+    else await takeBack(scope, `task:${id}`);
+  }
   // Completing a repeating to-do schedules the next one (once).
   let next: typeof row | null = null;
   if (data.status === "done" && before.status !== "done" && row.repeat && row.dueAt) {

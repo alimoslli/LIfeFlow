@@ -17,8 +17,8 @@ export async function createPersonalGoalAction(_p: ActionState, fd: FormData): P
 export async function updatePersonalGoalAction(id: string, _p: ActionState, fd: FormData): Promise<ActionState> {
   const progress = formNum(formObject(fd).progress);
   return mutate("goal.personal.update", async (s) => {
-    await updatePersonalGoal(s, id, { ...fields(fd), ...(progress != null && { progress }) });
-    return "Goal saved.";
+    const g = await updatePersonalGoal(s, id, { ...fields(fd), ...(progress != null && { progress }) });
+    return { message: "Goal saved.", sun: g.sun };
   });
 }
 
@@ -26,14 +26,14 @@ export async function updatePersonalGoalAction(id: string, _p: ActionState, fd: 
 export async function stepPersonalGoalAction(id: string, progress: number): Promise<ActionState> {
   return mutate("goal.personal.progress", async (s) => {
     const g = await updatePersonalGoal(s, id, { progress });
-    return g.doneAt ? `Done: ${g.title}. Nice work.` : undefined;
+    return { message: g.doneAt ? `Done: ${g.title}. Nice work.` : undefined, sun: g.sun };
   });
 }
 
 export async function setPersonalGoalDoneAction(id: string, done: boolean): Promise<ActionState> {
   return mutate("goal.personal.done", async (s) => {
     const g = await updatePersonalGoal(s, id, { done });
-    return done ? `Done: ${g.title}. Nice work.` : undefined;
+    return { message: done ? `Done: ${g.title}. Nice work.` : undefined, sun: g.sun };
   });
 }
 

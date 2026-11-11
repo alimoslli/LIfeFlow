@@ -11,8 +11,9 @@ import { ServiceError } from "./services/errors";
 import { plainValidation } from "@/lib/validation-message";
 
 /** `undo` is a trash id: the toast's Undo button restores it. */
-export type ActionState = { ok: boolean; error?: string; message?: string; undo?: string; at: number } | null;
-export type MutationResult = string | void | { message: string; undo?: string };
+/** `sun`: the action earned a sun on the skyling's cloud, so a "big" cheer plays the sun (otherwise a star). */
+export type ActionState = { ok: boolean; error?: string; message?: string; undo?: string; sun?: boolean; at: number } | null;
+export type MutationResult = string | void | { message?: string; undo?: string; sun?: boolean };
 
 /** FormData → plain object; blank strings become undefined. */
 export function formObject(fd: FormData): Record<string, string | undefined> {
@@ -63,7 +64,7 @@ export async function mutate(
     );
     if (done.user) proactiveAfterMutation(name, done.user);
     for (const p of opts.revalidate ?? ["/"]) revalidatePath(p, "layout");
-    if (message && typeof message === "object") return { ok: true, message: message.message, undo: message.undo, at: Date.now() };
+    if (message && typeof message === "object") return { ok: true, message: message.message, undo: message.undo, sun: message.sun, at: Date.now() };
     return { ok: true, message: message || undefined, at: Date.now() };
   } catch (e) {
     unstable_rethrow(e);

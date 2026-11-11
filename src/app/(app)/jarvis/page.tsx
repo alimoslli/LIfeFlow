@@ -7,13 +7,14 @@ import type { UiMessage } from "@/components/jarvis/types";
 import { missingConnections } from "@/server/services/integrations";
 import { ideaClouds } from "@/server/services/idea-clouds";
 import { assistantProfile } from "@/lib/assistant";
+import { skyCounts } from "@/server/services/sky-home";
 import { JarvisPage } from "./jarvis-page";
 
 export const metadata: Metadata = { title: "Skyling" };
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ ask?: string; voice?: string; c?: string }> }) {
   const { ask, voice, c } = await searchParams;
-  const { conversations, tz, connect, ideas, messages, activeId } = await withCurrentUser(async (s, u) => {
+  const { conversations, tz, connect, ideas, messages, activeId, home } = await withCurrentUser(async (s, u) => {
     const conversations = await listConversations(s);
     // one chat that keeps going (owner, 2026-11-10: "starting a new chat is annoying every time"): the skyling's page
     // opens the latest one, the same one Today's bar carries on
@@ -33,6 +34,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
       connect: await missingConnections(s),
       // idea clouds under the skyling: what they can tell or ask it, from their own data (lib/idea-clouds)
       ideas: await ideaClouds(s, u.timezone, u.preferences, assistantProfile(u.preferences, u.timezone).name),
+      // the skyling's cloud: its stars and suns (owner, 2026-11-11)
+      home: await skyCounts(s),
       tz: u.timezone,
     };
   });
@@ -46,6 +49,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
       connect={connect}
       ideas={ideas}
       voice={voice === "1"}
+      home={home}
     />
   );
 }

@@ -1,13 +1,14 @@
 /**
  * The stars you claim on coming back (owner, 2026-11-10): what the skyling passed on your sky while you were away,
- * one star each with what it was for, and the sun to finish when there were a few. Words only here; what counts is
+ * one star each with what it was for, and one more that says how many when there were a few (the sun is only for a sun
+ * earned on the skyling's cloud, owner 2026-11-11). Words only here; what counts is
  * decided in services/stars.ts.
  */
 
 /** Stars shown one by one; anything past this is one more star that says how many. */
 export const MAX_STARS = 8;
-/** The sun finishes the run from this many. */
-export const SUN_FROM = 3;
+/** A run of this many ends with a star that says how many. */
+export const RUN_FROM = 3;
 
 const DONE: Record<string, string> = {
   class: "class done",
@@ -28,8 +29,8 @@ export function starLabel(title: string, kind: string): string {
 
 export const moreLabel = (n: number) => `+${n} more done`;
 
-/** The sun's words, or none when there were only one or two. */
-export const sunLabel = (n: number) => (n >= SUN_FROM ? `${n} done while you were away` : null);
+/** The last star's words, or none when there were only one or two. */
+export const runLabel = (n: number) => (n >= RUN_FROM ? `${n} done while you were away` : null);
 
 /** One sentence for screen readers: what was claimed, in order. */
 export function spokenStars(titles: string[]): string {

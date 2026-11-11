@@ -5,6 +5,7 @@ import { starLabel, starPush } from "@/lib/stars";
 import { notificationLog, users, type UserPreferences } from "@/server/db/schema";
 import type { UserScope } from "@/server/db/with-user";
 import { getAgenda, type AgendaItem } from "./calendar";
+import { awardStars } from "./sky-home";
 import { inQuietHours, jarvisSettings } from "./proactive/engine";
 import { listSubscriptions, notificationPrefs, sendOnce, type Sender } from "./push";
 
@@ -42,7 +43,14 @@ export async function claimStars(scope: UserScope, tz: string, now = new Date())
   if (!last || Number.isNaN(last.getTime()) || last >= now) return [];
   const from = new Date(Math.max(last.getTime(), now.getTime() - WINDOW_MS));
   const items = await getAgenda(scope, tz, localDateOf(from, tz), localDateOf(now, tz), { now, include: ["event", "shift"] });
-  return passedStars(items, from, now);
+  const stars = passedStars(items, from, now);
+  // each claimed star stays on the skyling's cloud (owner, 2026-11-11)
+  await awardStars(
+    scope,
+    stars.map((s) => `sky:${s.key}`),
+    now,
+  );
+  return stars;
 }
 
 /** How far back a run looks for things that just ended (the job runs every 5 minutes; each thing is noted once). */

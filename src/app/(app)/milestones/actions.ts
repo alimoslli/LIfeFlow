@@ -11,7 +11,7 @@ const fields = (fd: FormData) => {
 export async function createMilestoneAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   return mutate("milestone.create", async (s) => {
     const m = await createMilestone(s, fields(fd));
-    return `Added to your milestones: ${m.title}.`;
+    return { message: `Added to your milestones: ${m.title}.`, sun: m.sun };
   });
 }
 

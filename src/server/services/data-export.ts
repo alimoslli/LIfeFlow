@@ -53,6 +53,7 @@ export const EXPORT_TABLES = {
   integrations: schema.integrations,
   health: schema.healthSamples,
   notifications: schema.notificationLog,
+  skyRewards: schema.skyRewards,
   recentlyDeleted: schema.trash,
   feedback: schema.feedback,
   activity: schema.auditEvents,

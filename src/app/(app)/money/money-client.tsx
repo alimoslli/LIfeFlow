@@ -29,9 +29,9 @@ export function CelebrateGoal({ goalId, name, percent }: { goalId: string; name:
     start(async () => {
       await celebrateMilestoneAction(goalId, percent);
     });
-    // the milestone sun with the goal's line (owner, 2026-11-10): it pops up over the middle and is gone in about three
-    // seconds. It used to be a card stuck over the bottom of the page, covering the goal for eight (nothing over anything).
-    const t = setTimeout(() => celebrate(null, "big", `${name}: ${percent}%`, { silent: true }), 350);
+    // a star with the goal's line (owner, 2026-11-10): it pops up and is gone in a few seconds. Not the sun: the sun plays
+    // only when a sun is earned on the skyling's cloud, and a goal on its way isn't reached yet (owner, 2026-11-11).
+    const t = setTimeout(() => celebrate(null, "small", `${name}: ${percent}%`, { silent: true }), 350);
     return () => clearTimeout(t);
   }, [goalId, percent, name]);
   // the words for screen readers (the sun is a picture)

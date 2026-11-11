@@ -9,6 +9,7 @@ import { ActionButton } from "@/components/action-form";
 import { JarvisChat } from "@/components/jarvis/chat";
 import type { UiMessage } from "@/components/jarvis/types";
 import type { IdeaCloud } from "@/lib/idea-clouds";
+import type { SkyCounts } from "@/lib/sky-home";
 import { formatIn } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { jarvisStatus } from "@/server/jarvis/providers";
@@ -27,6 +28,7 @@ export function JarvisPage({
   connect,
   ideas,
   voice,
+  home,
 }: {
   conversations: Conv[];
   activeId: string | null;
@@ -40,6 +42,8 @@ export function JarvisPage({
   ideas?: IdeaCloud[];
   /** Start talking right away (the mic on Today). */
   voice?: boolean;
+  /** The skyling's cloud: its stars and suns. */
+  home?: SkyCounts;
 }) {
   const status = jarvisStatus();
   const items = conversations.map((c) => ({ id: c.id, title: c.title, when: formatIn(c.lastMessageAt, tz, "MMM d") }));
@@ -99,6 +103,7 @@ export function JarvisPage({
             connect={connect}
             ideas={ideas}
             startVoice={voice}
+            home={home}
             module="home"
             availability={{ available: status.available, reason: status.reason, model: status.model }}
           />

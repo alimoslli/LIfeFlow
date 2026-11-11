@@ -9,6 +9,8 @@ import { useCallback, useEffect, useRef, useState, useTransition, type CSSProper
 import { useAppBusy } from "@/lib/app-busy";
 import { Plug, Brain, CircleAlert, ImageIcon, Loader2, Square } from "lucide-react";
 import { useAutoGrow } from "@/components/ui/auto-grow";
+import { SkyHome, homeHeight } from "@/components/skylings/sky-home";
+import type { SkyCounts } from "@/lib/sky-home";
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
 import { cn } from "@/lib/utils";
 import { isAppPath, viewAtName } from "@/lib/app-routes";
@@ -78,6 +80,7 @@ export function JarvisChat({
   connect,
   ideas,
   startVoice,
+  home,
 }: {
   conversationId?: string | null;
   initialMessages?: UiMessage[];
@@ -94,6 +97,8 @@ export function JarvisChat({
   startVoice?: boolean;
   /** Idea clouds for the empty chat, in place of the starter cards (owner, 2026-11-10; lib/idea-clouds). */
   ideas?: IdeaCloud[];
+  /** The skyling's cloud in its window (the skyling's own page), with its stars and suns. */
+  home?: SkyCounts;
 }) {
   const router = useRouter();
   const { assistantName, aiConsent, tz, skyling } = useShell();
@@ -127,6 +132,8 @@ export function JarvisChat({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   // grows with a long message up to six lines, then scrolls inside (owner, 2026-11-11), on an iPhone too
   useAutoGrow(inputRef, input);
+  // the cloud lives on the skyling's own page, not in a compact chat
+  const cloudHome = home && !compact ? home : null;
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -607,15 +614,32 @@ export function JarvisChat({
             <div className="animate-rise flex flex-col items-center text-center">
               {/* their skyling in its corner of the real sky, saying the catchphrase with its name beside it (owner, 2026-11-10:
                   "Let's clear your sky."; never put into the prompt as a script). Tap it and it hops. */}
-              <SkyWindow tz={tz} className={cn("w-full rounded-[2rem] text-left", compact ? "h-36" : "h-44 sm:h-52")}>
-                <div className="absolute bottom-0 left-[4%] flex flex-col items-center sm:left-[10%]">
-                  <SkylingSprite
-                    companion={skyling}
-                    className={cn("relative z-10 -mb-2 cursor-pointer", compact ? "h-16 w-16" : "h-20 w-20 sm:h-24 sm:w-24")}
-                  />
-                  <PixelArt art={CLOUD} className={cn("-mb-1", compact ? "w-24" : "w-28 sm:w-40")} />
-                </div>
-                <div className="lf-speech absolute top-1/2 right-4 left-[38%] -translate-y-[38%] px-3.5 py-3 sm:right-[8%] sm:left-[40%] sm:px-5 sm:py-4">
+              <SkyWindow
+                tz={tz}
+                className={cn("w-full rounded-[2rem] text-left", cloudHome ? "" : compact ? "h-36" : "h-44 sm:h-52")}
+                style={cloudHome ? { height: homeHeight(cloudHome) } : undefined}
+              >
+                {cloudHome ? (
+                  // its cloud, with what its stars and suns unlocked (owner, 2026-11-11: the cloud is the skyling's own)
+                  <SkyHome counts={cloudHome} skyling={skyling} name={assistantName} />
+                ) : (
+                  <div className="absolute bottom-0 left-[4%] flex flex-col items-center sm:left-[10%]">
+                    <SkylingSprite
+                      companion={skyling}
+                      className={cn("relative z-10 -mb-2 cursor-pointer", compact ? "h-16 w-16" : "h-20 w-20 sm:h-24 sm:w-24")}
+                    />
+                    <PixelArt art={CLOUD} className={cn("-mb-1", compact ? "w-24" : "w-28 sm:w-40")} />
+                  </div>
+                )}
+                <div
+                  className={cn(
+                    "lf-speech absolute z-20 px-3.5 py-3 sm:px-5 sm:py-4",
+                    cloudHome
+                      ? // on a phone above the cloud at the top right; wider, beside it (the cloud keeps the left 23 rem)
+                        "top-3 right-3 left-[38%] sm:top-1/2 sm:right-[6%] sm:left-[24rem] sm:-translate-y-1/2"
+                      : "top-1/2 right-4 left-[38%] -translate-y-[38%] sm:right-[8%] sm:left-[40%]",
+                  )}
+                >
                   {/* sun ink on the bubble, which is white in both themes (dawn-3 was 2.2:1, too faint for 11 px) */}
                   <p className="text-[0.6875rem] font-semibold tracking-[0.14em] text-[#b45309] uppercase">{assistantName}</p>
                   <h2

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { moreLabel, spokenStars, starLabel, starPush, sunLabel } from "@/lib/stars";
+import { moreLabel, spokenStars, starLabel, starPush, runLabel } from "@/lib/stars";
 
 describe("the stars' words (owner, 2026-11-10: each one says what it was for)", () => {
   it("names what it was for, short enough for one line", () => {
@@ -11,8 +11,8 @@ describe("the stars' words (owner, 2026-11-10: each one says what it was for)", 
   });
 
   it("the sun finishes a run of three or more; one star says how many more past the shown ones", () => {
-    expect(sunLabel(2)).toBeNull();
-    expect(sunLabel(3)).toBe("3 done while you were away");
+    expect(runLabel(2)).toBeNull();
+    expect(runLabel(3)).toBe("3 done while you were away");
     expect(moreLabel(4)).toBe("+4 more done");
   });
 
@@ -23,7 +23,7 @@ describe("the stars' words (owner, 2026-11-10: each one says what it was for)", 
   });
 
   it("no em dashes and no guilt words", () => {
-    const all = [starLabel("X", "class"), sunLabel(5)!, moreLabel(2), spokenStars(["X", "Y"])].join(" ");
+    const all = [starLabel("X", "class"), runLabel(5)!, moreLabel(2), spokenStars(["X", "Y"])].join(" ");
     expect(all).not.toMatch(/—|missed|slipping|behind|late/i);
   });
 });

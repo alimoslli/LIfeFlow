@@ -4,6 +4,7 @@ import { DATE_RE } from "@/lib/dates";
 import { personalGoals } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { notFound } from "./errors";
+import { awardSun, takeBack } from "./sky-home";
 
 /**
  * Goals that aren't about money: "Run a 5K", "Read 12 books", "Get a B in Chem".
@@ -63,7 +64,11 @@ export async function updatePersonalGoal(scope: UserScope, id: string, change: P
     })
     .where(eq(personalGoals.id, id))
     .returning();
-  return row;
+  // reaching a goal is a sun on the skyling's cloud (owner, 2026-11-11); setting it back takes the sun back
+  let sun = false;
+  if (done && !cur.doneAt) sun = await awardSun(scope, `goal:${id}`);
+  else if (!done && cur.doneAt) await takeBack(scope, `goal:${id}`);
+  return Object.assign(row, { sun });
 }
 
 export async function deletePersonalGoal(scope: UserScope, id: string) {

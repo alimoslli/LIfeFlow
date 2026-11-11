@@ -7,6 +7,7 @@ import { assignments, courseMaterials, courses, type DataSource } from "../db/sc
 import type { UserScope } from "../db/with-user";
 import { assertOwned, notFound, ServiceError } from "./errors";
 import { parsePatch } from "./patch";
+import { awardStar, takeBack } from "./sky-home";
 
 export const ASSIGNMENT_KINDS = ["assignment", "exam", "quiz", "project", "reading", "lab", "discussion", "other"] as const;
 
@@ -229,6 +230,11 @@ export async function updateAssignment(scope: UserScope, tz: string, id: string,
     .set(set)
     .where(and(eq(assignments.id, id), eq(assignments.userId, scope.userId)))
     .returning();
+  // an assignment ticked is a star on the skyling's cloud; unticking takes it back
+  if (data.status !== undefined && (data.status === "done") !== (current.status === "done")) {
+    if (data.status === "done") await awardStar(scope, `assignment:${id}`, tz);
+    else await takeBack(scope, `assignment:${id}`);
+  }
   return row;
 }
 

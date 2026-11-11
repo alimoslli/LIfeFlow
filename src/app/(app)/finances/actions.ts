@@ -226,7 +226,10 @@ export async function contributeGoalAction(id: string, _p: ActionState, fd: Form
       date: todayIn(u.timezone),
       note: f.note,
     });
-    return r.achieved ? "Recorded. You reached your goal!" : `Recorded. ${Math.round((r.savedCents / r.targetCents) * 100)}% of the way there.`;
+    return {
+      message: r.achieved ? "Recorded. You reached your goal!" : `Recorded. ${Math.round((r.savedCents / r.targetCents) * 100)}% of the way there.`,
+      sun: r.sun,
+    };
   });
 }
 
