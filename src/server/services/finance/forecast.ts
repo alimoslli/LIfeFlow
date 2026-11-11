@@ -230,12 +230,12 @@ export async function cashForecast(scope: UserScope, today: string, days = 30) {
   const p = projectCash({ startCents: balances.cashCents, today, days, bills, income: pay, dailySpendCents: typical.dailyCents });
   const warnings: string[] = [];
   if (p.overdraftDateWithoutPay && p.overdraftDateWithPay)
-    warnings.push(`At your usual pace, checking could go below $0 around ${nice(p.overdraftDateWithPay)}, even with expected pay.`);
+    warnings.push(`You could run out of money around ${nice(p.overdraftDateWithPay)} if you keep spending like usual, even with your expected pay.`);
   else if (p.overdraftDateWithoutPay)
     warnings.push(
       pay.length
-        ? `Checking could go below $0 around ${nice(p.overdraftDateWithoutPay)} if your next paycheck is late or smaller than usual.`
-        : `At your usual spending, checking could go below $0 around ${nice(p.overdraftDateWithoutPay)} unless more money comes in.`,
+        ? `You could run out of money around ${nice(p.overdraftDateWithoutPay)} if your next paycheck is late or smaller than usual.`
+        : `You could run out of money around ${nice(p.overdraftDateWithoutPay)} if you keep spending like usual.`,
     );
   const lowBill = bills.find((b) => p.points.find((x) => x.date === b.date)!.withPayCents < 0);
   if (lowBill) warnings.push(`${lowBill.name} (${dollars(-lowBill.amountCents)}) on ${nice(lowBill.date)} may not be covered.`);

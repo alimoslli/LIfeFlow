@@ -19,7 +19,7 @@ export function FeedbackCard() {
     <section id="feedback" aria-label="Send feedback" className="scroll-mt-24">
       <Card className="p-5">
         <h2 className="font-display text-[1.375rem] leading-tight font-medium tracking-tight">Tell us what to fix</h2>
-        <p className="mt-1 mb-4 text-[0.9375rem] text-text-2">It goes straight to the person building LifeFlow, who may reply by email.</p>
+        <p className="mt-1 mb-4 text-[0.9375rem] text-text-2">It goes straight to the builder.</p>
         <ActionForm action={sendFeedbackAction} showSuccess className="flex flex-col gap-4">
           <fieldset className="flex flex-wrap gap-2">
             <legend className="sr-only">What kind of feedback</legend>
