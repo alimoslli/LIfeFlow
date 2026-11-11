@@ -7,6 +7,8 @@ import { withUser } from "@/server/db/with-user";
 import { errorResponse, HttpError } from "@/server/http";
 import { purgeUnusedPreviews } from "@/server/services/hq-files";
 import { purgeOldRateLimits } from "@/server/rate-limit";
+import { purgeExpiredVoiceSessions } from "@/server/jarvis/voice";
+import { purgeOldSmsInbound } from "@/server/services/sms";
 import { pushImportant, runDueSlot } from "@/server/services/proactive/engine";
 import { runNotifications, sendOnce, webPushSender } from "@/server/services/push";
 
@@ -43,6 +45,8 @@ async function runNotify() {
   let messages = 0;
   let sent = 0;
   for (const u of all) {
+    // Ended voice calls and their saved tool results (RLS: per user).
+    await withUser(u.id, (s) => purgeExpiredVoiceSessions(s)).catch(() => undefined);
     // the demo account, and an account locked under 13 (nothing of theirs is kept, and nothing is sent to them)
     // A suspended account gets nothing either.
     if (u.kind === "demo" || u.prefs?.ageBlockedAt || u.suspended) continue;
@@ -58,6 +62,7 @@ async function runNotify() {
   }
   // Housekeeping that must not depend on sign-ins: old limit buckets, Stop and continuation marks.
   await purgeOldRateLimits(getDb()).catch(() => undefined);
+  await purgeOldSmsInbound(getDb()).catch(() => undefined);
   // HQ housekeeping: pictures no decision card uses any more. Never blocks the run.
   try {
     await purgeUnusedPreviews(getDb());
