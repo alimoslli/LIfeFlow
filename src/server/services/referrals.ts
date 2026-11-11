@@ -70,8 +70,12 @@ export async function creditReferral(tx: Tx, inviteeId: string, now = new Date()
     .from(users)
     .where(eq(users.id, inviteeId));
   if (!me || !me.by || !me.verifiedAt || me.kind !== "standard" || me.by === inviteeId) return none;
-  const [inviter] = await tx.select({ id: users.id, email: users.email, kind: users.accountKind }).from(users).where(eq(users.id, me.by));
-  if (!inviter || inviter.kind !== "standard") return none;
+  const [inviter] = await tx
+    .select({ id: users.id, email: users.email, kind: users.accountKind, prefs: users.preferences })
+    .from(users)
+    .where(eq(users.id, me.by));
+  // an inviter the under-13 lock closed has left the queue and keeps nothing, so nobody is credited to them
+  if (!inviter || inviter.kind !== "standard" || inviter.prefs.ageBlockedAt) return none;
   const hash = emailHash(me.email);
   if (hash === emailHash(inviter.email)) return none;
   // The unique hash decides, even when two confirmations (or a deleted and re-made account) arrive together.

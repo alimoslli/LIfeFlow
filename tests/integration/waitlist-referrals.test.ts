@@ -9,7 +9,9 @@ import { emailConfirmations, users, waitlistReferrals } from "@/server/db/schema
 import { confirmEmailCode, CONFIRM_CODE_TTL_MS, sendConfirmCode } from "@/server/services/email-confirm";
 import { inviteCodeFor, recordInvite, validInviteCode } from "@/server/services/invites";
 import { creditReferral, emailHash, MAX_CREDITS_PER_DAY, normalizeEmail, referralEmailKey, verifyEmail } from "@/server/services/referrals";
-import { acceptUsers, waitlistPage, waitlistPlace } from "@/server/services/waitlist";
+import { saveWelcomeProgress } from "@/server/services/onboarding";
+import { acceptUsers, moveUpOne, nextInLine, waitingCount, waitlistPage, waitlistPlace } from "@/server/services/waitlist";
+import { inviterFor } from "@/server/services/invites";
 import { makeUser as makeAnyUser } from "../helpers";
 
 const db = getDb();
@@ -396,6 +398,52 @@ describe("Google and Apple sign-up", () => {
     const link = await startGoogleSignIn(db, cfg, { mode: "link", invite: "abcdefgh23", userId: (await makeUser("L")).user.id });
     expect(parseGoogleState((await takeChallenge(db, "google", link.token))!.challenge).invite).toBeNull();
     expect(validInviteCode("abc")).toBeNull();
+  });
+});
+
+describe("an under-13 lock takes the account out of the queue", () => {
+  it("a locked waiting child is out of the counts, the front, the moves, the acceptance and the invite code", async () => {
+    await clearLine();
+    const a = (await makeUser("A")).user;
+    const kid = await makeUser("Kai Young");
+    const b = (await makeUser("B")).user;
+    await db
+      .update(users)
+      .set({ preferences: { onboarding: "pending" }, invitedBy: a.id })
+      .where(eq(users.id, kid.user.id));
+    const code = await inviteCodeFor(db, kid.user.id);
+    expect(await waitingCount(db)).toBe(3);
+    expect(await place(b.id)).toBe(3);
+    expect(await kid.run((s) => saveWelcomeProgress(s, "UTC", { birthDate: `${new Date().getFullYear() - 9}-03-03` }))).toEqual({ blocked: true });
+
+    expect(await waitingCount(db)).toBe(2);
+    expect((await nextInLine(db, 10)).map((p) => p.id)).toEqual([a.id, b.id]);
+    expect((await waitlistPage(db, a.id)).front.map((f) => f.place)).toEqual([1, 2]);
+    expect(await place(kid.user.id)).toBeNull();
+    expect(await place(b.id)).toBe(2);
+    // b moves past a, not past the locked child
+    expect(await moveUpOne(db, b.id)).toBe(true);
+    expect([await place(b.id), await place(a.id)]).toEqual([1, 2]);
+    expect(await moveUpOne(db, kid.user.id)).toBe(false);
+    expect(await acceptUsers(db, [kid.user.id])).toEqual({ accepted: [], already: [kid.user.id] });
+    // the invite code and the inviter link are cleared, so the public invite page no longer resolves
+    expect(await inviterFor(db, code)).toBeNull();
+    const [row] = await db.select({ code: users.inviteCode, by: users.invitedBy, access: users.access }).from(users).where(eq(users.id, kid.user.id));
+    expect(row).toEqual({ code: null, by: null, access: "waiting" });
+  });
+
+  it("a friend of a locked inviter is never credited to them", async () => {
+    await clearLine();
+    const kid = await makeUser("Kai Young");
+    const friend = (await makeUser("Friend")).user;
+    await db
+      .update(users)
+      .set({ preferences: { onboarding: "pending" } })
+      .where(eq(users.id, kid.user.id));
+    await recordInvite(db, friend.id, await inviteCodeFor(db, kid.user.id));
+    await kid.run((s) => saveWelcomeProgress(s, "UTC", { birthDate: `${new Date().getFullYear() - 9}-03-03` }));
+    expect((await verifyEmail(db, friend.id)).recorded).toBe(false);
+    expect(await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, kid.user.id))).toEqual([]);
   });
 });
 

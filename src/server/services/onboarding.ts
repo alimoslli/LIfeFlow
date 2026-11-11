@@ -200,6 +200,9 @@ async function blockUnderAge(scope: UserScope, prefs: Prefs) {
       timezone: "UTC",
       inboxToken: null,
       smsPhone: null,
+      // out of the waitlist (the queue ignores a locked account) and no invite link or inviter kept
+      inviteCode: null,
+      invitedBy: null,
       preferences: { onboarding: prefs.onboarding, ageBlockedAt: at, ...(outside.length ? { ageLockClosing: true } : {}) },
     })
     .where(eq(users.id, scope.userId));

@@ -31,12 +31,16 @@ export function canUseApp(u: Person, waitlistOn: boolean, env: Record<string, st
   return !waitlistOn || u.access === "in" || alwaysIn(u, env);
 }
 
-/** Who holds a place in line: waiting, not suspended, not the demo account, not an admin. */
+/** An account the under-13 lock closed (preferences.ageBlockedAt): it never holds a place or gets let in. */
+export const notAgeLocked = () => sql`not (${users.preferences} ? 'ageBlockedAt')`;
+
+/** Who holds a place in line: waiting, not suspended, not age-locked, not the demo account, not an admin. */
 export function inLine(): SQL {
   const admins = adminEmails();
   return and(
     eq(users.access, "waiting"),
     isNull(users.suspendedAt),
+    notAgeLocked(),
     eq(users.accountKind, "standard"),
     admins.length ? notInArray(sql`lower(${users.email})`, admins) : undefined,
   )!;
@@ -84,7 +88,7 @@ export async function acceptUsers(db: Database, ids: string[]): Promise<{ accept
   const rows = await db
     .update(users)
     .set({ access: "in", acceptedAt: new Date() })
-    .where(and(inArray(users.id, want), eq(users.access, "waiting"), eq(users.accountKind, "standard")))
+    .where(and(inArray(users.id, want), eq(users.access, "waiting"), eq(users.accountKind, "standard"), notAgeLocked()))
     .returning({ id: users.id });
   const accepted = rows.map((r) => r.id);
   const done = new Set(accepted);
