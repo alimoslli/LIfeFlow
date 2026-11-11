@@ -22,7 +22,8 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
   expect(Math.round((await page.getByLabel("What should I call you?").boundingBox())!.height)).toBeGreaterThanOrEqual(44); // 43.99997 is 44 px
   await page.getByLabel("What should I call you?").fill("Maya");
   await expect(page.getByRole("heading", { name: "Hi Maya." })).toBeVisible();
-  await expect(page.getByText("LifeFlow is free while we're testing.")).toBeVisible();
+  // no plan or price line in setup: people come in from the waitlist (owner, 2026-11-11)
+  await expect(page.getByText(/free while we're testing/)).toHaveCount(0);
   const go = page.getByRole("button", { name: "Connect my sky" });
   await page.getByRole("radio", { name: /^Both/ }).click();
   await expect(go).toBeDisabled(); // the birthday is asked for, neutrally (the age rule is the server's)

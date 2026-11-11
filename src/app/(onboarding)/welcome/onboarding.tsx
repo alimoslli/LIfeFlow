@@ -55,7 +55,6 @@ const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} .'-]*$/u;
 const SAMPLE = "You've got 2 things due this week. The BIO lab is the big one, so let's start it Tuesday. You've got this.";
 
 /** What's free. `paid` is false while LifeFlow is free for everyone (testing). */
-export type PlanInfo = { paid: boolean; freeChatsPerDay: number; proFeatures: string[] };
 /** What the welcome kept on the account (it comes back here after connecting Google or Microsoft). */
 export type Saved = {
   companion: CompanionChoice | null;
@@ -88,7 +87,6 @@ const BACK_TEXT: Record<Back["result"], string> = {
 export function Onboarding({
   firstName,
   aiOk,
-  plan,
   clock: firstClock,
   saved,
   back,
@@ -97,7 +95,6 @@ export function Onboarding({
   firstName: string;
   /** They already allowed the skyling to use AI (the chat's "Before we start"). */
   aiOk: boolean;
-  plan: PlanInfo;
   clock: ClockData;
   saved: Saved;
   back: Back | null;
@@ -438,7 +435,7 @@ export function Onboarding({
                         ["student", "Classes", "I'm a student", "class"],
                         ["working", "Work", "I have a job", "shift"],
                         ["both", "Both", "Classes and a job", "calendar"],
-                        ["life", "Neither", "My day and my money", "today"],
+                        ["life", "Neither", "My life, money and goals", "today"],
                       ] as const
                     ).map(([value, label, hint, icon]) => (
                       <button
@@ -458,12 +455,8 @@ export function Onboarding({
                     ))}
                   </div>
                 </div>
-                {/* no school or workplace to type (owner, 2026-11-11): connecting their sky fills those in */}
-                <p data-anim className="rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem] leading-snug text-text-2">
-                  {plan.paid
-                    ? `Free plan: everything you add yourself, and ${plan.freeChatsPerDay} chats with your skyling a day. Pro adds ${listOf(plan.proFeatures)}.`
-                    : "LifeFlow is free while we're testing. Everything is open to you."}
-                </p>
+                {/* no school or workplace to type (owner, 2026-11-11): connecting their sky fills those in. And no plan or
+                    price line here: people come in from the waitlist (owner, 2026-11-11) */}
               </div>
             </>
           )}
@@ -692,14 +685,75 @@ function ShiftsSource({
   done: boolean;
   onDone: () => Promise<void>;
 }) {
+  const photo = useSendPhoto({
+    who,
+    allowed,
+    onAllowed,
+    ask: "Add my work shifts from this schedule.",
+    notFound: `${nameAtStart(who)} couldn't find shifts in that photo. Try a clearer one.`,
+    onSaved: onDone,
+  });
+  return (
+    <SourceCard
+      icon="shift"
+      title="Work shifts"
+      brings="A photo of your schedule is enough"
+      connected={done}
+      done="Added. They're on your sky."
+      note={
+        <>
+          {!allowed && <span className="block text-xs text-muted">To read it, {who} sends it to OpenAI. They don&apos;t use it to train their models.</span>}
+          {photo.problem && (
+            <span role="alert" className="block text-sm [overflow-wrap:anywhere] text-danger">
+              {photo.problem}
+            </span>
+          )}
+        </>
+      }
+    >
+      {photo.field}
+      <button
+        type="button"
+        onClick={photo.open}
+        disabled={photo.busy}
+        className="lf-sb lf-sb-sun lf-sb-sm shrink-0"
+        aria-label="Add a photo of your work schedule"
+      >
+        {photo.busy ? "Reading…" : "Add photo"}
+      </button>
+    </SourceCard>
+  );
+}
+
+/**
+ * A photo (or PDF) sent to the skyling to read and add to the sky: uploaded like a chat attachment, then asked in the same
+ * chat, with the same limits and AI permission. Only what's in the photo is saved; nothing is made up.
+ */
+function useSendPhoto({
+  who,
+  allowed,
+  onAllowed,
+  ask,
+  notFound,
+  onSaved,
+}: {
+  who: string;
+  allowed: boolean;
+  onAllowed: () => void;
+  ask: string;
+  notFound: string;
+  onSaved: () => Promise<void>;
+}) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
-  const fallback = `${nameAtStart(who)} couldn't read that just now. Try again, or tell ${who} your shifts below.`;
+  const [said, setSaid] = useState<string | null>(null);
+  const fallback = `${nameAtStart(who)} couldn't read that just now. Try again.`;
   const read = async (file: File | undefined) => {
     if (!file || busy) return;
     setBusy(true);
     setProblem(null);
+    setSaid(null);
     try {
       if (!allowed) {
         const r = await setAiConsentAction(true);
@@ -712,9 +766,10 @@ function ShiftsSource({
       // only words the server wrote for people (size, kind of file); anything else is the calm fallback
       if (!up.ok) throw new Error(((await up.json().catch(() => null)) as { error?: string } | null)?.error || fallback);
       const { id } = (await up.json()) as { id: string };
-      const { saved } = await askSkyling("Add my work shifts from this schedule.", [id], fallback);
-      if (!saved) throw new Error(`${nameAtStart(who)} couldn't find shifts in that photo. Try a clearer one, or tell ${who} below.`);
-      await onDone();
+      const { reply, saved } = await askSkyling(ask, [id], fallback);
+      if (!saved) throw new Error(notFound);
+      setSaid(reply || "Added. It's on your sky.");
+      await onSaved();
     } catch (e) {
       setProblem(e instanceof Error && e.message ? e.message : fallback);
     } finally {
@@ -722,48 +777,10 @@ function ShiftsSource({
       if (input.current) input.current.value = "";
     }
   };
-  return (
-    <SourceCard
-      icon="shift"
-      title="Work shifts"
-      brings="A photo of your schedule is enough"
-      connected={done}
-      done="Added. They're on your sky."
-      note={
-        <>
-          {!allowed && (
-            <span className="block text-xs text-muted">
-              To read it, {who} sends your photo to OpenAI, our AI provider. They don&apos;t use it to train their models.
-            </span>
-          )}
-          {problem && (
-            <span role="alert" className="block text-sm [overflow-wrap:anywhere] text-danger">
-              {problem}
-            </span>
-          )}
-        </>
-      }
-    >
-      <input
-        ref={input}
-        type="file"
-        accept="image/*,application/pdf"
-        className="sr-only"
-        tabIndex={-1}
-        aria-hidden
-        onChange={(e) => read(e.target.files?.[0])}
-      />
-      <button
-        type="button"
-        onClick={() => input.current?.click()}
-        disabled={busy}
-        className="lf-sb lf-sb-sun lf-sb-sm shrink-0"
-        aria-label="Add a photo of your work schedule"
-      >
-        {busy ? "Reading…" : "Add photo"}
-      </button>
-    </SourceCard>
+  const field = (
+    <input ref={input} type="file" accept="image/*,application/pdf" className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => read(e.target.files?.[0])} />
   );
+  return { field, busy, problem, said, open: () => input.current?.click() };
 }
 
 /**
@@ -808,16 +825,26 @@ async function askSkyling(message: string, attachmentIds: string[], fallback: st
 }
 
 /**
- * No calendar to connect: tell the skyling the week in one message, right here (owner's program, item 7: the first
- * minute ends on a full sky). It goes through the same chat as everywhere else (its limits, its AI permission, the
- * one-call set_up_schedule), and the sky above comes back with what was saved. Nothing is made up: only what they wrote.
+ * The last suggestion on "Connect your sky" (owner, 2026-11-11: "something including taking a photo and sending it"): a
+ * photo of a schedule, a syllabus or a bill, read by the skyling and added to the sky, with typing it one tap away (the
+ * week in one message, owner's program item 7). Both go through the same chat as everywhere else (its limits, its AI
+ * permission, set_up_schedule), and the sky above comes back with what was saved. Nothing is made up.
  */
 function TellWeek({ who, allowed, onAllowed, onSaved }: { who: string; allowed: boolean; onAllowed: () => void; onSaved: () => Promise<void> }) {
+  const [typing, setTyping] = useState(false);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [said, setSaid] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
-  const fallback = `${nameAtStart(who)} couldn't save that just now. Try again, or connect a calendar above.`;
+  const photo = useSendPhoto({
+    who,
+    allowed,
+    onAllowed,
+    ask: "Add what's in this photo to my sky.",
+    notFound: `${nameAtStart(who)} couldn't find anything to add in that photo. Try a clearer one.`,
+    onSaved,
+  });
+  const fallback = `${nameAtStart(who)} couldn't save that just now. Try again.`;
   const send = async () => {
     const message = text.trim();
     if (!message || busy) return;
@@ -839,39 +866,61 @@ function TellWeek({ who, allowed, onAllowed, onSaved }: { who: string; allowed: 
       setBusy(false);
     }
   };
+  const shown = said ?? photo.said;
+  const wrong = problem ?? photo.problem;
   return (
-    <div data-anim className="mt-5 rounded-2xl bg-surface px-4 py-3.5 shadow-soft">
-      <label htmlFor="tell-week" className="block text-[0.9375rem] font-medium">
-        No calendar? Tell {who} your week
-      </label>
-      <p className="text-sm text-muted">One message is enough, in your own words.</p>
-      <textarea
-        id="tell-week"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        rows={3}
-        maxLength={2000}
-        placeholder="Bio 101 Mon and Wed at 10, work at Target Tue and Thu 5 to 9"
-        className="mt-3 w-full resize-none rounded-xl bg-surface-2 px-3 py-2.5 text-[1rem] outline-none placeholder:text-muted focus:ring-2 focus:ring-accent"
-      />
+    <div data-anim className="mt-5 flex flex-col gap-2 rounded-2xl bg-surface px-4 py-3.5 shadow-soft">
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-2 max-[359px]:hidden">
+          <PixelIcon name="upload" className="h-6 w-6" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[0.9375rem] font-medium">Or send {who} a photo</span>
+          <span className="block text-sm text-muted">A schedule, a syllabus or a bill</span>
+        </span>
+        {photo.field}
+        <button type="button" onClick={photo.open} disabled={photo.busy} className="lf-sb lf-sb-sun lf-sb-sm shrink-0" aria-label={`Send ${who} a photo`}>
+          {photo.busy ? "Reading…" : "Photo"}
+        </button>
+      </div>
       {!allowed && (
-        <p className="mt-2 text-xs text-muted">
-          To save it, {who} sends your message to OpenAI, our AI provider. They don&apos;t use it to train their models. You can turn this off anytime in
-          Settings.
+        <p className="text-xs text-muted">
+          To read it, {who} sends it to OpenAI, our AI provider. They don&apos;t use it to train their models. You can turn this off anytime in Settings.
         </p>
       )}
-      <button type="button" onClick={send} disabled={!text.trim() || busy} className="lf-sb lf-sb-sun lf-sb-sm mt-3">
-        {busy ? "Saving your week…" : allowed ? "Send" : "Allow and send"}
-      </button>
-      {said && (
+      {typing ? (
+        <>
+          <label htmlFor="tell-week" className="sr-only">
+            Type it to {who}
+          </label>
+          <textarea
+            id="tell-week"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={3}
+            maxLength={2000}
+            autoFocus
+            placeholder="Bio 101 Mon and Wed at 10, work at Target Tue and Thu 5 to 9"
+            className="w-full resize-none rounded-xl bg-surface-2 px-3 py-2.5 text-[1rem] outline-none placeholder:text-muted focus:ring-2 focus:ring-accent"
+          />
+          <button type="button" onClick={send} disabled={!text.trim() || busy} className="lf-sb lf-sb-sun lf-sb-sm self-start">
+            {busy ? "Saving…" : allowed ? "Send" : "Allow and send"}
+          </button>
+        </>
+      ) : (
+        <button type="button" onClick={() => setTyping(true)} className="min-h-11 self-start text-sm font-medium text-accent hover:underline">
+          Or type it
+        </button>
+      )}
+      {shown && (
         // the reply wraps anywhere: a long word or link must never widen the phone's page
-        <p role="status" className="mt-3 line-clamp-6 text-sm [overflow-wrap:anywhere] text-text-2">
-          {said}
+        <p role="status" className="line-clamp-6 text-sm [overflow-wrap:anywhere] text-text-2">
+          {shown}
         </p>
       )}
-      {problem && (
-        <p role="alert" className="mt-3 text-sm [overflow-wrap:anywhere] text-danger">
-          {problem}
+      {wrong && (
+        <p role="alert" className="text-sm [overflow-wrap:anywhere] text-danger">
+          {wrong}
         </p>
       )}
     </div>
@@ -1048,10 +1097,4 @@ function Group({ label, children }: { label: string; children: ReactNode }) {
       {children}
     </div>
   );
-}
-
-/** "a, b and c" */
-function listOf(items: string[]) {
-  const lower = items.map((t, i) => (i === 0 ? t.toLowerCase() : t.charAt(0).toLowerCase() + t.slice(1)));
-  return lower.length > 1 ? `${lower.slice(0, -1).join(", ")} and ${lower[lower.length - 1]}` : (lower[0] ?? "");
 }

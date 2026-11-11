@@ -3,7 +3,6 @@ import { aiAllowed } from "@/lib/ai-consent";
 import { redirect } from "next/navigation";
 import { isCompanionChoice } from "@/lib/companions";
 import { requireUserForWelcome, withCurrentUser } from "@/server/auth/current-user";
-import { billingConfig, FREE_JARVIS_PER_DAY, PRO_FEATURES } from "@/server/billing";
 import { series } from "@/server/db/series";
 import { canvasConnection } from "@/server/integrations/canvas";
 import { googleConfig } from "@/server/integrations/google";
@@ -26,8 +25,6 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
   // comes before "setup is done", or a locked finished account would bounce between / and here
   if (user.preferences?.ageBlockedAt) return <AgeBlocked withPassword={await accountHasPassword(getDb(), user.id)} />;
   if (user.preferences?.onboarding !== "pending") redirect("/");
-  // Limits are shown only once paid plans are switched on; until then everything is free.
-  const plan = { paid: !!billingConfig(), freeChatsPerDay: FREE_JARVIS_PER_DAY, proFeatures: Object.values(PRO_FEATURES) };
   // their own sky (no money on it), and what's connected already (coming back from Google or Microsoft)
   const { clock, list, canvas } = await withCurrentUser(async (s, u) => {
     const [clock, list, canvas] = await series(
@@ -57,7 +54,6 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
     <Onboarding
       firstName={user.name.split(" ")[0]}
       aiOk={aiAllowed(user.preferences)}
-      plan={plan}
       clock={clock}
       saved={saved}
       back={back}

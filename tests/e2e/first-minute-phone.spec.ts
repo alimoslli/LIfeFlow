@@ -16,11 +16,13 @@ test("the first minute: the real welcome ends on Today with the told week on the
   await fillBirthday(page, "2005-04-12");
   await page.getByRole("button", { name: "Connect my sky" }).click();
 
-  // 3. no calendar to connect: the week in one message. AI is asked for first, never assumed.
+  // 3. nothing to connect: a photo, or the week typed in one message. AI is asked for first, never assumed.
   await expect(page.getByRole("heading", { name: "Connect your sky" })).toBeVisible();
-  await expect(page.getByText("sends your message to OpenAI", { exact: false })).toBeVisible();
+  await expect(page.getByText("sends it to OpenAI", { exact: false }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Send Ray a photo" })).toBeVisible();
+  await page.getByRole("button", { name: "Or type it" }).click();
   await page
-    .getByLabel("No calendar? Tell Ray your week")
+    .getByLabel("Type it to Ray")
     .fill('/tool set_up_schedule {"classes":[{"name":"BIO 101","days":[0,1,2,3,4,5,6],"startTime":"10:00","endTime":"11:15"}]}');
   await page.getByRole("button", { name: "Allow and send" }).click();
   await expect(page.getByRole("status").filter({ hasText: /^Done|Saved/ })).toBeVisible({ timeout: 30_000 });
