@@ -204,8 +204,10 @@ test("a finished account answering under 13 on Today is locked the same way (own
     await expect(card.getByRole("button", { name: "Save" })).toBeEnabled();
     await card.getByRole("button", { name: "Save" }).click();
   };
-  // today's date (a phone's picker opens on it) is a slip, not an answer: nothing is locked
-  await answer(new Date().toISOString().slice(0, 10));
+  // today's date (a phone's picker opens on it) is a slip, not an answer: nothing is locked. Local date: the account's zone is
+  // the browser's, so a UTC date would be tomorrow for a browser west of UTC in the evening.
+  const now = new Date();
+  await answer(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`);
   await expect(card.getByRole("alert")).toHaveText("Check the year.");
   // a real under-13 date is read back first; "Change the date" goes back with nothing locked
   await answer(`${new Date().getFullYear() - 10}-04-04`);

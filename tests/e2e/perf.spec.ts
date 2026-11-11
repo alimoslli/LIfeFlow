@@ -49,7 +49,7 @@ test("tabs: skeleton only on the first visit, instant after that", async ({ page
   const email = await signUp(page, "Speedy Sam");
   // Realistic data, so pages do real work.
   execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/seed-coach.ts", email], {
-    env: { ...process.env, DATABASE_URL: "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" },
+    env: { ...process.env, DATABASE_URL: process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" },
   });
   await page.goto("/");
   await page.waitForLoadState("networkidle");
