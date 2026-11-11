@@ -28,6 +28,7 @@ export async function POST(req: Request) {
     if (e instanceof HttpError) return EMPTY;
     throw e;
   }
+  // At-most-once on purpose: the id is claimed BEFORE the work, so a provider retry (or a crash mid-turn) never runs a second turn or repeats an action.
   // A retry of a text we already took (same provider message id) is answered with nothing, so a turn never runs twice.
   const sid = params.MessageSid || params.SmsMessageSid;
   if (sid && !(await claimInboundSms(getDb(), sid))) return EMPTY;

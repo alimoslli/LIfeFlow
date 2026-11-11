@@ -123,10 +123,14 @@ export function smsHelpText(contactEmail: string | null) {
 
 /**
  * Claims a provider message id (Twilio's MessageSid) before answering. True the first time, false for a retry of the same text,
- * decided by one atomic insert, so two deliveries at once can't both run a turn. Old ids are cleared (providers retry within minutes).
+ * decided by one atomic insert, so two deliveries at once can't both run a turn. Old ids are cleared by the daily cron (purgeOldSmsInbound).
  */
 export async function claimInboundSms(db: Database, messageSid: string): Promise<boolean> {
-  await db.delete(smsInbound).where(lt(smsInbound.createdAt, new Date(Date.now() - 7 * 86_400_000)));
   const rows = await db.insert(smsInbound).values({ messageSid }).onConflictDoNothing().returning({ sid: smsInbound.messageSid });
   return rows.length > 0;
+}
+
+/** Daily housekeeping: provider message ids older than a week (providers retry within minutes). */
+export async function purgeOldSmsInbound(db: Database) {
+  await db.delete(smsInbound).where(lt(smsInbound.createdAt, new Date(Date.now() - 7 * 86_400_000)));
 }

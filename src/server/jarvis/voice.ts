@@ -6,7 +6,7 @@ import OpenAI from "openai";
 import { assistantProfile } from "@/lib/assistant";
 import type { SessionUser } from "../auth/sessions";
 import { conversations, messages, voiceSessions, voiceToolCalls, type JarvisModule, type ToolResultRecord } from "../db/schema";
-import { withUser } from "../db/with-user";
+import { withUser, type UserScope } from "../db/with-user";
 import { env } from "../env";
 import { listActiveMemories } from "../services/memory";
 import { makeToolContext } from "./agent";
@@ -116,7 +116,7 @@ export async function startVoiceSession(user: SessionUser, module: JarvisModule 
   // The server's own record of this call: tool calls are accepted only for a live row of this user and conversation.
   const conversation = await withUser(user.id, async (s) => {
     const c = conversationId ? { id: conversationId } : await createConversation(s, module, `Talking with ${session.name}`);
-    await s.tx.delete(voiceSessions).where(lt(voiceSessions.expiresAt, new Date(Date.now() - 3_600_000)));
+    await purgeExpiredVoiceSessions(s);
     const [vs] = await s.tx
       .insert(voiceSessions)
       .values({ userId: s.userId, conversationId: c.id, expiresAt: new Date(Date.now() + (maxSeconds + VOICE_GRACE_SECONDS) * 1000) })
@@ -193,22 +193,36 @@ export async function relayVoiceTool(
   if (claim === "no-session") throw new HttpError(403, "This call isn't active any more. Start a new one.");
   if (claim === "running") throw new HttpError(409, "That step is already running.");
   if (claim !== "mine") return claim;
+  let result: VoiceToolResult;
   try {
-    const result = await runVoiceTool(user, input, opts);
-    await withUser(user.id, (s) =>
-      s.tx
-        .update(voiceToolCalls)
-        .set({ result: result as unknown as Record<string, unknown> })
-        .where(and(eq(voiceToolCalls.sessionId, input.voiceSessionId), eq(voiceToolCalls.callId, input.callId))),
-    );
-    return result;
+    result = await runVoiceTool(user, input, opts);
   } catch (e) {
-    // Nothing was recorded as done: let the model's retry run.
+    // The tool itself failed: let the model's retry run.
     await withUser(user.id, (s) =>
       s.tx.delete(voiceToolCalls).where(and(eq(voiceToolCalls.sessionId, input.voiceSessionId), eq(voiceToolCalls.callId, input.callId))),
     ).catch(() => undefined);
     throw e;
   }
+  // The tool ran. Saving its result is retried; if it still fails the claim stays (a repeat answers 409), so a tool that changed data never runs twice.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await withUser(user.id, (s) =>
+        s.tx
+          .update(voiceToolCalls)
+          .set({ result: result as unknown as Record<string, unknown> })
+          .where(and(eq(voiceToolCalls.sessionId, input.voiceSessionId), eq(voiceToolCalls.callId, input.callId))),
+      );
+      break;
+    } catch {
+      /* try again, then keep the claim */
+    }
+  }
+  return result;
+}
+
+/** Removes this user's ended voice calls and their saved tool results (the daily cron runs it for each user; the rows are behind RLS). */
+export async function purgeExpiredVoiceSessions(s: UserScope) {
+  await s.tx.delete(voiceSessions).where(lt(voiceSessions.expiresAt, new Date(Date.now() - 3_600_000)));
 }
 
 async function runVoiceTool(
