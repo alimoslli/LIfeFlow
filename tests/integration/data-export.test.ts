@@ -141,11 +141,33 @@ describe("Download my data", () => {
     const { user } = await makeUser("Wendy Wait");
     const code = await inviteCodeFor(db, user.id);
     const first = JSON.parse(await readAll(exportStream(user.id, profileOf(user)))).profile.waitlist;
-    expect(first).toMatchObject({ place: 1, access: "waiting", acceptedAt: null, emailVerifiedAt: null, inviteCode: code });
+    expect(first).toMatchObject({
+      place: 1,
+      access: "waiting",
+      acceptedAt: null,
+      emailVerifiedAt: null,
+      inviteCode: code,
+      joinedThroughALink: false,
+      friendsCounted: 0,
+    });
     const stamp = new Date("2026-11-11T10:00:00.000Z");
     await db.update(users).set({ emailVerifiedAt: stamp, access: "in", acceptedAt: stamp }).where(eq(users.id, user.id));
     const second = JSON.parse(await readAll(exportStream(user.id, profileOf(user)))).profile.waitlist;
-    expect(second).toEqual({ place: null, access: "in", acceptedAt: stamp.toISOString(), emailVerifiedAt: stamp.toISOString(), inviteCode: code });
+    expect(second).toEqual({
+      place: null,
+      access: "in",
+      acceptedAt: stamp.toISOString(),
+      emailVerifiedAt: stamp.toISOString(),
+      inviteCode: code,
+      joinedThroughALink: false,
+      friendsCounted: 0,
+    });
+    // joining through someone's link is reported (never who)
+    const { user: inviter } = await makeUser("Inviter Ivy");
+    await db.update(users).set({ invitedBy: inviter.id }).where(eq(users.id, user.id));
+    const third = JSON.parse(await readAll(exportStream(user.id, profileOf(user)))).profile.waitlist;
+    expect(third.joinedThroughALink).toBe(true);
+    expect(JSON.stringify(third)).not.toContain(inviter.id);
   });
 
   it("streams the transactions CSV in full: all 5,001 rows arrive, same columns, newest first", async () => {

@@ -3,7 +3,7 @@ import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import * as schema from "../db/schema";
 import { getDb } from "../db/client";
 import { withUser, type UserScope } from "../db/with-user";
-import { waitlistPlace } from "./waitlist";
+import { friendCounts, waitlistPlace } from "./waitlist";
 
 type UserTable = PgTable & { userId: PgColumn; id: PgColumn };
 
@@ -72,9 +72,9 @@ export const NOT_EXPORTED: Record<string, string> = {
   oauth_identities: "Apple and Google sign-in links (provider account ids)",
   password_resets: "password reset links (hashes)",
   login_challenges: "two-step sign-in in progress",
-  email_confirmations: "a keyed hash of the 6-digit code emailed to confirm their email, kept up to 10 minutes; a sign-in secret, never exported",
+  email_confirmations: "a keyed hash of the 6-digit code emailed to confirm their email, kept up to 10 minutes; a one-time code, not exported",
   waitlist_referrals:
-    "who invited whom for the waitlist: a keyed hash of the friend's email, the inviter and invitee links and dates; it exists so one email can't be counted twice. The person's own place, invite code and dates are in the profile",
+    "rows tying an inviter to a friend's one-way keyed email hash, kept so one email can't count twice; what applies to the person (place, invite code, dates, whether they joined through a link, how many friends counted) is in the profile",
   remembered_devices: "phones and computers that skip the two-step code (hashes of cookie tokens)",
   health_tokens: "Apple Health keys (hashes)",
   push_subscriptions: "this device's push keys",
@@ -220,6 +220,7 @@ async function* exportBody(userId: string, profile: ExportProfile, batch: number
       acceptedAt: schema.users.acceptedAt,
       emailVerifiedAt: schema.users.emailVerifiedAt,
       inviteCode: schema.users.inviteCode,
+      invitedBy: schema.users.invitedBy,
     })
     .from(schema.users)
     .where(eq(schema.users.id, userId));
@@ -230,7 +231,18 @@ async function* exportBody(userId: string, profile: ExportProfile, batch: number
       email: profile.email,
       timezone: profile.timezone,
       preferences: exportablePreferences(profile.preferences),
-      waitlist: me ? { place: await waitlistPlace(db, userId), ...me } : null,
+      waitlist: me
+        ? {
+            place: await waitlistPlace(db, userId),
+            access: me.access,
+            acceptedAt: me.acceptedAt,
+            emailVerifiedAt: me.emailVerifiedAt,
+            inviteCode: me.inviteCode,
+            // whether they joined through someone's link (never who), and how many of their own friends counted
+            joinedThroughALink: !!me.invitedBy,
+            friendsCounted: (await friendCounts(db, userId)).friends,
+          }
+        : null,
     },
   };
   yield JSON.stringify(head).slice(0, -1); // the object stays open for the tables
