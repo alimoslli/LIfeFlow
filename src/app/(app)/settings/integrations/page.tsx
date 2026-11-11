@@ -83,7 +83,7 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
       />
       <ManualSourceCard
         title="Another school platform?"
-        body="Not on Canvas? Send your skyling a screenshot of your homework or syllabus."
+        body="Not on Canvas? Send your skyling a screenshot of your assignments or syllabus."
         tip="Try: send a screenshot of your assignment list, then say “add these”."
       />
       <Group title="Email & Calendar" />

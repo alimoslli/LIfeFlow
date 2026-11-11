@@ -20,7 +20,8 @@ Biggest changes:
 - Settings, Connections: "Send your skyling a screenshot or a PDF of a statement. It adds the account and the transactions it can read, so Money still shows what you spent and what came in." is now "Send your skyling a screenshot or PDF of a statement."
 - "Plaid", "access token", "Synced" and "Link"-style words are gone from the screens ("Bank not listed?", "Use a code instead", "Updated ...").
 - Notification help on iPhone and "blocked" help cut from about 30 words to 12 and 11.
-- "Assignment" is "homework" on buttons and sheet titles (Add homework, Edit homework, Delete homework, the trash list).
+- "Assignment" stays (COO review): the owner and Canvas both say assignments, and a college assignment is often a paper, lab or project, not homework.
+- Put back in review: the grade card's next step ("Aim one step lower or ask about extra credit"), "Nothing you marked done is lost" on merging a class, new backup codes after a two-step restart, example authenticator apps, "If your school allows it" for a Canvas access token, and that the builder may reply by email.
 - Accounts and Bills: "kept up to date by themselves", "sync every day, and whenever your bank has something new" and similar behind-the-scenes lines are now short or gone.
 
 Left long on purpose:

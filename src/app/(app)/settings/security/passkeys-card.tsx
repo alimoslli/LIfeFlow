@@ -41,7 +41,7 @@ export function PasskeysCard({ passkeys, demo }: { passkeys: PasskeyRow[]; demo:
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="font-medium">Passkeys (Face ID, Touch ID)</h2>
-          <p className="mt-0.5 text-sm text-text-2">Sign in with your face or fingerprint. It never leaves your device.</p>
+          <p className="mt-0.5 text-sm text-text-2">Sign in with your face or fingerprint. They never leave your device.</p>
         </div>
       </div>
       {passkeys.length > 0 && (

@@ -35,7 +35,9 @@ export function TwoFactorCard({ status }: { status: Status }) {
           <h2 className="flex items-center gap-2 font-medium">
             <PixelIcon name="shield" className="h-4 w-4 text-accent" /> Two-step sign-in
           </h2>
-          <p className="mt-1 max-w-md text-sm text-text-2">After your password, enter a 6-digit code from an authenticator app.</p>
+          <p className="mt-1 max-w-md text-sm text-text-2">
+            After your password, enter a 6-digit code from an app like Apple Passwords or Google Authenticator.
+          </p>
         </div>
         <Badge tone={status.enabled ? "success" : "neutral"}>{status.enabled ? "On" : "Off"}</Badge>
       </div>
@@ -166,7 +168,7 @@ export function TwoFactorCard({ status }: { status: Status }) {
               );
             }}
           >
-            <p className="text-sm text-text-2">We&apos;ll email you a code, then you set up your app again.</p>
+            <p className="text-sm text-text-2">We&apos;ll email you a code. Then you set up your app again and get new backup codes.</p>
             <Field label="Password" htmlFor="tf-restart-pw">
               <Input id="tf-restart-pw" name="password" type="password" autoComplete="current-password" required className="max-w-xs" />
             </Field>

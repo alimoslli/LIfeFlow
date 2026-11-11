@@ -64,7 +64,7 @@ export default async function SchoolPage({ searchParams }: { searchParams: Promi
 
       {hasDuplicates && (
         <Card className="mb-5 flex flex-wrap items-center justify-between gap-3 p-4">
-          <p className="min-w-0 flex-1 text-[0.9375rem]">A class shows up twice. Merge them?</p>
+          <p className="min-w-0 flex-1 text-[0.9375rem]">A class shows up twice. Merge them? Nothing you marked done is lost.</p>
           <ActionButton action={mergeDuplicateClassesAction} className="lf-sb lf-sb-sun lf-sb-sm">
             Merge duplicates
           </ActionButton>

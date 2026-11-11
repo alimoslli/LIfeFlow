@@ -19,7 +19,7 @@ export function CanvasCard({ connection }: { connection: Connection | null }) {
           </span>
           <div>
             <h2 className="font-medium">Canvas</h2>
-            <p className="text-xs text-muted">Classes and homework</p>
+            <p className="text-xs text-muted">Classes and assignments</p>
           </div>
         </div>
         <Badge tone={connection ? (connection.status === "error" ? "danger" : "success") : "neutral"}>
@@ -39,7 +39,7 @@ export function CanvasCard({ connection }: { connection: Connection | null }) {
             </ActionButton>
             <ActionButton
               action={disconnectCanvasAction}
-              confirm="Disconnect Canvas? Your classes and homework stay."
+              confirm="Disconnect Canvas? Your classes and assignments stay."
               title="Disconnect Canvas"
               className="inline-flex min-h-11 items-center rounded-full px-4 text-sm text-muted hover:text-danger"
             >
@@ -71,9 +71,9 @@ export function CanvasCard({ connection }: { connection: Connection | null }) {
             <SubmitButton className="self-start">Connect Canvas</SubmitButton>
           </ActionForm>
           <details className="group rounded-2xl bg-surface-2 px-4 py-3">
-            <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium">Use a code instead</summary>
+            <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium">Use an access token instead</summary>
             <ActionForm action={connectCanvasAction} className="mt-2">
-              <p className="text-sm text-text-2">In Canvas: Account, Settings, New access token.</p>
+              <p className="text-sm text-text-2">If your school allows it: in Canvas, Account, Settings, New access token.</p>
               <Field label="Your school's Canvas address" htmlFor="cv-url">
                 <Input id="cv-url" name="url" required placeholder="canvas.myschool.edu" autoCapitalize="none" autoCorrect="off" />
               </Field>

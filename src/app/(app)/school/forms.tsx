@@ -66,7 +66,12 @@ export function CourseDialog({ action, course, trigger }: { action: Action; cour
 
 export function AssignmentDialog({ action, courses, defaultCourseId }: { action: Action; courses: Course[]; defaultCourseId?: string }) {
   return (
-    <Dialog trigger="Add homework" title="Add homework" description="Or paste details into your skyling to add many at once." triggerProps={{ variant: "sky" }}>
+    <Dialog
+      trigger="Add assignment"
+      title="Add an assignment"
+      description="Or paste details into your skyling to add many at once."
+      triggerProps={{ variant: "sky" }}
+    >
       {(close) => (
         <ActionForm action={action} onSuccess={close}>
           <Field label="Course" htmlFor="a-course">
@@ -104,7 +109,7 @@ export function AssignmentDialog({ action, courses, defaultCourseId }: { action:
           <Field label="Details" htmlFor="a-desc">
             <Textarea id="a-desc" name="description" rows={3} />
           </Field>
-          <SubmitButton className="self-end">Add homework</SubmitButton>
+          <SubmitButton className="self-end">Add assignment</SubmitButton>
         </ActionForm>
       )}
     </Dialog>

@@ -9,7 +9,7 @@ const NOUN: Record<TrashKind, string> = {
   task: "To-do",
   note: "Note",
   event: "Event",
-  assignment: "Homework",
+  assignment: "Assignment",
   shift: "Shift",
   transaction: "Transaction",
   goal: "Goal",

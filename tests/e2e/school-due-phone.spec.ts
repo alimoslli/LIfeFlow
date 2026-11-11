@@ -17,12 +17,12 @@ test("School shows what's due under the classes; the old Due link lands on it", 
   await course.getByRole("button", { name: "Add course" }).click();
   await expect(course).toBeHidden();
 
-  await page.getByRole("button", { name: "Add homework" }).first().click();
-  const add = page.getByRole("dialog", { name: "Add homework" });
+  await page.getByRole("button", { name: "Add assignment" }).first().click();
+  const add = page.getByRole("dialog", { name: "Add an assignment" });
   await add.getByLabel("Title").fill("Lab report 3");
   const soon = new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10);
   await add.getByLabel("Due date").fill(soon);
-  await add.getByRole("button", { name: "Add homework" }).click();
+  await add.getByRole("button", { name: "Add assignment" }).click();
   await expect(add).toBeHidden();
 
   // Under the classes, this week by default; one row of section tabs on the page (no second "Classes").

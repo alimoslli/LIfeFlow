@@ -38,7 +38,7 @@ export function AppleHealthCard({ keys, lastReceived, url }: { keys: Key[]; last
         <Badge tone={lastReceived ? "success" : "neutral"}>{lastReceived ? "Receiving data" : keys.length ? "Waiting for data" : "Not set up"}</Badge>
       </div>
       <p className="mt-3 text-sm text-text-2">
-        A daily Shortcut sends the numbers you pick.
+        A daily Shortcut on your iPhone sends the numbers you pick.
         {lastReceived && <> Last data received {lastReceived}.</>}
       </p>
 

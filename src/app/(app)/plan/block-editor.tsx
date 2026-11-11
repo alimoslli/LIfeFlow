@@ -55,7 +55,7 @@ export function EditableBlock({ block, className, children }: { block: Block | n
 /** The editor for one event, shift or assignment, in a sheet (Plan's rows and the Today timeline's cards). */
 export function BlockSheet({ block, onClose }: { block: Exclude<Block, { origin: "task" }> | null; onClose: () => void }) {
   return (
-    <Sheet open={!!block} onClose={onClose} title={block?.origin === "shift" ? "Shift" : block?.origin === "assignment" ? "Homework" : "Event"}>
+    <Sheet open={!!block} onClose={onClose} title={block?.origin === "shift" ? "Shift" : block?.origin === "assignment" ? "Assignment" : "Event"}>
       {block?.origin === "event" && <EventForm key={block.id} b={block} done={onClose} />}
       {block?.origin === "shift" && <ShiftForm key={block.id} b={block} done={onClose} />}
       {block?.origin === "assignment" && <AssignmentForm key={block.id} b={block} done={onClose} />}
@@ -236,7 +236,7 @@ function AssignmentForm({ b, done }: { b: Extract<Block, { origin: "assignment" 
         <ActionButton
           action={deleteAssignmentAction.bind(null, b.id)}
           confirm={`Delete "${b.title}"?`}
-          title="Delete homework"
+          title="Delete assignment"
           className="min-h-11 rounded-full px-4 text-sm text-danger"
           onSuccess={done}
         >
