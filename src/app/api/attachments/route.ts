@@ -4,7 +4,7 @@ import { getSessionUser } from "@/server/auth/current-user";
 import { attachments } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
 import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
-import { sniffMime } from "@/server/uploads";
+import { officeText, sniffMime } from "@/server/uploads";
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 export const MAX_TEXT_BYTES = 1024 * 1024;
@@ -20,9 +20,12 @@ export async function POST(req: Request) {
     const file = form?.get("file");
     if (!(file instanceof File)) throw new HttpError(400, "No file provided");
     if (file.size > MAX_IMAGE_BYTES) throw new HttpError(413, "Files must be 5 MB or smaller");
-    const buf = Buffer.from(await file.arrayBuffer());
-    const mime = sniffMime(buf, file.name);
-    if (!mime) throw new HttpError(415, "Unsupported file type. Use a PDF, a photo, or a text file.");
+    let buf = Buffer.from(await file.arrayBuffer());
+    let mime = sniffMime(buf, file.name);
+    // a Word or PowerPoint file is kept as its words, which the skyling reads like any text file
+    const words = mime ? null : officeText(buf, file.name);
+    if (words) [buf, mime] = [Buffer.from(words, "utf8"), "text/plain"];
+    if (!mime) throw new HttpError(415, "That kind of file can't be read yet. Use a PDF, a photo, a Word or PowerPoint file, or a text file.");
     if (!mime.startsWith("image/") && mime !== "application/pdf" && buf.length > MAX_TEXT_BYTES) throw new HttpError(413, "Text files must be 1 MB or smaller");
     const filename = file.name.replace(/[^\w.\- ()]/g, "_").slice(0, 120) || "upload";
     const [row] = await withUser(user.id, (s) =>

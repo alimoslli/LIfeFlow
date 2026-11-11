@@ -60,7 +60,9 @@ const newId = () =>
         return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
       });
 
-const ACCEPT = "application/pdf,.pdf,image/png,image/jpeg,image/webp,image/gif,text/plain,text/csv,text/markdown,application/json,.md,.csv,.txt";
+const ACCEPT =
+  "application/pdf,.pdf,image/png,image/jpeg,image/webp,image/gif,text/plain,text/csv,text/markdown,application/json,.md,.csv,.txt,.docx,.pptx," +
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation";
 
 export function JarvisChat({
   conversationId: initialId,
@@ -762,7 +764,7 @@ export function JarvisChat({
                 onClick={() => fileRef.current?.click()}
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40"
                 aria-label="Attach a file or screenshot"
-                title="Attach a screenshot, syllabus or text file"
+                title="Attach a photo, PDF, Word or PowerPoint file"
                 disabled={!canSend}
               >
                 <PixelIcon name="upload" className="h-4 w-4" />
