@@ -18,7 +18,7 @@ test("School shows what's due under the classes; the old Due link lands on it", 
   await expect(course).toBeHidden();
 
   await page.getByRole("button", { name: "Add homework" }).first().click();
-  const add = page.getByRole("dialog", { name: "Add an assignment" });
+  const add = page.getByRole("dialog", { name: "Add homework" });
   await add.getByLabel("Title").fill("Lab report 3");
   const soon = new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10);
   await add.getByLabel("Due date").fill(soon);
