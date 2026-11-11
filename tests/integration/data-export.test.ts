@@ -161,6 +161,29 @@ describe("Download my data", () => {
     expect(dates).toEqual([...dates].sort().reverse());
   }, 60_000);
 
+  it("pages the CSV by (date, created, id): 4,500 rows sharing one date and one insert time arrive once each, none missing", async () => {
+    const { run } = await signIn("Dale Ties");
+    const TOTAL = 4500;
+    await run(async (s) => {
+      const acct = await createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 0 });
+      // One statement: every row gets the same created_at too.
+      await s.tx.insert(transactions).values(
+        Array.from({ length: TOTAL }, (_, i) => ({
+          userId: s.userId,
+          accountId: acct.id,
+          date: "2026-05-05",
+          description: `Tie ${i}`,
+          amountCents: -100,
+          kind: "expense" as const,
+        })),
+      );
+    });
+    const res = await GET(new Request("http://localhost/api/export?format=transactions.csv"));
+    const lines = (await res.text()).split("\n").slice(1);
+    expect(lines).toHaveLength(TOTAL);
+    expect(new Set(lines.map((l) => l.split(",")[1]))).toEqual(new Set(Array.from({ length: TOTAL }, (_, i) => `Tie ${i}`)));
+  }, 60_000);
+
   it("refuses both formats while Money is locked, with a plain message, and works once Money is unlocked", async () => {
     const { token } = await signIn("Maya Locked", { moneyLock: { enabled: true, idleMinutes: 5 } });
     for (const url of ["http://localhost/api/export", "http://localhost/api/export?format=transactions.csv"]) {

@@ -6,7 +6,9 @@ import { getCategoryByName } from "@/server/services/finance/categories";
 import { cashflowFor, moneyOverview } from "@/server/services/finance/overview";
 import { budgetStatus, setBudget, spendingByCategory } from "@/server/services/finance/planning";
 import { spendingSummary } from "@/server/services/finance/insights";
-import { cashflowOverQuery, queryAllTransactions, queryTransactions } from "@/server/services/finance/transactions";
+import { queryAllTransactions, queryTransactions } from "@/server/services/finance/transactions";
+import { cashflowTotals, flowTotals } from "@/server/services/finance/totals";
+import { roundUps } from "@/server/services/finance/coach";
 import { resolvePeriod } from "@/lib/periods";
 import { makeUser } from "../helpers";
 
@@ -57,7 +59,7 @@ describe("totals cover every row, not the first 500 or 5,000", () => {
     const { run } = await seed(5001);
     expect((await run((s) => queryAllTransactions(s, { from: "2026-10-01", to: "2026-10-31" }))).length).toBe(5001);
     expect((await run((s) => spendingSummary(s, { from: "2026-10-01", to: "2026-10-31" }))).netSpendingCents).toBe(500_100);
-    expect((await run((s) => cashflowOverQuery(s, { from: "2026-10-01", to: "2026-10-31", includeExcluded: true }))).netSpendingCents).toBe(500_100);
+    expect((await run((s) => cashflowTotals(s, { from: "2026-10-01", to: "2026-10-31", includeExcluded: true }))).netSpendingCents).toBe(500_100);
     // A list asked for with no limit is still a page, not a total.
     expect((await run((s) => queryTransactions(s, { from: "2026-10-01", to: "2026-10-31" }))).length).toBe(500);
   }, 60_000);
@@ -77,8 +79,63 @@ describe("totals cover every row, not the first 500 or 5,000", () => {
     const o = await run((s) => moneyOverview(s, TODAY));
     expect(o.month).toMatchObject({ netSpendingCents: expectedSpend, incomeCents: 300_000, transactionCount: 600 + 6, pendingCount: 1 });
     expect(o.budgets.items[0].spentCents).toBe(expectedSpend); // all in Groceries, refunds offset it
-    // The row-based rules give the same answer as the SQL ones.
-    const viaRows = await run((s) => cashflowOverQuery(s, { from: "2026-10-01", to: "2026-10-31" }));
-    expect(viaRows).toMatchObject({ netSpendingCents: expectedSpend, incomeCents: 300_000, transactionCount: 606, pendingCount: 1 });
+    // The same totals through the Transactions page path (hidden rows are counted apart).
+    const viaRows = await run((s) => cashflowTotals(s, { from: "2026-10-01", to: "2026-10-31" }));
+    expect(viaRows).toMatchObject({ netSpendingCents: expectedSpend, incomeCents: 300_000, transactionCount: 606, pendingCount: 1, excludedCount: 2 });
+  }, 60_000);
+
+  it("never returns a negative zero: income-only month, and expense and refund that cancel", async () => {
+    const { run } = await seed(0, [{ kind: "income", amountCents: 5_000 }]);
+    const o = await run((s) => moneyOverview(s, TODAY));
+    expect(Object.is(o.month.netSpendingCents, 0)).toBe(true);
+    expect(o.month.incomeCents).toBe(5_000);
+    expect(Object.is(o.month.netCashflowCents, 5_000)).toBe(true);
+    expect(Object.is((await run((s) => cashflowTotals(s, { from: "2026-10-01", to: "2026-10-31" }))).netSpendingCents, 0)).toBe(true);
+
+    const c = await seed(0, [
+      { kind: "expense", amountCents: -4_000 },
+      { kind: "refund", amountCents: 4_000 },
+    ]);
+    const byCat = await c.run((s) => spendingByCategory(s, "2026-10-01", "2026-10-31"));
+    expect(byCat).toEqual([]); // a category netting to zero is not listed
+    const status = await c.run((s) => budgetStatus(s, TODAY));
+    expect(Object.is(status[0].spentCents, 0)).toBe(true);
+    expect(Object.is(status[0].remainingCents, 10_000_000)).toBe(true);
+    expect(Object.is((await c.run((s) => cashflowTotals(s, { from: "2026-10-01", to: "2026-10-31" }))).netSpendingCents, 0)).toBe(true);
+    const empty = await seed(0);
+    expect(Object.is((await empty.run((s) => cashflowTotals(s, { from: "2026-10-01", to: "2026-10-31" }))).netSpendingCents, 0)).toBe(true);
+  }, 60_000);
+
+  it("the Transactions page totals follow its filters (kind, category, search, hidden rows) in SQL", async () => {
+    const { run, groceries } = await seed(10, [
+      { kind: "income", amountCents: 20_000 },
+      { kind: "expense", amountCents: -9_999, excluded: true },
+    ]);
+    const range = { from: "2026-10-01", to: "2026-10-31", includeExcluded: true };
+    expect(await run((s) => cashflowTotals(s, { ...range, kinds: ["income"] }))).toMatchObject({
+      incomeCents: 20_000,
+      netSpendingCents: 0,
+      transactionCount: 1,
+    });
+    expect(await run((s) => cashflowTotals(s, { ...range, categoryIds: [groceries] }))).toMatchObject({ netSpendingCents: 1_000, excludedCount: 1 });
+    expect(await run((s) => cashflowTotals(s, { ...range, search: "row 3" }))).toMatchObject({ netSpendingCents: 100, transactionCount: 1 });
+    expect(await run((s) => cashflowTotals(s, { ...range, categoryIds: [] }))).toMatchObject({ transactionCount: 0 });
+  }, 60_000);
+
+  it("flow sums (weekend split, round-ups) are exact over more than 5,000 rows", async () => {
+    const { run } = await seed(5001);
+    const range = { from: "2026-10-01", to: "2026-10-31", kinds: ["expense" as const] };
+    const [we, wd] = await run(async (s) => [await flowTotals(s, { ...range, weekend: true }), await flowTotals(s, { ...range, weekend: false })]);
+    expect(we.outCents + wd.outCents).toBe(500_100);
+    expect(we.count + wd.count).toBe(5001);
+    expect(we.outCents).toBeGreaterThan(0);
+    expect((await run((s) => roundUps(s, "2026-11-15"))).roundUpCents).toBe(0); // $1.00 purchases round up by nothing
+  }, 60_000);
+
+  it("an uncapped read is bounded and says so", async () => {
+    const { run } = await seed(5001);
+    const rows = await run((s) => queryAllTransactions(s, { from: "2026-10-01", to: "2026-10-31" }));
+    expect(rows.length).toBe(5001);
+    expect(rows.truncated).toBe(false);
   }, 60_000);
 });

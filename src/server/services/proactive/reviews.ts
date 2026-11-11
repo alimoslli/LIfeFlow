@@ -11,7 +11,7 @@ import { netWorthTrend } from "../finance/investing";
 import { budgetStatus, spendingByCategory } from "../finance/planning";
 import { listAccounts } from "../finance/accounts";
 import { balancesOf } from "../finance/overview";
-import { queryAllTransactions } from "../finance/transactions";
+import { flowTotals } from "../finance/totals";
 import { coursesOnCalendar, freeSlots, getAgenda } from "../calendar";
 import { listHabits, slotMinutes } from "../habits";
 import { listActiveMemories } from "../memory";
@@ -20,20 +20,15 @@ import { listShifts } from "../work";
 import type { Candidate, DetectContext, Detector } from "./detectors";
 
 type Section = { heading: string; lines: string[] };
-const spendOf = (t: { amountCents: number }) => Math.max(0, -t.amountCents);
 
 // ------------------------------------------------------------------ patterns
 
 /** Spending per day on weekends vs. weekdays over the last 8 weeks. */
 export async function weekendPattern({ scope, today }: DetectContext) {
   const from = addDaysStr(weekStart(today), -56);
-  const txns = await queryAllTransactions(scope, { from, to: addDaysStr(weekStart(today), -1), kinds: ["expense"] });
-  let weekend = 0;
-  let weekday = 0;
-  for (const t of txns) {
-    if (dayOfWeek(t.date) % 6 === 0) weekend += spendOf(t);
-    else weekday += spendOf(t);
-  }
+  const range = { from, to: addDaysStr(weekStart(today), -1), kinds: ["expense" as const] };
+  const weekend = (await flowTotals(scope, { ...range, weekend: true })).outCents;
+  const weekday = (await flowTotals(scope, { ...range, weekend: false })).outCents;
   const perWeekend = Math.round(weekend / 16);
   const perWeekday = Math.round(weekday / 40);
   if (perWeekday <= 0 || perWeekend < perWeekday * 1.5 || perWeekend - perWeekday < 1000) return null;
@@ -161,14 +156,14 @@ export const weeklyReview: Detector = async (ctx) => {
         .select({ title: tasks.title, status: tasks.status, dueAt: tasks.dueAt, completedAt: tasks.completedAt })
         .from(tasks)
         .where(and(eq(tasks.userId, scope.userId), gte(tasks.updatedAt, new Date(`${addDaysStr(wk, -1)}T00:00:00Z`)))),
-    () => queryAllTransactions(scope, { from: wk, to: today, kinds: ["expense"] }),
+    () => flowTotals(scope, { from: wk, to: today, kinds: ["expense"] }),
     () => budgetStatus(scope, today),
     () => goalsWithPlans(scope, today),
     () => listHabits(scope, today),
   );
   const done = taskRows.filter((t) => t.status === "done" && t.completedAt && localDateOf(t.completedAt, tz) >= wk);
   const slipped = taskRows.filter((t) => t.status !== "done" && t.dueAt && localDateOf(t.dueAt, tz) >= wk && localDateOf(t.dueAt, tz) <= today);
-  const spent = spend.reduce((s, t) => s + spendOf(t), 0);
+  const spent = spend.outCents;
   const weeklyBudget = Math.round((budgets.reduce((s, b) => s + b.limitCents, 0) * 7) / 30.44);
   const patterns = [await weekendPattern(ctx), await lastMinutePattern(ctx)].filter((p): p is { text: string; fix: string } => !!p);
   const over = budgets.filter((b) => b.percent > 100).sort((a, b) => a.remainingCents - b.remainingCents)[0];
@@ -213,14 +208,14 @@ export const monthlyReview: Detector = async ({ scope, today }) => {
   const last = monthStart(addDaysStr(monthStart(today), -1));
   const end = addDaysStr(monthStart(today), -1);
   const [txns, cats, worth, subs, goals] = await series(
-    () => queryAllTransactions(scope, { from: last, to: end, kinds: ["expense", "income"] }),
+    () => flowTotals(scope, { from: last, to: end, kinds: ["expense", "income"] }),
     () => spendingByCategory(scope, last, end),
     () => netWorthTrend(scope, today, 70),
     () => subscriptionReport(scope, today),
     () => goalsWithPlans(scope, today),
   );
-  const income = txns.filter((t) => t.amountCents > 0).reduce((s, t) => s + t.amountCents, 0);
-  const spent = txns.filter((t) => t.amountCents < 0).reduce((s, t) => s - t.amountCents, 0);
+  const income = txns.inCents;
+  const spent = txns.outCents;
   if (!income && !spent) return [];
   const rate = income > 0 ? Math.round(((income - spent) / income) * 100) : null;
   const first = worth.find((w) => w.day >= last);

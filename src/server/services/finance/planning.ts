@@ -60,7 +60,7 @@ export async function budgetStatus(scope: UserScope, month: string) {
         .from(budgets)
         .where(and(eq(budgets.userId, scope.userId), eq(budgets.month, m))),
     () => listCategories(scope),
-    () => netSpendingByCategory(scope, m, monthEnd(m)),
+    () => netSpendingByCategory(scope, { from: m, to: monthEnd(m) }),
   );
   const descendants = (id: string): Set<string> => {
     const set = new Set([id]);
@@ -100,7 +100,7 @@ export async function budgetStatus(scope: UserScope, month: string) {
 export async function spendingByCategory(scope: UserScope, from: string, to: string) {
   const [cats, byCategory] = await series(
     () => listCategories(scope),
-    () => netSpendingByCategory(scope, from, to),
+    () => netSpendingByCategory(scope, { from, to }),
   );
   return rollupToParents(byCategory, cats);
 }

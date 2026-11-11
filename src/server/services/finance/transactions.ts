@@ -10,7 +10,6 @@ import { assertOwned, notFound, ServiceError } from "../errors";
 import { listCategories, resolveCategory } from "./categories";
 import { cleanVendorName } from "@/lib/vendor";
 import { ACCENT_FROM, ACCENT_TO, IGNORED_MARKS, P2P_NEEDLES, parseSearch, prefilterNeedles, scoreRow } from "@/lib/txn-search";
-import { summarizeCashflow, type CashflowSummary } from "./cashflow";
 import { autoCategorize, learnCategoryRule } from "./categorize";
 import { parsePatch } from "../patch";
 
@@ -155,7 +154,7 @@ export type TransactionQuery = {
 };
 
 const likeEscape = (s: string) => s.replace(/[\\%_]/g, "");
-const anyTextLike = (needle: string) => {
+export const anyTextLike = (needle: string) => {
   const p = `%${likeEscape(needle)}%`;
   return or(ilike(transactions.description, p), ilike(transactions.merchantName, p), ilike(transactions.notes, p))!;
 };
@@ -221,7 +220,7 @@ async function selectRows(scope: UserScope, conds: ReturnType<typeof eq>[], limi
 }
 
 /** Every filter except the text search. */
-async function baseConds(scope: UserScope, q: TransactionQuery) {
+export async function baseConds(scope: UserScope, q: TransactionQuery) {
   const conds = [eq(transactions.userId, scope.userId)] as ReturnType<typeof eq>[];
   if (q.from) conds.push(gte(transactions.date, q.from));
   if (q.to) conds.push(lte(transactions.date, q.to));
@@ -279,51 +278,50 @@ export async function queryTransactions(scope: UserScope, q: TransactionQuery = 
 
 export type TransactionRow = Awaited<ReturnType<typeof queryTransactions>>[number];
 
-/** Pages of this size when a caller reads every row (keyset order, so a sync between pages can't skip or repeat a row). */
+/** Rows per page when a caller reads past the list cap (keyset order, so a sync between pages can't skip or repeat a row). */
 export const ALL_PAGE = 2000;
+/** The most rows an uncapped read returns; past it `truncated` is true. Sums should use totals.ts instead. */
+export const ALL_MAX = 50_000;
 
-/** Calls `onPage` with every matching row, newest first, one bounded page at a time. For exports and anything that must not stop at a cap. */
-export async function forEachTransactionPage(
+export type PageCursor = { date: string; createdAt: string; id: string };
+
+/**
+ * One keyset page (newest first) of what a plain query matches; pass the previous page's `last` as `after`.
+ * A text filter here is the plain substring match (the Transactions page box), never the forgiving one.
+ */
+export async function readTransactionPage(
   scope: UserScope,
   q: Omit<TransactionQuery, "search" | "phrase" | "sureOnly" | "limit"> & { search?: string },
-  onPage: (rows: TransactionRow[]) => Promise<void> | void,
+  after?: PageCursor,
+  pageSize = ALL_PAGE,
 ) {
   const conds = await baseConds(scope, q);
-  // A text filter here is always the plain substring match (the Transactions page search box), never the forgiving one.
   if (q.search?.trim()) conds.push(anyTextLike(q.search.trim()));
-  let after: { date: string; createdAt: string; id: string } | undefined;
-  for (;;) {
-    const page = await selectPage(scope, conds, ALL_PAGE, after);
-    if (page.rows.length) await onPage(page.rows);
-    if (page.rows.length < ALL_PAGE || !page.last) return;
-    after = page.last;
-  }
-}
-
-/** The cash-flow summary (cashflow.ts rules) over every row a plain-substring query matches, read page by page. */
-export async function cashflowOverQuery(scope: UserScope, q: Omit<TransactionQuery, "phrase" | "sureOnly" | "limit">): Promise<CashflowSummary> {
-  const total = summarizeCashflow([]);
-  await forEachTransactionPage(scope, q, (rows) => {
-    const s = summarizeCashflow(rows);
-    for (const k of Object.keys(total) as (keyof CashflowSummary)[]) total[k] += s[k];
-  });
-  // netSpending/netCashflow are derived, not additive, but their parts are, so re-derive them.
-  total.netSpendingCents = total.grossSpendingCents - total.refundsCents - total.reimbursementsCents;
-  total.netCashflowCents = total.incomeCents - total.netSpendingCents;
-  return total;
+  return selectPage(scope, conds, pageSize, after);
 }
 
 /**
- * Every matching row, with no cap (explicit, unlike the list default of 500). Prefer the SQL totals in totals.ts
- * when only a sum is needed. With a text search the forgiving matcher's own scan limit still applies.
+ * Every matching row up to ALL_MAX, newest first (explicit, unlike the list default of 500). `truncated` says the
+ * bound was hit. Prefer the SQL totals in totals.ts when only a sum or a group is needed. With a text search the
+ * forgiving matcher's own scan limit still applies.
  */
-export async function queryAllTransactions(scope: UserScope, q: Omit<TransactionQuery, "limit"> = {}): Promise<TransactionRow[]> {
-  if (q.search?.trim()) return queryTransactions(scope, { ...q, limit: 5000 });
+export async function queryAllTransactions(scope: UserScope, q: Omit<TransactionQuery, "limit"> = {}): Promise<TransactionRow[] & { truncated?: boolean }> {
+  if (q.search?.trim()) return Object.assign(await queryTransactions(scope, { ...q, limit: 5000 }), { truncated: false });
+  const conds = await baseConds(scope, q);
   const out: TransactionRow[] = [];
-  await forEachTransactionPage(scope, q, (rows) => {
-    for (const r of rows) out.push(r);
-  });
-  return out;
+  let after: PageCursor | undefined;
+  let truncated = false;
+  for (;;) {
+    const page = await selectPage(scope, conds, ALL_PAGE, after);
+    out.push(...page.rows);
+    if (page.rows.length < ALL_PAGE || !page.last) break;
+    if (out.length >= ALL_MAX) {
+      truncated = true;
+      break;
+    }
+    after = page.last;
+  }
+  return Object.assign(out, { truncated });
 }
 
 export type TransactionFind =
