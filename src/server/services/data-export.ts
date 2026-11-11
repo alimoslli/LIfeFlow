@@ -68,6 +68,9 @@ export const NOT_EXPORTED: Record<string, string> = {
   oauth_identities: "Apple and Google sign-in links (provider account ids)",
   password_resets: "password reset links (hashes)",
   login_challenges: "two-step sign-in in progress",
+  email_confirmations: "the code for confirming the email while one is waiting (a hash)",
+  waitlist_referrals:
+    "who invited whom for the waitlist: a hash of the friend's email and the inviter; operational, and the invite link itself is exported with the profile",
   remembered_devices: "phones and computers that skip the two-step code (hashes of cookie tokens)",
   health_tokens: "Apple Health keys (hashes)",
   push_subscriptions: "this device's push keys",
