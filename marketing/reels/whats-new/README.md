@@ -50,3 +50,23 @@ timeline, then ticked off for the star. Filmed on main 87acda3 (the answer card 
 - Filming pauses every animation and steps it; a finished star can come back as a still, so cut before it does.
 - After filming: the assignment back to "todo", the event Ray added deleted, the test account's AI consent removed.
 Download: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/359271f5-01e4-402f-a872-4b254f42db17.zip
+
+## v3 (2026-11-11): refilmed on the newest app (main dc32257)
+Ali: "refilm this video because a lot has changed". The cast is five now (Dawn, Ray, Goldie, Twinkle, Dreamy; Noon and Dusk
+retired), Today is one screen with the answer in the middle, the skyling has its own tab, the night is a softer blue.
+- A fresh film database `budgetflow_film2`: the demo seed run with faketime on the evening of Nov 16, then the film day
+  (`scripts/_film/day.ts`, FILM_TODAY=2026-11-17, local only), birthday and Ray set, the reading goal at 11 of 12. Signed
+  in with `login2.cjs` (state2.json, local).
+- Why Nov 17: a real skyling answer needs the server's clock no more than an hour behind real time (the proxy's
+  certificates); the future is fine. And the chat's "last 12 hours" compares the app's clock with the database's, so for the
+  real take Postgres ran on the same offset: `pg_ctl start` with `LD_PRELOAD=libfaketime FAKETIME=+<seconds>`, the app with
+  `serve_ai.sh +<seconds> real`, the page with `AT=`. Postgres was put back on real time after.
+- Real AI: 1 message for this take (Ray found 2:45 to 4:00 before the 4 PM shift and added it directly). One earlier try
+  was refused by OpenAI as empty (the clock mismatch), with no tokens. Total for Ali's 5: 4 used.
+- New shots: `cap_sky` (Ray waves, the sky turns), `cap_pick` (the five and "Changes with the sky"). A tap within 350 ms
+  of sliding the line is ignored by the app, so `cap_follow tick` waits 18 frames after the slide.
+- The ending uses the logo rebuilt for the five (`../../logo/v2`, `../../logo/sting/v2`).
+- Seen while filming and sent to the COO: the Undo chip overlaps the answer's text, and create_events once failed on a
+  course id ("That course link failed…" shows in the card). Ali's request (2026-11-11): the chat box should grow to show a
+  long message; sent to the COO.
+Download: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/8a0d2d39-2c78-4547-ae0d-6140145878b3.zip

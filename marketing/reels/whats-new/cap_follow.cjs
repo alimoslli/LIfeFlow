@@ -4,7 +4,7 @@
 //   night: 11:06 PM, Today's night sky with today's stars
 const { film } = require("./lib.cjs");
 const mode = process.argv[2];
-const AT = { see: "2026-11-10T20:19:58Z", tick: "2026-11-11T04:04:58Z", night: "2026-11-11T04:05:58Z" }[mode];
+const AT = { see: "2026-11-17T20:19:58Z", tick: "2026-11-17T20:57:58Z", night: "2026-11-18T04:05:58Z" }[mode];
 (async () => {
   const f = await film("follow_" + mode, AT); const p = f.page;
   await p.clock.pauseAt(new Date(new Date(AT).getTime() + 2000));
@@ -26,9 +26,16 @@ const AT = { see: "2026-11-10T20:19:58Z", tick: "2026-11-11T04:04:58Z", night: "
     await f.hold("see", 70);
   } else {
     let r = await stopRect("^Chapter 6 reading response due"); console.log("due before", JSON.stringify(r));
-    if (r && r[0] > 360) { await f.drag("slide", 380, Y, 380 - Math.min(300, r[0] - 280), Y, 30, 10); await f.hold("slid", 10); }
+    if (r && r[0] > 360) { await f.drag("slide", 380, Y, 380 - Math.min(300, r[0] - 280), Y, 30, 10); await f.hold("slid", 18); } // a tap within 350 ms of a slide is ignored by the app
     const st = p.getByRole("button", { name: /^Chapter 6 reading response due/ }).first();
-    await f.tap("tapstop", st, 36);
+    console.log("stop after slide", JSON.stringify(await stopRect("^Chapter 6 reading response due")));
+    { const r2 = await stopRect("^Chapter 6 reading response due"); const cx = r2[0] + r2[2] / 2, cy = r2[1] + r2[3] / 2;
+      f.S.finger = [cx, cy]; await f.shot("tapstop");
+      const hitInfo = await p.evaluate(([x, y]) => { const e = document.elementFromPoint(x, y); return e ? [e.tagName, e.className && e.className.baseVal === undefined ? e.className : "svg", (e.closest("button") || {}).ariaLabel || ""] : null; }, [cx, cy]); console.log("at point", JSON.stringify(hitInfo));
+      await p.mouse.click(cx, cy);
+      f.S.finger = null; await f.hold("tapstop-after", 36); }
+    await p.screenshot({ path: f.out + "/dbg_card.png" });
+    console.log("buttons", JSON.stringify(await p.evaluate(() => [...document.querySelectorAll('[data-testid="day-clock"] button')].filter((b) => b.offsetParent && /done|edit|open/i.test(b.textContent)).map((b) => [b.className, b.textContent.trim().slice(0, 30)]))));
     f.anchors.card = await f.rect(p.locator(".dc-d-done"));
     await f.tap("tapdone", p.locator(".dc-d-done"));
     await f.hold("cheer", 80);

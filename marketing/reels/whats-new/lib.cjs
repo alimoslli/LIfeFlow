@@ -22,7 +22,7 @@ const STEPPER = () => {
 async function film(name, at, { scale = 2.5 } = {}) {
   const out = path.join(__dirname, "cap", name); fs.rmSync(out, { recursive: true, force: true }); fs.mkdirSync(out, { recursive: true });
   const browser = await chromium.launch();
-  const ctx = await browser.newContext({ viewport: { width: 432, height: 768 }, deviceScaleFactor: scale, storageState: path.join(__dirname, "../skyreel/probe/state.json"), timezoneId: "America/New_York" });
+  const ctx = await browser.newContext({ viewport: { width: 432, height: 768 }, deviceScaleFactor: scale, storageState: process.env.STATE || path.join(__dirname, "state2.json"), timezoneId: "America/New_York" });
   await ctx.addInitScript(STEPPER);
   // a returning person's phone has their first name and zone saved by the app (the opening screen reads them)
   await ctx.addInitScript(() => { try { if (!localStorage.getItem("lf_first_name")) localStorage.setItem("lf_first_name", "Alex"); if (!localStorage.getItem("lf_tz")) localStorage.setItem("lf_tz", "America/New_York"); } catch {} });

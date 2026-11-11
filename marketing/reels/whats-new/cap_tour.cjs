@@ -1,8 +1,8 @@
 // The tour: Today, then the dock's Money, School and More (Everything else). Real taps, film clock 2:30 PM.
 const { film } = require("./lib.cjs");
 (async () => {
-  const f = await film("tour", "2026-11-10T19:29:58Z"); const p = f.page;
-  await p.clock.pauseAt(new Date("2026-11-10T19:30:00Z"));
+  const f = await film("tour", "2026-11-17T19:29:58Z"); const p = f.page;
+  await p.clock.pauseAt(new Date("2026-11-17T19:30:00Z"));
   await p.goto("http://localhost:3100/", { waitUntil: "networkidle", timeout: 240000 }).catch(() => {});
   await f.until(p.locator('[data-testid="day-clock"]'), 60000); await f.until(p.locator('[data-dc="hit"]'), 10000); await f.tidy();
   await f.hold("today", 45); await f.tidy();

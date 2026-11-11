@@ -2,11 +2,11 @@
 // the sky; then open the day to see the block on the line. Film clock 2:30 PM. REHEARSE=1 sends a /tool line to the fake model.
 const { film } = require("./lib.cjs");
 const Q = process.env.REHEARSE
-  ? '/tool create_events {"events":[{"title":"Study: Chapter 6 reading response","date":"2026-11-10","startTime":"14:45","endTime":"15:45"}]}'
+  ? '/tool create_events {"events":[{"title":"Study: Chapter 6 reading response","date":"2026-11-17","startTime":"14:45","endTime":"15:45"}]}'
   : "Chapter 6 reading response is due tonight and I work 4 to 9. Find me time for it and put it on my day.";
 (async () => {
   // the page's clock matches the server's (faketime "-<OFFSET_S>"): the proxy's certificates start an hour before real time
-  const off = Number(process.env.OFFSET_S || 0) * 1000, t0 = process.env.OFFSET_S ? new Date(Date.now() - off + 20000) : new Date("2026-11-10T19:32:58Z");
+  const off = Number(process.env.OFFSET_S || 0) * 1000, t0 = process.env.OFFSET_S ? new Date(Date.now() - off + 20000) : new Date(process.env.AT || "2026-11-17T19:29:58Z");
   const f = await film(process.env.REHEARSE ? "ask_rehearse" : "ask", t0.toISOString()); const p = f.page;
   await p.clock.pauseAt(new Date(t0.getTime() + 2000)); console.log("film clock", new Date(t0.getTime() + 2000).toISOString());
   await p.goto("http://localhost:3100/", { waitUntil: "networkidle", timeout: 240000 }).catch(() => {});

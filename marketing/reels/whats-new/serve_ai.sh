@@ -5,8 +5,8 @@
 #         (2026-11-10: up to 5 messages for the "What's new" skyling scene).
 cd /home/user/lf-main
 U=$(grep -m1 '^DATABASE_URL=' .env.local | cut -d= -f2-)
-export DATABASE_URL=${U%/budgetflow}/budgetflow_capture TZ=UTC FAKETIME_DONT_FAKE_MONOTONIC=1 PORT=3100
+export DATABASE_URL=${U%/budgetflow}/${FILMDB:-budgetflow_film2} TZ=UTC FAKETIME_DONT_FAKE_MONOTONIC=1 PORT=3100
 if [ "$2" = "real" ]; then export OPENAI_API_KEY=sk-dummy-replaced-by-proxy NODE_USE_ENV_PROXY=1 NODE_EXTRA_CA_CERTS=/root/.ccr/ca-bundle.crt
 elif [ "$2" = "fake" ]; then export OPENAI_API_KEY=sk-e2e-test OPENAI_BASE_URL=http://127.0.0.1:4010/v1
 else unset OPENAI_API_KEY; fi
-case "$1" in -*) exec faketime -f "$1" npx next start -p 3100;; *) exec faketime -f "@$1" npx next start -p 3100;; esac
+case "$1" in [-+]*) exec faketime -f "$1" npx next start -p 3100;; *) exec faketime -f "@$1" npx next start -p 3100;; esac

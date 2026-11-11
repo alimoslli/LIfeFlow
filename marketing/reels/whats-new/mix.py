@@ -1,4 +1,4 @@
-# Sound for "What's new in LifeFlow": pixel sound effects on the timeline's own clock (taps from the capture logs),
+# Sound for "What's new in LifeFlow" v3: pixel sound effects on the timeline's own clock (taps from the capture logs),
 # a soft bed, and the logo's ending sound. No voice, no music.
 import json, re
 import numpy as np
@@ -46,10 +46,10 @@ def at(frame):  # first time a capture frame shows in the segment
     return a["start"] + fa.index(frame) / 30
 for k in range(0, 34, 2): put(sq(2200 + (k % 3) * 180, 0.018, 120, 0.018), at(26) + k / 30)
 put(sweep(0.45, 900, 2800, 0.18), at(72) + 0.03)
-put(tri(988, 0.3, 9, 0.06), at(143)); put(tri(1318, 0.4, 8, 0.06), at(143) + 0.12)
-for k, f in enumerate([784, 988, 1175, 1568]): put(tri(f, 0.3, 10, 0.055), at(163) + k * 0.06)
+put(tri(988, 0.3, 9, 0.06), at(110)); put(tri(1318, 0.4, 8, 0.06), at(110) + 0.12)
+for k, f in enumerate([784, 988, 1175, 1568]): put(tri(f, 0.3, 10, 0.055), at(143) + k * 0.06)
 # the block on the line
-put(sweep(1.2, 2200, 700, 0.16), seg["see"]["start"] + 1.05)
+put(sweep(0.6, 900, 3000, 0.18), at(151))
 # tick it off: a pop and a little star chime
 for t in taps(seg["tick"])[-1:]:
     put(tri(523, 0.16, 14, 0.09, 1.2), t + 0.02)

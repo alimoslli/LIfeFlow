@@ -1,0 +1,93 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>html,body{margin:0;background:#000}canvas{display:block}</style></head>
+<body><canvas id="c" width="1080" height="1080"></canvas>
+<script src="lf2.js"></script>
+<script>
+// The official LifeFlow logo (Ali, 2026-11-10): "Whoever's up", animated, with the matching sky.
+// Everything comes from the app's own code: the skylings (drawCompanion, with Star's night rim), the sky (skyAt, darkness),
+// who's up when (skylingAt) and the horizon line and ground from the app icon (morning-mark.ts).
+const LF = window.LF;
+const S = 1080, cv = document.getElementById("c"), g = cv.getContext("2d");
+const RISE = 395, SET = 1010; // about 6:35 AM and 4:50 PM, the same day as the app's "Changes with the sky" picture
+const CAST = [["dawn", 380], ["ray", 560], ["goldie", 960], ["star", 1120], ["moon", 1380]]; // the five (2026-11-11): Dawn, Ray, Goldie, Twinkle, Dreamy
+const SEG = 2, LOOP = SEG * CAST.length;
+const HY = 0.64 * S; // the horizon, where the app icon has it
+const LINE = { x: 0.04 * S, w: 0.92 * S, h: 0.055 * S, col: "#2f7cd2" };
+const P = 32, CUT = 15; // sprite pixel size and the sprite row the horizon cuts at
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const ease = (k) => (k = clamp(k), k * k * (3 - 2 * k));
+const smoother = (k) => (k = clamp(k), k * k * k * (k * (k * 6 - 15) + 10));
+const back = (k) => { k = clamp(k); const s = 1.9; return 1 + (s + 1) * Math.pow(k - 1, 3) + s * Math.pow(k - 1, 2); };
+const rgb = (c, a = 1) => `rgba(${c.map(Math.round).join(",")},${a})`;
+for (const [k, m] of CAST) if (LF.skylingAt(m, RISE, SET) !== k) console.log("ERR window", k, m, LF.skylingAt(m, RISE, SET));
+
+// the minute of the day the sky shows at time t: it lingers on each skyling's moment and flows to the next
+function minuteAt(t) {
+  t = ((t % LOOP) + LOOP) % LOOP;
+  // the sky arrives at each moment just as its skyling pops up, holds while it's up, then flows on while it dips
+  const A = 0.3, B = 1.5;
+  const keys = [[-SEG + B, CAST[CAST.length - 1][1] - 1440]];
+  CAST.forEach(([, m], i) => { keys.push([i * SEG + A, m]); keys.push([i * SEG + B, m + 8]); });
+  keys.push([LOOP + A, CAST[0][1] + 1440]);
+  for (let i = 1; i < keys.length; i++) if (t <= keys[i][0]) {
+    const [t0, m0] = keys[i - 1], [t1, m1] = keys[i];
+    return m0 + (m1 - m0) * smoother((t - t0) / (t1 - t0));
+  }
+  return CAST[0][1];
+}
+// deterministic pixel stars in the upper sky
+const rng = (s) => () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+const STARS = (() => { const r = rng(7), out = []; while (out.length < 34) { const x = r() * S, y = r() * HY * 0.9; if (Math.abs(x - S / 2) < 300 && y > 230) continue; out.push([x, y, r() < 0.25 ? 3 : 2, r() * 6.28]); } return out; })();
+const sprite = document.createElement("canvas");
+
+function frame(t, { still = null } = {}) {
+  const m = still != null ? still : minuteAt(t);
+  const [top, mid, low] = LF.skyAt(m, RISE, SET);
+  const dark = LF.darkness(m, RISE, SET);
+  // sky
+  const sky = g.createLinearGradient(0, 0, 0, HY);
+  sky.addColorStop(0, rgb(top)); sky.addColorStop(0.55, rgb(mid)); sky.addColorStop(1, rgb(low));
+  g.fillStyle = sky; g.fillRect(0, 0, S, HY);
+  // stars at night (they twinkle)
+  if (dark > 0.25) for (const [x, y, s, ph] of STARS) {
+    const tw = 0.55 + 0.45 * Math.sin(t * 2.2 + ph);
+    g.fillStyle = `rgba(255,248,225,${(dark - 0.25) / 0.75 * tw})`; const q = s * 4; g.fillRect(Math.round(x / 4) * 4, Math.round(y / 4) * 4, q, q);
+  }
+  // ground: the app icon's calm night-blue ground
+  const gr = g.createLinearGradient(0, HY, 0, S); gr.addColorStop(0, "#1b3263"); gr.addColorStop(1, "#0b1a3a");
+  g.fillStyle = gr; g.fillRect(0, HY, S, S - HY);
+  // glow behind the skyling: warm by day, moonlight at night
+  const gw = g.createRadialGradient(S / 2, HY, 0, S / 2, HY, 0.5 * S);
+  const warm = [255, 215, 173], moon = [134, 168, 222], gc = warm.map((v, i) => v + (moon[i] - v) * dark);
+  gw.addColorStop(0, rgb(gc, 0.75 - 0.35 * dark)); gw.addColorStop(0.5, rgb(gc, 0.3 - 0.15 * dark)); gw.addColorStop(1, rgb(gc, 0));
+  g.save(); g.beginPath(); g.rect(0, 0, S, HY); g.clip(); g.fillStyle = gw; g.fillRect(0, 0, S, HY); g.restore();
+
+  // who's up, and how far up
+  const tt = ((t % LOOP) + LOOP) % LOOP;
+  const i = still != null ? CAST.findIndex(([, mm]) => mm === still) : Math.floor(tt / SEG);
+  const u = still != null ? 1 : tt - i * SEG;
+  const up = still != null ? 1 : u < 0.55 ? back(u / 0.55) : u > 1.6 ? 1 - ease((u - 1.6) / 0.38) : 1;
+  const key = CAST[i][0], info = LF.COMPANIONS.find((c) => c.key === key);
+  const night = !(((m % 1440) + 1440) % 1440 >= RISE && ((m % 1440) + 1440) % 1440 < SET); // the app's rule (day-clock/sky.ts)
+  const blink = still == null && u > 1.15 && u < 1.27;
+  LF.drawCompanion(sprite, info, "idle", blink ? 1 : 0, night, false);
+  const lineTop = HY - LINE.h / 2;
+  const rise = (1 - up) * (CUT * P - 60);
+  g.save(); g.beginPath(); g.rect(0, 0, S, lineTop); g.clip(); g.imageSmoothingEnabled = false;
+  g.drawImage(sprite, Math.round(S / 2 - 12 * P), Math.round(lineTop + LINE.h * 0.15 - CUT * P + rise), 24 * P, 24 * P);
+  g.restore();
+  // a little gold sparkle as it pops up
+  if (still == null && u > 0.18 && u < 0.85) {
+    const k = (u - 0.18) / 0.67, a = 1 - k;
+    g.fillStyle = `rgba(255,215,122,${a})`;
+    for (let s = 0; s < 6; s++) { const ang = -Math.PI * (0.12 + 0.76 * s / 5), r = 250 + k * 150; g.fillRect(Math.round((S / 2 + Math.cos(ang) * r) / 8) * 8 - 8, Math.round((HY - 40 + Math.sin(ang) * r) / 8) * 8 - 8, 16, 16); }
+  }
+  // the horizon line (the brand's blue line)
+  g.fillStyle = LINE.col; g.beginPath(); g.roundRect(LINE.x, lineTop, LINE.w, LINE.h, LINE.h / 2); g.fill();
+}
+window.seek = (t) => frame(t);
+window.still = (i) => frame(CAST[i][1] === CAST[i][1] ? 0 : 0, { still: CAST[i][1] });
+window.CAST = CAST; window.LOOP = LOOP;
+window.ready = Promise.resolve(true);
+</script></body></html>

@@ -1,33 +1,30 @@
-# "What's new in LifeFlow": the edit as data. Each segment plays real frames from one capture; captions, spotlights,
-# taps and sounds are placed on the same clock. Writes timeline.json for film.html and mix.py.
+# "What's new in LifeFlow" v3 (refilmed 2026-11-11 on main dc32257: five skylings, Today as one screen, the skyling's tab):
+# the edit as data. Each segment plays real frames from one capture; captions, spotlights, taps and sounds share its clock.
 import json
 R = lambda a, b: list(range(a, b + 1))
 SEGS = [
-  # key, folder (served path), frames, captions [(from, to, line1, line2, y)] in seconds from the segment start
   dict(key="hook", src="/whatsnew/cap/splash", frames=R(1, 45) + [45] * 20 + R(46, 64), hook=True),
-  dict(key="sky", src="/appfilm/full", frames=R(1, 22) + R(241, 300),
-       caps=[(0.15, None, "Your day,", "drawn as the sky.", 1490)]),
+  dict(key="sky", src="/whatsnew/cap/sky", frames=R(1, 30) + R(76, 140),
+       caps=[(0.15, None, "Your day,", "drawn as the sky.", 1150)]),
   dict(key="ask", src="/whatsnew/cap/ask",
-       frames=R(10, 24) + [25] + R(26, 59) + R(60, 71) + [72] + R(73, 92) + R(116, 118) + R(143, 149) + [149] * 45 + [150] + R(151, 153) + R(163, 200) + [200] * 15,
-       caps=[(0.05, 2.1, "Ask right under the sky.", None, 1830), (2.9, 4.6, "It finds the time around your shift.", None, 1830),
-             (4.75, None, "One tap, and it's on your day.", None, 1830)]),
-  dict(key="see", src="/whatsnew/cap/follow_see", frames=R(1, 30) + R(47, 93) + R(100, 140),
-       caps=[(0.1, None, "There it is: 9 to 11 PM,", "right after work.", 1350)]),
-  dict(key="tick", src="/whatsnew/cap/follow_tick", frames=R(1, 30) + R(47, 75) + R(84, 128),
-       caps=[(0.05, None, "Studied? Tick it off,", "and a star pops up.", 190)]),
+       frames=R(10, 24) + [25] + R(26, 59) + R(60, 71) + [72] + R(73, 95) + R(110, 139) + [139] * 30 + [143] * 12 + R(151, 220),
+       caps=[(0.05, 2.1, "Ask right under the sky.", None, 1830), (2.9, 4.85, "It finds the time around your shift.", None, 1830),
+             (4.9, None, "It's on your day, right before work.", None, 1830)]),
+  dict(key="tick", src="/whatsnew/cap/follow_tick", frames=R(5, 30) + R(47, 87) + R(104, 106) + R(107, 132) + R(143, 183),
+       caps=[(0.05, None, "Done? Tick it off,", "and a star pops up.", 190)]),
   dict(key="night", src="/whatsnew/cap/follow_night", frames=R(1, 78),
-       caps=[(0.1, None, "Tonight it's one of", "the stars in your sky.", 1490)]),
+       caps=[(0.1, None, "Tonight it's one of", "the stars in your sky.", 1150)]),
   dict(key="goal", src="/whatsnew/cap/goal", frames=R(14, 41) + R(42, 112),
-       caps=[(0.1, None, "Reach a goal,", "and the sun comes out.", 1560)], spot=dict(anchor="goal", until=0.9)),
+       caps=[(0.1, None, "Reach a goal,", "and the sun comes out.", 1600)], spot=dict(anchor="goal", until=0.9)),
   dict(key="money", src="/whatsnew/cap/tour", frames=R(36, 46) + R(47, 128),
        caps=[(0.1, None, "Money: what you", "have right now.", 1490)]),
   dict(key="school", src="/whatsnew/cap/tour", frames=R(150, 157) + R(158, 228),
        caps=[(0.05, None, "School: your classes", "and what's due next.", 1490)]),
   dict(key="more", src="/whatsnew/cap/tour", frames=R(262, 268) + R(269, 345),
        caps=[(0.05, None, "Everything else,", "one tap away.", 1580)]),
-  dict(key="skylings", src="/appfilm/full_settings", frames=R(1, 151), settings=True,
-       caps=[(0.1, 2.5, "Six skylings, one for", "each moment of the sky.", 1520), (2.5, None, "Pick yours,", "or let the sky choose.", 1520)]),
-  dict(key="end", src="/sting/f_outro", frames=R(1, 105), end=True),
+  dict(key="skylings", src="/whatsnew/cap/pick", frames=R(1, 151), settings=True,
+       caps=[(0.1, 2.5, "Five skylings, one for", "each part of the sky.", 1520), (2.5, None, "Pick yours,", "or let the sky choose.", 1520)]),
+  dict(key="end", src="/sting2/f_outro", frames=R(1, 105), end=True),
 ]
 t = 0.0; out = []
 for s in SEGS:

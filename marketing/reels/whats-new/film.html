@@ -7,7 +7,7 @@ html,body{margin:0;background:#000}canvas{display:block}
 </style></head>
 <body><canvas id="c" width="1080" height="1920"></canvas>
 <script>
-// "What's new in LifeFlow" (full screen, no phone): the real app, a local build of main with sample data in a test account.
+// "What's new in LifeFlow" v3 (full screen, no phone; refilmed on the five skylings): the real app, a local build of main with sample data in a test account.
 // The edit lives in timeline.json (timeline.py); every picture is a real capture of the app.
 const W = 1080, H = 1920, g = document.getElementById("c").getContext("2d"), GOLD = "#ffd27a", K = 2.5;
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -58,13 +58,13 @@ async function frame(t) {
   if (s.spot && log && log.anchors[s.spot.anchor]) { const [x, y, w, h] = log.anchors[s.spot.anchor], kk = ease((u - 0.15) / 0.3) * (1 - ease((u - (s.spot.until - 0.2)) / 0.2));
     dim(0.5 * kk, [[x * K - 22, y * K - 22, w * K + 44, h * K + 44, 56]]); }
   if (s.settings && log) { const [gx, gy, gw] = log.anchors.grid, [sx, sy, sw, sh] = log.anchors.sky, ti = s.frames.findIndex((ff) => log.frames[ff - 1] && log.frames[ff - 1].tag === "tap"), tt = ti / 30;
-    if (u < tt) { const kk = ease((u - 0.3) / 0.35) * (1 - ease((u - (tt - 0.25)) / 0.25)); dim(0.55 * kk, [[gx * K - 10, gy * K - 10, gw * K + 20, (sy - gy) * K + 6, 50]]); }
+    if (u < tt) { const kk = ease((u - 0.3) / 0.35) * (1 - ease((u - (tt - 0.25)) / 0.25)); dim(0.55 * kk, [[gx * K - 12, gy * K - 12, gw * K + 24, log.anchors.grid[3] * K + 24, 50]]); }
     else { const kk = ease((u - tt) / 0.3); dim(0.5 * kk, [[sx * K - 12, sy * K - 12, sw * K + 24, sh * K + 24, 56]]); } }
   if (log) { fingerAt(log.frames[f - 1]);
     s.frames.forEach((ff, j) => { const e = log.frames[ff - 1]; if (isTap(e)) tapRing(u - j / 30, e.finger[0] * K, e.finger[1] * K); }); }
   if (s.hook) {
-    text(["We rebuilt LifeFlow."], 330, 104, { alpha: clamp((u - 0.15) / 0.2) * (1 - ease((u - 1.95) / 0.25)), scale: back((u - 0.15) / 0.45) });
-    text(["Here's what's new."], 470, 96, { alpha: clamp((u - 0.7) / 0.2) * (1 - ease((u - 1.95) / 0.25)), scale: back((u - 0.7) / 0.45) });
+    text(["We rebuilt LifeFlow."], 270, 104, { alpha: clamp((u - 0.15) / 0.2) * (1 - ease((u - 1.95) / 0.25)), scale: back((u - 0.15) / 0.45) });
+    text(["Here's what's new."], 400, 96, { alpha: clamp((u - 0.7) / 0.2) * (1 - ease((u - 1.95) / 0.25)), scale: back((u - 0.7) / 0.45) });
   }
   for (const [a, b, l1, l2, y] of s.caps) {
     if (u < a - 0.05 || u > b + 0.3) continue;
