@@ -157,6 +157,6 @@ The owner asked whether the skylings look like their part of the day, wanted nig
 (the app never mentions prayer times): **Dawn** (first light), **Ray** (the day; Noon folded into it), **Goldie**
 (golden hour), **Star** (sunset into the evening; Dusk folded into it, so Star wears the last sunset glow for its first
 hour) and **Moon** (new: from 9 PM, or two hours after sunset when later, until first light, when it turns into Dawn).
-Moon is a moon: its night side in deep blue down one side, craters, half-closed eyes and a small smirk, two little stars
-beside it; calm late-night company that never scolds anyone for being up. Saved choices of Noon become Ray and of Dusk
+Moon is a moon: its night side in deep blue down one side, craters, half-closed eyes and a small smirk
+(no sparkles of its own: the sky and Star are around it); calm late-night company that never scolds anyone for being up. Saved choices of Noon become Ray and of Dusk
 become Moon. Pictures: `five-skylings.png` (drawn first, approved), `cast-by-moment.png` (the six before).

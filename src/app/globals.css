@@ -569,22 +569,94 @@ html[data-lf-moment="goldie"] .lf-splash-rays {
   transform: scale(0);
   animation: lf-ray 0.3s steps(3, end) calc(0.7s + var(--i) * 70ms) forwards;
 }
-/* after sunset: stars that twinkle, and in Star's evening a pixel moon (later the Moon is the skyling itself) */
-.lf-splash-moon,
-.lf-splash-stars {
+/* after sunset: stars that twinkle; in Star's evening Moon waits small in the background, and in Moon's turn Star,
+   very small, circles it (owner, 2026-11-11) */
+.lf-splash-stars,
+.lf-splash-mini,
+.lf-splash-orbit,
+.lf-splash-pass {
   display: none;
 }
 html[data-lf-moment="star"] .lf-splash-stars,
 html[data-lf-moment="moon"] .lf-splash-stars,
-html[data-lf-moment="star"] .lf-splash-moon {
+html[data-lf-moment="star"] .lf-splash-mini-moon,
+html[data-lf-moment="moon"] .lf-splash-orbit,
+html[data-lf-moment="moon"] .lf-splash-mini-star {
   display: block;
 }
-.lf-splash-moon {
+.lf-splash-mini-moon {
   position: absolute;
-  top: 18%;
-  right: 14%;
-  width: clamp(36px, 11vw, 56px);
-  filter: drop-shadow(0 0 14px rgb(255 241 194 / 0.6));
+  top: 14%;
+  right: 12%;
+  width: clamp(34px, 10vw, 52px);
+  filter: drop-shadow(0 0 12px rgb(255 241 194 / 0.55));
+  animation: lf-bob 2.4s ease-in-out infinite alternate;
+}
+.lf-splash-orbit {
+  position: absolute;
+  left: 50%;
+  top: 60%;
+  width: 0;
+  height: 0;
+  /* counter-clockwise from its right, so it rises over Moon first */
+  animation: lf-orbit 4.5s linear infinite reverse;
+}
+.lf-splash-mini-star {
+  position: absolute;
+  left: calc(var(--lf-sun) * 0.86);
+  top: 0;
+  width: calc(var(--lf-sun) * 0.3);
+  translate: -50% -50%;
+  filter: drop-shadow(0 0 6px rgb(255 215 122 / 0.7));
+  animation: lf-orbit 4.5s linear infinite;
+}
+/* something passing by, so the sky is never empty: a ship and a shooting star at night, birds by day */
+html[data-lf-moment="star"] .lf-splash-ship,
+html[data-lf-moment="moon"] .lf-splash-ship,
+html[data-lf-moment="star"] .lf-splash-shoot,
+html[data-lf-moment="moon"] .lf-splash-shoot,
+html[data-lf-moment="dawn"] .lf-splash-birds,
+html[data-lf-moment="ray"] .lf-splash-birds,
+html[data-lf-moment="goldie"] .lf-splash-birds {
+  display: block;
+}
+.lf-splash-ship {
+  position: absolute;
+  top: 9%;
+  left: 0;
+  width: clamp(30px, 8vw, 44px);
+  filter: drop-shadow(0 0 6px rgb(191 224 255 / 0.7));
+  animation: lf-pass 4.2s linear 0.15s both;
+}
+.lf-splash-birds {
+  position: absolute;
+  top: 16%;
+  left: 0;
+  width: clamp(34px, 9vw, 48px);
+  opacity: 0.75;
+  animation: lf-pass 4.6s linear 0.1s both;
+}
+.lf-splash-flap-b {
+  opacity: 0;
+}
+.lf-splash-flap-a,
+.lf-splash-flap-b {
+  animation: lf-flap 0.36s steps(1, end) infinite;
+}
+.lf-splash-flap-b {
+  animation-delay: -0.18s;
+}
+.lf-splash-shoot {
+  position: absolute;
+  top: 6%;
+  right: 8%;
+  width: 70px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgb(255 255 255 / 0), #ffffff);
+  transform-origin: right center;
+  opacity: 0;
+  animation: lf-shoot 0.9s ease-out 0.9s both;
 }
 .lf-splash-stars i {
   position: absolute;
@@ -631,6 +703,51 @@ html[data-lf-moment="star"] .lf-splash-moon {
   flex-direction: column;
   align-items: center;
   padding-top: clamp(52px, 10vh, 84px);
+}
+@keyframes lf-bob {
+  from {
+    transform: translateY(-3px);
+  }
+  to {
+    transform: translateY(3px);
+  }
+}
+@keyframes lf-orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes lf-pass {
+  from {
+    transform: translateX(-60px);
+  }
+  to {
+    transform: translateX(calc(100vw + 60px));
+  }
+}
+@keyframes lf-flap {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes lf-shoot {
+  0% {
+    opacity: 0;
+    transform: rotate(-24deg) translateX(0);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(-24deg) translateX(-160px);
+  }
 }
 @keyframes lf-rise {
   0% {

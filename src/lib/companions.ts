@@ -10,7 +10,7 @@ export const COMPANION_KEYS = ["dawn", "ray", "goldie", "star", "moon"] as const
 export type CompanionKey = (typeof COMPANION_KEYS)[number];
 
 export type CompanionShape = "round" | "tall" | "pear" | "hood";
-export type CompanionCrown = "wisp" | "rays" | "lowsun" | "antenna" | "sparkles";
+export type CompanionCrown = "wisp" | "rays" | "lowsun" | "antenna" | "none";
 
 export type CompanionInfo = {
   key: CompanionKey;
@@ -158,7 +158,7 @@ export const COMPANIONS: CompanionInfo[] = [
     sample: "Easy start. One thing before noon, the rest later.",
     look: {
       shape: "round",
-      crown: "sparkles",
+      crown: "none",
       eyes: "lidded",
       mouth: "smirk",
       body: "#f4eed8",

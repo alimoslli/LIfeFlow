@@ -505,15 +505,8 @@ export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: bo
       [13, t - 2, T2],
       ...[7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((x): Pixel => [x, t - 1, T]),
     ],
-    // two little stars beside the moon
-    sparkles: [
-      [20, t - 1, "#ffffff"],
-      [19, t - 1, c.light],
-      [21, t - 1, c.light],
-      [20, t - 2, c.light],
-      [20, t, c.light],
-      [22, t + 3, c.trim2],
-    ],
+    // Moon wears nothing above its head: the sky's stars and Star are around it (owner, 2026-11-11: "a bit crowded")
+    none: [],
     antenna: [
       [12, t - 1, INK],
       [12, t - 2, T],

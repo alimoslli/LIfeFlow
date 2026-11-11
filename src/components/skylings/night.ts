@@ -3,9 +3,9 @@ import { companionOf, type CompanionKey, ownsNight } from "@/lib/companions";
 
 /**
  * The skylings' night (owner, 2026-11-09: "all the characters ... together, interacting together in the sky at night"):
- * one pixel canvas, drawn small and scaled up crisp. Star stands on the moon and lights new stars, Ray and Goldie toss a
- * fallen star across the hill, Dawn naps on a cloud while Moon keeps watch and draws a constellation (Moon turns into
- * Dawn), and when a shooting star crosses, everyone looks up and cheers. Tap the sky for a shooting star; tap a
+ * one pixel canvas, drawn small and scaled up crisp. Moon is the moon, big, and Star circles it lighting new stars, Ray
+ * and Goldie toss a fallen star across the hill, Dawn naps on a cloud under a constellation drawing itself, and when a
+ * shooting star crosses, everyone looks up and cheers. Tap the sky for a shooting star; tap a
  * skyling and it hops. The art comes from the same engine as Today's wheel (day-clock/companion.ts).
  * Real-sky colours only (no purple). Reduced motion gets one still frame.
  */
@@ -58,6 +58,28 @@ function rng(seed: number) {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+/** How far the big Moon's body reaches from its middle, in art pixels (its 24 px sprite drawn at twice the size). */
+const BIG_R = 16;
+/** How wide Star circles the Moon: wider on a wide canvas, always clear of the Moon. */
+const orbitOf = (sw: number) => Math.round(Math.min(Math.max(sw * 0.22, BIG_R + 16), BIG_R + 26));
+const bigMoons = new Map<string, HTMLCanvasElement>();
+/** Moon as the moon in the sky: its sprite at twice the size, without boots or a shadow (it hangs there). */
+function bigMoon(pose: Pose, frame: number) {
+  const id = `${pose}|${frame}`;
+  let c = bigMoons.get(id);
+  if (c) return c;
+  c = document.createElement("canvas");
+  c.width = c.height = GRID * 2;
+  const g = c.getContext("2d")!;
+  for (const [x, y, col] of pixels(companionOf("moon"), pose, frame, true)) {
+    if (y >= 21) continue;
+    g.fillStyle = col;
+    g.fillRect(x * 2, y * 2, 2, 2);
+  }
+  bigMoons.set(id, c);
+  return c;
 }
 
 const sprites = new Map<string, HTMLCanvasElement>();
@@ -167,7 +189,8 @@ export function mountNight(canvas: HTMLCanvasElement, opts: NightOptions): Night
       sw,
       sy0,
       sh,
-      moon: { x: Math.round(sx0 + sw * 0.8), y: Math.round(sy0 + 26 + r), r },
+      // the big Moon with room for Star's circle inside the canvas on a narrow phone too
+      moon: { x: Math.round(Math.min(sx0 + sw * 0.8, W - orbitOf(sw) - 13)), y: Math.round(Math.max(sy0 + 26 + r, orbitOf(sw) + 14)), r },
       // the cloud floats well clear of Ray and Goldie's heads, even on a short strip
       cloud: { x: Math.round(sx0 + sw * 0.06), y: Math.round(Math.max(sy0 + 20, Math.min(sy0 + sh * 0.42, groundBase - bump - 46))) },
       ray: Math.round(cx - d),
@@ -231,28 +254,14 @@ export function mountNight(canvas: HTMLCanvasElement, opts: NightOptions): Night
       const y = Math.floor(rand() ** 1.6 * H * 0.8);
       blend(x, y, hex(rand() < 0.2 ? "#ffe9b0" : "#cfe0ff"), 0.25 + rand() * 0.4);
     }
-    // the moon: a soft glow, a lit crescent, the dark side faintly there, three craters
+    // the moon's light on the sky (Moon, the skyling, is the moon itself: drawn big in front of it each frame)
     const m = L.moon;
-    const mx = m.x + 4;
     const lit = hex(MOON.lit);
-    for (let y = m.y - m.r - 12; y <= m.y + m.r + 12; y++)
-      for (let x = mx - m.r - 12; x <= mx + m.r + 12; x++) {
-        const dist = Math.hypot(x - mx, y - m.y);
-        if (dist > m.r && dist < m.r + 12) blend(x, y, lit, 0.2 * (1 - (dist - m.r) / 12) ** 2);
-        if (dist <= m.r) {
-          const inShade = Math.hypot(x - (mx - m.r * 0.5), y - (m.y - m.r * 0.2)) < m.r * 0.92;
-          const edge = dist > m.r - 1;
-          blend(x, y, hex(inShade ? MOON.shade : edge ? MOON.rim : MOON.lit), inShade ? 0.75 : 1);
-        }
+    for (let y = m.y - BIG_R - 16; y <= m.y + BIG_R + 16; y++)
+      for (let x = m.x - BIG_R - 16; x <= m.x + BIG_R + 16; x++) {
+        const dist = Math.hypot(x - m.x, y - m.y);
+        if (dist < BIG_R + 16) blend(x, y, lit, 0.24 * Math.min(1, (1 - dist / (BIG_R + 16)) * 1.6) ** 2);
       }
-    for (const [cx, cy, cr] of [
-      [0.45, 0.1, 0.16],
-      [0.6, 0.45, 0.11],
-      [0.3, 0.55, 0.09],
-    ])
-      for (let y = -2; y <= 2; y++)
-        for (let x = -2; x <= 2; x++)
-          if (Math.hypot(x, y) <= cr * m.r) blend(Math.round(mx + cx * m.r + x), Math.round(m.y + cy * m.r + y), hex(MOON.crater), 0.9);
     sg.putImageData(img, 0, 0);
 
     // bright stars that twinkle (drawn each frame)
@@ -472,24 +481,32 @@ export function mountNight(canvas: HTMLCanvasElement, opts: NightOptions): Night
     if (near) g.drawImage(near, -4 + Math.round(px * 4), 0);
     const nx = Math.round(px * 4);
 
-    // Star on the moon, lighting stars with its antenna
+    // Moon is the moon, big; Star circles it, smaller, lighting new stars with its antenna as it goes (owner, 2026-11-11)
     const m = L.moon;
     const lighting = t > nextLight - 0.5 && t < nextLight + 0.4;
+    // over the top of the Moon and back, never across it (owner, 2026-11-11: "a bit crowded")
+    const swing = 0.5 - 0.5 * Math.cos(t * 0.5);
+    const over = Math.PI * (1 + swing);
+    const ox = m.x + Math.cos(over) * orbitOf(L.sw) + sh;
+    const oy = m.y + Math.sin(over) * orbitOf(L.sw);
     if (t > nextLight) {
       const a = Math.random() * 6.28;
-      const dist = 16 + Math.random() * 30;
-      lit.push({ x: Math.round(m.x + Math.cos(a) * dist), y: Math.round(clamp(m.y - 10 + Math.sin(a) * dist * 0.7, 3, m.y + 10)), born: t });
+      const dist = 6 + Math.random() * 18;
+      lit.push({ x: Math.round(ox + Math.cos(a) * dist), y: Math.round(clamp(oy - 8 + Math.sin(a) * dist * 0.7, 3, m.y + 14)), born: t });
       nextLight = t + 3.2 + Math.random() * 2.4;
     }
-    put("star", lighting ? ["celebrate", 2] : pose("star", t, blink(t, 0.6)), m.x - 11 + sh, m.y - m.r - 21);
+    const starPose: [Pose, number] = lighting ? ["celebrate", 2] : pose("star", t, ["walk", Math.floor(t * 6) % 4]);
+    const starFlip = Math.sin(t * 0.5) < 0;
+    const mp = pose("moon", t, blink(t, 1.7));
+    g.drawImage(bigMoon(mp[0], mp[1]), Math.round(m.x - 23 + sh), Math.round(m.y - 27));
+    actors.push({ key: "moon", x: m.x - 23 + sh, y: m.y - 27, w: GRID * 2, h: GRID * 2 });
+    put("star", starPose, ox - 11, oy - 14, starFlip);
 
-    // Dawn naps on the cloud; Moon sits beside her, keeps watch and draws the constellation (arm up while drawing)
+    // Dawn naps on the cloud under the constellation (Moon turns into Dawn come morning)
     const cb = Math.round(Math.sin(t * 0.9) * 1.2);
     const cx0 = L.cloud.x + Math.round(px * 2);
     const cy0 = L.cloud.y + cb;
     put("dawn", pose("dawn", t, ["sleep", Math.floor(t * 1.1) % 2]), cx0 + 4, cy0 - 17);
-    const drawing = cyc > 0.33 && cyc < 0.52;
-    put("moon", pose("moon", t, drawing ? ["celebrate", 3] : blink(t, 1.7)), cx0 + 26, cy0 - 19);
     if (cloud) g.drawImage(cloud, cx0, cy0);
 
     // Ray and Goldie play catch with a fallen star over the hill
