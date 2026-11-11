@@ -2,9 +2,9 @@ import { series } from "@/server/db/series";
 import { resolvePeriod, type Period } from "@/lib/periods";
 import type { UserScope } from "../../db/with-user";
 import { listAccounts, spendableCents, summarizeBalances } from "./accounts";
-import { summarizeCashflow, type CashflowSummary } from "./cashflow";
+import type { CashflowSummary } from "./cashflow";
 import { budgetStatus } from "./planning";
-import { queryTransactions } from "./transactions";
+import { cashflowTotals } from "./totals";
 import { listHoldings, portfolioReturn } from "./wealth";
 
 /**
@@ -44,16 +44,7 @@ export type CashflowForPeriod = Pick<CashflowSummary, "incomeCents" | "netSpendi
 
 /** Spending and income over a named range, with the same rules everywhere. */
 export async function cashflowFor(scope: UserScope, period: Period): Promise<CashflowForPeriod> {
-  const txns = await queryTransactions(scope, { from: period.from, to: period.to, limit: 20_000 });
-  const s = summarizeCashflow(txns);
-  return {
-    period,
-    incomeCents: s.incomeCents,
-    netSpendingCents: s.netSpendingCents,
-    netCashflowCents: s.netCashflowCents,
-    transactionCount: s.transactionCount,
-    pendingCount: s.pendingCount,
-  };
+  return { period, ...(await cashflowTotals(scope, period.from, period.to)) };
 }
 
 export async function moneyOverview(scope: UserScope, today: string) {

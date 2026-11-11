@@ -9,7 +9,7 @@ import { createTask } from "../tasks";
 import { amountsClose } from "./bill-match";
 import { bankSeries, createRecurring, listRecurring, seriesForItem, suggestRecurring } from "./planning";
 import { merchantKey, merchantKeys, storedKeyForms, type RecurringCandidate } from "./recurring-detect";
-import { queryTransactions } from "./transactions";
+import { queryAllTransactions } from "./transactions";
 
 /**
  * Subscription finder: what you pay for, how much a month and a year, the next
@@ -54,7 +54,7 @@ const priceUpOf = (c: RecurringCandidate): PriceUp | null => {
 export async function subscriptionsOverview(scope: UserScope, today: string) {
   const [items, txns, bank] = await series(
     () => listRecurring(scope, { includeInactive: true }),
-    () => queryTransactions(scope, { from: addDaysStr(today, -400), to: today, kinds: ["expense"], limit: 20_000 }),
+    () => queryAllTransactions(scope, { from: addDaysStr(today, -400), to: today, kinds: ["expense"] }),
     () => bankSeries(scope, today),
   );
   const allSeries = [...bank.tracked, ...bank.untracked];

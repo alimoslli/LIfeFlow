@@ -8,7 +8,7 @@ import { moneyOverview } from "../services/finance/overview";
 import { budgetWarnings, cashForecast } from "../services/finance/forecast";
 import { listGoals, monthlyContributionNeeded, upcomingRecurring } from "../services/finance/planning";
 import { merchantKey } from "../services/finance/recurring-detect";
-import { queryTransactions } from "../services/finance/transactions";
+import { queryAllTransactions } from "../services/finance/transactions";
 import { summarizeCashflow } from "../services/finance/cashflow";
 import { listAssignments } from "../services/school";
 import { listTasks } from "../services/tasks";
@@ -81,8 +81,8 @@ async function collectMoney(s: UserScope, today: string): Promise<MoneySnapshot 
   const lastStart = monthStart(addDaysStr(mStart, -1));
   const lastSameDay = addDaysStr(lastStart, span);
   const [thisMonth, lastMonth, goals, pace, forecast] = await series(
-    () => queryTransactions(s, { from: mStart, to: today, limit: 5000 }),
-    () => queryTransactions(s, { from: lastStart, to: lastSameDay, limit: 5000 }),
+    () => queryAllTransactions(s, { from: mStart, to: today }),
+    () => queryAllTransactions(s, { from: lastStart, to: lastSameDay }),
     () => listGoals(s),
     () => budgetWarnings(s, today),
     () => cashForecast(s, today, 14),

@@ -6,7 +6,7 @@ import { budgets, categories, financialAccounts, financialGoals, integrations, r
 import type { UserScope } from "../../db/with-user";
 import { assertOwned, notFound } from "../errors";
 import { listCategories } from "./categories";
-import { rollupToParents, spendingByCategoryId } from "./cashflow";
+import { rollupToParents } from "./cashflow";
 import {
   PAID_EARLY_DAYS,
   SLACK_DAYS,
@@ -22,7 +22,8 @@ import {
 import { keywordCategory } from "./categorize";
 import { MIN_CONFIDENCE, detectRecurring, merchantKey, merchantKeys, nthOccurrence, occurrencesBetween, type RecurringCandidate } from "./recurring-detect";
 import { countsPending, spendableCents } from "./accounts";
-import { queryTransactions } from "./transactions";
+import { queryAllTransactions } from "./transactions";
+import { netSpendingByCategory } from "./totals";
 import { parsePatch } from "../patch";
 
 // ---------------------------------------------------------------- budgets
@@ -52,16 +53,15 @@ export async function deleteBudget(scope: UserScope, id: string) {
 /** Budget vs. actual for a month. Budgets on a parent category include its subcategories. */
 export async function budgetStatus(scope: UserScope, month: string) {
   const m = monthStart(month);
-  const [rows, cats, txns] = await series(
+  const [rows, cats, spentById] = await series(
     () =>
       scope.tx
         .select()
         .from(budgets)
         .where(and(eq(budgets.userId, scope.userId), eq(budgets.month, m))),
     () => listCategories(scope),
-    () => queryTransactions(scope, { from: m, to: monthEnd(m), kinds: ["expense", "refund", "reimbursement"] }),
+    () => netSpendingByCategory(scope, m, monthEnd(m)),
   );
-  const spentById = spendingByCategoryId(txns);
   const descendants = (id: string): Set<string> => {
     const set = new Set([id]);
     let grew = true;
@@ -98,11 +98,11 @@ export async function budgetStatus(scope: UserScope, month: string) {
 }
 
 export async function spendingByCategory(scope: UserScope, from: string, to: string) {
-  const [cats, txns] = await series(
+  const [cats, byCategory] = await series(
     () => listCategories(scope),
-    () => queryTransactions(scope, { from, to, kinds: ["expense", "refund", "reimbursement"] }),
+    () => netSpendingByCategory(scope, from, to),
   );
-  return rollupToParents(spendingByCategoryId(txns), cats);
+  return rollupToParents(byCategory, cats);
 }
 
 // ---------------------------------------------------------------- goals
@@ -252,7 +252,7 @@ export async function upcomingRecurring(scope: UserScope, from: string, to: stri
   }
   const ahead = due.filter((d) => d.date >= from);
   if (!ahead.length) return [];
-  const recent = await queryTransactions(scope, { from: addDaysStr(from, -early), to, limit: 5000 });
+  const recent = await queryAllTransactions(scope, { from: addDaysStr(from, -early), to });
   // Bank series matched to an item add the names its charges post under and whether its amount moves.
   // They're only needed when some charge could pay a due date, so the detection is skipped otherwise.
   const payable = ahead.filter(({ item, date }) =>
@@ -276,7 +276,7 @@ export async function upcomingRecurring(scope: UserScope, from: string, to: stri
       ...payable.map(({ item: r }) => addDaysStr(nthOccurrence(from, r.frequency, -1), -PAID_EARLY_DAYS[r.frequency] - SLACK_DAYS[r.frequency])),
     ].sort()[0];
     const [charges, named, accts] = await series(
-      () => queryTransactions(scope, { from: back, to, limit: 5000 }),
+      () => queryAllTransactions(scope, { from: back, to }),
       () => scope.tx.select({ id: categories.id, name: categories.name }).from(categories).where(eq(categories.userId, scope.userId)),
       () =>
         scope.tx
@@ -363,7 +363,7 @@ export function seriesForItem(item: TrackedItem, all: RecurringCandidate[]): Rec
  */
 export async function bankSeries(scope: UserScope, today: string) {
   const [txns, existing, synced] = await series(
-    () => queryTransactions(scope, { from: addDaysStr(today, -400), to: today, limit: 5000 }),
+    () => queryAllTransactions(scope, { from: addDaysStr(today, -400), to: today }),
     () => listRecurring(scope, { includeInactive: true }),
     () =>
       scope.tx

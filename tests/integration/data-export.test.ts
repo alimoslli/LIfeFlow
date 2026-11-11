@@ -134,6 +134,33 @@ describe("Download my data", () => {
     expect((data.profile as unknown as { email: string }).email).toBe(user.email);
   }, 120_000);
 
+  it("streams the transactions CSV in full: all 5,001 rows arrive, same columns, newest first", async () => {
+    const { run } = await signIn("Cora Csv");
+    const TOTAL = 5001;
+    await run(async (s) => {
+      const acct = await createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 0 });
+      await s.tx.insert(transactions).values(
+        Array.from({ length: TOTAL }, (_, i) => ({
+          userId: s.userId,
+          accountId: acct.id,
+          date: `2026-0${1 + (i % 9)}-1${i % 9}`,
+          description: `Row ${i}`,
+          amountCents: -(100 + i),
+          kind: "expense" as const,
+        })),
+      );
+    });
+    const res = await GET(new Request("http://localhost/api/export?format=transactions.csv"));
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-disposition")).toContain("lifeflow-transactions-");
+    const lines = (await res.text()).split("\n");
+    expect(lines[0]).toBe("date,description,merchant,amount,kind,category,account,pending,source");
+    expect(lines).toHaveLength(TOTAL + 1);
+    expect(new Set(lines.slice(1).map((l) => l.split(",")[1])).size).toBe(TOTAL);
+    const dates = lines.slice(1).map((l) => l.split(",")[0]);
+    expect(dates).toEqual([...dates].sort().reverse());
+  }, 60_000);
+
   it("refuses both formats while Money is locked, with a plain message, and works once Money is unlocked", async () => {
     const { token } = await signIn("Maya Locked", { moneyLock: { enabled: true, idleMinutes: 5 } });
     for (const url of ["http://localhost/api/export", "http://localhost/api/export?format=transactions.csv"]) {

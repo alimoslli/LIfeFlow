@@ -14,8 +14,7 @@ import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { listAccounts } from "@/server/services/finance/accounts";
 import { listCategories } from "@/server/services/finance/categories";
-import { summarizeCashflow } from "@/server/services/finance/cashflow";
-import { TRANSACTION_KINDS, queryTransactions } from "@/server/services/finance/transactions";
+import { TRANSACTION_KINDS, cashflowOverQuery, queryTransactions } from "@/server/services/finance/transactions";
 import {
   applyRuleAction,
   createTransactionAction,
@@ -62,9 +61,8 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
       from: sp.from && isValidDateStr(sp.from) ? sp.from : sp.to ? "2000-01-01" : undefined,
       to: sp.to && isValidDateStr(sp.to) ? sp.to : sp.from ? today : undefined,
     });
-    const rows = await queryTransactions(s, {
+    const query = {
       search: sp.q?.slice(0, 100),
-      phrase: true, // the page's search box is a plain substring filter
       from: period.from,
       to: period.to,
       categoryIds:
@@ -74,13 +72,15 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
       kinds: kind ? [kind] : undefined,
       accountId: accounts.some((a) => a.id === sp.account) ? sp.account : undefined,
       includeExcluded: true,
-      limit: 5000,
-    });
+    };
+    const rows = await queryTransactions(s, { ...query, phrase: true, limit: 5000 }); // the page's search box is a plain substring filter
+    // Totals cover every matching row, not just the list's first 5,000.
+    const summary = await cashflowOverQuery(s, query);
     // Category rules open over this page (the Rules page was folded in, owner's page map 2026-11-10); only read when asked.
     const rules = sp.rules ? await listCategoryRules(s) : [];
-    return { accounts, categories, rows, today, period, rules };
+    return { accounts, categories, rows, summary, today, period, rules };
   });
-  const summary = summarizeCashflow(d.rows);
+  const summary = d.summary;
   const filtered = Boolean(sp.q || sp.category || sp.kind || sp.account);
   const qs = (extra: Record<string, string | undefined>) => {
     const p = new URLSearchParams(Object.entries({ ...sp, ...extra }).filter(([, v]) => v) as [string, string][]);
@@ -203,7 +203,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
             <Money cents={summary.incomeCents} className="mt-0.5 block text-lg font-medium text-success" />
           </div>
           <p className="col-span-2 px-1 text-xs text-muted">
-            {d.period.label} · {d.rows.length} transactions · transfers between your accounts aren&apos;t counted
+            {d.period.label} · {summary.transactionCount + summary.excludedCount} transactions · transfers between your accounts aren&apos;t counted
             {summary.excludedCount ? ` · ${summary.excludedCount} hidden` : ""}
           </p>
         </div>

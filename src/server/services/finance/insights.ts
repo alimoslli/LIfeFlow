@@ -7,11 +7,11 @@ import { rollupToParents, spendingByCategoryId, summarizeCashflow } from "./cash
 import { billsAndPace } from "./forecast";
 import { isSavingsAccount } from "./overview";
 import { merchantDisplayName, merchantKey } from "./recurring-detect";
-import { queryTransactions, type TransactionQuery } from "./transactions";
+import { queryAllTransactions, type TransactionQuery } from "./transactions";
 
 /** Everything Jarvis needs to answer "how much did I spend/earn on X between A and B". */
 export async function spendingSummary(scope: UserScope, q: TransactionQuery & { from: string; to: string }) {
-  const found = await queryTransactions(scope, { ...q, limit: 5000 });
+  const found = await queryAllTransactions(scope, { ...q });
   // Totals count only rows that matched as the same words; the rest (a shortened name, an initial) are reported apart.
   const txns = found.filter((t) => t.sure);
   const unsure = found.filter((t) => !t.sure);

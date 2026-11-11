@@ -11,7 +11,7 @@ import { netWorthTrend } from "../finance/investing";
 import { budgetStatus, spendingByCategory } from "../finance/planning";
 import { listAccounts } from "../finance/accounts";
 import { balancesOf } from "../finance/overview";
-import { queryTransactions } from "../finance/transactions";
+import { queryAllTransactions } from "../finance/transactions";
 import { coursesOnCalendar, freeSlots, getAgenda } from "../calendar";
 import { listHabits, slotMinutes } from "../habits";
 import { listActiveMemories } from "../memory";
@@ -27,7 +27,7 @@ const spendOf = (t: { amountCents: number }) => Math.max(0, -t.amountCents);
 /** Spending per day on weekends vs. weekdays over the last 8 weeks. */
 export async function weekendPattern({ scope, today }: DetectContext) {
   const from = addDaysStr(weekStart(today), -56);
-  const txns = await queryTransactions(scope, { from, to: addDaysStr(weekStart(today), -1), kinds: ["expense"], limit: 10000 });
+  const txns = await queryAllTransactions(scope, { from, to: addDaysStr(weekStart(today), -1), kinds: ["expense"] });
   let weekend = 0;
   let weekday = 0;
   for (const t of txns) {
@@ -161,7 +161,7 @@ export const weeklyReview: Detector = async (ctx) => {
         .select({ title: tasks.title, status: tasks.status, dueAt: tasks.dueAt, completedAt: tasks.completedAt })
         .from(tasks)
         .where(and(eq(tasks.userId, scope.userId), gte(tasks.updatedAt, new Date(`${addDaysStr(wk, -1)}T00:00:00Z`)))),
-    () => queryTransactions(scope, { from: wk, to: today, kinds: ["expense"], limit: 5000 }),
+    () => queryAllTransactions(scope, { from: wk, to: today, kinds: ["expense"] }),
     () => budgetStatus(scope, today),
     () => goalsWithPlans(scope, today),
     () => listHabits(scope, today),
@@ -213,7 +213,7 @@ export const monthlyReview: Detector = async ({ scope, today }) => {
   const last = monthStart(addDaysStr(monthStart(today), -1));
   const end = addDaysStr(monthStart(today), -1);
   const [txns, cats, worth, subs, goals] = await series(
-    () => queryTransactions(scope, { from: last, to: end, kinds: ["expense", "income"], limit: 10000 }),
+    () => queryAllTransactions(scope, { from: last, to: end, kinds: ["expense", "income"] }),
     () => spendingByCategory(scope, last, end),
     () => netWorthTrend(scope, today, 70),
     () => subscriptionReport(scope, today),

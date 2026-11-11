@@ -10,6 +10,7 @@ import { assertOwned, notFound, ServiceError } from "../errors";
 import { listCategories, resolveCategory } from "./categories";
 import { cleanVendorName } from "@/lib/vendor";
 import { ACCENT_FROM, ACCENT_TO, IGNORED_MARKS, P2P_NEEDLES, parseSearch, prefilterNeedles, scoreRow } from "@/lib/txn-search";
+import { summarizeCashflow, type CashflowSummary } from "./cashflow";
 import { autoCategorize, learnCategoryRule } from "./categorize";
 import { parsePatch } from "../patch";
 
@@ -277,6 +278,53 @@ export async function queryTransactions(scope: UserScope, q: TransactionQuery = 
 }
 
 export type TransactionRow = Awaited<ReturnType<typeof queryTransactions>>[number];
+
+/** Pages of this size when a caller reads every row (keyset order, so a sync between pages can't skip or repeat a row). */
+export const ALL_PAGE = 2000;
+
+/** Calls `onPage` with every matching row, newest first, one bounded page at a time. For exports and anything that must not stop at a cap. */
+export async function forEachTransactionPage(
+  scope: UserScope,
+  q: Omit<TransactionQuery, "search" | "phrase" | "sureOnly" | "limit"> & { search?: string },
+  onPage: (rows: TransactionRow[]) => Promise<void> | void,
+) {
+  const conds = await baseConds(scope, q);
+  // A text filter here is always the plain substring match (the Transactions page search box), never the forgiving one.
+  if (q.search?.trim()) conds.push(anyTextLike(q.search.trim()));
+  let after: { date: string; createdAt: string; id: string } | undefined;
+  for (;;) {
+    const page = await selectPage(scope, conds, ALL_PAGE, after);
+    if (page.rows.length) await onPage(page.rows);
+    if (page.rows.length < ALL_PAGE || !page.last) return;
+    after = page.last;
+  }
+}
+
+/** The cash-flow summary (cashflow.ts rules) over every row a plain-substring query matches, read page by page. */
+export async function cashflowOverQuery(scope: UserScope, q: Omit<TransactionQuery, "phrase" | "sureOnly" | "limit">): Promise<CashflowSummary> {
+  const total = summarizeCashflow([]);
+  await forEachTransactionPage(scope, q, (rows) => {
+    const s = summarizeCashflow(rows);
+    for (const k of Object.keys(total) as (keyof CashflowSummary)[]) total[k] += s[k];
+  });
+  // netSpending/netCashflow are derived, not additive, but their parts are, so re-derive them.
+  total.netSpendingCents = total.grossSpendingCents - total.refundsCents - total.reimbursementsCents;
+  total.netCashflowCents = total.incomeCents - total.netSpendingCents;
+  return total;
+}
+
+/**
+ * Every matching row, with no cap (explicit, unlike the list default of 500). Prefer the SQL totals in totals.ts
+ * when only a sum is needed. With a text search the forgiving matcher's own scan limit still applies.
+ */
+export async function queryAllTransactions(scope: UserScope, q: Omit<TransactionQuery, "limit"> = {}): Promise<TransactionRow[]> {
+  if (q.search?.trim()) return queryTransactions(scope, { ...q, limit: 5000 });
+  const out: TransactionRow[] = [];
+  await forEachTransactionPage(scope, q, (rows) => {
+    for (const r of rows) out.push(r);
+  });
+  return out;
+}
 
 export type TransactionFind =
   | { match: "exact"; rows: TransactionRow[]; closest: [] }
