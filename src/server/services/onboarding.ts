@@ -131,7 +131,7 @@ const prefsOf = async (scope: UserScope) =>
  * What an age-locked account keeps: the email (on the user row), how they sign in, and the security log (sign-ins and account
  * actions, `audit_events`), as the Privacy Policy's section 9 says. Every other table with a user_id is emptied.
  */
-const KEEP_ON_LOCK = new Set([
+export const KEEP_ON_LOCK = new Set([
   "users",
   "sessions",
   "oauth_identities",
@@ -142,6 +142,14 @@ const KEEP_ON_LOCK = new Set([
   "password_resets",
   "audit_events",
 ]);
+
+/**
+ * Tables that point at a user by a column NOT called user_id, so the sweep below can't see them; `blockUnderAge` handles each by
+ * name (owner_inbox: their feedback copies deleted; waitlist_referrals: the row where they are the friend deleted, the link on
+ * rows where they invited cleared; email_confirmations: their pending code deleted). tests/integration/onboarding.test.ts fails
+ * when a table with a foreign key to users is neither swept (user_id), kept, handled here, nor a reviewed exception.
+ */
+export const HANDLED_ON_LOCK = new Set(["owner_inbox", "waitlist_referrals", "email_confirmations"]);
 
 /**
  * Under 13 (owner, 2026-11-10): one calm line, and the account is locked, during setup or later (a finished account answering

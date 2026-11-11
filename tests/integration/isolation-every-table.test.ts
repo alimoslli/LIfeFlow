@@ -3,6 +3,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { closeDb, getDb } from "@/server/db/client";
 import { createTask } from "@/server/services/tasks";
 import { createCourse } from "@/server/services/school";
+import { tablesPointingAtUsers, undecidedTables } from "../fk-guard";
 import { makeUser, TZ } from "../helpers";
 
 /**
@@ -31,7 +32,28 @@ const LOOKED_UP_BEFORE_SIGN_IN = new Set([
   "health_tokens",
 ]);
 
+// Tables that point at a user by a column NOT called user_id (found by their foreign key to users, so a new one is caught too).
+// Each is account data read before and after sign-in (like login_challenges) or owner operations data, reached only through
+// services; none holds a user's own content, so none has row-level security. Reviewed here with the reason.
+const POINTS_AT_USER_BY_OTHER_NAME: Record<string, string> = {
+  email_confirmations: "account data: the hashed confirm code, read before and after sign-in (like login_challenges); only email-confirm.ts reaches it",
+  waitlist_referrals: "account data: who invited whom for the waitlist (keyed email hash), read by the queue services before and after sign-in",
+  owner_inbox: "owner operations data behind requireAdmin; written by sendFeedback, never read in a user's scope",
+  admin_actions: "the owner's log of admin actions behind requireAdmin; names the admin, not user content",
+};
+
 describe("every user-owned table is locked to its user", () => {
+  it("every table with a foreign key to users has row-level security, is a listed sign-in table, or is a reviewed exception", async () => {
+    const tables = await tablesPointingAtUsers(getDb());
+    expect(undecidedTables(tables, (n) => n in POINTS_AT_USER_BY_OTHER_NAME)).toEqual([]);
+    // the reviewed list holds only real tables
+    expect(Object.keys(POINTS_AT_USER_BY_OTHER_NAME).filter((n) => !tables.some((t) => t.name === n))).toEqual([]);
+    // and a new table pointing at a user by another name is caught
+    expect(undecidedTables([...tables, { name: "zz_new_table", columns: ["owner_ref"], hasUserId: false }], (n) => n in POINTS_AT_USER_BY_OTHER_NAME)).toEqual([
+      "zz_new_table",
+    ]);
+  });
+
   it("each table with a user_id column forces RLS and has the owner policy", async () => {
     const { rows } = await getDb().execute(sql`
       select c.table_name as name,

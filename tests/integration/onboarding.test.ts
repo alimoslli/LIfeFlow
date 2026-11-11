@@ -14,6 +14,8 @@ import { listActiveMemories } from "@/server/services/memory";
 import { setCompanion, updateProfile } from "@/server/services/accounts";
 import {
   afterAgeLock,
+  HANDLED_ON_LOCK,
+  KEEP_ON_LOCK,
   closeLockedConnections,
   completeOnboarding,
   finishOnboarding,
@@ -26,6 +28,7 @@ import { closeAtProvider } from "@/server/services/account-cleanup";
 import { listCourses } from "@/server/services/school";
 import { listEmployers } from "@/server/services/work";
 import { assistantProfile } from "@/lib/assistant";
+import { tablesPointingAtUsers, undecidedTables } from "../fk-guard";
 import { makeUser } from "../helpers";
 
 afterAll(closeDb);
@@ -95,7 +98,22 @@ const born = (run: Awaited<ReturnType<typeof makeUser>>["run"]) => run((s) => sa
 
 const prefs = async (id: string) => (await getDb().select({ p: users.preferences }).from(users).where(eq(users.id, id)))[0].p;
 
+/** Tables with a foreign key to users that nothing has decided on for the under-13 lock: not swept (no user_id), kept, handled or reviewed. */
+const REVIEWED_NOT_USER_ROWS: Record<string, string> = {
+  admin_actions: "the owner's log of admin actions: it names the admin who acted, not an app user's content, and keeps its own rules",
+};
+const decidedForLock = (name: string) => KEEP_ON_LOCK.has(name) || HANDLED_ON_LOCK.has(name) || name in REVIEWED_NOT_USER_ROWS;
+
 describe("onboarding", () => {
+  it("every table with a foreign key to users is swept, kept, handled by name or reviewed: a new one fails until someone decides", async () => {
+    const tables = await tablesPointingAtUsers(getDb());
+    expect(tables.map((t) => t.name)).toEqual(expect.arrayContaining(["email_confirmations", "waitlist_referrals", "owner_inbox"]));
+    expect(undecidedTables(tables, decidedForLock)).toEqual([]);
+    // a new table that points at a user by some other column name is caught
+    const added = [...tables, { name: "zz_new_table", columns: ["owner_ref"], hasUserId: false }];
+    expect(undecidedTables(added, decidedForLock)).toEqual(["zz_new_table"]);
+  });
+
   it("under 13 also removes their referral row as a friend, unlinks the ones as an inviter, and removes a pending confirm code, but keeps the email", async () => {
     const db = getDb();
     const kid = await makeUser("Kai Young");
