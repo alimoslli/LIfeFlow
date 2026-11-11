@@ -1,6 +1,6 @@
 "use server";
 
-import { getAccountUser, clientIp } from "@/server/auth/current-user";
+import { getAccountUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
 import { confirmEmailCode, sendConfirmCode } from "@/server/services/email-confirm";
 import { recordError } from "@/server/services/error-reports";
@@ -13,7 +13,7 @@ export async function sendEmailCode(_prev: ConfirmState, _fd?: FormData): Promis
   const user = await getAccountUser();
   if (!user) return { error: "Please sign in again.", at: Date.now() };
   const db = getDb();
-  const r = await sendConfirmCode(db, user.id, await clientIp());
+  const r = await sendConfirmCode(db, user.id);
   if (r.ok) return { sentTo: maskEmail(user.email), at: Date.now() };
   if (r.reason === "already") return { confirmed: true, at: Date.now() };
   if (r.reason === "unavailable") return { error: "Email codes aren't available yet. Please try again later.", at: Date.now() };
@@ -26,7 +26,7 @@ export async function sendEmailCode(_prev: ConfirmState, _fd?: FormData): Promis
 export async function confirmEmail(_prev: ConfirmState, fd: FormData): Promise<ConfirmState> {
   const user = await getAccountUser();
   if (!user) return { error: "Please sign in again.", at: Date.now() };
-  const r = await confirmEmailCode(getDb(), user.id, String(fd.get("code") ?? "").slice(0, 20), await clientIp());
+  const r = await confirmEmailCode(getDb(), user.id, String(fd.get("code") ?? "").slice(0, 20));
   // No page refresh here: the card keeps its own "confirmed" line so the person sees it worked (the page is read again on the next visit).
   if (r.ok) return { confirmed: true, at: Date.now() };
   const error = {
