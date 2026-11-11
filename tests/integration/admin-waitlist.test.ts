@@ -4,7 +4,9 @@ import { adminFor } from "@/server/auth/admin";
 import { closeDb, getDb } from "@/server/db/client";
 import { adminActions, appAccess, users } from "@/server/db/schema";
 import { AdminError, acceptFromWaitlist, setWaitlist, waitlistHistory, waitlistNext, waitlistView } from "@/server/services/admin";
-import { accessSettings, lockQueue, waitlistPlace } from "@/server/services/waitlist";
+import { accessSettings, friendCounts, lockQueue, waitlistPlace } from "@/server/services/waitlist";
+import { inviteCodeFor, recordInvite } from "@/server/services/invites";
+import { verifyEmail } from "@/server/services/referrals";
 import { makeUser } from "../helpers";
 
 afterAll(async () => {
@@ -32,6 +34,17 @@ async function line(...names: string[]) {
 }
 
 describe("the waitlist in HQ", () => {
+  it("counts a person's friends the same way as the waitlist page: only the ones who confirmed", async () => {
+    await makeAdmin();
+    const [a, f] = await line("Ana", "Friend");
+    await recordInvite(db(), f.id, await inviteCodeFor(db(), a.id));
+    expect((await waitlistView(db())).rows.find((r) => r.id === a.id)?.friends).toBe(0);
+    await verifyEmail(db(), f.id);
+    const view = await waitlistView(db());
+    expect(view.rows.find((r) => r.id === a.id)?.friends).toBe(1);
+    expect(view.rows.find((r) => r.id === a.id)?.friends).toBe((await friendCounts(db(), a.id)).friends);
+  });
+
   it("letting people in waits for the queue lock, so it can't land inside a move", async () => {
     const admin = await makeAdmin();
     const [a] = await line("Ana");
