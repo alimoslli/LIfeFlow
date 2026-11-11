@@ -48,7 +48,13 @@ export async function POST(req: Request) {
     const state = await parseAppleState(ch.challenge);
     const { idToken, refreshToken } = await exchangeAppleCode(cfg, field("code"));
     const claims = await verifyAppleIdToken(idToken, cfg, state.nonce);
-    const outcome = await completeAppleSignIn(db, claims, { mode: state.mode, tz: state.tz, userId: ch.userId }, nameFromApple(field("user")), refreshToken);
+    const outcome = await completeAppleSignIn(
+      db,
+      claims,
+      { mode: state.mode, tz: state.tz, userId: ch.userId, invite: state.invite },
+      nameFromApple(field("user")),
+      refreshToken,
+    );
 
     return finishOAuth(outcome, { provider: "apple", next: state.next, origin, ip });
   } catch (e) {
