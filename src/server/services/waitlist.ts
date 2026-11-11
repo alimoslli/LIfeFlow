@@ -146,19 +146,27 @@ export function anonLabel(id: string): { label: string; companion: (typeof COMPA
 
 export type FrontRow = { place: number; label: string; companion: string; me: boolean };
 
-/** What the waitlist page shows one person: their place, the front of the line (anonymous), and friends from their link. */
-export async function waitlistPage(db: Database, userId: string) {
-  const [settings, place, waiting] = [await accessSettings(db), await waitlistPlace(db, userId), await waitingCount(db)];
-  const front = await db.select({ id: users.id }).from(users).where(inLine()).orderBy(asc(users.waitlistRank)).limit(10);
+/**
+ * One rule for "friends" everywhere (the waitlist page and Settings > Invite): `friends` have confirmed their email and
+ * counted (a referral row with a credit), `pending` signed up with this link and haven't confirmed yet.
+ */
+export async function friendCounts(db: Database, userId: string): Promise<{ friends: number; pending: number }> {
   const [{ friends }] = await db
     .select({ friends: count() })
     .from(waitlistReferrals)
     .where(and(eq(waitlistReferrals.inviterId, userId), isNotNull(waitlistReferrals.creditedAt)));
-  // Signed up with this link but haven't confirmed their email yet (a friend who confirmed is in "friends").
   const [{ pending }] = await db
     .select({ pending: count() })
     .from(users)
     .where(and(eq(users.invitedBy, userId), isNull(users.emailVerifiedAt), eq(users.accountKind, "standard")));
+  return { friends, pending };
+}
+
+/** What the waitlist page shows one person: their place, the front of the line (anonymous), and friends from their link. */
+export async function waitlistPage(db: Database, userId: string) {
+  const [settings, place, waiting] = [await accessSettings(db), await waitlistPlace(db, userId), await waitingCount(db)];
+  const front = await db.select({ id: users.id }).from(users).where(inLine()).orderBy(asc(users.waitlistRank)).limit(10);
+  const { friends, pending } = await friendCounts(db, userId);
   const [me] = await db.select({ verifiedAt: users.emailVerifiedAt, invitedBy: users.invitedBy }).from(users).where(eq(users.id, userId));
   return {
     emailVerified: !!me?.verifiedAt,
