@@ -15,7 +15,8 @@ export const metadata: Metadata = { title: "Skyling" };
 
 /**
  * A chat changes without a save (Today's bar and the chat send to the route, and the cookie moves), so this page is never
- * reused from the router's two-minute cache: navigating back to it always shows the chat as it is now (lib/chat-session.ts).
+ * reused from the router's two-minute cache. Going back to it (the browser's back, or a swipe) can show the copy the browser
+ * kept; the page is then rendered again when it's behind the chat this visit is in (JarvisChat, pageIsStale in lib/chat-session.ts).
  */
 export const unstable_dynamicStaleTime = 0;
 

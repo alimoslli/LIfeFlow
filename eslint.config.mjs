@@ -20,7 +20,7 @@ const eslintConfig = defineConfig([
     // Agent worktrees are full copies of the repo (with builds); each is checked in its own folder.
     ".claude/**",
     "docs/situations/eval/**",
-    "docs/design/2026-11-11-preview/**",  // design picture scripts: plain Node, not app code
+    "docs/design/2026-11-11-preview/**", // design picture scripts: plain Node, not app code
   ]),
 ]);
 

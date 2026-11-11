@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chatOfToday, NEW_VISIT_ATTR, parseChatCookie, VISIT_SCRIPT } from "@/lib/chat-session";
+import { chatOfToday, NEW_VISIT_ATTR, parseChatCookie, sameDay, VISIT_SCRIPT } from "@/lib/chat-session";
 
 const ID = "3f9c2a10-7b1e-4c2d-9a8f-1234567890ab";
 const TZ = "America/New_York";
@@ -27,6 +27,12 @@ describe("the chat this visit is in (lib/chat-session.ts)", () => {
     const now = new Date("2026-11-11T03:00:00Z"); // Nov 10, 10 PM in New York
     expect(chatOfToday(`${ID}~${now.getTime() + 5 * 60_000}`, TZ, now)).toBe(ID);
     expect(chatOfToday(`${ID}~${now.getTime() + 26 * 3_600_000}`, TZ, now)).toBeNull();
+  });
+
+  it("a chat carried on past midnight in the person's time zone is a new day's chat", () => {
+    const became = new Date("2026-11-11T04:30:00Z").getTime(); // Nov 10, 11:30 PM in New York
+    expect(sameDay(became, TZ, new Date("2026-11-10T20:00:00Z"))).toBe(true); // Nov 10, 3 PM
+    expect(sameDay(became, TZ, new Date("2026-11-11T06:10:00Z"))).toBe(false); // Nov 11, 1:10 AM
   });
 
   it("marks a new visit before the first paint, with the attribute the chat reads", () => {

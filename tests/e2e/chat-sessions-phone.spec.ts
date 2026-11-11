@@ -129,8 +129,8 @@ test("a link to something that isn't a chat opens a new one", async ({ page }) =
 });
 
 // Found in review: the skyling page can't be a copy from before (Next's client cache): a chat started on Today shows there
-// when you go back to it.
-test("the skyling page is never a copy from before: a chat started on Today shows there when you go back", async ({ page }) => {
+// when you tap the skyling tab.
+test("the skyling page is never a copy from before: a chat started on Today shows there when you tap the skyling tab", async ({ page }) => {
   await signUp(page, "Tara Tab");
   await page.goto("/jarvis");
   const tabs = page.getByRole("navigation", { name: "Main" }).last();
@@ -141,4 +141,26 @@ test("the skyling page is never a copy from before: a chat started on Today show
   await expect(page.locator('[data-testid="today-reply"]:visible').getByText("You said: a question from today")).toBeVisible({ timeout: 15_000 });
   await tabs.getByRole("link", { name: "Ray" }).click();
   await expect(page.getByText("You said: a question from today").first()).toBeVisible();
+});
+
+// Found in review (2026-11-11): going back to the skyling page (the browser's back, or a swipe) must show the chat this visit
+// is in, even when the page was left before a chat started on Today, and the next message goes into that chat, not a new one.
+test("going back to the skyling page shows the chat started on Today, and the next message stays in it", async ({ page }) => {
+  const email = await signUp(page, "Bo Back");
+  await page.goto("/");
+  const tabs = page.getByRole("navigation", { name: "Main" }).last();
+  await tabs.getByRole("link", { name: "Ray" }).click();
+  await expect(page.getByRole("heading", { name: "Let's clear your sky." })).toBeVisible();
+  await tabs.getByRole("link", { name: "Today" }).click();
+  await page.waitForURL((u) => u.pathname === "/");
+  const box = page.locator(".dc-dock").getByRole("textbox", { name: COMPOSER });
+  await box.fill("a question before going back");
+  await box.press("Enter");
+  await expect(page.locator('[data-testid="today-reply"]:visible').getByText("You said: a question before going back")).toBeVisible({ timeout: 15_000 });
+  await page.goBack();
+  await page.waitForURL((u) => u.pathname === "/jarvis");
+  await expect(page.getByText("You said: a question before going back").first()).toBeVisible();
+  await askJarvis(page, "a question after going back");
+  await expect(page.getByText("You said: a question after going back").first()).toBeVisible();
+  expect(await queryAsUser(email, COUNT)).toEqual([{ n: 1 }]);
 });

@@ -9,7 +9,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, useTransitio
 import { useAppBusy } from "@/lib/app-busy";
 import { Plug, Brain, CircleAlert, ImageIcon, Loader2, Square } from "lucide-react";
 import { useAutoGrow } from "@/components/ui/auto-grow";
-import { rememberChat, settleNewVisit, takeNewVisit } from "@/lib/chat-session";
+import { currentChat, pageIsStale, rememberChat, settleNewVisit, takeNewVisit } from "@/lib/chat-session";
 import { SkyHome, homeHeight } from "@/components/skylings/sky-home";
 import type { SkyCounts } from "@/lib/sky-home";
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
@@ -111,16 +111,23 @@ export function JarvisChat({
   // set once the visit's chat is settled (below), so a question sent on mount is sent into the right chat
   const [settled, setSettled] = useState(false);
   // A new visit (the app was closed) starts without the chat from before, which stays in the list (lib/chat-session.ts).
-  // This runs before the first paint, so the old messages never show. A deep link (?c=) keeps its chat.
+  // This runs before the first paint, so the old messages never show. A deep link (?c=) keeps its chat. A page shown again
+  // from the browser's copy (back or forward) is rendered again when it's behind the chat this visit is in (pageIsStale).
   useLayoutEffect(() => {
     const fresh = takeNewVisit();
     const deepLink = new URLSearchParams(window.location.search).get("c");
+    settleNewVisit();
     if (fresh && !deepLink) {
       setConversationId(null);
       setMessages([]);
     } else if (deepLink && initialId) rememberChat(initialId);
-    settleNewVisit();
+    else if (!fresh && pageIsStale(initialId ?? null, tz)) {
+      // the page is rendered again with the chat this visit is in; this component is rebuilt with it, and settles then
+      router.refresh();
+      return;
+    }
     setSettled(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialId]);
   // the skyling thinks while it works on your answer (owner, 2026-11-11)
   useEffect(() => {
@@ -347,6 +354,8 @@ export function JarvisChat({
     let mutated = false;
     let finished = false;
     let plain: string | null = null;
+    // The chat this turn goes into is the chat this app is in: a page shown again from the browser's copy can be behind it.
+    const target = currentChat(tz);
     // Coming back to a page whose stream went quiet: if the server already has the answer, take it and drop the dead stream.
     pokeRef.current = () => {
       void snapshotOf(id)
@@ -363,7 +372,7 @@ export function JarvisChat({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          conversationId,
+          conversationId: target,
           clientMessageId: id,
           message,
           module,
@@ -396,7 +405,7 @@ export function JarvisChat({
           const ev = JSON.parse(line) as ServerEvent;
           switch (ev.type) {
             case "conversation":
-              if (!conversationId) {
+              if (conversationId !== ev.id) {
                 setConversationId(ev.id);
                 // a chat left behind (New chat) must not take this visit or the address back
                 if (aliveRef.current) {
