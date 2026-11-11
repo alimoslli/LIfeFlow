@@ -11,6 +11,7 @@ import { createHabit, checkHabit } from "@/server/services/habits";
 import { createMemory } from "@/server/services/memory";
 import { createMilestone } from "@/server/services/milestones";
 import { createPersonalGoal } from "@/server/services/personal-goals";
+import { inviteCodeFor } from "@/server/services/invites";
 import { makeUser } from "../helpers";
 
 // The route reads the signed-in user and the session cookie; everything else (database, money lock, streaming) is real.
@@ -133,6 +134,19 @@ describe("Download my data", () => {
     expect(text).not.toContain("PLAID_");
     expect((data.profile as unknown as { email: string }).email).toBe(user.email);
   }, 120_000);
+
+  it("the profile includes their own waitlist place, acceptance date, email-confirmed date and invite code", async () => {
+    const db = getDb();
+    await db.update(users).set({ access: "in" }).where(eq(users.access, "waiting"));
+    const { user } = await makeUser("Wendy Wait");
+    const code = await inviteCodeFor(db, user.id);
+    const first = JSON.parse(await readAll(exportStream(user.id, profileOf(user)))).profile.waitlist;
+    expect(first).toMatchObject({ place: 1, access: "waiting", acceptedAt: null, emailVerifiedAt: null, inviteCode: code });
+    const stamp = new Date("2026-11-11T10:00:00.000Z");
+    await db.update(users).set({ emailVerifiedAt: stamp, access: "in", acceptedAt: stamp }).where(eq(users.id, user.id));
+    const second = JSON.parse(await readAll(exportStream(user.id, profileOf(user)))).profile.waitlist;
+    expect(second).toEqual({ place: null, access: "in", acceptedAt: stamp.toISOString(), emailVerifiedAt: stamp.toISOString(), inviteCode: code });
+  });
 
   it("streams the transactions CSV in full: all 5,001 rows arrive, same columns, newest first", async () => {
     const { run } = await signIn("Cora Csv");

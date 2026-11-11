@@ -3,6 +3,7 @@ import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import * as schema from "../db/schema";
 import { getDb } from "../db/client";
 import { withUser, type UserScope } from "../db/with-user";
+import { waitlistPlace } from "./waitlist";
 
 type UserTable = PgTable & { userId: PgColumn; id: PgColumn };
 
@@ -71,9 +72,9 @@ export const NOT_EXPORTED: Record<string, string> = {
   oauth_identities: "Apple and Google sign-in links (provider account ids)",
   password_resets: "password reset links (hashes)",
   login_challenges: "two-step sign-in in progress",
-  email_confirmations: "the code for confirming the email while one is waiting (a hash)",
+  email_confirmations: "a keyed hash of the 6-digit code emailed to confirm their email, kept up to 10 minutes; a sign-in secret, never exported",
   waitlist_referrals:
-    "who invited whom for the waitlist: a hash of the friend's email and the inviter; operational, and the invite link itself is exported with the profile",
+    "who invited whom for the waitlist: a keyed hash of the friend's email, the inviter and invitee links and dates; it exists so one email can't be counted twice. The person's own place, invite code and dates are in the profile",
   remembered_devices: "phones and computers that skip the two-step code (hashes of cookie tokens)",
   health_tokens: "Apple Health keys (hashes)",
   push_subscriptions: "this device's push keys",
@@ -211,9 +212,26 @@ export async function* exportChunks(
 }
 
 async function* exportBody(userId: string, profile: ExportProfile, batch: number, idleMs: number, deadlineMs: number): AsyncGenerator<string> {
+  // their own place in the waitlist and what the account row holds about it (account data, no row-level security)
+  const db = getDb();
+  const [me] = await db
+    .select({
+      access: schema.users.access,
+      acceptedAt: schema.users.acceptedAt,
+      emailVerifiedAt: schema.users.emailVerifiedAt,
+      inviteCode: schema.users.inviteCode,
+    })
+    .from(schema.users)
+    .where(eq(schema.users.id, userId));
   const head = {
     exportedAt: new Date().toISOString(),
-    profile: { name: profile.name, email: profile.email, timezone: profile.timezone, preferences: exportablePreferences(profile.preferences) },
+    profile: {
+      name: profile.name,
+      email: profile.email,
+      timezone: profile.timezone,
+      preferences: exportablePreferences(profile.preferences),
+      waitlist: me ? { place: await waitlistPlace(db, userId), ...me } : null,
+    },
   };
   yield JSON.stringify(head).slice(0, -1); // the object stays open for the tables
   const snapshot = openSnapshot(userId, idleMs, deadlineMs);
