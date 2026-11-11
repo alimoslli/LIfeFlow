@@ -150,6 +150,7 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 - 11-10, overnight (owner approved): every page, sheet and first-run step checked on phones, laptops, dark mode, an empty account, sideways and with an accessibility scan; what broke is fixed and tested (change log, and `docs/hq/tonight-2026-11-09.md` §28). Full e2e on main at each step.
 
 **Next:**
+- **The audit and waitlist backlog** (owner, 2026-11-11): `docs/backlog/2026-11-11-audit-and-waitlist.md`. The waitlist first (close public access before the January 2027 App Store launch, let people in in batches from HQ), then money totals and exports, authorization and retries, offline, AI costs, scale, tests and the UX proposals. One small step per session on its own branch (`claude/waitlist`), never merged, deployed or switched on without the owner. LF COO.
 - Run the full test suite on the combined branch and check its preview.
 - A "Tonight" card on Today or the clock, picture first.
 - Coordinate migration numbers with HQ before merging phone sign-in (CLAUDE.md lists the order).
@@ -294,7 +295,7 @@ Last: done 2026-11-10 evening ([the walk and the numbers](audits/2026-11-10-prod
 **Status:**
 - **Instagram @lifeflowweb:** it is the only account. The owner has posted several of the videos himself, and their numbers will show once Instagram is properly connected in Metricool.
 - **Main project:** "The School Project" relaunch film. The teaser is Sun Nov 29 and the premiere is Mon Nov 30 at 10 AM PT. Test shoots are underway.
-- **Waiting list:** the rank rises with friends who join. It's planned for the website, later.
+- **Waiting list:** the rank rises with friends who join. Now being built in the app before launch (owner, 2026-11-11; `docs/backlog/2026-11-11-audit-and-waitlist.md`).
 - **Posting:** one tap per post by the owner. Nothing is published by an agent.
 
 **Owner decisions (11-07 and 11-08):**
@@ -351,6 +352,7 @@ Last: done 2026-11-10 evening ([the walk and the numbers](audits/2026-11-10-prod
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-11, LF COO: the owner's audit and waitlist backlog saved whole in `docs/backlog/2026-11-11-audit-and-waitlist.md` with his answers: the waitlist first; today's accounts queue in sign-up order and he accepts people in HQ before switching it on; a free trial and student offer are planned (replaces "no free term"); a referral counts only after the friend's email code.
 - 2026-11-11, LF Main (owner asked directly, picture approved): the skylings are five and follow the real sky: Dawn, Ray (the day), Goldie, Star (sunset into the evening, wearing the last glow at first) and Moon (new, 9 PM to first light, then it turns into Dawn), so the night gets the morning's attention. Noon and Dusk are retired (saved picks move to Ray and Moon). The suns drawn around Dawn, Noon and Goldie were dropped ("i dont like what appears").
 - 2026-11-11, LF Main (owner asked directly): the skylings get a little life. New looks drawn in code (wave, stretch, reading a book, a mug of coffee, thinking, surprised), picked by the real day (a wave when Today opens, reading through a class, coffee on a shift, a morning stretch, thinking while answering, surprised at a clash). Star is brighter, and dark mode and the night sky are a softer blue ("lighter still"). Today's note only says news, never money warnings or late to-dos ("we shouldnt think our users are dumb"). Next: the skyling's home that grows, with things you unlock, picture first.
 - 2026-11-11, LF COO (owner's reset, item 5): plain words on Money, School, Calendar, To-dos and Settings: shorter lines (about 4,700 words on screen down to 4,300; the longest block 34 words down to 22), nothing behind-the-scenes ("Bank not listed?", "Updated" instead of "Synced"), cash warnings say "You could run out of money around …" like Today. Kept: "assignment" (the owner's and Canvas's word), next steps, safety facts, consent, legal and delete warnings word for word. Tests: core, mobile (Extra large text), no-overlap, school-due, coach, crawl, a11y, touch targets; 644 unit tests.
