@@ -27,9 +27,10 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
   const email = await signUp(page, "Riley Chen");
   expect(seed(email)).toContain("Jarvis has");
 
-  await test.step("Today leads with the most important message", async () => {
+  await test.step("Today doesn't tell an organized person what they know (owner, 2026-11-11)", async () => {
     await page.goto("/");
-    await expect(page.getByRole("region", { name: "Heads up" })).toContainText(/run out of money|may not be covered/);
+    await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
+    await expect(page.getByText(/run out of money|below \$0|over budget/i)).toHaveCount(0);
     await shot(page, "1-today");
   });
 

@@ -59,7 +59,10 @@ export default async function TodayPage() {
     // The one thing worth saying: something that needs attention first, then a heads-up. Money stays quiet while locked.
     const insights = briefing.insights.filter((i) => !locked || (i.icon !== "money" && i.icon !== "trend" && i.icon !== "goal"));
     // Late to-dos come last: the timeline and To-dos already carry them; a money or schedule warning comes first.
-    const ranked = [...insights.filter((i) => i.id !== "overdue"), ...insights.filter((i) => i.id === "overdue")];
+    // Only what they might not have seen: a clash, an exam coming, a busy tomorrow, a bill on its way. Never what an
+    // organized person already knows (owner, 2026-11-11: "we shouldnt think our users are dumb ... he def knows he could
+    // run out of money"): no money warnings, budget nags or "you have late to-dos" here; Money and the line show those.
+    const ranked = insights.filter((i) => !/^(overdraft|budget-|pace-|overdue)/.test(i.id));
     const top = ranked.find((i) => i.tone === "attention") ?? ranked.find((i) => i.tone === "heads-up") ?? null;
     const note: AssistantNote | null = top
       ? { text: top.text, tone: top.tone, href: top.action?.href, prompt: top.action?.prompt, label: top.action?.label }
