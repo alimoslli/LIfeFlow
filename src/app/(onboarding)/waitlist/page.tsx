@@ -38,7 +38,11 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
   const preview = admin && sp.preview === "1";
   const firstName = user.name.split(" ")[0];
   // While the switch is off everyone can use the app, so the line shows only in the owner's preview.
-  if (!preview && canUseApp(user, w.waitlistOn)) return <YoureIn name={firstName} admin={admin} />;
+  // Someone let in before confirming their email still sees the card, or their friend's invite would never count.
+  if (!preview && canUseApp(user, w.waitlistOn)) {
+    const confirm = !w.emailVerified && <ConfirmEmail invited={w.invited} className={`${glass} wl-ticket`} />;
+    return <YoureIn name={firstName} admin={admin} confirm={confirm} />;
+  }
 
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost";
@@ -249,7 +253,7 @@ function Queue({ place, waiting, mine, name }: { place: number | null; waiting: 
   );
 }
 
-function YoureIn({ name, admin }: { name: string; admin: boolean }) {
+function YoureIn({ name, admin, confirm }: { name: string; admin: boolean; confirm: React.ReactNode }) {
   return (
     <div className="min-h-dvh bg-night-0 text-white">
       <div className="lf-stars pointer-events-none fixed inset-0" aria-hidden />
@@ -257,6 +261,7 @@ function YoureIn({ name, admin }: { name: string; admin: boolean }) {
         <p className={`${kicker} text-star-gold`}>No line for you</p>
         <h1 className="font-display text-[2.5rem] leading-none font-medium tracking-[-0.04em]">You&apos;re in, {name}</h1>
         <p className="text-[1.0625rem] text-white/80">You don&apos;t need to wait. Your sky is ready.</p>
+        {confirm}
         <div className="mt-2 flex flex-wrap gap-2">
           <Link href="/" className="lf-sb lf-sb-sun lf-sb-sm">
             Open my day
