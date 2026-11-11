@@ -7,6 +7,7 @@ import { encryptSecret } from "../crypto";
 import { audit } from "../services/audit";
 import { seedDefaultCategories } from "../services/finance/categories";
 import { recordInvite } from "../services/invites";
+import { verifyEmail } from "../services/referrals";
 import { adminFor } from "./admin";
 import { saveChallenge, takeChallenge } from "./challenges";
 
@@ -112,14 +113,21 @@ export async function completeOAuthSignIn(
     db,
   );
   await linkIdentity(db, provider, user.id, claims, refreshToken ? encryptSecret(refreshToken) : null);
-  // Signed up from a friend's link: record who invited them. The friend counts only after they confirm the 6-digit code on
-  // /waitlist like everyone else (owner, 2026-11-11): a provider's verified email doesn't count on its own. Never blocks sign-up.
+  // Signed up from a friend's link: record who invited them. Never blocks sign-up.
   if (state.invite) {
     try {
       await recordInvite(db, user.id, state.invite);
     } catch (e) {
-      console.warn("invite credit skipped:", e instanceof Error ? e.name : "unknown");
+      console.warn("invite record skipped:", e instanceof Error ? e.name : "unknown");
     }
+  }
+  // The provider verified this email (checked above), so it counts without a code (owner, 2026-11-11). All or nothing: the
+  // verified date and the inviter's credit are one transaction (`verifyEmail`), so an account is never verified and attributed
+  // but never credited. If it can't be done, the account stays unverified and the 6-digit code on /waitlist credits it later.
+  try {
+    await verifyEmail(db, user.id);
+  } catch (e) {
+    console.warn("provider email left unverified:", e instanceof Error ? e.name : "unknown");
   }
   return { kind: "created", userId: user.id };
 }
