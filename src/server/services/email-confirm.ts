@@ -14,6 +14,8 @@ import { verifyEmail, type VerifyResult } from "./referrals";
 
 export const CONFIRM_CODE_TTL_MS = 10 * 60_000;
 export const CONFIRM_MAX_ATTEMPTS = 5;
+/** Every try counts per person per day, on top of the 5 per code, and a new code never resets it. */
+export const CONFIRM_TRIES_PER_DAY = 10;
 export const CONFIRM_SENDS_PER_HOUR = 3;
 export const CONFIRM_SENDS_PER_IP_HOUR = 10;
 
@@ -76,7 +78,10 @@ export type ConfirmResult = ({ ok: true } & VerifyResult) | { ok: false; reason:
  * marked confirmed, crediting the inviter, in one transaction, so it works once and can't half-happen.
  */
 export async function confirmEmailCode(db: Database, userId: string, code: string, ip: string, now = Date.now()): Promise<ConfirmResult> {
-  const [byIp, byUser] = [await rateLimit(db, `email-confirm:try:ip:${ip}`, 30, 900), await rateLimit(db, `email-confirm:try:user:${userId}`, 20, 900)];
+  const [byIp, byUser] = [
+    await rateLimit(db, `email-confirm:try:ip:${ip}`, 30, 900),
+    await rateLimit(db, `email-confirm:try:user:${userId}`, CONFIRM_TRIES_PER_DAY, 86400),
+  ];
   if (!byIp.allowed || !byUser.allowed) return { ok: false, reason: "too_many" };
   const typed = code.replace(/\s/g, "");
   return db.transaction(async (tx) => {

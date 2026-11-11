@@ -357,6 +357,23 @@ describe("alias farming, the keyed hash and the daily cap", () => {
     expect(rows.filter((r) => r.creditedAt)).toHaveLength(11);
   });
 
+  it("a person gets 10 tries a day in total: a new code doesn't reset the count", async () => {
+    const { user } = await makeUser("Sam");
+    const ip = newIp();
+    const out = outbox();
+    const wrongFor = () => (out.code() === "000000" ? "111111" : "000000");
+    let tries = 0;
+    for (const n of [4, 4, 2]) {
+      await sendConfirmCode(db, user.id, ip, { send: out.send, config: CFG });
+      for (let i = 0; i < n; i++, tries++) expect(await confirmEmailCode(db, user.id, wrongFor(), ip)).toEqual({ ok: false, reason: "wrong" });
+    }
+    expect(tries).toBe(10);
+    // the eleventh try is refused, even with the right code from the newest email
+    expect(await confirmEmailCode(db, user.id, out.code(), ip)).toEqual({ ok: false, reason: "too_many" });
+    const [u] = await db.select({ at: users.emailVerifiedAt }).from(users).where(eq(users.id, user.id));
+    expect(u.at).toBeNull();
+  });
+
   it("parallel wrong guesses never exceed 5 tries", async () => {
     const { user } = await makeUser("Sam");
     const ip = newIp();
@@ -366,8 +383,8 @@ describe("alias farming, the keyed hash and the daily cap", () => {
     const results = await Promise.all(Array.from({ length: 12 }, () => confirmEmailCode(db, user.id, wrong, ip)));
     expect(results.filter((r) => !r.ok && r.reason === "wrong").length).toBeLessThanOrEqual(4);
     expect(results.filter((r) => !r.ok && r.reason === "locked").length).toBeGreaterThanOrEqual(1);
-    // The code is gone: even the right one fails now.
-    expect(await confirmEmailCode(db, user.id, out.code(), ip)).toEqual({ ok: false, reason: "expired" });
+    // The code is gone (and the day's tries are used): even the right one fails now.
+    expect(await confirmEmailCode(db, user.id, out.code(), ip)).toMatchObject({ ok: false });
   });
 });
 
