@@ -147,7 +147,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
               {
                 who: "ray",
                 title: "Friends move you",
-                text: "Each friend who confirms their email puts you ahead of the person just above. A friend counts once, and first place stays first.",
+                text: "Each friend who confirms their email puts you ahead of the person just above. A friend counts once, first place stays first, and you can move up to 10 places a day.",
               },
               { who: "moon", title: "A few at a time", text: "We let people in in small groups. Other people's friends and each group can change your place." },
             ].map((s, i) => (

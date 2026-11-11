@@ -29,7 +29,7 @@ export function referralEmailKey(email: string): string {
 /** The unique, keyed (HMAC) hash stored for a friend's email: never guessable offline from the table. */
 export const emailHash = (email: string) => keyedHash("waitlist-referral-email", referralEmailKey(email));
 
-/** Moves one inviter can earn in a day (a rolling 24 hours); more friends are still recorded, without a move. */
+/** Real moves one inviter can earn in a day (a rolling 24 hours; friends who moved nobody don't count); more friends are still recorded, without a move or a count. */
 export const MAX_CREDITS_PER_DAY = 10;
 
 export type Credit = { recorded: boolean; moved: boolean };
@@ -83,7 +83,7 @@ export async function creditReferral(tx: Tx, inviteeId: string, now = new Date()
   const [{ n: today }] = await tx
     .select({ n: count() })
     .from(waitlistReferrals)
-    .where(and(eq(waitlistReferrals.inviterId, inviter.id), gte(waitlistReferrals.creditedAt, new Date(now.getTime() - 24 * 3600_000))));
+    .where(and(eq(waitlistReferrals.inviterId, inviter.id), gte(waitlistReferrals.movedAt, new Date(now.getTime() - 24 * 3600_000))));
   const capped = today >= MAX_CREDITS_PER_DAY;
   const inserted = await tx
     .insert(waitlistReferrals)
@@ -92,5 +92,8 @@ export async function creditReferral(tx: Tx, inviteeId: string, now = new Date()
     .returning({ id: waitlistReferrals.id });
   if (!inserted.length) return none;
   // Moves only someone still waiting; an inviter already let in, or first in line, stays put.
-  return { recorded: true, moved: capped ? false : await moveUpOne(tx, inviter.id) };
+  if (capped) return { recorded: true, moved: false };
+  const moved = await moveUpOne(tx, inviter.id);
+  if (moved) await tx.update(waitlistReferrals).set({ movedAt: now }).where(eq(waitlistReferrals.id, inserted[0].id));
+  return { recorded: true, moved };
 }

@@ -246,6 +246,8 @@ export const waitlistReferrals = pgTable(
     inviteeId: uuid("invitee_id").references(() => users.id, { onDelete: "set null" }),
     inviteeEmailHash: text("invitee_email_hash").notNull(),
     creditedAt: tstz("credited_at"),
+    /** Set only when this friend really moved the inviter up a place (the daily cap counts these). */
+    movedAt: tstz("moved_at"),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("waitlist_referrals_email_uniq").on(t.inviteeEmailHash), index("waitlist_referrals_inviter_idx").on(t.inviterId)],

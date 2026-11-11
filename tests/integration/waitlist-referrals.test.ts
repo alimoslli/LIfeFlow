@@ -329,6 +329,34 @@ describe("alias farming, the keyed hash and the daily cap", () => {
     expect((await waitlistPage(db, inviter.id)).friends).toBe(10);
   });
 
+  it("the daily cap counts moves, not credited friends: ten friends who moved nobody don't use it up", async () => {
+    await clearLine();
+    const inviter = (await makeUser("Inviter")).user;
+    const code = await inviteCodeFor(db, inviter.id);
+    expect(await place(inviter.id)).toBe(1);
+    const friends: string[] = [];
+    for (let i = 0; i < MAX_CREDITS_PER_DAY + 1; i++) {
+      const f = (await makeUser(`F${i}`)).user;
+      await recordInvite(db, f.id, code);
+      friends.push(f.id);
+    }
+    // first place stays first: ten friends are recorded and counted, none moves anyone
+    for (const id of friends.slice(0, MAX_CREDITS_PER_DAY)) expect(await verifyEmail(db, id)).toEqual({ verified: true, recorded: true, moved: false });
+    // someone later takes the place ahead (the owner lets the queue change); the 11th friend still gets a real move
+    const [{ rank }] = await db.select({ rank: users.waitlistRank }).from(users).where(eq(users.id, inviter.id));
+    const filler = (await makeUser("Filler")).user;
+    await db
+      .update(users)
+      .set({ waitlistRank: rank - 1_000_000 - Math.floor(Math.random() * 1000) })
+      .where(eq(users.id, filler.id));
+    expect(await place(inviter.id)).toBe(2);
+    expect(await verifyEmail(db, friends[MAX_CREDITS_PER_DAY])).toEqual({ verified: true, recorded: true, moved: true });
+    expect(await place(inviter.id)).toBe(1);
+    const rows = await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id));
+    expect(rows.filter((r) => r.movedAt)).toHaveLength(1);
+    expect(rows.filter((r) => r.creditedAt)).toHaveLength(11);
+  });
+
   it("parallel wrong guesses never exceed 5 tries", async () => {
     const { user } = await makeUser("Sam");
     const ip = newIp();
