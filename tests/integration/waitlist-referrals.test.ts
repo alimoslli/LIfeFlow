@@ -6,7 +6,7 @@ import { takeChallenge } from "@/server/auth/challenges";
 import { completeGoogleSignIn, parseGoogleState, startGoogleSignIn } from "@/server/auth/google-signin";
 import { closeDb, getDb } from "@/server/db/client";
 import { emailConfirmations, users, waitlistReferrals } from "@/server/db/schema";
-import { confirmEmailCode, CONFIRM_CODE_TTL_MS, sendConfirmCode } from "@/server/services/email-confirm";
+import { confirmEmailCode, CONFIRM_CODE_TTL_MS, purgeExpiredConfirmCodes, sendConfirmCode } from "@/server/services/email-confirm";
 import { inviteCodeFor, recordInvite, validInviteCode } from "@/server/services/invites";
 import { creditReferral, emailHash, MAX_CREDITS_PER_DAY, normalizeEmail, referralEmailKey, verifyEmail } from "@/server/services/referrals";
 import { saveWelcomeProgress } from "@/server/services/onboarding";
@@ -64,9 +64,11 @@ describe("confirm your email: the code", () => {
     const out = outbox();
     expect(await sendConfirmCode(db, user.id, ip, { send: out.send, config: CFG })).toEqual({ ok: true, id: "msg_1" });
     expect(out.sent[0].to).toBe(user.email);
-    // Only a hash is kept, never the code.
+    // Only a hash is kept, never the code, and not a plain sha256 of it (a 6-digit code would fall to a lookup table).
     const [row] = await db.select().from(emailConfirmations).where(eq(emailConfirmations.userId, user.id));
     expect(row.codeHash).not.toContain(out.code());
+    for (const plain of [out.code(), `${user.id}:${out.code()}`, `email-confirm:${user.id}:${out.code()}`])
+      expect(row.codeHash).not.toBe(createHash("sha256").update(plain).digest("hex"));
 
     const r = await confirmEmailCode(db, user.id, ` ${out.code().slice(0, 3)} ${out.code().slice(3)} `, ip);
     expect(r).toMatchObject({ ok: true, verified: true });
@@ -76,6 +78,18 @@ describe("confirm your email: the code", () => {
     expect(await confirmEmailCode(db, user.id, out.code(), ip)).toEqual({ ok: false, reason: "expired" });
     // Already confirmed: no new code.
     expect(await sendConfirmCode(db, user.id, ip, { send: out.send, config: CFG })).toEqual({ ok: false, reason: "already" });
+  });
+
+  it("the sweep removes expired codes and keeps live ones", async () => {
+    const a = (await makeUser("A")).user;
+    const b = (await makeUser("B")).user;
+    const out = outbox();
+    const ip = newIp();
+    await sendConfirmCode(db, a.id, ip, { send: out.send, config: CFG, now: Date.now() - 2 * CONFIRM_CODE_TTL_MS });
+    await sendConfirmCode(db, b.id, ip, { send: out.send, config: CFG });
+    expect(await purgeExpiredConfirmCodes(db)).toBeGreaterThanOrEqual(1);
+    expect(await db.select().from(emailConfirmations).where(eq(emailConfirmations.userId, a.id))).toEqual([]);
+    expect(await db.select().from(emailConfirmations).where(eq(emailConfirmations.userId, b.id))).toHaveLength(1);
   });
 
   it("says a send worked only when the provider returned an id, and leaves no code behind otherwise", async () => {

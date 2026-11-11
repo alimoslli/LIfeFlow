@@ -8,6 +8,7 @@ import { openToApp } from "@/server/services/waitlist";
 import { errorResponse, HttpError } from "@/server/http";
 import { purgeUnusedPreviews } from "@/server/services/hq-files";
 import { purgeOldRateLimits } from "@/server/rate-limit";
+import { purgeExpiredConfirmCodes } from "@/server/services/email-confirm";
 import { purgeExpiredVoiceSessions } from "@/server/jarvis/voice";
 import { purgeOldSmsInbound } from "@/server/services/sms";
 import { pushImportant, runDueSlot } from "@/server/services/proactive/engine";
@@ -66,6 +67,7 @@ async function runNotify() {
   // Housekeeping that must not depend on sign-ins: old limit buckets, Stop and continuation marks.
   await purgeOldRateLimits(getDb()).catch(() => undefined);
   await purgeOldSmsInbound(getDb()).catch(() => undefined);
+  await purgeExpiredConfirmCodes(getDb()).catch(() => undefined);
   // HQ housekeeping: pictures no decision card uses any more. Never blocks the run.
   try {
     await purgeUnusedPreviews(getDb());

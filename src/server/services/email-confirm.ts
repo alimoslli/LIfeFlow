@@ -1,5 +1,6 @@
-import { createHash, randomInt, timingSafeEqual } from "node:crypto";
-import { and, eq, sql } from "drizzle-orm";
+import { randomInt, timingSafeEqual } from "node:crypto";
+import { and, eq, lt, sql } from "drizzle-orm";
+import { keyedHash } from "../crypto";
 import type { Database } from "../db/client";
 import { emailConfirmations, users } from "../db/schema";
 import { emailConfig, sendEmail, type EmailConfig } from "../integrations/email";
@@ -19,7 +20,8 @@ export const CONFIRM_TRIES_PER_DAY = 10;
 export const CONFIRM_SENDS_PER_HOUR = 3;
 export const CONFIRM_SENDS_PER_IP_HOUR = 10;
 
-const codeHash = (userId: string, code: string) => createHash("sha256").update(`email-confirm:${userId}:${code}`).digest("hex");
+// Keyed (HMAC under a key derived from ENCRYPTION_KEY, its own label), so a stolen table can't be run against all million codes.
+const codeHash = (userId: string, code: string) => keyedHash("email-confirm-code", `${userId}:${code}`);
 const same = (a: string, b: string) => {
   const x = Buffer.from(a, "hex");
   const y = Buffer.from(b, "hex");
@@ -114,4 +116,10 @@ export async function confirmEmailCode(db: Database, userId: string, code: strin
     if (!taken.length) return { ok: false, reason: "expired" } as const;
     return { ok: true, ...(await verifyEmail(tx, userId, new Date(now))) } as const;
   });
+}
+
+/** Housekeeping for the daily run: codes past their 10 minutes are useless, so they go. Returns how many were removed. */
+export async function purgeExpiredConfirmCodes(db: Database): Promise<number> {
+  const gone = await db.delete(emailConfirmations).where(lt(emailConfirmations.expiresAt, new Date())).returning({ id: emailConfirmations.userId });
+  return gone.length;
 }
