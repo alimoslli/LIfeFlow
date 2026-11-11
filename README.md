@@ -105,7 +105,7 @@ The key is only read on the server. It is never sent to the browser, logged, or 
 | `npm run lint` | ESLint |
 | `npm test` | Unit + integration tests (Vitest, against `TEST_DATABASE_URL`) |
 | `npm run test:e2e` | Browser tests (Playwright) against the production build, an isolated `budgetflow_e2e` database and a local fake OpenAI server. Run `npm run build` first |
-| `npm run check` | typecheck + lint + tests |
+| `npm run check` | typecheck + lint + format check + tests (set `TEST_DATABASE_URL` to a database other than `DATABASE_URL`) |
 | `npm run db:generate` | Generate a new migration after editing `src/server/db/schema.ts` |
 | `npm run db:migrate` | Apply migrations (and warn if the DB role would bypass row-level security) |
 | `npm run db:seed-demo` | Recreate the demo account |

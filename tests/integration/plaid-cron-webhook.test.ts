@@ -4,7 +4,7 @@ import { GET as cron } from "@/app/api/cron/sync/route";
 import { POST as webhook } from "@/app/api/integrations/plaid/webhook/route";
 import { closeDb, getDb } from "@/server/db/client";
 import { withJobLock, withPlaidSyncLock } from "@/server/db/job-lock";
-import { integrations, jobLocks, syncJobs } from "@/server/db/schema";
+import { connectionRegistry, integrations, jobLocks, syncJobs } from "@/server/db/schema";
 import { exchangePublicToken, markNeedsReauth, reconnectLinkToken } from "@/server/integrations/plaid";
 import { makeUser } from "../helpers";
 
@@ -17,8 +17,23 @@ vi.mock("@/server/integrations/plaid", async (orig) => ({
   syncConnection: mocks.sync,
 }));
 
-afterAll(closeDb);
-beforeAll(() => {
+afterAll(async () => {
+  vi.unstubAllGlobals();
+  await closeDb();
+});
+beforeAll(async () => {
+  // The cron walks EVERY connection in the database. Earlier files leave Google, Outlook and Canvas connections behind, and
+  // the real cron would call those providers over the network (slow or hanging, growing with every file that ran before this
+  // one), and can find the cron lease held. This file is about Plaid, so it starts from an empty registry (rows are derived
+  // and every test makes its own user) and may never reach a real provider.
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => {
+      throw new Error("no network in this test");
+    }),
+  );
+  await getDb().delete(jobLocks).where(eq(jobLocks.name, "cron:sync"));
+  await getDb().delete(connectionRegistry);
   process.env.PLAID_CLIENT_ID = "cid";
   process.env.PLAID_SECRET = "sec";
   process.env.PLAID_ENV = "sandbox";
