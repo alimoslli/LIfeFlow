@@ -179,6 +179,26 @@ describe("referral credit", () => {
     expect(await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id))).toHaveLength(1);
   });
 
+  it("two friends of one inviter confirming their codes at the same moment don't deadlock, and each moves the inviter", async () => {
+    await clearLine();
+    await makeUser("A");
+    await makeUser("B");
+    const inviter = (await makeUser("Inviter")).user;
+    const code = await inviteCodeFor(db, inviter.id);
+    const ip = newIp();
+    const pairs = [];
+    for (const n of ["F1", "F2"]) {
+      const f = (await makeUser(n)).user;
+      await recordInvite(db, f.id, code);
+      const out = outbox();
+      await sendConfirmCode(db, f.id, ip, { send: out.send, config: CFG });
+      pairs.push({ id: f.id, code: out.code() });
+    }
+    const results = await Promise.all(pairs.map((p) => confirmEmailCode(db, p.id, p.code, ip)));
+    expect(results.every((r) => r.ok)).toBe(true);
+    expect(await place(inviter.id)).toBe(1);
+  });
+
   it("two different friends confirming together each move the inviter one place", async () => {
     await clearLine();
     const a = (await makeUser("A")).user;

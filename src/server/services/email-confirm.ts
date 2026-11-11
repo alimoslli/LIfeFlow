@@ -6,6 +6,7 @@ import { emailConfirmations, users } from "../db/schema";
 import { emailConfig, sendEmail, type EmailConfig } from "../integrations/email";
 import { rateLimit } from "../rate-limit";
 import { verifyEmail, type VerifyResult } from "./referrals";
+import { lockQueue } from "./waitlist";
 
 /**
  * "Confirm your email" (owner, 2026-11-11). A 6-digit code emailed to the account's own address, with the same rules as the
@@ -87,6 +88,8 @@ export async function confirmEmailCode(db: Database, userId: string, code: strin
   if (!byIp.allowed || !byUser.allowed) return { ok: false, reason: "too_many" };
   const typed = code.replace(/\s/g, "");
   return db.transaction(async (tx) => {
+    // The queue lock comes first in every transaction that may credit someone (see lockQueue), before the code row's lock.
+    await lockQueue(tx);
     // Counting the try first (and locking the row) means parallel guesses can't beat the limit.
     const [c] = await tx
       .update(emailConfirmations)

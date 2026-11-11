@@ -42,7 +42,7 @@ export type VerifyResult = Credit & { verified: boolean };
  */
 export async function verifyEmail(db: Database | Tx, userId: string, now = new Date()): Promise<VerifyResult> {
   return db.transaction(async (tx) => {
-    // The queue lock comes before any row lock below (see lockQueue), so confirmations at the same moment queue up instead of deadlocking.
+    // The queue lock comes before any row lock (see lockQueue), here and in confirmEmailCode, which takes it before it touches the code row, so confirmations at the same moment queue up instead of deadlocking.
     await lockQueue(tx);
     // Only the request that flips null to a time goes on to credit; a second one at the same moment waits on the row, then finds it set.
     const [flipped] = await tx
