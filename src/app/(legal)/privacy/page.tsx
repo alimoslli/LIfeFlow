@@ -218,6 +218,10 @@ export default function PrivacyPolicy() {
         our providers&apos; backups expire within their normal backup periods. Rate-limit records are deleted after about a day, and expired sign-in sessions
         are cleared automatically. Disconnecting Google removes your stored Google tokens.
       </p>
+      <p>
+        When you delete your account we remove your data, except a one-way fingerprint of your email address, kept so the same address can&apos;t earn a second
+        invite credit. It can&apos;t be turned back into your address.
+      </p>
 
       <h2>8. Your choices and rights</h2>
       <ul>

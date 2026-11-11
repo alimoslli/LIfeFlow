@@ -51,7 +51,10 @@ export default async function DataSettings() {
       </Card>
       <Card className="border-danger/30 p-5">
         <h2 className="font-medium text-danger">Delete account</h2>
-        <p className="mt-1 text-sm text-text-2">Deletes your account and everything in it. This can&apos;t be undone.</p>
+        <p className="mt-1 text-sm text-text-2">
+          Deletes your account and everything in it, except a one-way fingerprint of your email address, kept so the same address can&apos;t earn a second
+          invite credit. This can&apos;t be undone.
+        </p>
         <ActionForm action={deleteAccountAction} className="mt-4 max-w-sm">
           {withPassword && (
             <Field label="Password" htmlFor="del-pw">
