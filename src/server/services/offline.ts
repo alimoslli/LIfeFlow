@@ -60,6 +60,9 @@ export type ReplayResult = { id: string; status: "applied" | "already_applied" |
 export function failureOf(e: unknown): Omit<ReplayResult, "id"> {
   if (e instanceof ServiceError) return { status: "failed", error: e.message.slice(0, 200) };
   if (e instanceof ZodError) return { status: "failed", error: "This change isn't valid." };
+  // Integrity errors (23xxx: a record is missing, a rule is broken) fail the same way every time, so they are final.
+  const code = (e as { cause?: { code?: string }; code?: string })?.cause?.code ?? (e as { code?: string })?.code;
+  if (typeof code === "string" && code.startsWith("23")) return { status: "failed", error: "This change couldn't be saved." };
   return { status: "failed", error: "This change couldn't be saved.", retryable: true };
 }
 

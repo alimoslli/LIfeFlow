@@ -68,6 +68,7 @@ export function AppShell({
   assistantNamed = false,
   companion,
   aiConsent = false,
+  moneyLock = false,
   unread = 0,
   areas = ALL_AREAS,
   renderedAt,
@@ -87,6 +88,8 @@ export function AppShell({
   companion?: string | null;
   /** The user allowed Jarvis to send their data to the AI provider. */
   aiConsent?: boolean;
+  /** The Money lock is on: the service worker must not keep the home page (it shows money) for offline reading. */
+  moneyLock?: boolean;
   user: { id: string; name: string; email: string; accountKind: "standard" | "demo"; timezone?: string };
   /** Show the guided tour (once, after onboarding or when replayed). */
   tour?: boolean;
@@ -312,7 +315,7 @@ export function AppShell({
         </div>
         <Toaster />
         <PullToRefresh />
-        <PwaClient userId={user.id} />
+        <PwaClient userId={user.id} moneyLock={moneyLock} />
         <SettingsSheet />
         <EverythingSheet />
         <PasskeyOffer />

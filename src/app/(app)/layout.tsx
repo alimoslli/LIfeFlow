@@ -25,6 +25,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       assistantNamed={assistantProfile(user.preferences, user.timezone).named}
       companion={user.preferences?.companion}
       aiConsent={aiAllowed(user.preferences)}
+      moneyLock={user.preferences?.moneyLock?.enabled === true}
       unread={unread}
       areas={lifeAreas(user.preferences?.lifeStage)}
       renderedAt={renderedAt}

@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { OFFLINE_BATCH_MAX } from "@/lib/offline-limits";
-import { applyOutcome, backoffMs, chunk, classifyHttp, nextSeq, orderOps, readyOps, type OpLike } from "@/lib/offline-queue-logic";
+import {
+  applyOutcome,
+  backoffMs,
+  chunk,
+  classifyHttp,
+  failDependents,
+  MAX_ATTEMPTS,
+  nextSeq,
+  orderOps,
+  readyOps,
+  type OpLike,
+} from "@/lib/offline-queue-logic";
 
 const op = (id: string, more: Partial<OpLike> = {}): OpLike => ({ id, kind: "task.create", data: {}, ...more });
 
@@ -30,8 +41,45 @@ describe("offline queue logic", () => {
     const tick = op("s1", { seq: 2, kind: "task.status", data: { taskId: "t1", done: true } });
     expect(readyOps([tick, create], "u", 0).map((o) => o.id)).toEqual(["t1"]);
     expect(readyOps([tick], "u", 0).map((o) => o.id)).toEqual(["s1"]); // the earlier one is saved: go
-    // A failed earlier change keeps the later one waiting too.
-    expect(readyOps([{ ...create, state: "failed" as const }, tick], "u", 0)).toEqual([]);
+    // When the create fails for good, what depended on it fails with it (it could never be saved).
+    const [c2, t2] = failDependents([{ ...create, state: "failed" as const }, tick], "t1");
+    expect(c2.state).toBe("failed");
+    expect(t2).toMatchObject({ state: "failed" });
+    expect(readyOps([c2, t2], "u", 0)).toEqual([]);
+    // Other changes are left alone.
+    expect(failDependents([op("x", { seq: 3 })], "t1")[0].state).toBeUndefined();
+  });
+
+  it("keeps two changes to the same item in order: tick done, undo, with the first retrying", () => {
+    const done = op("d1", { seq: 1, kind: "task.status", data: { taskId: "t", done: true } });
+    const undo = op("d2", { seq: 2, kind: "task.status", data: { taskId: "t", done: false } });
+    let stored = [undo, done]; // stored order doesn't matter
+    let state: boolean | undefined; // the server's copy of the to-do
+    let deadlock = true; // the first attempt hits a temporary database error
+    let now = 0;
+    for (let round = 0; round < 6 && stored.length; round++) {
+      const ready = readyOps(stored, "u", now);
+      for (const o of ready) {
+        const r = deadlock && o.id === "d1" ? { id: o.id, status: "failed" as const, retryable: true } : { id: o.id, status: "applied" as const };
+        if (r.status === "applied") state = o.data.done as boolean;
+        deadlock = false;
+        stored = stored.map((x) => (x.id === o.id ? applyOutcome(x, r, now) : x)).filter((x): x is OpLike => !!x);
+      }
+      // While the first is backing off, the undo must not be sent past it.
+      if (round === 0) expect(state).toBeUndefined();
+      now += 60_000;
+    }
+    expect(stored).toEqual([]);
+    expect(state).toBe(false); // ends undone
+  });
+
+  it("gives up on a change that keeps failing, and keeps it visible", () => {
+    let o: OpLike | null = op("a");
+    for (let i = 1; i < MAX_ATTEMPTS; i++) o = applyOutcome(o!, { id: "a", status: "failed", retryable: true }, 0);
+    expect(o).toMatchObject({ attempts: MAX_ATTEMPTS - 1 });
+    expect(o!.state).toBeUndefined();
+    o = applyOutcome(o!, { id: "a", status: "failed", retryable: true }, 0);
+    expect(o).toMatchObject({ state: "failed" });
   });
 
   it("holds changes during backoff, but not when the person asks to retry", () => {
