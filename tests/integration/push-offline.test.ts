@@ -128,5 +128,8 @@ describe("offline replay failures", () => {
     expect(failureOf(new ServiceError("Account not found"))).toEqual({ status: "failed", error: "Account not found" });
     expect(failureOf(new Error("connection terminated"))).toMatchObject({ status: "failed", retryable: true });
     expect(failureOf(Object.assign(new Error("deadlock"), { code: "40P01" }))).toMatchObject({ retryable: true });
+    // Integrity errors (23xxx) will fail the same way every time: final, so they show on the failure card.
+    expect(failureOf(Object.assign(new Error("x"), { cause: { code: "23503" } })).retryable).toBeUndefined();
+    expect(failureOf(Object.assign(new Error("x"), { code: "23505" })).retryable).toBeUndefined();
   });
 });

@@ -37,14 +37,33 @@ export const ownedBy = <T extends StoredMeta>(ops: T[], userId: string) => ops.f
 /** Ids of earlier changes this one needs first (ticking a to-do that was created offline). */
 export const dependsOn = (op: OpLike): string[] => (typeof op.data.taskId === "string" ? [op.data.taskId] : []);
 
+/** The thing a change is about: the to-do for a tick (and for the change that created it), otherwise the change itself. */
+const targetOf = (op: OpLike) => (typeof op.data.taskId === "string" ? op.data.taskId : op.id);
+
 /**
  * What can be sent now: this account's, in creation order, not failed, past
- * its backoff, and not waiting for an earlier change that is still stored.
+ * its backoff, and not waiting for an earlier change about the same item that
+ * is still stored (backing off, failed, or about to be sent first).
  */
 export function readyOps<T extends OpLike>(all: T[], userId: string, now: number, force = false): T[] {
-  const mine = orderOps(ownedBy(all, userId));
-  const stored = new Set(mine.map((o) => o.id));
-  return mine.filter((o) => o.state !== "failed" && (force || !o.nextTryAt || o.nextTryAt <= now) && !dependsOn(o).some((id) => id !== o.id && stored.has(id)));
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const o of orderOps(ownedBy(all, userId))) {
+    const key = targetOf(o);
+    const blocked = seen.has(key);
+    seen.add(key);
+    if (!blocked && o.state !== "failed" && (force || !o.nextTryAt || o.nextTryAt <= now)) out.push(o);
+  }
+  return out;
+}
+
+/** When a change fails for good, what was waiting on it can never be saved either: mark it failed too. */
+export function failDependents<T extends OpLike>(all: T[], failedId: string): T[] {
+  return all.map((o) =>
+    o.state !== "failed" && o.id !== failedId && dependsOn(o).includes(failedId)
+      ? { ...o, state: "failed" as const, error: "An earlier change it depended on couldn't be saved." }
+      : o,
+  );
 }
 
 export function chunk<T>(items: T[], size = OFFLINE_BATCH_MAX): T[][] {
@@ -58,6 +77,9 @@ export function classifyHttp(status: number): "retry" | "stop" {
   return status === 408 || status === 429 || status >= 500 ? "retry" : "stop"; // 401/403/409/400: keep them and wait (signed out, other account)
 }
 
+/** After this many tries a change stops retrying and shows on the failure card, so one bad change never loops forever. */
+export const MAX_ATTEMPTS = 8;
+
 /** Waits 5 s, 10 s, 20 s … up to 15 minutes. */
 export const backoffMs = (attempts: number) => Math.min(15 * 60_000, 5_000 * 2 ** Math.max(0, attempts - 1));
 
@@ -65,8 +87,9 @@ export type ReplayOutcome = { id: string; status: "applied" | "already_applied" 
 
 /** Per-change result from the server: gone from the queue, tried again later, or kept as failed. */
 export function applyOutcome<T extends OpLike>(op: T, r: ReplayOutcome | undefined, now: number): T | null {
-  if (!r) return { ...op, attempts: (op.attempts ?? 0) + 1, nextTryAt: now + backoffMs((op.attempts ?? 0) + 1) };
-  if (r.status !== "failed") return null;
-  if (r.retryable) return { ...op, attempts: (op.attempts ?? 0) + 1, nextTryAt: now + backoffMs((op.attempts ?? 0) + 1) };
-  return { ...op, state: "failed", error: r.error?.slice(0, 200) };
+  if (r && r.status !== "failed") return null;
+  if (r && !r.retryable) return { ...op, state: "failed", error: r.error?.slice(0, 200) };
+  const attempts = (op.attempts ?? 0) + 1;
+  if (attempts >= MAX_ATTEMPTS) return { ...op, attempts, state: "failed", error: "This change couldn't be saved after several tries." };
+  return { ...op, attempts, nextTryAt: now + backoffMs(attempts) };
 }

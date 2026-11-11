@@ -1,5 +1,5 @@
 import { OFFLINE_BATCH_MAX } from "./offline-limits";
-import { applyOutcome, nextSeq, orderOps, ownedBy, readyOps, classifyHttp, type OpLike, type ReplayOutcome } from "./offline-queue-logic";
+import { applyOutcome, failDependents, nextSeq, orderOps, ownedBy, readyOps, classifyHttp, type OpLike, type ReplayOutcome } from "./offline-queue-logic";
 
 /**
  * Changes made while offline, kept in IndexedDB on this device until they
@@ -111,6 +111,16 @@ export async function pending(): Promise<QueuedOp[]> {
   }
 }
 
+/** How many of this account's changes are not saved yet (waiting or failed), after one try at sending them. */
+export async function unsavedCount(): Promise<number> {
+  try {
+    await flush();
+    return ownedBy(await allOps(), owner ?? "").length;
+  } catch {
+    return 0;
+  }
+}
+
 /** This account's changes the server refused. They stay here until the person retries or discards them. */
 export async function failedOps(): Promise<QueuedOp[]> {
   try {
@@ -147,9 +157,17 @@ async function record(sent: Stored[], results: ReplayOutcome[]) {
   const now = Date.now();
   await tx("readwrite", async (s) => {
     for (const op of sent) {
-      const next = applyOutcome(op, byId.get(op.id), now);
-      if (next) await wrap(s.put(next));
-      else await wrap(s.delete(op.id));
+      // Read the stored copy inside this transaction, so another tab's newer write is never overwritten by a stale one.
+      const fresh = await wrap(s.get(op.id) as IDBRequest<Stored | undefined>);
+      if (!fresh) continue;
+      const next = applyOutcome(fresh, byId.get(op.id), now);
+      if (!next) await wrap(s.delete(op.id));
+      else await wrap(s.put(next));
+      // A create that can never be saved takes what depended on it down with it.
+      if (next?.state === "failed" && fresh.kind.endsWith(".create")) {
+        const all = await wrap(s.getAll() as IDBRequest<Stored[]>);
+        for (const o of failDependents(all, op.id)) if (!all.includes(o)) await wrap(s.put(o));
+      }
     }
   });
 }
@@ -170,7 +188,10 @@ export async function flush(opts: { force?: boolean } = {}): Promise<{ applied: 
       const unstamped = all.filter((o) => !o.userId);
       if (unstamped.length)
         await tx("readwrite", async (s) => {
-          for (const o of unstamped) await wrap(s.put({ ...o, userId: owner }));
+          for (const o of unstamped) {
+            const fresh = await wrap(s.get(o.id) as IDBRequest<Stored | undefined>);
+            if (fresh && !fresh.userId) await wrap(s.put({ ...fresh, userId: owner }));
+          }
         });
       const ready = readyOps(all, owner, Date.now(), opts.force).filter((o) => !tried.has(o.id));
       if (!ready.length) break;

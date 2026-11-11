@@ -3,6 +3,8 @@ const VERSION = "lf-v5"; // v5: Money is never kept for offline reading (the loc
 const SHELL = `${VERSION}-shell`;
 const PAGES = `${VERSION}-pages`;
 const STATIC = `${VERSION}-static`;
+const FLAGS = `${VERSION}-flags`; // small facts the app tells us (whether the Money lock is on)
+const LOCK_KEY = "/__money-lock";
 const OFFLINE_URL = "/offline";
 // Pages kept for reading offline (the latest version you opened).
 // Money is left out on purpose: it sits behind the Money lock, which a saved copy would bypass.
@@ -29,6 +31,18 @@ self.addEventListener("activate", (event) => {
 // Signing out clears every cached page, so no one else can read them on this device.
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "clear-user-data") event.waitUntil(caches.delete(PAGES));
+  // With the Money lock on, the home page (it shows the money line) is not kept for offline reading, and a copy already kept is removed.
+  if (event.data && event.data.type === "money-lock") {
+    event.waitUntil(
+      (async () => {
+        const f = await caches.open(FLAGS);
+        if (event.data.on) {
+          await f.put(LOCK_KEY, new Response("1"));
+          await (await caches.open(PAGES)).delete("/");
+        } else await f.delete(LOCK_KEY);
+      })(),
+    );
+  }
 });
 
 self.addEventListener("fetch", (event) => {
@@ -58,7 +72,8 @@ self.addEventListener("fetch", (event) => {
         try {
           const res = await fetch(req);
           const path = url.pathname;
-          if (res.ok && READABLE.includes(path) && !url.search && (res.headers.get("content-type") || "").includes("text/html")) {
+          const locked = !!(await caches.open(FLAGS).then((f) => f.match(LOCK_KEY)));
+          if (res.ok && READABLE.includes(path) && !(locked && path === "/") && !url.search && (res.headers.get("content-type") || "").includes("text/html")) {
             const c = await caches.open(PAGES);
             c.put(path, res.clone());
           }

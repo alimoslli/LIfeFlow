@@ -17,7 +17,7 @@ const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) && !/CriOS|FxiO
  * Everything that makes the web app behave like an installed one:
  * service worker, offline banner + queued changes, and the install prompt.
  */
-export function PwaClient({ userId }: { userId: string }) {
+export function PwaClient({ userId, moneyLock }: { userId: string; moneyLock: boolean }) {
   const router = useRouter();
   const [offline, setOffline] = useState(false);
   const [queued, setQueued] = useState(0);
@@ -32,15 +32,26 @@ export function PwaClient({ userId }: { userId: string }) {
   };
 
   // The signed-in account: changes are saved under it and sent only while it is the one signed in.
-  // A different account on this device never sees pages kept for the last one.
-  useEffect(() => {
+  // A different account on this device never sees pages kept for the last one; this runs while rendering,
+  // before anything on screen can ask for them.
+  useState(() => {
+    if (typeof window === "undefined") return null;
     setQueueOwner(userId);
     try {
       const last = localStorage.getItem("lf-cache-owner");
       if (last && last !== userId) void clearSavedPages();
       localStorage.setItem("lf-cache-owner", userId);
     } catch {}
+    return null;
+  });
+  useEffect(() => {
+    setQueueOwner(userId);
   }, [userId]);
+
+  // Tell the service worker about the Money lock, so it never keeps the home page (which shows money) while the lock is on.
+  useEffect(() => {
+    navigator.serviceWorker?.controller?.postMessage({ type: "money-lock", on: moneyLock });
+  }, [moneyLock]);
 
   const sync = async (force = false) => {
     const r = force ? await retryFailed() : await flush();
