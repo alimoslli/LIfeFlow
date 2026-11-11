@@ -1,7 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useSyncExternalStore } from "react";
+import { useLayoutEffect, useSyncExternalStore } from "react";
+import { useShell } from "@/components/shell/app-shell";
+import { currentChat, rememberChat, settleNewVisit, takeNewVisit } from "@/lib/chat-session";
 import { setAiConsentAction } from "@/app/(app)/settings/actions";
 import { undoChatToolsAction } from "@/app/(app)/jarvis/actions";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
@@ -109,8 +111,10 @@ export async function askOnToday(message: string, refresh: () => void) {
           actionId?: string;
           message?: string;
         };
-        if (ev.type === "conversation" && ev.id) set({ conversationId: ev.id });
-        else if (ev.type === "text")
+        if (ev.type === "conversation" && ev.id) {
+          set({ conversationId: ev.id });
+          rememberChat(ev.id);
+        } else if (ev.type === "text")
           patch((r) => {
             if (r.kept) {
               r.text = `${r.text.trimEnd()}\n\n`;
@@ -320,22 +324,23 @@ export function TodayMiddle({
   name,
   clouds,
   note,
-  conversationId,
   children,
 }: {
   name: string;
   clouds: IdeaCloud[];
   /** The skyling's one note: a link, a question it sends, or words it puts in the bar. */
   note: { text: string; href?: string; prompt?: string; fill?: string; attention?: boolean } | null;
-  conversationId: string | null;
   /** Something that must come first (the birthday question). */
   children?: React.ReactNode;
 }) {
   const router = useRouter();
   const { reply } = useTodayChat();
-  useEffect(() => {
-    if (conversationId && !state.conversationId) set({ conversationId });
-  }, [conversationId]);
+  // the chat this visit is in, read from the cookie (lib/chat-session.ts): a new visit starts without one
+  const { tz } = useShell();
+  useLayoutEffect(() => {
+    set({ conversationId: takeNewVisit() ? null : currentChat(tz) });
+    settleNewVisit();
+  }, [tz]);
   const refresh = () => router.refresh();
   if (reply) return <TodayReplyCard name={name} refresh={refresh} fill />;
   if (children) return <div className="h-full overflow-y-auto">{children}</div>;

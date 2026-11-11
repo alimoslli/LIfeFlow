@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { attachmentMeta, listConversations, listMessages, listPendingActions } from "@/server/jarvis/conversations";
+import { sessionChatId } from "@/server/jarvis/chat-session";
 import { suggestedMemoryIds, toUiMessages } from "@/server/jarvis/ui-messages";
 import { memoryStatuses } from "@/server/services/memory";
 import type { UiMessage } from "@/components/jarvis/types";
 import { missingConnections } from "@/server/services/integrations";
 import { ideaClouds } from "@/server/services/idea-clouds";
-import { assistantProfile } from "@/lib/assistant";
 import { skyCounts } from "@/server/services/sky-home";
+import { assistantProfile } from "@/lib/assistant";
 import { JarvisPage } from "./jarvis-page";
 
 export const metadata: Metadata = { title: "Skyling" };
@@ -16,10 +17,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
   const { ask, voice, c } = await searchParams;
   const { conversations, tz, connect, ideas, messages, activeId, home } = await withCurrentUser(async (s, u) => {
     const conversations = await listConversations(s);
-    // one chat that keeps going (owner, 2026-11-10: "starting a new chat is annoying every time"): the skyling's page
-    // opens the latest one, the same one Today's bar carries on
-    // an earlier conversation, when one is asked for (old links, the list of earlier chats), stays readable here
-    const latest = (c && conversations.find((x) => x.id === c)) || conversations[0];
+    // The chat lasts while the app is open and for the day (lib/chat-session.ts): this visit's chat opens here, the same
+    // one Today's bar carries on. An earlier chat opens when asked for (the list of chats, ?c=). Another person's chat
+    // address finds nothing (row-level security), so it opens this visit's chat, or an empty one.
+    const asked = c ? conversations.find((x) => x.id === c) : undefined;
+    const visit = asked ? null : await sessionChatId(s, u.timezone);
+    const latest = asked ?? conversations.find((x) => x.id === visit);
     let messages: UiMessage[] = [];
     if (latest) {
       const rows = await listMessages(s, latest.id);

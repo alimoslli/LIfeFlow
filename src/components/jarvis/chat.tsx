@@ -5,10 +5,11 @@ import Link from "next/link";
 import { NotifyAsk } from "./notify-ask";
 import { ASK_EVENT, takeHandoff, type AskDetail } from "@/lib/ask-handoff";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useTransition, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useTransition, type CSSProperties } from "react";
 import { useAppBusy } from "@/lib/app-busy";
 import { Plug, Brain, CircleAlert, ImageIcon, Loader2, Square } from "lucide-react";
 import { useAutoGrow } from "@/components/ui/auto-grow";
+import { rememberChat, settleNewVisit, takeNewVisit } from "@/lib/chat-session";
 import { SkyHome, homeHeight } from "@/components/skylings/sky-home";
 import type { SkyCounts } from "@/lib/sky-home";
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
@@ -107,6 +108,17 @@ export function JarvisChat({
   const [messages, setMessages] = useState<UiMessage[]>(initialMessages);
   const [input, setInput] = useState(initialPrompt ?? "");
   const [busy, setBusy] = useState(false);
+  // A new visit (the app was closed) starts without the chat from before, which stays in the list (lib/chat-session.ts).
+  // This runs before the first paint, so the old messages never show. A deep link (?c=) keeps its chat.
+  useLayoutEffect(() => {
+    const fresh = takeNewVisit();
+    const deepLink = new URLSearchParams(window.location.search).get("c");
+    if (fresh && !deepLink) {
+      setConversationId(null);
+      setMessages([]);
+    } else if (deepLink && initialId) rememberChat(initialId);
+    settleNewVisit();
+  }, [initialId]);
   // the skyling thinks while it works on your answer (owner, 2026-11-11)
   useEffect(() => {
     if (busy) skylingDoes("think");
@@ -245,6 +257,7 @@ export function JarvisChat({
     setMessages(withChoices(snap.messages));
     if (!conversationId && snap.conversationId) {
       setConversationId(snap.conversationId);
+      rememberChat(snap.conversationId);
       onConversation?.(snap.conversationId, snap.title);
       if (!compact) window.history.replaceState(null, "", `/jarvis?c=${snap.conversationId}`);
     }
@@ -382,6 +395,7 @@ export function JarvisChat({
             case "conversation":
               if (!conversationId) {
                 setConversationId(ev.id);
+                rememberChat(ev.id);
                 onConversation?.(ev.id, ev.title);
                 if (!compact) window.history.replaceState(null, "", `/jarvis?c=${ev.id}`);
               }
@@ -683,13 +697,15 @@ export function JarvisChat({
               )}
             </div>
           }
-          {messages.map((m, i) =>
-            m.role === "user" ? (
-              <UserBubble key={m.id} m={m} />
-            ) : (
-              <AssistantBubble key={m.id} m={m} last={i === messages.length - 1} onDecide={decide} onMemory={decideMemory} onRetry={tryAgain} />
-            ),
-          )}
+          <div data-chat-log className="flex flex-col gap-5">
+            {messages.map((m, i) =>
+              m.role === "user" ? (
+                <UserBubble key={m.id} m={m} />
+              ) : (
+                <AssistantBubble key={m.id} m={m} last={i === messages.length - 1} onDecide={decide} onMemory={decideMemory} onRetry={tryAgain} />
+              ),
+            )}
+          </div>
           {!aiConsent && !empty && <AiConsentCard name={assistantName} />}
           {followUps && aiConsent && (
             <div className="flex flex-wrap gap-2">
@@ -759,6 +775,7 @@ export function JarvisChat({
               onConversation={(id) => {
                 if (conversationId) return;
                 setConversationId(id);
+                rememberChat(id);
                 onConversation?.(id, `Talking with ${assistantName}`);
                 if (!compact) window.history.replaceState(null, "", `/jarvis?c=${id}`);
               }}

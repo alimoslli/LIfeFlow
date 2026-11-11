@@ -8,7 +8,6 @@ import { DayClock } from "@/components/day-clock/day-clock";
 import { assistantProfile } from "@/lib/assistant";
 import { greetingIn } from "@/lib/dates";
 import { requireUser, withCurrentUser } from "@/server/auth/current-user";
-import { listConversations } from "@/server/jarvis/conversations";
 import { moneyLocked } from "@/server/auth/money-lock";
 import { withUser } from "@/server/db/with-user";
 import { series } from "@/server/db/series";
@@ -47,7 +46,7 @@ export default async function TodayPage() {
     await withUser(me.id, (scope) => runProactive({ scope, tz: me.timezone, prefs: me.preferences, trigger: "promise" })).catch((e) =>
       console.error("promise check failed", e instanceof Error ? e.name : e),
     );
-  const { clock, note, assistantName, setup, hello, clouds, chatId } = await withCurrentUser(async (scope, user) => {
+  const { clock, note, assistantName, setup, hello, clouds } = await withCurrentUser(async (scope, user) => {
     const tz = user.timezone ?? "UTC";
     // Money (bills due, spent today) joins the clock only while the Money lock is open.
     const clock = await dayClockData(scope, tz, new Date(), { money: !locked });
@@ -79,8 +78,6 @@ export default async function TodayPage() {
       clouds: await ideaClouds(scope, tz, user.preferences, assistantProfile(user.preferences, user.timezone).name),
       setup,
       hello: `${greetingIn(tz)}, ${user.name.split(" ")[0]}`,
-      // one chat that keeps going (owner, 2026-11-10): Today carries on the latest one
-      chatId: (await listConversations(scope, 1))[0]?.id ?? null,
     };
   });
 
@@ -131,7 +128,6 @@ export default async function TodayPage() {
         <TodayMiddle
           name={assistantName}
           clouds={clouds}
-          conversationId={chatId}
           note={
             !me.preferences?.birthDate
               ? null

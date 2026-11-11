@@ -1362,6 +1362,10 @@ input[type="checkbox"].lf-switch:focus-visible {
 .lf-ask textarea:focus-visible {
   outline: none;
 }
+/* A new visit (lib/chat-session.ts): the chat from before is hidden until the chat has let it go, so it never flashes. */
+html[data-lf-new-visit] [data-chat-log] {
+  visibility: hidden;
+}
 /* The voice call: a soft halo behind the mark. */
 .lf-orb-glow {
   background: radial-gradient(closest-side, color-mix(in oklab, var(--accent) 22%, transparent), transparent);

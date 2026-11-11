@@ -7,6 +7,7 @@ import { SectionNav } from "@/components/shell/section-nav";
 import { QuickAddButton } from "@/components/shell/quick-add";
 import { ActionButton } from "@/components/action-form";
 import { JarvisChat } from "@/components/jarvis/chat";
+import { NewChatButton } from "@/components/jarvis/new-chat-button";
 import type { UiMessage } from "@/components/jarvis/types";
 import type { IdeaCloud } from "@/lib/idea-clouds";
 import type { SkyCounts } from "@/lib/sky-home";
@@ -80,6 +81,7 @@ export function JarvisPage({
           <p className="min-w-0 flex-1 truncate px-1 text-center text-[0.9375rem] font-semibold lg:text-left">
             <AssistantName start />
           </p>
+          <NewChatButton className="flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-2.5 text-[0.8125rem] font-semibold text-text-2 transition-colors hover:bg-surface-2 hover:text-text" />
           <SettingsGear className="flex h-11 w-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-surface-2 hover:text-text">
             <PixelIcon name="cog" className="h-6 w-6" />
           </SettingsGear>
