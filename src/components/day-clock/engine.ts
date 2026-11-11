@@ -432,7 +432,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       ]
         .filter(([k]) => (k as number) > 0)
         .map(([k, one, many]) => `${k} ${k === 1 ? one : many}`);
-      if (on.length) lines.push(`On your line: ${on.join(" · ")}`);
+      // plain words (owner, 2026-11-10): "You have 1 to-do and 2 goals", not "On your line: …"
+      if (on.length) lines.push(`You have ${on.length < 2 ? on[0] : `${on.slice(0, -1).join(", ")} and ${on[on.length - 1]}`}`);
     }
     return lines;
   }
@@ -783,7 +784,12 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       const w = pick(work);
       const end = w.end ?? w.start;
       // running: when it ends; over: the hours it took (from the schedule, never pay); later: when it starts
-      const [name, time] = live(w) ? ["Work till", endsAt(end)] : end <= now ? ["Worked", hrs(end - w.start)] : ["Work", fmtShort(w.start)];
+      // the small line says what it is, the big one when, in plain words (owner, 2026-11-10: the boxes were hard to read)
+      const [name, time] = live(w)
+        ? ["At work", `till ${endsAt(end)}`]
+        : end <= now
+          ? ["Worked today", hrs(end - w.start)]
+          : ["Work starts", fmtShort(w.start)];
       out.push({ it: w, icon: "work", name, time, label: `Work, ${fmt(w.start)} to ${fmt(end)}` });
     }
     const cls = DATED.filter((it) => it.cat === "class" && !it.allDay && inDay(it)).sort(byTime);
@@ -791,7 +797,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       const c = pick(cls);
       const end = c.end ?? c.start;
       const time = live(c) ? `till ${endsAt(end)}` : d === dayOf(now) && end <= now ? "done" : fmtShort(c.start);
-      out.push({ it: c, icon: "class", name: c.title, time, label: `${c.title}, ${fmt(c.start)} to ${fmt(end)}` });
+      const name = live(c) ? `In class: ${c.title}` : `Class: ${c.title}`;
+      out.push({ it: c, icon: "class", name, time, label: `${c.title}, ${fmt(c.start)} to ${fmt(end)}` });
     }
     let due = DATED.filter((it) => it.cat === "due" && inDay(it)).sort(byTime)[0];
     let ahead = false;
@@ -803,8 +810,9 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       const t = t0(due);
       const time = ahead ? dayShort(dayOf(t)) : (billOf(due) ?? (due.allDay ? "today" : fmtShort(t)));
       const pile = pileOf(DATED.filter((it) => it.cat === "due" && it.start === due.start && it.allDay === due.allDay));
-      const name = pile ?? due.title;
-      out.push({ it: due, icon: "due", name, time, label: `${name}, due ${dayLong(dayOf(t))}${due.allDay ? "" : ` at ${fmt(t)}`}`, ahead });
+      const what = pile ?? due.title;
+      const name = billOf(due) ? what : `${ahead ? "Next due" : "Due"}: ${what}`;
+      out.push({ it: due, icon: "due", name, time, label: `${what}, due ${dayLong(dayOf(t))}${due.allDay ? "" : ` at ${fmt(t)}`}`, ahead });
     }
     // in the order they happen; a deadline on a later day goes last
     return out.sort((a, b) => (a.ahead ? 1e9 : t0(a.it)) - (b.ahead ? 1e9 : t0(b.it)));

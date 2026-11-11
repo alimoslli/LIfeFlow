@@ -170,8 +170,8 @@ const overdraftRule: Rule = (s) => {
       tone: "attention",
       icon: "money",
       text: o.evenWithPay
-        ? `Checking could go below $0 around ${dayName(o.date, s.today)} at your usual pace.`
-        : `Checking could go below $0 around ${dayName(o.date, s.today)} if your next paycheck is late.`,
+        ? `You could run out of money around ${dayName(o.date, s.today)} if you keep spending like usual.`
+        : `You could run out of money around ${dayName(o.date, s.today)} if your next paycheck is late.`,
       action: { label: "Plan around it", prompt: "My checking might go below zero soon. Show me the forecast and help me avoid an overdraft." },
       score: 80,
     },

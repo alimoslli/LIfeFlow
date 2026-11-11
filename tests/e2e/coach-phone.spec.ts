@@ -29,7 +29,7 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
 
   await test.step("Today leads with the most important message", async () => {
     await page.goto("/");
-    await expect(page.getByRole("region", { name: "Heads up" })).toContainText(/below \$0|may not be covered/);
+    await expect(page.getByRole("region", { name: "Heads up" })).toContainText(/run out of money|may not be covered/);
     await shot(page, "1-today");
   });
 
