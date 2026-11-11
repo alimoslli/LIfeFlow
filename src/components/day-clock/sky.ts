@@ -18,6 +18,7 @@ import { isExam, pileOf, sunTimes, type ClockData, type ClockItem } from "@/lib/
 import { css, darkness, mix, skyAt, type RGB } from "@/lib/sky";
 import { companionOf, skylingAt, SKY_CHOICE, starGlowAt, type CompanionKey } from "@/lib/companions";
 import { drawCompanion, FRAMES, type Pose } from "./companion";
+import { choosePose } from "./pose";
 import { onSkylingDoes, skylingDoing } from "@/components/skylings/activity";
 import { createVisitors, type VisitorKind } from "./visitors";
 import { iconSvgInto, pixelize } from "./pixel-icons";
@@ -360,23 +361,11 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   let step = 0;
   // what the skyling's day looks like right now (set by draw), so the timer can pick its pose without redrawing the sky
   let poseCtx: { follow: boolean; moved: boolean; sleep: boolean; live?: string; morning: boolean } | null = null;
-  /**
-   * Its little life (owner, 2026-11-11): asleep late at night; at rest, whatever the page says it's doing (waving hello,
-   * thinking about your answer, surprised at a clash), else reading through a class, a coffee on a shift, a stretch now
-   * and then in the morning; otherwise it jogs in place. Turning the wheel, it runs.
-   */
+  /** Its little life (owner, 2026-11-11): the pose the rules in pose.ts choose now, for this time and what the page is doing. */
   const pickPose = (): Pose => {
     const c = poseCtx;
     if (!c) return "idle";
-    // it wakes up to say hello or to think about your answer, even at night
-    const doing = c.follow && !c.moved ? skylingDoing() : null;
-    if (doing) return doing;
-    if (c.sleep) return "sleep";
-    if (!c.follow || c.moved) return reduce && !c.moved ? "idle" : "walk";
-    if (c.live === "class") return "read";
-    if (c.live === "work") return "sip";
-    if (c.morning && Math.floor(Date.now() / 6000) % 4 === 0) return "stretch";
-    return reduce ? "idle" : "walk";
+    return choosePose({ ...c, doing: skylingDoing(), reduce, tick: Math.floor(Date.now() / 6000) });
   };
   // a cheer (something done, a visitor) plays the celebrate frames over whatever it was doing
   let cheerFrom = 0;
@@ -436,6 +425,8 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     const c = companionOf(choice === SKY_CHOICE ? viewKey : choice);
     if (root.dataset.skylingNow !== c.key) root.dataset.skylingNow = c.key;
     const cheering = performance.now() < cheerUntil;
+    // the pose it's showing, for the browser's checks (and for anyone reading the page)
+    who.dataset.pose = cheering ? "celebrate" : pose;
     for (const cv of [who, ...root.querySelectorAll<HTMLCanvasElement>(".dc-now-who")])
       drawCompanion(
         cv,
