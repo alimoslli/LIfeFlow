@@ -25,6 +25,7 @@ export async function GET(req: Request) {
     tz: url.searchParams.get("tz") ?? undefined,
     next: safeNext(url.searchParams.get("next")),
     userId: user?.id ?? null,
+    invite: url.searchParams.get("invite"),
   });
   // Google returns with a top-level GET redirect, so SameSite=Lax is enough.
   (await cookies()).set(GOOGLE_STATE_COOKIE, r.token, {

@@ -1,7 +1,8 @@
 import { and, asc, count, eq, inArray, isNull, lt, notInArray, or, sql, type SQL } from "drizzle-orm";
 import { adminEmails } from "../auth/admin";
 import type { Database } from "../db/client";
-import { appAccess, users } from "../db/schema";
+import { appAccess, users, waitlistReferrals } from "../db/schema";
+import type { Tx } from "../db/with-user";
 import { COMPANION_KEYS } from "@/lib/companions";
 
 /**
@@ -95,28 +96,39 @@ export async function acceptUsers(db: Database, ids: string[]): Promise<{ accept
  * first and nothing is banked. One move at a time across the whole queue (a transaction lock), so concurrent moves
  * can't lose or duplicate a place. Returns false when they're first or not in line.
  */
-export async function moveUpOne(db: Database, userId: string): Promise<boolean> {
-  return db.transaction(async (tx) => {
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext('lifeflow:waitlist'))`);
-    const [me] = await tx
-      .select({ rank: users.waitlistRank })
-      .from(users)
-      .where(and(eq(users.id, userId), inLine()));
-    if (!me) return false;
-    const [above] = await tx
-      .select({ id: users.id, rank: users.waitlistRank })
-      .from(users)
-      .where(and(inLine(), lt(users.waitlistRank, me.rank)))
-      .orderBy(sql`${users.waitlistRank} desc`)
-      .limit(1);
-    if (!above) return false;
-    // One statement swaps both places (the unique check runs at the end of the statement).
-    await tx
-      .update(users)
-      .set({ waitlistRank: sql`case when ${users.id} = ${userId} then ${above.rank}::bigint else ${me.rank}::bigint end` })
-      .where(inArray(users.id, [userId, above.id]));
-    return true;
-  });
+export async function moveUpOne(db: Database | Tx, userId: string): Promise<boolean> {
+  // Inside a transaction already (a referral credit), run in it so the credit and the move commit together.
+  return db.transaction((tx) => moveUpOneIn(tx, userId));
+}
+
+/**
+ * One change to the queue at a time (held until the transaction ends). A caller that also changes a user row or inserts a
+ * row pointing at a user takes this FIRST, before those row locks, or two of them can wait on each other (a deadlock).
+ */
+export async function lockQueue(tx: Tx) {
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtext('lifeflow:waitlist'))`);
+}
+
+async function moveUpOneIn(tx: Tx, userId: string): Promise<boolean> {
+  await lockQueue(tx);
+  const [me] = await tx
+    .select({ rank: users.waitlistRank })
+    .from(users)
+    .where(and(eq(users.id, userId), inLine()));
+  if (!me) return false;
+  const [above] = await tx
+    .select({ id: users.id, rank: users.waitlistRank })
+    .from(users)
+    .where(and(inLine(), lt(users.waitlistRank, me.rank)))
+    .orderBy(sql`${users.waitlistRank} desc`)
+    .limit(1);
+  if (!above) return false;
+  // One statement swaps both places (the unique check runs at the end of the statement).
+  await tx
+    .update(users)
+    .set({ waitlistRank: sql`case when ${users.id} = ${userId} then ${above.rank}::bigint else ${me.rank}::bigint end` })
+    .where(inArray(users.id, [userId, above.id]));
+  return true;
 }
 
 /** A stable, anonymous name for someone in line: a skyling and four digits from their id. Never their name or email. */
@@ -134,8 +146,17 @@ export type FrontRow = { place: number; label: string; companion: string; me: bo
 export async function waitlistPage(db: Database, userId: string) {
   const [settings, place, waiting] = [await accessSettings(db), await waitlistPlace(db, userId), await waitingCount(db)];
   const front = await db.select({ id: users.id }).from(users).where(inLine()).orderBy(asc(users.waitlistRank)).limit(10);
-  const [{ friends }] = await db.select({ friends: count() }).from(users).where(eq(users.invitedBy, userId));
+  const [{ friends }] = await db.select({ friends: count() }).from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, userId));
+  // Signed up with this link but haven't confirmed their email yet (a friend who confirmed is in "friends").
+  const [{ pending }] = await db
+    .select({ pending: count() })
+    .from(users)
+    .where(and(eq(users.invitedBy, userId), isNull(users.emailVerifiedAt), eq(users.accountKind, "standard")));
+  const [me] = await db.select({ verifiedAt: users.emailVerifiedAt, invitedBy: users.invitedBy }).from(users).where(eq(users.id, userId));
   return {
+    emailVerified: !!me?.verifiedAt,
+    invited: !!me?.invitedBy,
+    pending,
     ...settings,
     place,
     waiting,

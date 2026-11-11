@@ -39,7 +39,20 @@ function GoogleLogo() {
  * email form. On sign-in, passkeys also show up in the email field's
  * suggestions (autocomplete="username webauthn").
  */
-export function SignInOptions({ mode, apple, google = false, next }: { mode: "login" | "signup"; apple: boolean; google?: boolean; next?: string }) {
+export function SignInOptions({
+  mode,
+  apple,
+  google = false,
+  next,
+  invite,
+}: {
+  mode: "login" | "signup";
+  apple: boolean;
+  google?: boolean;
+  next?: string;
+  /** a friend's invite code from /signup?invite=…, carried through Apple and Google sign-up */
+  invite?: string;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +91,7 @@ export function SignInOptions({ mode, apple, google = false, next }: { mode: "lo
   // The time zone comes along so a new account starts in the right one.
   const startHref = (provider: "apple" | "google") => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-    return `/api/auth/${provider}/start?tz=${encodeURIComponent(tz)}${next ? `&next=${encodeURIComponent(next)}` : ""}`;
+    return `/api/auth/${provider}/start?tz=${encodeURIComponent(tz)}${next ? `&next=${encodeURIComponent(next)}` : ""}${mode === "signup" && invite ? `&invite=${encodeURIComponent(invite)}` : ""}`;
   };
   const verb = mode === "login" ? "Sign in" : "Sign up";
 

@@ -43,7 +43,7 @@ export async function GET(req: Request) {
     const state = parseGoogleState(ch.challenge);
     const idToken = await exchangeGoogleSignInCode(cfg, q("code"), state.verifier);
     const { name, ...claims } = await verifyGoogleIdToken(idToken, cfg, state.nonce);
-    const outcome = await completeGoogleSignIn(db, claims, { mode: state.mode, tz: state.tz, userId: ch.userId }, name);
+    const outcome = await completeGoogleSignIn(db, claims, { mode: state.mode, tz: state.tz, userId: ch.userId, invite: state.invite }, name);
     return finishOAuth(outcome, { provider: "google", next: state.next, origin: url.origin, ip });
   } catch (e) {
     console.warn("google sign-in refused:", e instanceof GoogleSignInError ? e.message : e instanceof Error ? e.name : "unknown");
