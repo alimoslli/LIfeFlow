@@ -233,6 +233,15 @@ export const emailConfirmations = pgTable("email_confirmations", {
 });
 
 /**
+ * Kept when a friend deletes their account (owner, 2026-11-11): only the one-way keyed fingerprint of their email key, so the
+ * same address can't earn a second credit. Nothing else (no inviter, no dates). Written by `forgetFriend` on deletion, checked
+ * when a credit is made. Account data, no RLS; reached only through services/referrals.ts.
+ */
+export const referralFingerprints = pgTable("referral_fingerprints", {
+  hash: text("hash").primaryKey(),
+});
+
+/**
  * One row per friend who confirmed their email from someone's invite link (owner, 2026-11-11). The keyed HMAC (never a plain hash) of the
  * friend's email key (`referralEmailKey`: no +tag, no Gmail dots) is unique, so deleting an account and signing up again with the same email never credits twice. No RLS: account
  * data like `users`, reached only through services/referrals.ts. Either link is cleared if that account is deleted;

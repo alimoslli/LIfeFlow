@@ -5,7 +5,7 @@ import { completeAppleSignIn, parseAppleState, startAppleSignIn } from "@/server
 import { takeChallenge } from "@/server/auth/challenges";
 import { completeGoogleSignIn, parseGoogleState, startGoogleSignIn } from "@/server/auth/google-signin";
 import { closeDb, getDb } from "@/server/db/client";
-import { emailConfirmations, rateLimitBuckets, users, waitlistReferrals } from "@/server/db/schema";
+import { emailConfirmations, rateLimitBuckets, referralFingerprints, users, waitlistReferrals } from "@/server/db/schema";
 import { confirmEmailCode, CONFIRM_CODE_TTL_MS, purgeExpiredConfirmCodes, sendConfirmCode } from "@/server/services/email-confirm";
 import { inviteCodeFor, recordInvite, validInviteCode } from "@/server/services/invites";
 import { creditReferral, emailHash, MAX_CREDITS_PER_DAY, referralEmailKey, verifyEmail } from "@/server/services/referrals";
@@ -22,6 +22,11 @@ vi.mock("@/server/services/waitlist", async (orig) => {
   return { ...real, moveUpOne: (...a: Parameters<typeof real.moveUpOne>) => (h.failMove ? Promise.reject(new Error("move failed")) : real.moveUpOne(...a)) };
 });
 const db = getDb();
+/** A person deleting their own account through the service (a Google-style account, so no password is asked). */
+async function leave(id: string) {
+  await db.update(users).set({ passwordHash: "!google" }).where(eq(users.id, id));
+  await deleteAccount(db, id, "");
+}
 const made: string[] = [];
 const makeUser = async (name?: string) => {
   const m = await makeAnyUser(name);
@@ -228,10 +233,16 @@ describe("referral credit", () => {
     const { inviter, friend } = await inviterAndFriend();
     await verifyEmail(db, friend.id);
     expect(await place(inviter.id)).toBe(1);
-    await db.delete(users).where(eq(users.id, friend.id));
-    // The referral stays (the invitee link is cleared), and the same email, normalized, is recognised.
-    const [kept] = await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id));
-    expect(kept.inviteeId).toBeNull();
+    await leave(friend.id);
+    // Only the one-way fingerprint stays: the referral row (inviter link, dates) is gone, and the inviter's count drops.
+    expect(await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id))).toEqual([]);
+    expect(
+      await db
+        .select()
+        .from(referralFingerprints)
+        .where(eq(referralFingerprints.hash, emailHash(friend.email))),
+    ).toHaveLength(1);
+    expect((await waitlistPage(db, inviter.id)).friends).toBe(0);
     const [again] = await db
       .insert(users)
       .values({ name: "Friend again", email: friend.email, passwordHash: "x", invitedBy: inviter.id })
@@ -240,8 +251,8 @@ describe("referral credit", () => {
     expect(emailHash(` ${friend.email.toUpperCase()} `)).toBe(emailHash(friend.email));
     expect(referralEmailKey(` ${friend.email.toUpperCase()} `)).toBe(referralEmailKey(friend.email));
     expect(await verifyEmail(db, again.id)).toEqual({ verified: true, recorded: false, moved: false });
-    expect(await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id))).toHaveLength(1);
-    // Moved up once only: first place was the other person, now the inviter.
+    expect(await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id))).toEqual([]);
+    // The move they already earned stays, and nothing more: first place was the other person, now the inviter.
     expect(await place(inviter.id)).toBe(1);
   });
 
@@ -591,8 +602,20 @@ describe("the friend's dedupe row outlives the inviter", () => {
       .from(waitlistReferrals)
       .where(eq(waitlistReferrals.inviteeEmailHash, emailHash(friend.email)));
     expect(row).toMatchObject({ inviterId: null, inviteeId: friend.id });
-    // the friend deletes their account too and signs up again through another person's link
-    await db.delete(users).where(eq(users.id, friend.id));
+    // the friend deletes their account too (only the fingerprint stays) and signs up again through another person's link
+    await leave(friend.id);
+    expect(
+      await db
+        .select()
+        .from(waitlistReferrals)
+        .where(eq(waitlistReferrals.inviteeEmailHash, emailHash(friend.email))),
+    ).toEqual([]);
+    expect(
+      await db
+        .select()
+        .from(referralFingerprints)
+        .where(eq(referralFingerprints.hash, emailHash(friend.email))),
+    ).toHaveLength(1);
     const other = (await makeUser("Other")).user;
     const filler = (await makeUser("Filler")).user;
     const [again] = await db.insert(users).values({ name: "Friend", email: friend.email, passwordHash: "x", invitedBy: other.id }).returning({ id: users.id });

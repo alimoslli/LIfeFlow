@@ -11,7 +11,7 @@ import { smsConfig } from "../integrations/twilio";
 import { rateLimit } from "../rate-limit";
 import { DeletionBlockedError, revokeOutsideAccess, type CleanupDeps } from "./account-cleanup";
 import { acceptUsers, inLine, lockQueue, nextInLine } from "./waitlist";
-import { fingerprintAdminLogEmail } from "./referrals";
+import { fingerprintAdminLogEmail, forgetFriend } from "./referrals";
 
 /**
  * Owner admin page (ADR 0022). Accounts and operations only: per-user content is protected by row-level security
@@ -317,6 +317,7 @@ export async function deleteUser(db: Database, actor: Admin, userId: string, con
     const u = await target(tx, actor, userId);
     await log(tx, actor, "user.delete", u, { createdAt: u.createdAt.toISOString() });
     await tx.delete(ownerInbox).where(eq(ownerInbox.senderUserId, u.id));
+    await forgetFriend(tx, u.id);
     await fingerprintAdminLogEmail(tx, u.id, u.email);
     await tx.delete(users).where(eq(users.id, u.id));
   });

@@ -1,6 +1,6 @@
 import { and, count, eq, gte, isNull } from "drizzle-orm";
 import type { Database } from "../db/client";
-import { adminActions, users, waitlistReferrals } from "../db/schema";
+import { adminActions, referralFingerprints, users, waitlistReferrals } from "../db/schema";
 import { keyedHash } from "../crypto";
 import type { Tx } from "../db/with-user";
 import { lockQueue, moveUpOne } from "./waitlist";
@@ -78,6 +78,9 @@ export async function creditReferral(tx: Tx, inviteeId: string, now = new Date()
   if (!inviter || inviter.kind !== "standard" || inviter.prefs.ageBlockedAt) return none;
   const hash = emailHash(me.email);
   if (hash === emailHash(inviter.email)) return none;
+  // A friend who deleted their account earlier left only this fingerprint: the same address can't earn a second credit.
+  const [seen] = await tx.select({ hash: referralFingerprints.hash }).from(referralFingerprints).where(eq(referralFingerprints.hash, hash));
+  if (seen) return none;
   // The unique hash decides, even when two confirmations (or a deleted and re-made account) arrive together.
   // Over the daily cap the friend is recorded without being credited (and without a move), so it can't be retried for one.
   const [{ n: today }] = await tx
@@ -108,4 +111,15 @@ export async function fingerprintAdminLogEmail(tx: Tx, userId: string, email: st
     .update(adminActions)
     .set({ targetEmail: emailHash(email) })
     .where(eq(adminActions.targetUserId, userId));
+}
+
+/**
+ * On a friend's deletion (their own or the owner's): their referral row goes, and only its one-way fingerprint stays
+ * (owner, 2026-11-11), so the same address can't earn a second credit. No inviter link, no dates. The inviter's count for this
+ * friend drops; the place they already moved up stays. An under-13 lock does not call this: it keeps nothing, not even this.
+ */
+export async function forgetFriend(tx: Tx, userId: string) {
+  const rows = await tx.select({ hash: waitlistReferrals.inviteeEmailHash }).from(waitlistReferrals).where(eq(waitlistReferrals.inviteeId, userId));
+  if (rows.length) await tx.insert(referralFingerprints).values(rows).onConflictDoNothing();
+  await tx.delete(waitlistReferrals).where(eq(waitlistReferrals.inviteeId, userId));
 }

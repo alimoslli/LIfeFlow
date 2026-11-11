@@ -36,6 +36,11 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 --> statement-breakpoint
+-- Kept after a friend deletes their account: only the keyed fingerprint, so the same address can't earn a second credit.
+CREATE TABLE IF NOT EXISTS "referral_fingerprints" (
+	"hash" text PRIMARY KEY NOT NULL
+);
+--> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "waitlist_referrals_email_uniq" ON "waitlist_referrals" USING btree ("invitee_email_hash");
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "waitlist_referrals_inviter_idx" ON "waitlist_referrals" USING btree ("inviter_id");
