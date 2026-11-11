@@ -233,9 +233,10 @@ export const emailConfirmations = pgTable("email_confirmations", {
 });
 
 /**
- * One row per friend who confirmed their email from someone's invite link (owner, 2026-11-11). The hash of the normalized
- * email is unique, so deleting an account and signing up again with the same email never credits twice. No RLS: account
- * data like `users`, reached only through services/referrals.ts. The invitee link is cleared if that account is deleted.
+ * One row per friend who confirmed their email from someone's invite link (owner, 2026-11-11). The keyed HMAC (never a plain hash) of the
+ * friend's email key (`referralEmailKey`: no +tag, no Gmail dots) is unique, so deleting an account and signing up again with the same email never credits twice. No RLS: account
+ * data like `users`, reached only through services/referrals.ts. Either link is cleared if that account is deleted;
+ * the hash stays so the email can't be credited again.
  */
 export const waitlistReferrals = pgTable(
   "waitlist_referrals",
