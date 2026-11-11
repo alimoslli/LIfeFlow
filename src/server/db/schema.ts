@@ -198,7 +198,28 @@ export const users = pgTable("users", {
   invitedBy: uuid("invited_by").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
   /** Set by the owner (admin page). A suspended user can't sign in and their sessions stop working; data is kept. */
   suspendedAt: tstz("suspended_at"),
+  /**
+   * App access before launch (owner, 2026-11-11; docs/backlog/2026-11-11-audit-and-waitlist.md): "waiting" until the
+   * owner accepts them in HQ, then "in". It only matters while `app_access.waitlist_on` is set, and it never changes `plan`.
+   */
+  access: text("access").$type<"waiting" | "in">().notNull().default("waiting"),
+  /** Place in the queue: sign-up order (new accounts at the end), then referral moves. Unique, checked at the end of each statement so two places can swap. */
+  waitlistRank: bigint("waitlist_rank", { mode: "number" })
+    .notNull()
+    .default(sql`nextval('waitlist_rank_seq')`),
+  /** When the owner let this person in. */
+  acceptedAt: tstz("accepted_at"),
   createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+/** One row: whether the waitlist is closing the app (the owner's switch in HQ, off until he flips it) and the tentative launch line. */
+export const appAccess = pgTable("app_access", {
+  id: text("id").primaryKey().default("app"),
+  waitlistOn: boolean("waitlist_on").notNull().default(false),
+  /** Shown on the waitlist page, e.g. "We're aiming for the App Store in January 2027." Tentative, set by the owner. */
+  launchNote: text("launch_note"),
+  updatedByEmail: text("updated_by_email"),
   updatedAt: updatedAt(),
 });
 
