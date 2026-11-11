@@ -344,7 +344,7 @@ describe("alias farming, the keyed hash and the daily cap", () => {
 describe("Google and Apple sign-up", () => {
   const signin = (invite?: string | null) => ({ mode: "signin" as const, tz: "UTC", userId: null, invite });
 
-  it("an account made with a verified provider email counts as verified and credits the inviter", async () => {
+  it("a provider's verified email doesn't count on its own: no referral and no move until the friend confirms the code", async () => {
     await clearLine();
     await makeUser("First");
     const inviter = (await makeUser("Inviter")).user;
@@ -353,24 +353,32 @@ describe("Google and Apple sign-up", () => {
     const out = await completeGoogleSignIn(db, g, signin(code.toUpperCase()), "Ana");
     expect(out.kind).toBe("created");
     const [u] = await db.select().from(users).where(eq(users.email, g.email));
-    expect(u.emailVerifiedAt).not.toBeNull();
+    expect(u.emailVerifiedAt).toBeNull();
     expect(u.invitedBy).toBe(inviter.id);
-    expect(await place(inviter.id)).toBe(1);
+    expect(await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id))).toEqual([]);
+    expect(await place(inviter.id)).toBe(2);
 
     const a = { sub: `a-${randomUUID()}`, email: `${randomUUID().slice(0, 8)}@privaterelay.example`, emailVerified: true, isPrivateEmail: true };
     await completeAppleSignIn(db, a, signin(code), "Ben");
     const [v] = await db.select().from(users).where(eq(users.email, a.email));
-    expect(v).toMatchObject({ invitedBy: inviter.id });
-    expect(v.emailVerifiedAt).not.toBeNull();
-    expect(await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id))).toHaveLength(2);
+    expect(v).toMatchObject({ invitedBy: inviter.id, emailVerifiedAt: null });
+    expect(await place(inviter.id)).toBe(2);
+
+    // The friend confirms the code like everyone else, and only then does the inviter move.
+    const ip = newIp();
+    const out2 = outbox();
+    await sendConfirmCode(db, u.id, ip, { send: out2.send, config: CFG });
+    expect(await confirmEmailCode(db, u.id, out2.code(), ip)).toMatchObject({ ok: true, recorded: true, moved: true });
+    expect(await place(inviter.id)).toBe(1);
+    expect(await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id))).toHaveLength(1);
   });
 
-  it("a provider sign-up without an invite, or with a bad one, is verified and credits nobody", async () => {
+  it("a provider sign-up without an invite, or with a bad one, is unconfirmed and credits nobody", async () => {
     const before = (await db.select().from(waitlistReferrals)).length;
     const g = { sub: `g-${randomUUID()}`, email: `${randomUUID().slice(0, 8)}@gmail.com`, emailVerified: true, isPrivateEmail: false };
     await completeGoogleSignIn(db, g, signin("nosuchcode1"), null);
     const [u] = await db.select().from(users).where(eq(users.email, g.email));
-    expect(u.emailVerifiedAt).not.toBeNull();
+    expect(u.emailVerifiedAt).toBeNull();
     expect(u.invitedBy).toBeNull();
     expect((await db.select().from(waitlistReferrals)).length).toBe(before);
     // An unverified provider email never creates an account.
