@@ -1,4 +1,4 @@
-import { and, count, eq, gte, isNull } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { adminActions, waitlistFingerprints, users, waitlistReferrals } from "../db/schema";
 import { keyedHash } from "../crypto";
