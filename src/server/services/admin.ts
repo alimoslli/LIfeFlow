@@ -10,7 +10,7 @@ import { plaidConfig } from "../integrations/plaid";
 import { smsConfig } from "../integrations/twilio";
 import { rateLimit } from "../rate-limit";
 import { DeletionBlockedError, revokeOutsideAccess, type CleanupDeps } from "./account-cleanup";
-import { acceptUsers, inLine, nextInLine } from "./waitlist";
+import { acceptUsers, inLine, lockQueue, nextInLine } from "./waitlist";
 
 /**
  * Owner admin page (ADR 0022). Accounts and operations only: per-user content is protected by row-level security
@@ -740,6 +740,8 @@ export async function acceptFromWaitlist(db: Database, actor: Admin, ids: string
   if (want.length > 100) throw new AdminError("At most 100 people at a time.");
   await limited(db, actor);
   return db.transaction(async (tx) => {
+    // One change to the queue at a time: a let-in can't land between a referral move's read and its swap.
+    await lockQueue(tx);
     const people = await tx.select({ id: users.id, email: users.email, kind: users.accountKind }).from(users).where(inArray(users.id, want));
     const allowed = people.filter((p) => p.id !== actor.id && !isAdminEmail(p.email) && p.kind === "standard").map((p) => p.id);
     const { accepted, already } = await acceptUsers(tx as unknown as Database, allowed);

@@ -4,7 +4,7 @@ import { adminFor } from "@/server/auth/admin";
 import { closeDb, getDb } from "@/server/db/client";
 import { adminActions, appAccess, users } from "@/server/db/schema";
 import { AdminError, acceptFromWaitlist, setWaitlist, waitlistHistory, waitlistNext, waitlistView } from "@/server/services/admin";
-import { accessSettings, waitlistPlace } from "@/server/services/waitlist";
+import { accessSettings, lockQueue, waitlistPlace } from "@/server/services/waitlist";
 import { makeUser } from "../helpers";
 
 afterAll(async () => {
@@ -32,6 +32,30 @@ async function line(...names: string[]) {
 }
 
 describe("the waitlist in HQ", () => {
+  it("letting people in waits for the queue lock, so it can't land inside a move", async () => {
+    const admin = await makeAdmin();
+    const [a] = await line("Ana");
+    let release!: () => void;
+    const held = new Promise<void>((r) => (release = r));
+    let locked!: () => void;
+    const gotLock = new Promise<void>((r) => (locked = r));
+    // someone is mid-move: holds the queue lock until we let go
+    const mover = db().transaction(async (tx) => {
+      await lockQueue(tx);
+      locked();
+      await held;
+    });
+    await gotLock;
+    let done = false;
+    const accepting = acceptFromWaitlist(db(), admin, [a.id], true).then((r) => ((done = true), r));
+    await new Promise((r) => setTimeout(r, 400));
+    expect(done).toBe(false);
+    expect(await waitlistPlace(db(), a.id)).toBe(1);
+    release();
+    await mover;
+    expect(await accepting).toEqual({ accepted: 1, already: 0 });
+  });
+
   it("shows the line in order with true places, even when searching", async () => {
     const admin = await makeAdmin();
     const [a, b, c] = await line("Ana Ruiz", "Ben Okafor", "Cleo Park");
