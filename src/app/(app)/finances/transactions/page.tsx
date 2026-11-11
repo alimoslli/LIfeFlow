@@ -27,7 +27,8 @@ import {
 } from "../actions";
 import { listCategoryRules } from "@/server/services/finance/categorize";
 import { RulesSheet } from "./rules-sheet";
-import { AddTransactionDialog, CategoryOptions, ImportCsvDialog, KIND_LABELS } from "../forms";
+import { AddTransactionDialog, CategoryOptions, ImportCsvDialog } from "../forms";
+import { KIND_LABELS } from "@/lib/transaction-kinds";
 
 export const metadata: Metadata = { title: "Transactions" };
 
@@ -232,6 +233,8 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                   <li key={t.id} className={cn(t.excluded && "opacity-50")}>
                     <Link
                       href={sp.edit === t.id ? qs({ edit: undefined }) : qs({ edit: t.id })}
+                      // opening a row's editor keeps your place in the list (it jumped to the top, owner, 2026-11-11)
+                      scroll={false}
                       className="flex items-center gap-3.5 px-4 py-3.5 transition-colors hover:bg-surface-2/50 sm:px-5"
                     >
                       <span

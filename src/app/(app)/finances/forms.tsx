@@ -1,4 +1,5 @@
 "use client";
+import { KIND_LABELS } from "@/lib/transaction-kinds";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -8,16 +9,6 @@ import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 type Action = (p: ActionState, fd: FormData) => Promise<ActionState>;
 type Opt = { id: string; name: string };
-
-export const KIND_LABELS: Record<string, string> = {
-  expense: "Expense",
-  income: "Income",
-  transfer: "Transfer (own accounts)",
-  refund: "Refund",
-  reimbursement: "Reimbursement",
-  investment: "Investment movement",
-  adjustment: "Adjustment",
-};
 
 export function CategoryOptions({ categories }: { categories: (Opt & { parentId: string | null })[] }) {
   const parents = categories.filter((c) => !c.parentId);
