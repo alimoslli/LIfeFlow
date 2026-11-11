@@ -147,7 +147,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
               {
                 who: "ray",
                 title: "Friends move you",
-                text: "Each friend who confirms their email puts you ahead of the person just above. A friend counts once, first place stays first, and you can move up to 10 places a day.",
+                text: "Each friend who confirms their email can move you up a place, up to 10 places a day. At first place, or past the limit, a friend doesn't move you.",
               },
               { who: "moon", title: "A few at a time", text: "We let people in in small groups. Other people's friends and each group can change your place." },
             ].map((s, i) => (
@@ -171,7 +171,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
             Bring a friend, move up a spot.
           </h2>
           <p className="mt-2 text-[0.9375rem] leading-relaxed text-white/75">
-            Each friend who joins with your link and confirms their email moves you ahead one place.
+            Each friend who joins with your link and confirms their email can move you up a place (up to 10 a day).
           </p>
           <InviteShare link={link} firstName={firstName} dark />
           <ul role="list" className="mt-4 flex flex-col gap-1 text-sm text-white/70">

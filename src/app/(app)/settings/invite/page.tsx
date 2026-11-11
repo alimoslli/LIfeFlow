@@ -26,7 +26,8 @@ export default async function InvitePage() {
       <Card className="p-6">
         <h2 className="font-display text-[1.625rem] leading-tight font-medium tracking-tight">Share LifeFlow with friends</h2>
         <p className="mt-2 text-[0.9375rem] leading-relaxed text-text-2">
-          Send your link. Friends who sign up show here. A friend counts once they confirm their email.
+          Send your link. Friends who sign up show here. A friend counts once they confirm their email, and each one can move you up a place on the waitlist, up
+          to 10 places a day.
         </p>
         <InviteShare link={link} firstName={user.name.split(" ")[0]} />
       </Card>

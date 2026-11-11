@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import type { SessionUser } from "@/server/auth/sessions";
 import { closeDb, getDb } from "@/server/db/client";
-import { users } from "@/server/db/schema";
+import { appAccess, users } from "@/server/db/schema";
 import { inviteCodeFor, recordInvite } from "@/server/services/invites";
 import { verifyEmail } from "@/server/services/referrals";
 import { acceptUsers, waitlistPlace } from "@/server/services/waitlist";
@@ -57,6 +57,26 @@ describe("the waitlist page", () => {
     const html = await render({ preview: "1" });
     expect(html).toContain("3 people are waiting");
     expect(html).not.toContain("12 people are waiting");
-    expect(html).toContain("example");
+    // only the admin's own place is marked as an example, exactly once, and the place heading shows the last real place
+    expect(html.match(/<span[^>]*>You \(example\)<\/span>/g)).toHaveLength(1);
+    expect(html.match(/\(example\)/g)).toHaveLength(1);
+    expect(html).toMatch(/data-testid="wl-place"[^>]*>#3</);
+  });
+
+  it("the rules say what really happens: a friend can move you up, up to 10 places a day, never at first place or past the limit", async () => {
+    await db.update(users).set({ access: "in" }).where(eq(users.access, "waiting"));
+    const a = (await makeUser("A")).user;
+    h.user = asSession(a);
+    const [before] = await db.select().from(appAccess);
+    await db.update(appAccess).set({ waitlistOn: true });
+    let html = "";
+    try {
+      html = await render();
+    } finally {
+      await db.update(appAccess).set({ waitlistOn: before?.waitlistOn ?? false });
+    }
+    expect(html).toContain("can move you up a place, up to 10 places a day");
+    expect(html).toContain("a friend doesn&#x27;t move you");
+    expect(html).not.toContain("puts you ahead of the person just above");
   });
 });

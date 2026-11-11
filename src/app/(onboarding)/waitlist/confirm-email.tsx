@@ -8,7 +8,31 @@ import { confirmEmail, sendEmailCode, type ConfirmState } from "./actions";
  * accepted the message (the server says so). The card is a peer section of the page, so its heading is an h2 like the others.
  * After a right code the card stays and says so in its own place (the action doesn't re-render the page), so the person sees it worked.
  */
-export function ConfirmEmail({ invited, className }: { invited: boolean; className: string }) {
+export function ConfirmEmail({
+  invited,
+  className,
+  variant = "night",
+}: {
+  invited: boolean;
+  className: string;
+  /** "app" on Settings (the app's own colours) */ variant?: "night" | "app";
+}) {
+  const t =
+    variant === "night"
+      ? {
+          main: "text-white/85",
+          soft: "text-white/70",
+          err: "text-star-gold",
+          input: "bg-white/10 text-white ring-1 ring-white/20 focus:ring-star-gold",
+          label: "text-white/70",
+        }
+      : {
+          main: "text-text",
+          soft: "text-text-2",
+          err: "text-danger",
+          input: "bg-surface text-text ring-1 ring-border focus:ring-accent",
+          label: "text-text-2",
+        };
   const [sent, sendAction, sending] = useActionState<ConfirmState, FormData>(sendEmailCode, null);
   const [checked, checkAction, checking] = useActionState<ConfirmState, FormData>(confirmEmail, null);
   // The newest answer wins, so a fresh "Send code" clears an old "wrong code".
@@ -20,6 +44,11 @@ export function ConfirmEmail({ invited, className }: { invited: boolean; classNa
   useEffect(() => {
     if (sent?.sentTo) codeField.current?.focus();
   }, [sent]);
+  // After a right code the form goes away, so focus moves to the thank-you line (keyboard and switch users keep their place).
+  const thanks = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (done) thanks.current?.focus();
+  }, [done]);
   const status = done ? "Thank you, your email is confirmed." : sentTo ? `We sent a code to ${sentTo}.` : "";
 
   return (
@@ -28,12 +57,23 @@ export function ConfirmEmail({ invited, className }: { invited: boolean; classNa
         {invited ? "Confirm your email so your friend's invite counts" : "Confirm your email"}
       </h2>
       {/* always in the page, so a screen reader hears the text when it changes */}
-      <p role="status" aria-live="polite" data-testid="wl-confirm-status" className={status ? "mt-3 text-[0.9375rem] text-white/85" : "sr-only"}>
+      <p
+        ref={thanks}
+        tabIndex={-1}
+        role="status"
+        aria-live="polite"
+        data-testid="wl-confirm-status"
+        className={`${status ? `mt-3 text-[0.9375rem] ${t.main}` : "sr-only"} outline-none`}
+      >
         {status}
+      </p>
+      {/* one alert region, in the page before its text changes, so the error is announced when it appears */}
+      <p role="alert" aria-live="assertive" data-testid="wl-confirm-error" className={latest?.error && !done ? `mt-3 text-sm ${t.err}` : "sr-only"}>
+        {done ? "" : (latest?.error ?? "")}
       </p>
       {!done && (
         <>
-          <p className="mt-2 text-sm leading-relaxed text-white/70">We&apos;ll email you a 6-digit code. It works once, for 10 minutes.</p>
+          <p className={`mt-2 text-sm leading-relaxed ${t.soft}`}>We&apos;ll email you a 6-digit code. It works once, for 10 minutes.</p>
           <form action={sendAction} className="mt-4">
             <button type="submit" disabled={sending} className="lf-sb lf-sb-sun lf-sb-sm min-h-11 min-w-11 disabled:opacity-60">
               {sending ? "Sending…" : sentTo ? "Send a new code" : "Send code"}
@@ -41,7 +81,7 @@ export function ConfirmEmail({ invited, className }: { invited: boolean; classNa
           </form>
           {/* always there, so someone who reloads the page or comes back to an earlier email can still type the code */}
           <form action={checkAction} className="mt-3 flex flex-wrap items-end gap-2">
-            <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm font-medium text-white/70">
+            <label className={`flex min-w-0 flex-1 flex-col gap-1 text-sm font-medium ${t.label}`}>
               Your code
               <input
                 ref={codeField}
@@ -51,18 +91,13 @@ export function ConfirmEmail({ invited, className }: { invited: boolean; classNa
                 pattern="[0-9 ]*"
                 maxLength={7}
                 required
-                className="min-h-12 rounded-2xl bg-white/10 px-4 text-lg tracking-[0.3em] text-white ring-1 ring-white/20 outline-none focus:ring-star-gold"
+                className={`min-h-12 rounded-2xl px-4 text-lg tracking-[0.3em] outline-none ${t.input}`}
               />
             </label>
             <button type="submit" disabled={checking} className="lf-sb lf-sb-glass lf-sb-sm min-h-12 min-w-11 disabled:opacity-60">
               {checking ? "Checking…" : "Confirm"}
             </button>
           </form>
-          {latest?.error && (
-            <p role="alert" className="mt-3 text-sm text-star-gold">
-              {latest.error}
-            </p>
-          )}
         </>
       )}
     </section>

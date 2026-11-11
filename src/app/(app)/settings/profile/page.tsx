@@ -13,13 +13,21 @@ import { users } from "@/server/db/schema";
 import { updateProfileAction } from "../actions";
 import { SettingsHeader } from "../settings-header";
 import { BirthdayField } from "@/components/ui/birthday-field";
+import { ConfirmEmail } from "../../../(onboarding)/waitlist/confirm-email";
 
 export const metadata: Metadata = { title: "You and the look" };
 
 export default async function ProfileSettings() {
   const session = await requireUser({ account: true });
   const [u] = await getDb()
-    .select({ name: users.name, email: users.email, timezone: users.timezone, preferences: users.preferences })
+    .select({
+      name: users.name,
+      email: users.email,
+      timezone: users.timezone,
+      preferences: users.preferences,
+      verifiedAt: users.emailVerifiedAt,
+      invitedBy: users.invitedBy,
+    })
     .from(users)
     .where(eq(users.id, session.id));
   const zones = Intl.supportedValuesOf("timeZone");
@@ -37,6 +45,8 @@ export default async function ProfileSettings() {
         <h3 className="mt-5 mb-3 text-sm font-medium text-text-2">Today&apos;s sky</h3>
         <TodayModePicker initial={parseTodayMode(jar.get(TODAY_COOKIE)?.value)} />
       </Card>
+      {/* Someone let in before confirming can still confirm here (a friend's invite counts only then); gone once confirmed. */}
+      {!u.verifiedAt && <ConfirmEmail variant="app" invited={!!u.invitedBy} className="rounded-3xl bg-surface p-6 shadow-soft" />}
       <Card className="p-6">
         <h2 className="mb-4 text-[0.9375rem] font-semibold">Profile</h2>
         <ActionForm action={updateProfileAction} reset={false} showSuccess>
