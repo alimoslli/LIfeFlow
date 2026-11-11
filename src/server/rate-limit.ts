@@ -33,8 +33,14 @@ export async function rateLimitCount(db: Database, key: string, windowSeconds: n
 }
 
 export async function purgeOldRateLimits(db: Database) {
-  // Keep 31 days: some limits count over 30 days (testing-phase monthly limits).
-  await db.delete(rateLimitBuckets).where(sql`${rateLimitBuckets.windowStart} < now() - interval '31 days' and ${rateLimitBuckets.key} !~ '^jarvis:cont:'`);
+  // About a day, as the privacy page says. Every counter has a window of a day or less, so one whose window started more than a day
+  // ago is finished (a counter in use has a recent window and stays). Only the monthly testing counters need their month.
+  await db
+    .delete(rateLimitBuckets)
+    .where(
+      sql`${rateLimitBuckets.windowStart} < now() - interval '1 day' and ${rateLimitBuckets.key} !~ '^jarvis:cont:' and ${rateLimitBuckets.key} !~ '-month:'`,
+    );
+  await db.delete(rateLimitBuckets).where(sql`${rateLimitBuckets.windowStart} < now() - interval '31 days' and ${rateLimitBuckets.key} ~ '-month:'`);
   // Stop requests only matter while their turn runs (at most a few minutes).
   await db.delete(rateLimitBuckets).where(sql`${rateLimitBuckets.key} ~ '^jarvis:stop:' and ${rateLimitBuckets.windowStart} < now() - interval '10 minutes'`);
   // Continuation marks keep their time (in seconds) in the count; their window is fixed.
