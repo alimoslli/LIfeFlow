@@ -14,7 +14,8 @@ test("a chat lasts while the app is open; New chat starts another; reopening the
   await page.goto("/jarvis");
   await askJarvis(page, "first thing I asked");
   await expect(page.getByText("You said: first thing I asked").first()).toBeVisible();
-  await expect(page).toHaveURL(/\/jarvis\?c=[0-9a-f-]{36}$/);
+  // the address doesn't carry the chat: the browser does (lib/chat-session.ts)
+  await expect(page).toHaveURL(/\/jarvis$/);
 
   // the same visit: a reload keeps this chat
   await page.reload();
@@ -35,7 +36,8 @@ test("a chat lasts while the app is open; New chat starts another; reopening the
   await expect(page.getByText("You said: second thing").first()).toBeVisible();
   await expect(page.getByText("You said: first thing")).toHaveCount(0);
 
-  // the app is closed and opened again: a new page in the same browser starts fresh, and both chats stay in the list
+  // the app is closed (its window too) and opened again: the new window starts fresh, and both chats stay in the list
+  await page.close();
   const again = await context.newPage();
   await again.goto("/jarvis");
   await expect(again.getByRole("heading", { name: "Let's clear your sky." })).toBeVisible();
@@ -163,4 +165,35 @@ test("going back to the skyling page shows the chat started on Today, and the ne
   await askJarvis(page, "a question after going back");
   await expect(page.getByText("You said: a question after going back").first()).toBeVisible();
   expect(await queryAsUser(email, COUNT)).toEqual([{ n: 1 }]);
+});
+
+// Owner, 2026-11-11: "join the second window". A second window of the app opened while the app is open shows the chat that's
+// open and writes into it. (Closing every window and opening the app again starts another: the first test here.)
+test("a second window of the app joins the chat that's open", async ({ page, context }) => {
+  const email = await signUp(page, "Jo Join");
+  await page.goto("/jarvis");
+  await askJarvis(page, "in the first window");
+  await expect(page.getByText("You said: in the first window").first()).toBeVisible();
+  const second = await context.newPage();
+  await second.goto("/jarvis");
+  await expect(second.getByText("You said: in the first window").first()).toBeVisible();
+  await askJarvis(second, "from the second window");
+  await expect(second.getByText("You said: from the second window").first()).toBeVisible();
+  expect(await queryAsUser(email, COUNT)).toEqual([{ n: 1 }]);
+  await page.reload();
+  await expect(page.getByText("You said: from the second window").first()).toBeVisible();
+});
+
+// New chat in one window starts another for the app, so the other open windows follow it.
+test("New chat in one window starts another in the others", async ({ page, context }) => {
+  await signUp(page, "Kit Follow");
+  await page.goto("/jarvis");
+  await askJarvis(page, "a question for both windows");
+  await expect(page.getByText("You said: a question for both windows").first()).toBeVisible();
+  const second = await context.newPage();
+  await second.goto("/jarvis");
+  await expect(second.getByText("You said: a question for both windows").first()).toBeVisible();
+  await second.getByRole("button", { name: "New chat" }).click();
+  await expect(second.getByRole("heading", { name: "Let's clear your sky." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Let's clear your sky." })).toBeVisible({ timeout: 10_000 });
 });

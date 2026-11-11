@@ -69,7 +69,8 @@ test("Jarvis saves assignments and tasks that then appear in School and Tasks", 
   // One final reply per turn; no tool chatter in the chat.
   await expect(page.getByText(/^Done:/)).toHaveCount(1);
   await expect(page.getByText("Saved 1 assignment · 1 need a course")).toHaveCount(0);
-  await expect(page).toHaveURL(/\/jarvis\?c=[0-9a-f-]{36}$/);
+  // the address doesn't carry the chat (the browser does): opening the app at the same address brings the chat back
+  await expect(page).toHaveURL(/\/jarvis$/);
   const conversationUrl = page.url();
 
   await askJarvis(page, `/tool create_tasks {"tasks":[{"title":"Study for PSY quiz","priority":"high","dueDate":"${due}","subtasks":["Re-read chapter 4"]}]}`);
@@ -108,15 +109,17 @@ test("destructive Jarvis actions wait for explicit confirmation", async ({ page 
 
 test("users cannot see each other's data", async ({ browser }) => {
   const a = await browser.newPage();
-  await signUp(a, "Avery One");
+  const averyEmail = await signUp(a, "Avery One");
   await a.goto("/tasks");
   await a.getByLabel("To-do title").fill("Avery's private task");
   await a.getByRole("button", { name: "Add", exact: true }).click();
   await expect(a.getByRole("link", { name: /Avery's private task/ })).toBeVisible();
   await a.goto("/jarvis");
   await askJarvis(a, "hello there");
-  await expect(a).toHaveURL(/\/jarvis\?c=[0-9a-f-]{36}$/);
-  const convUrl = a.url();
+  await expect(a).toHaveURL(/\/jarvis$/);
+  // Avery's chat, by its address: Blake's window must not open it
+  const [{ id: averyChat }] = await queryAsUser<{ id: string }>(averyEmail, "select id from conversations order by last_message_at desc limit 1");
+  const convUrl = `/jarvis?c=${averyChat}`;
 
   const b = await browser.newPage();
   await signUp(b, "Blake Two");

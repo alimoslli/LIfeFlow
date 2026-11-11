@@ -1,20 +1,22 @@
 import { localDateOf } from "@/lib/dates";
 
 /**
- * The chat you're in (owner, 2026-11-11: "not one continuous chat ... whenever I close down the app, it goes away ...
- * or sign out"). It lasts while the app is open and for that day. Closing the app (swiping it away), signing out, a new
- * day or "New chat" starts another; every earlier chat stays in the Conversations list.
+ * The chat you're in (owner, 2026-11-11: "not one continuous chat ... whenever I close down the app, it goes away ... or
+ * sign out", and "join the second window"). The app's chat lasts while the app is open and for that day. Closing the app
+ * (every window), signing out, a new day or "New chat" starts another; every earlier chat stays in Conversations.
  *
- * `lf_chat` is "<chat id>~<epoch ms it became this visit's chat>" (started, or opened from the list): a cookie with no
- * expiry, the browser's last chat, which the server reads to paint the first page. Each open app keeps its own chat in
- * memory (`visit`), so another tab never changes it. A new visit is known from sessionStorage, which the browser clears
- * when the app closes: the inline script in the root layout marks the document before its first paint (NEW_VISIT_ATTR),
- * and the first chat component to mount lets that chat go (takeNewVisit). A marked document hides its chat messages until
- * then, so an old chat never flashes.
+ * The browser keeps the app's chat in `lf_chat` ("<chat id>~<epoch ms it became the chat>"): a cookie with no expiry, and
+ * the one source of truth. Every window of the app shows and writes that chat, and the server renders the page from it.
+ * A window that opens fresh (sessionStorage is per window, so it's a new visit) joins the open chat when another window of
+ * the app is open, and starts a fresh one when it's alone (joinNewVisit). Every window holds a shared lock while it's open,
+ * so the browser says whether the app is open elsewhere (a force-quit app holds nothing). When the chat changes, the other
+ * windows are told (onChatChanged) and render it again. The address never carries the chat (only a link to one does).
  */
 export const CHAT_COOKIE = "lf_chat";
 export const NEW_VISIT_ATTR = "data-lf-new-visit";
 const VISIT_KEY = "lf-visit";
+const WINDOW_LOCK = "lf-window";
+const CHANNEL = "lf-chat";
 const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Whether this is the shape of a chat id (checked before it goes anywhere near the database). */
@@ -23,41 +25,11 @@ export const isChatId = (id: string | null | undefined): id is string => !!id &&
 /** Runs in the root layout's <head>, before the first paint: marks a document that opened a new visit. */
 export const VISIT_SCRIPT = `try{if(!sessionStorage.getItem("${VISIT_KEY}")){sessionStorage.setItem("${VISIT_KEY}","1");document.documentElement.setAttribute("${NEW_VISIT_ATTR}","")}}catch(e){}`;
 
-/** The cookie's chat and when it became this visit's chat (epoch ms), or null when it's missing or not ours. */
+/** The cookie's chat and when it became the chat (epoch ms), or null when it's missing or not ours. */
 export function parseChatCookie(value: string | null | undefined): { id: string; at: number } | null {
   const [id, at] = (value ?? "").split("~");
   const ms = Number(at);
   return id && ID.test(id) && Number.isSafeInteger(ms) && ms > 0 ? { id, at: ms } : null;
-}
-
-/** The chat in the cookie, when it became the chat today in the person's time zone (the server and the browser agree). */
-export function chatOfToday(value: string | null | undefined, tz: string, now: Date = new Date()): string | null {
-  const c = parseChatCookie(value);
-  return c && localDateOf(new Date(c.at), tz) === localDateOf(now, tz) ? c.id : null;
-}
-
-const attrs = () => `; path=/; samesite=lax${location.protocol === "https:" ? "; secure" : ""}`;
-
-/** This app's chat: undefined until it's first asked, then the browser's last chat for today (or null for a new visit). */
-let visit: string | null | undefined;
-/** When that chat became this app's (epoch ms): a chat that began on another day is not carried on. */
-let visitAt = 0;
-
-/** Makes this chat the one this app is in (started or opened); the browser's last chat follows it. */
-export function rememberChat(id: string) {
-  if (typeof document === "undefined" || !ID.test(id)) return;
-  const at = Date.now();
-  visit = id;
-  visitAt = at;
-  document.cookie = `${CHAT_COOKIE}=${id}~${at}${attrs()}`;
-}
-
-/** The next message starts a new chat (New chat, a new visit, a new day). */
-export function forgetChat() {
-  visit = null;
-  visitAt = 0;
-  if (typeof document === "undefined") return;
-  document.cookie = `${CHAT_COOKIE}=; max-age=0${attrs()}`;
 }
 
 /** Whether `at` (epoch ms) is the same day as `now` in the person's time zone. */
@@ -65,60 +37,133 @@ export function sameDay(at: number, tz: string, now: Date = new Date()): boolean
   return localDateOf(new Date(at), tz) === localDateOf(now, tz);
 }
 
-/** The chat this app is in right now: its own, or the browser's for today when it has none yet. */
+/** The chat in the cookie, when it became the chat today in the person's time zone (the server and the browser agree). */
+export function chatOfToday(value: string | null | undefined, tz: string, now: Date = new Date()): string | null {
+  const c = parseChatCookie(value);
+  return c && sameDay(c.at, tz, now) ? c.id : null;
+}
+
+const attrs = () => `; path=/; samesite=lax${location.protocol === "https:" ? "; secure" : ""}`;
+
+/** The cookie's raw value (`<id>~<stamp>`), or undefined. */
+function cookieValue(): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  return document.cookie
+    .split("; ")
+    .find((c) => c.startsWith(`${CHAT_COOKIE}=`))
+    ?.slice(CHAT_COOKIE.length + 1);
+}
+
+/** The app's chat in the browser, whatever its day. */
+function cookieChat(): string | null {
+  return parseChatCookie(cookieValue())?.id ?? null;
+}
+
+let channel: BroadcastChannel | null | undefined;
+/** The channel the windows of the app talk on (client only; never on the server). */
+function chatChannel(): BroadcastChannel | null {
+  if (channel === undefined) channel = typeof window !== "undefined" && typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(CHANNEL) : null;
+  return channel;
+}
+
+/** When this browser last saw the app's chat change (epoch ms, from this window or another): a page rendered before it is stale. */
+let changedAt = 0;
+export const chatChangedAt = () => changedAt;
+
+/** Runs when another window changed the app's chat (a window that changed it is not told). Returns the way to stop. */
+export function onChatChanged(fn: () => void): () => void {
+  const c = chatChannel();
+  if (!c) return () => {};
+  const listener = () => {
+    changedAt = Date.now();
+    fn();
+  };
+  c.addEventListener("message", listener);
+  return () => c.removeEventListener("message", listener);
+}
+
+/** Makes this chat the app's chat in this browser (started or opened): every window of the app shows and writes it. */
+export function rememberChat(id: string) {
+  if (typeof document === "undefined" || !ID.test(id)) return;
+  const was = cookieChat();
+  document.cookie = `${CHAT_COOKIE}=${id}~${Date.now()}${attrs()}`;
+  if (was !== id) {
+    changedAt = Date.now();
+    chatChannel()?.postMessage("changed");
+  }
+}
+
+/** The app starts no chat for the next message (New chat, a new day, a new visit alone, sign-out). */
+export function forgetChat() {
+  if (typeof document === "undefined") return;
+  const was = cookieChat();
+  document.cookie = `${CHAT_COOKIE}=; max-age=0${attrs()}`;
+  if (was) {
+    changedAt = Date.now();
+    chatChannel()?.postMessage("changed");
+  }
+}
+
+/** The app's chat right now: the browser's chat when it began today in the person's time zone, else null. */
 export function currentChat(tz: string): string | null {
-  if (visit === undefined) {
-    const value =
-      typeof document === "undefined"
-        ? undefined
-        : document.cookie
-            .split("; ")
-            .find((c) => c.startsWith(`${CHAT_COOKIE}=`))
-            ?.slice(CHAT_COOKIE.length + 1);
-    visit = chatOfToday(value, tz);
-    visitAt = parseChatCookie(value)?.at ?? 0;
-  } else if (visit !== null && !sameDay(visitAt, tz)) forgetChat();
-  return visit;
+  return chatOfToday(cookieValue(), tz);
 }
 
-/** Takes the chat a fresh render of the page shows as this app's own (the browser's copy already says the same): no cookie write. */
-export function adoptChat(id: string | null) {
-  visit = id;
-  visitAt = id ? Date.now() : 0;
-}
-
-let asked = false;
 /**
- * Whether a page rendered with `server` as its chat is behind the chat this app is in. A page shown again from the browser's
- * copy (back or forward) can be: a chat started on Today after it was left. Such a page is rendered again once; if the fresh
- * render still disagrees, the server's chat is the one this app takes, so the two never split.
+ * After a fresh render of a page (its chat was decided by the server from the cookie), the browser's chat is the one that page
+ * shows: a chat the server no longer finds, or one from another day, is let go.
  */
-export function pageIsStale(server: string | null, tz: string): boolean {
-  if (currentChat(tz) === server) {
-    asked = false;
-    return false;
-  }
-  if (!asked) {
-    asked = true;
-    return true;
-  }
-  asked = false;
-  adoptChat(server);
-  return false;
+export function adoptPageChat(page: string | null, tz: string) {
+  if (currentChat(tz) === page) return;
+  if (page) rememberChat(page);
+  else forgetChat();
 }
 
-let decided = false;
+let windows: Promise<boolean> | null = null;
+/** Whether another window of the app is open. Asked once per window, before this window takes its own lock. */
+function otherWindowOpen(): Promise<boolean> {
+  windows ??= (async () => {
+    const locks = typeof navigator !== "undefined" ? navigator.locks : undefined;
+    if (!locks) return false;
+    try {
+      const snapshot = await locks.query();
+      const open = (snapshot.held ?? []).some((lock) => lock.name === WINDOW_LOCK);
+      // this window holds its lock from now on, for as long as it's open (the browser lets go when it closes)
+      void locks.request(WINDOW_LOCK, { mode: "shared" }, () => new Promise<void>(() => {})).catch(() => undefined);
+      return open;
+    } catch {
+      return false;
+    }
+  })();
+  return windows;
+}
+
+/** Every window of the app holds its lock while it's open: the app shell asks once, on every app page. */
+export function holdWindow() {
+  void otherWindowOpen();
+}
+
+let joined: Promise<boolean> | null = null;
 /**
- * True when this document is the first page of a new visit. Only the first chat component to ask gets the answer (the
- * page's own chat, whose first render came from the cookie before the app opened); later ones use this app's chat. When
- * it's a new visit, the browser's last chat is let go here, and this app starts without one.
+ * A new visit (this window opened fresh: not a reload, not a page of the app already open) joins the app's chat when another
+ * window of the app is open. Alone, it starts fresh: the browser's chat is let go. Resolves to whether it joined. Asked once.
+ */
+export function joinNewVisit(): Promise<boolean> {
+  joined ??= otherWindowOpen().then((open) => {
+    if (!open) forgetChat();
+    return open;
+  });
+  return joined;
+}
+
+/**
+ * True while this document is the first page of a new visit (sessionStorage marks each window's documents): until
+ * settleNewVisit. Every component that asks before then gets the same answer, and the join is asked once (joinNewVisit), so a
+ * component that runs twice (React's Strict Mode in development) agrees with itself. What a new visit does is joinNewVisit.
  */
 export function takeNewVisit(): boolean {
-  if (decided || typeof document === "undefined") return false;
-  decided = true;
-  const fresh = document.documentElement.hasAttribute(NEW_VISIT_ATTR);
-  if (fresh) forgetChat();
-  return fresh;
+  if (typeof document === "undefined") return false;
+  return document.documentElement.hasAttribute(NEW_VISIT_ATTR);
 }
 
 /** Shows the chat messages again, once the component has settled what they show. */
