@@ -10,6 +10,8 @@ import { assertOwned, notFound, ServiceError } from "../errors";
 import { listCategories, resolveCategory } from "./categories";
 import { cleanVendorName } from "@/lib/vendor";
 import { ACCENT_FROM, ACCENT_TO, IGNORED_MARKS, P2P_NEEDLES, parseSearch, prefilterNeedles, scoreRow } from "@/lib/txn-search";
+import { getDb } from "../../db/client";
+import { recordError } from "../error-reports";
 import { autoCategorize, learnCategoryRule } from "./categorize";
 import { parsePatch } from "../patch";
 
@@ -305,21 +307,36 @@ export async function readTransactionPage(
  * bound was hit. Prefer the SQL totals in totals.ts when only a sum or a group is needed. With a text search the
  * forgiving matcher's own scan limit still applies.
  */
-export async function queryAllTransactions(scope: UserScope, q: Omit<TransactionQuery, "limit"> = {}): Promise<TransactionRow[] & { truncated?: boolean }> {
+export async function queryAllTransactions(
+  scope: UserScope,
+  q: Omit<TransactionQuery, "limit"> = {},
+  opts: { max?: number } = {},
+): Promise<TransactionRow[] & { truncated?: boolean }> {
+  const max = opts.max ?? ALL_MAX;
   if (q.search?.trim()) return Object.assign(await queryTransactions(scope, { ...q, limit: 5000 }), { truncated: false });
   const conds = await baseConds(scope, q);
-  const out: TransactionRow[] = [];
+  let out: TransactionRow[] = [];
   let after: PageCursor | undefined;
   let truncated = false;
   for (;;) {
     const page = await selectPage(scope, conds, ALL_PAGE, after);
     out.push(...page.rows);
-    if (page.rows.length < ALL_PAGE || !page.last) break;
-    if (out.length >= ALL_MAX) {
+    // One row past the bound proves there is more; exactly `max` rows is not truncated.
+    if (out.length > max) {
+      out = out.slice(0, max);
       truncated = true;
       break;
     }
+    if (page.rows.length < ALL_PAGE || !page.last) break;
     after = page.last;
+  }
+  if (truncated) {
+    // Never silent: one scrubbed error with no user content (the owner's error alerts pick it up).
+    await recordError(getDb(), {
+      source: "server",
+      route: "finance.read-all",
+      message: `Transactions read truncated at ${max.toLocaleString("en-US")} rows`,
+    }).catch(() => {});
   }
   return Object.assign(out, { truncated });
 }

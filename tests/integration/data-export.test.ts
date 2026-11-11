@@ -184,6 +184,43 @@ describe("Download my data", () => {
     expect(new Set(lines.map((l) => l.split(",")[1]))).toEqual(new Set(Array.from({ length: TOTAL }, (_, i) => `Tie ${i}`)));
   }, 60_000);
 
+  it("the CSV holds only the signed-in user's rows, and an exact multiple of the page (4,000 rows, an empty last page) loses none", async () => {
+    const other = await makeUser("Olga Other");
+    await other.run(async (s) => {
+      const acct = await createManualAccount(s, { name: "Other checking", type: "depository", subtype: "checking", currentBalanceCents: 0 });
+      await s.tx.insert(transactions).values(
+        Array.from({ length: 50 }, (_, i) => ({
+          userId: s.userId,
+          accountId: acct.id,
+          date: "2026-05-05",
+          description: `Other ${i}`,
+          amountCents: -100,
+          kind: "expense" as const,
+        })),
+      );
+    });
+    const { run } = await signIn("Pia Pages");
+    const TOTAL = 4000;
+    await run(async (s) => {
+      const acct = await createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 0 });
+      await s.tx.insert(transactions).values(
+        Array.from({ length: TOTAL }, (_, i) => ({
+          userId: s.userId,
+          accountId: acct.id,
+          date: `2026-0${1 + (i % 9)}-1${i % 9}`,
+          description: `Mine ${i}`,
+          amountCents: -100,
+          kind: "expense" as const,
+        })),
+      );
+    });
+    const text = await (await GET(new Request("http://localhost/api/export?format=transactions.csv"))).text();
+    expect(text).not.toContain("Other ");
+    const lines = text.split("\n").slice(1);
+    expect(lines).toHaveLength(TOTAL);
+    expect(new Set(lines.map((l) => l.split(",")[1])).size).toBe(TOTAL);
+  }, 60_000);
+
   it("refuses both formats while Money is locked, with a plain message, and works once Money is unlocked", async () => {
     const { token } = await signIn("Maya Locked", { moneyLock: { enabled: true, idleMinutes: 5 } });
     for (const url of ["http://localhost/api/export", "http://localhost/api/export?format=transactions.csv"]) {

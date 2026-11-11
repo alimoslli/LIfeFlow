@@ -17,6 +17,10 @@ const CSV_HEADER = ["date", "description", "merchant", "amount", "kind", "catego
  * Every transaction, newest first. One keyset page is read per pull(), each in its own short withUser (the user's
  * own scope), so a slow download holds no transaction open and never keeps more than a page in memory. The cursor
  * is (date, createdAt, id), so rows sharing a date and time neither repeat nor go missing.
+ *
+ * Limits, on purpose: this is not one snapshot. A row edited or re-posted by a sync mid-download can appear twice or
+ * be skipped once, because its (date, createdAt) key can move between pages. The session and the Money lock are
+ * checked once, before the stream starts, not again on every page.
  */
 export function transactionsCsvStream(userId: string) {
   const enc = new TextEncoder();
