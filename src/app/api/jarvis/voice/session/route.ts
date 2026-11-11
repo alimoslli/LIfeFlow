@@ -4,10 +4,12 @@ import { getSessionUser } from "@/server/auth/current-user";
 import { AI_CONSENT_NEEDED, aiAllowed } from "@/lib/ai-consent";
 import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { startVoiceSession } from "@/server/jarvis/voice";
-import { inTestingPhase, LIMIT_MONTH_SECONDS, requirePro, TESTING_LIMITS, testingLimitMessage } from "@/server/billing";
+import { inTestingPhase, LIMIT_MONTH_SECONDS, requirePro, TESTING_BUDGET_MESSAGE, TESTING_LIMITS, testingLimitMessage } from "@/server/billing";
 import { getDb } from "@/server/db/client";
 import { rateLimit } from "@/server/rate-limit";
 import { adminFor } from "@/server/auth/admin";
+import { withUser } from "@/server/db/with-user";
+import { spendSinceMicros } from "@/server/jarvis/metrics";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +36,9 @@ export async function POST(req: Request) {
       if (!day.allowed) throw new HttpError(429, testingLimitMessage("voice calls", TESTING_LIMITS.voiceCallsPerDay, day.retryAfterSeconds));
       const month = await rateLimit(getDb(), `voice:testing-month:${user.id}`, TESTING_LIMITS.voiceCallsPerMonth, LIMIT_MONTH_SECONDS);
       if (!month.allowed) throw new HttpError(429, testingLimitMessage("voice calls", TESTING_LIMITS.voiceCallsPerMonth, month.retryAfterSeconds, "month"));
+      // The same dollar cap as typed chat (each turn's measured cost).
+      const spent = await withUser(user.id, (s) => spendSinceMicros(s, new Date(Date.now() - LIMIT_MONTH_SECONDS * 1000)));
+      if (spent >= TESTING_LIMITS.assistantDollarsPerMonth * 1_000_000) throw new HttpError(429, TESTING_BUDGET_MESSAGE);
     }
     try {
       return NextResponse.json(await startVoiceSession(user, parsed.data.module ?? null, undefined, parsed.data.conversationId), {

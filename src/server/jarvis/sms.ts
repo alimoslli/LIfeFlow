@@ -34,9 +34,12 @@ export async function answerText(
       preferences: users.preferences,
       phone: users.smsPhone,
       plan: users.plan,
+      suspendedAt: users.suspendedAt,
     })
     .from(users)
     .where(eq(users.id, userId));
+  // A suspended account, or one locked under 13, has no sessions anywhere else; texts get no answer and never reach the model.
+  if (u.suspendedAt || u.preferences?.ageBlockedAt) return null;
   // Reply on the channel the message came in on: WhatsApp back to WhatsApp, texts to the saved number.
   const replyTo = isWhatsApp(from) ? from : u.phone!;
   const user: SessionUser = {

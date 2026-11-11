@@ -1,8 +1,9 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
+import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import type OpenAI from "openai";
 import { closeDb } from "@/server/db/client";
-import { jarvisRuns } from "@/server/db/schema";
+import { jarvisRuns, voiceSessions } from "@/server/db/schema";
 import { listMessages } from "@/server/jarvis/conversations";
 import { buildVoiceSession, recordVoiceRun, relayVoiceTool, saveVoiceTranscript, startVoiceSession } from "@/server/jarvis/voice";
 import { listTasks } from "@/server/services/tasks";
@@ -13,7 +14,14 @@ afterAll(closeDb);
 
 async function voiceUser(prefs?: SessionUser["preferences"]) {
   const u = await makeUser("Voice Person");
-  const session: SessionUser = { id: u.user.id, email: u.user.email, name: u.user.name, timezone: TZ, accountKind: "standard", preferences: prefs };
+  const session: SessionUser = {
+    id: u.user.id,
+    email: u.user.email,
+    name: u.user.name,
+    timezone: TZ,
+    accountKind: "standard",
+    preferences: { aiConsentAt: "2026-01-01T00:00:00.000Z", ...prefs },
+  };
   return { ...u, session };
 }
 
@@ -70,9 +78,10 @@ describe("live voice", () => {
   it("relays tool calls through the normal executor and saves transcript + call record", async () => {
     const { session, run } = await voiceUser();
     const { client } = fakeOpenAI();
-    const { conversationId } = await startVoiceSession(session, "home", client);
+    const { conversationId, voiceSessionId } = await startVoiceSession(session, "home", client);
     await saveVoiceTranscript(session, conversationId, "user", "Add a task to buy stamps");
     const r = await relayVoiceTool(session, {
+      voiceSessionId,
       conversationId,
       callId: "c1",
       name: "create_tasks",
@@ -85,7 +94,13 @@ describe("live voice", () => {
 
     // Deletions still wait for an explicit Confirm.
     const [task] = await run((s) => listTasks(s, { status: "open" }));
-    const del = await relayVoiceTool(session, { conversationId, callId: "c2", name: "delete_task", arguments: JSON.stringify({ id: task.id }) });
+    const del = await relayVoiceTool(session, {
+      voiceSessionId,
+      conversationId,
+      callId: "c2",
+      name: "delete_task",
+      arguments: JSON.stringify({ id: task.id }),
+    });
     expect(del.confirmation?.summary).toMatch(/Buy stamps/);
     expect(await run((s) => listTasks(s, { status: "open" }))).toHaveLength(1);
 
@@ -105,8 +120,71 @@ describe("live voice", () => {
   it("can't use another user's conversation", async () => {
     const a = await voiceUser();
     const b = await voiceUser();
-    const { conversationId } = await startVoiceSession(a.session, "home", fakeOpenAI().client);
-    await expect(relayVoiceTool(b.session, { conversationId, callId: "x", name: "list_tasks", arguments: "{}" })).rejects.toThrow(/not found/i);
+    const { conversationId, voiceSessionId } = await startVoiceSession(a.session, "home", fakeOpenAI().client);
+    await expect(relayVoiceTool(b.session, { voiceSessionId, conversationId, callId: "x", name: "list_tasks", arguments: "{}" })).rejects.toThrow(/not found/i);
     await expect(saveVoiceTranscript(b.session, conversationId, "user", "hi")).rejects.toThrow(/not found/i);
+  });
+
+  it("refuses a tool call without a live server-issued session of the same user and conversation", async () => {
+    const a = await voiceUser();
+    const b = await voiceUser();
+    const { client } = fakeOpenAI();
+    const call = await startVoiceSession(a.session, "home", client);
+    const other = await startVoiceSession(a.session, "home", client);
+    const args = JSON.stringify({ tasks: [{ title: "Nope" }] });
+    const base = { conversationId: call.conversationId, callId: "g1", name: "create_tasks", arguments: args };
+    await expect(relayVoiceTool(a.session, { ...base, voiceSessionId: randomUUID() })).rejects.toThrow(/isn't active/);
+    // another user's session id, and a session of the same user for a different conversation
+    await expect(relayVoiceTool(b.session, { ...base, voiceSessionId: call.voiceSessionId })).rejects.toThrow();
+    await expect(relayVoiceTool(a.session, { ...base, voiceSessionId: other.voiceSessionId })).rejects.toThrow(/isn't active/);
+    // expired
+    await a.run((s) =>
+      s.tx
+        .update(voiceSessions)
+        .set({ expiresAt: new Date(Date.now() - 1000) })
+        .where(eq(voiceSessions.id, call.voiceSessionId)),
+    );
+    await expect(relayVoiceTool(a.session, { ...base, voiceSessionId: call.voiceSessionId })).rejects.toThrow(/isn't active/);
+    expect(await a.run((s) => listTasks(s, { status: "open" }))).toHaveLength(0);
+  });
+
+  it("applies the plan and AI consent checks to tool calls", async () => {
+    const a = await voiceUser();
+    const { client } = fakeOpenAI();
+    const call = await startVoiceSession(a.session, "home", client);
+    const input = { voiceSessionId: call.voiceSessionId, conversationId: call.conversationId, callId: "p1", name: "list_tasks", arguments: "{}" };
+    await expect(relayVoiceTool({ ...a.session, preferences: {} }, input)).rejects.toThrow(/AI|allow/i);
+    vi.stubEnv("STRIPE_SECRET_KEY", "sk_test");
+    vi.stubEnv("STRIPE_WEBHOOK_SECRET", "whsec");
+    vi.stubEnv("STRIPE_PRICE_ID", "price_1");
+    vi.stubEnv("APP_URL", "https://lifeflow.test");
+    try {
+      await expect(relayVoiceTool({ ...a.session, plan: "free" }, input)).rejects.toThrow(/Pro/);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("a repeated call id returns the first result and never runs the tool twice", async () => {
+    const a = await voiceUser();
+    const { client } = fakeOpenAI();
+    const call = await startVoiceSession(a.session, "home", client);
+    const input = {
+      voiceSessionId: call.voiceSessionId,
+      conversationId: call.conversationId,
+      callId: "dup",
+      name: "create_tasks",
+      arguments: JSON.stringify({ tasks: [{ title: "Once" }] }),
+    };
+    const [x, y] = await Promise.allSettled([relayVoiceTool(a.session, input), relayVoiceTool(a.session, input)]);
+    const again = await relayVoiceTool(a.session, input);
+    const ok = [x, y].filter((r) => r.status === "fulfilled");
+    expect(ok.length).toBeGreaterThanOrEqual(1);
+    expect(again).toEqual((ok[0] as PromiseFulfilledResult<unknown>).value);
+    expect((await a.run((s) => listTasks(s, { status: "open" }))).map((t) => t.title)).toEqual(["Once"]);
+    // the same id in another call is a different tool call
+    const next = await startVoiceSession(a.session, "home", client);
+    await relayVoiceTool(a.session, { ...input, voiceSessionId: next.voiceSessionId, conversationId: next.conversationId });
+    expect(await a.run((s) => listTasks(s, { status: "open" }))).toHaveLength(2);
   });
 });

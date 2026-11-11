@@ -4,7 +4,7 @@ import { enforceRateLimit, HttpError } from "@/server/http";
 import { sendSms, smsConfig, validTwilioRequest } from "@/server/integrations/twilio";
 import { answerText } from "@/server/jarvis/sms";
 import { legalDetails } from "@/lib/legal";
-import { smsHelpText, smsKeyword, unlinkPhone, userForPhone } from "@/server/services/sms";
+import { claimInboundSms, smsHelpText, smsKeyword, unlinkPhone, userForPhone } from "@/server/services/sms";
 import { getProvider } from "@/server/jarvis/providers";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +28,9 @@ export async function POST(req: Request) {
     if (e instanceof HttpError) return EMPTY;
     throw e;
   }
+  // A retry of a text we already took (same provider message id) is answered with nothing, so a turn never runs twice.
+  const sid = params.MessageSid || params.SmsMessageSid;
+  if (sid && !(await claimInboundSms(getDb(), sid))) return EMPTY;
   // Carrier keywords come first and never reach the skyling.
   const keyword = smsKeyword(body);
   if (keyword === "stop") {

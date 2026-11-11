@@ -24,6 +24,8 @@ export const EXPORT_TABLES = {
   savingsOpportunities: schema.savingsOpportunities,
   personalGoals: schema.personalGoals,
   promises: schema.promises,
+  voice_sessions: schema.voiceSessions,
+  voice_tool_calls: schema.voiceToolCalls,
   goalCheckins: schema.goalCheckins,
   milestones: schema.lifeMilestones,
   habits: schema.habits,
