@@ -21,6 +21,7 @@ async function ownerPage(browser: Browser): Promise<Page> {
   return op;
 }
 
+const SHOTS = "/tmp/claude-0/-workspace-LIfeFlow/f88947bb-17ba-59ee-934a-43df1518cad1/scratchpad/nicknames";
 const noSideScroll = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 
 test.afterAll(async () => {
@@ -116,4 +117,44 @@ test("after setup, someone waiting lands on their place in line; the app stays c
   await page.goto("/");
   await expect(page).toHaveURL((u) => u.pathname === "/");
   await pool.query("update app_access set waitlist_on = false");
+});
+
+test("someone waiting can set, see and clear an optional nickname at phone width", async ({ browser }) => {
+  test.setTimeout(120_000);
+  await pool.query("update users set access = 'in' where access = 'waiting'");
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+  const page = await ctx.newPage();
+  await signUp(page, "Nia Okafor");
+  await pool.query("update app_access set waitlist_on = true");
+  await page.goto("/waitlist");
+  const front = page.getByRole("region", { name: "The front of the line" });
+  const input = front.getByLabel("Nickname");
+  await expect(input).toBeVisible();
+  // Reachable by keyboard: Tab from the heading area lands on the field, then Save.
+  await input.focus();
+  await expect(input).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(front.getByRole("button", { name: "Save" })).toBeFocused();
+  // The server's message shows for a bad value, and nothing is saved.
+  await input.fill("me@x.com");
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Enter");
+  await expect(front.getByRole("alert")).toContainText("email or a web address");
+  await input.fill("A");
+  await front.getByRole("button", { name: "Save" }).click();
+  await expect(front.getByRole("alert")).toContainText("2 to 16");
+  expect((await pool.query("select waitlist_nickname from users where name = 'Nia Okafor'")).rows[0].waitlist_nickname).toBeNull();
+  await input.fill("Night Owl");
+  await front.getByRole("button", { name: "Save" }).click();
+  await expect(front.getByRole("status").filter({ hasText: "Others in line see it now" })).toBeVisible();
+  await expect(front.getByRole("listitem")).toHaveText([/#1.*Night Owl.*You$/]);
+  expect(await noSideScroll(page)).toBe(true);
+  await page.screenshot({ path: `${SHOTS}/waitlist-nickname-phone.png`, fullPage: true });
+  await front.getByRole("button", { name: "Clear" }).click();
+  await expect(front.getByRole("listitem")).toHaveText([/#1.*[A-Z][a-z]+ \d{4}.*You$/]);
+  await expect(input).toHaveValue("");
+  expect(await noSideScroll(page)).toBe(true);
+  await pool.query("update app_access set waitlist_on = false");
+  await ctx.close();
 });

@@ -45,7 +45,7 @@ export function NicknameForm({ current }: { current: string | null }) {
       <p
         id="wl-nick-msg"
         role={state?.ok === false ? "alert" : "status"}
-        className={`mt-2 min-h-5 text-sm ${state?.ok === false ? "text-red-200" : "text-white/70"}`}
+        className={`mt-2 min-h-5 text-sm ${state?.ok === false ? "text-star-gold" : "text-white/70"}`}
       >
         {state?.ok === false ? state.error : state?.message}
       </p>
