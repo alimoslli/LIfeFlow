@@ -9,7 +9,7 @@ import { cloudFacts } from "./cloud-facts";
 import { ServiceError } from "./errors";
 import { listInsights } from "./insights";
 import type { Candidate } from "./proactive/detectors";
-import { saveMessage, toneOf } from "./proactive/engine";
+import { getMessage, saveMessage, toneOf } from "./proactive/engine";
 import { respondToMessage } from "./proactive/respond";
 
 export { cloudFacts };
@@ -46,10 +46,38 @@ export async function doCloud(scope: UserScope, user: { id: string; timezone: st
   if (typeof ref !== "string" || ref.length > 200) throw new ServiceError("That one changed. Open Today again.");
   const found = (await listInsights(scope, user.timezone, user.preferences, now)).find((i) => i.key === ref && i.action?.doIt);
   const doIt = found?.action?.doIt;
-  const source = doIt?.payload.source as
-    { kind: string; topic: string; dedupeKey: string; facts: Record<string, unknown>; priority: number; urgent?: boolean } | undefined;
-  const action = doIt?.payload.action as ProactiveAction | undefined;
-  if (!found || !source || !action || !DOABLE.has(action.type)) throw new ServiceError("That one changed. Open Today again.");
+  if (!found || !doIt) throw new ServiceError("That one changed. Open Today again.");
+  const today = todayIn(user.timezone, now);
+  const gone = () => new ServiceError("That one changed. Open Today again.");
+
+  // a message the producer already filed (the sky's own suggestions): the usual Do it on it
+  if (doIt.kind === "message") {
+    const id = String(doIt.payload.messageId ?? "");
+    if (!id || !(await getMessage(scope, id))) throw gone();
+    const r = await respondToMessage(scope, user, id, "do", today);
+    return { id, text: r.text };
+  }
+
+  // a fix filed now as a message, so it runs through the same Do it and has the same Undo
+  type Source = { kind: string; topic: string; dedupeKey: string; facts: Record<string, unknown>; priority: number; urgent?: boolean };
+  let action: ProactiveAction | undefined;
+  let source: Source | undefined;
+  if (doIt.kind === "block") {
+    const b = doIt.payload.block as { date: string; start: string; end: string; title: string } | undefined;
+    if (!b) throw gone();
+    action = { type: "block_time", label: "Block it", date: b.date, start: b.start, end: b.end, title: b.title };
+    source = {
+      kind: "study_block",
+      topic: "school",
+      dedupeKey: `cloud_block:${found.key}`,
+      facts: { headline: found.headline, text: found.why },
+      priority: 60,
+    };
+  } else {
+    action = doIt.payload.action as ProactiveAction | undefined;
+    source = doIt.payload.source as Source | undefined;
+  }
+  if (!source || !action || !DOABLE.has(action.type)) throw gone();
   const saved = await saveMessage(
     scope,
     {
@@ -71,7 +99,7 @@ export async function doCloud(scope: UserScope, user: { id: string; timezone: st
         .select()
         .from(jarvisMessages)
         .where(and(eq(jarvisMessages.userId, scope.userId), eq(jarvisMessages.dedupeKey, source.dedupeKey)));
-  const r = await respondToMessage(scope, user, row.id, "do", todayIn(user.timezone, now));
+  const r = await respondToMessage(scope, user, row.id, "do", today);
   return { id: row.id, text: r.text };
 }
 

@@ -12,6 +12,8 @@ import { logHealth } from "@/server/services/health";
 import { createHabit } from "@/server/services/habits";
 import { cloudFacts, doCloud, ideaClouds, recordCloudTap } from "@/server/services/idea-clouds";
 import { insightFacts } from "@/server/services/insight-facts";
+import { PRODUCERS } from "@/server/services/insights";
+import { saveMessage } from "@/server/services/proactive/engine";
 import { respondToMessage } from "@/server/services/proactive/respond";
 import { createTask, listTasks } from "@/server/services/tasks";
 import { createEmployer, createShift } from "@/server/services/work";
@@ -165,6 +167,61 @@ describe("insight clouds come from the person's own rows (owner, 2026-11-12)", (
     // a made-up key, or a fix the records don't show, does nothing
     await expect(run((s) => doCloud(s, u, "move_tasks:everything", NOW))).rejects.toThrow(/changed/);
     expect(await run((s) => listTasks(s, { status: "open" }))).toHaveLength(1);
+  });
+
+  it("producers added later work through the same tap: a 'block' and a filed 'message', each with Undo", async () => {
+    const { user, run } = await makeUser("Late Producer");
+    const u = { id: user.id, timezone: TZ, preferences: await prefsOf(user.id) };
+    const filed = await run((s) =>
+      saveMessage(
+        s,
+        {
+          kind: "task_streak",
+          topic: "habits",
+          dedupeKey: "t:1",
+          facts: { headline: "x", text: "y" },
+          action: { type: "create_task", label: "Add", title: "Stretch" },
+          priority: 50,
+        },
+        "friend",
+        false,
+        "t",
+      ),
+    );
+    const producer = async () => [
+      {
+        key: "p:block",
+        kind: "study_block",
+        tone: "heads_up" as const,
+        headline: "Study block",
+        why: "Free 7 to 9",
+        source: "test",
+        rank: 50,
+        action: { label: "Block 7", doIt: { kind: "block", payload: { block: { date: "2026-11-11", start: "19:00", end: "21:00", title: "Study" } } } },
+      },
+      {
+        key: "p:msg",
+        kind: "task_streak",
+        tone: "tip" as const,
+        headline: "Msg",
+        why: "w",
+        source: "test",
+        rank: 40,
+        action: { label: "Do it", doIt: { kind: "message", payload: { messageId: filed!.id } } },
+      },
+    ];
+    PRODUCERS.push(producer);
+    try {
+      const b = await run((s) => doCloud(s, u, "p:block", NOW));
+      expect(b.text).toMatch(/Blocked .* for "Study"/);
+      await run((s) => respondToMessage(s, u, b.id, "undo", "2026-11-11"));
+      const m = await run((s) => doCloud(s, u, "p:msg", NOW));
+      expect(m.id).toBe(filed!.id);
+      expect(m.text).toMatch(/Added the to-do "Stretch"/);
+      await expect(run((s) => doCloud(s, u, "p:nope", NOW))).rejects.toThrow(/changed/);
+    } finally {
+      PRODUCERS.pop();
+    }
   });
 
   it("an account with nothing: a couple of calm tips, so the sky is never empty", async () => {

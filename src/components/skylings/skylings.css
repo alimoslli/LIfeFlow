@@ -596,6 +596,10 @@
     line-height: 1.2;
     overflow-wrap: anywhere;
   }
+  /* the bolt has its own corner: the headline leaves room for it */
+  .lf-idea-cloud[data-bolt] .lf-idea-head {
+    padding-right: 1.25rem;
+  }
   .lf-idea-why {
     font-size: 0.8125rem;
     font-weight: 500;
@@ -658,8 +662,8 @@
   /* lightning (only the worst storms): a small bolt that flickers, twice every 6 s, at least 0.4 s apart, never more than 3 a second */
   .lf-idea-bolt {
     position: absolute;
-    top: 4px;
-    right: 6px;
+    top: 6px;
+    right: 14px;
     z-index: -1;
     width: 0.75rem;
     height: 1.125rem;

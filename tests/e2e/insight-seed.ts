@@ -31,7 +31,7 @@ export async function seedBusyStudent(email: string, opts: { locked?: boolean } 
   );
   await queryAsUser(
     email,
-    `insert into recurring_items (user_id, name, amount_cents, frequency, kind, next_due_date) values (${me}, 'Rent', -85000, 'monthly', 'bill', current_date + 2)`,
+    `insert into recurring_items (user_id, name, amount_cents, frequency, kind, next_due_date) values (${me}, 'Rent', -85000, 'monthly', 'bill', current_date + 1)`,
   );
   for (const t of ["Call the bank", "Return library books"])
     await queryAsUser(email, `insert into tasks (user_id, title, due_at) values (${me}, $1, now() - interval '2 days')`, [t]);
