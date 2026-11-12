@@ -17,7 +17,18 @@ export async function spendingSummary(scope: UserScope, q: TransactionQuery & { 
   // Totals count only rows that matched as the same words; the rest (a shortened name, an initial) are reported apart.
   const txns = found.filter((t) => t.sure);
   const unsure = found.filter((t) => !t.sure);
-  const unconfirmed = { count: unsure.length, cents: unsure.reduce((n, t) => n + Math.max(0, -t.amountCents), 0) };
+  // Money out and money in apart: an unsure incoming line must never be hidden behind an "all counted" incoming total.
+  const unconfirmed = {
+    count: unsure.length,
+    paidCents: unsure.reduce((n, t) => n + Math.max(0, -t.amountCents), 0),
+    receivedCents: unsure.reduce((n, t) => n + Math.max(0, t.amountCents), 0),
+  };
+  const counted = q.search?.trim()
+    ? countedNames(
+        txns.filter((t) => !t.excluded),
+        parseSearch(q.search).terms,
+      )
+    : { names: [], leftOut: { count: 0, cents: 0 } };
   const cats = await listCategories(scope);
   const summary = summarizeCashflow(txns);
   const byCategory = rollupToParents(spendingByCategoryId(txns), cats).slice(0, 10);
@@ -37,12 +48,8 @@ export async function spendingSummary(scope: UserScope, q: TransactionQuery & { 
     ...summary,
     unconfirmed,
     /** With a search: the exact names the totals counted (never a fuzzy match), so the answer can name them. */
-    countedNames: q.search?.trim()
-      ? countedNames(
-          txns.filter((t) => !t.excluded),
-          parseSearch(q.search).terms,
-        )
-      : [],
+    countedNames: counted.names,
+    countedLeftOut: counted.leftOut,
     topCategories: byCategory,
     topMerchants: [...merchants.values()].sort((a, b) => b.cents - a.cents).slice(0, 8),
     dataSources: sources,
