@@ -1,0 +1,71 @@
+{
+  "id": "s0043-student-dorm-eating-out-up-a-little-nothing-due-stay-quiet",
+  "title": "Dorm university student (no job, 4 classes, 12 credits, online Physics, Canvas, afternoon steady) eats out $7.07 a week more than usual this month; nothing is due, so there is no fix and Dev says nothing at 4 PM on Thursday, and no study on his kept-free Sunday morning.",
+  "persona": "p6005-university-dorm-none",
+  "now": "2026-11-12T16:00",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 6103,
+  "changes": [
+    {
+      "id": "h-food",
+      "type": "habit_change",
+      "habit": "eating-out",
+      "from": "2026-11-02",
+      "until": "2026-11-12",
+      "amount_scale": 1.6,
+      "per_week": 6
+    }
+  ],
+  "dev_must_notice": [],
+  "best_fix": {
+    "action": "none",
+    "needs_user": false,
+    "what": "Nothing. At 4:00 PM on Thursday Nov 12 the Tonight card shows that the evening is open (no class, no study window pending, dinner on his meal plan) and nothing else. No spending card: eating out is $31.88 a week this month against $24.81 before (about $7.07 more), Available now is $1,745.26, savings are $350.37, the only bills are small subscriptions (the next is Spotify $5.99 on Dec 3), and he has no income to protect. A figure with no fix attached is not worth his attention.",
+    "why": "Spending above usual is only worth saying when Dev has a fix, such as a bill at risk, a goal falling behind, or a charge that is wrong. Here nothing is at risk, so any message would be a scolding."
+  },
+  "must_not": [
+    "send a spending-above-usual message about eating out",
+    "suggest cooking, skipping meals or cutting the meal plan",
+    "use guilt words like 'overspending' or 'slipping'",
+    "count a refund, aid or family money that has not landed",
+    "put a study block on Sunday morning"
+  ],
+  "stay_quiet": true,
+  "tags": [
+    "student",
+    "university",
+    "dorm",
+    "no job",
+    "canvas",
+    "afternoon studier",
+    "steady",
+    "4 classes",
+    "12 credits",
+    "online class",
+    "meal plan",
+    "spending above usual",
+    "stay quiet",
+    "routine fit",
+    "insight cloud",
+    "tonight"
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "put a study block on Sunday morning",
+        "routine": "keep-free",
+        "why_wrong": "Sunday 8 AM to noon is his fixed kept-free time; he studies weekday afternoons from 2:00 to 4:45",
+        "facts": [
+          "m-04"
+        ]
+      }
+    ]
+  },
+  "assumptions": [
+    "Eating out of $24.81 a week before and $31.88 a week during is the simulator's measured effect, over Nov 2 to Nov 12.",
+    "The meal plan covers 14 dining hall meals a week, so some of the extra is a choice, not a need.",
+    "The family call Sunday evening and the kept-free morning are both untouched."
+  ]
+}

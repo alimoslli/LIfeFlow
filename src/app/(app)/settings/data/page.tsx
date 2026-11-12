@@ -38,7 +38,7 @@ export default async function DataSettings() {
       <Card className="p-5">
         <h2 className="font-medium">Your privacy</h2>
         <p className="mt-1 text-sm text-text-2">
-          Your data is private to you, encrypted where it matters, and never used to train AI. Read the{" "}
+          Your data is private to you, encrypted where it matters, and never used to train shared models. Read the{" "}
           <a href="/privacy" className="text-accent underline underline-offset-2">
             Privacy Policy
           </a>{" "}

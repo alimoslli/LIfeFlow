@@ -35,9 +35,11 @@ test("Live HQ: Right now shows who is working on what, the room and the desk say
   );
   await pool.query(
     `insert into hq_chats (id, title, status, last_checkin_at, live_state, live_line, live_at)
-     values ($1, 'Untitled chat', 'unknown', now(), 'busy', 'Run the SMS tests', now() - interval '2 minutes')`,
+     values ($1, 'Untitled chat', 'unknown', now(), 'busy', 'Run the SMS tests', now() - interval '1 minute 36 seconds')`,
     [DESK_CHAT],
   );
+  // The page rounds to the nearest minute and the seeds are 24 s younger than the minute they expect, so a render up to
+  // about 54 s late still reads exactly "2 min ago" / "12 min ago" (the minute is still checked, never loosened).
   const op = await ownerPage(browser, { viewport: { width: 1280, height: 900 }, deviceScaleFactor: SHOTS ? 2 : 1 });
   await op.goto("/admin");
 
@@ -79,7 +81,7 @@ test("Live HQ on a phone: Right now fits, with no sideways scroll and a 44 px Wa
   );
   await pool.query(
     `insert into hq_chats (id, title, status, last_checkin_at, live_state, live_line, live_at) values
-       ('session_01LiveRelayedChatAbcdef', 'LF V3', 'working', now(), 'relayed', 'Drawing the timeline', now() - interval '12 minutes')`,
+       ('session_01LiveRelayedChatAbcdef', 'LF V3', 'working', now(), 'relayed', 'Drawing the timeline', now() - interval '11 minutes 36 seconds')`,
   );
   const op = await ownerPage(browser, { viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true, deviceScaleFactor: SHOTS ? 3 : 1 });
   await op.goto("/admin");
