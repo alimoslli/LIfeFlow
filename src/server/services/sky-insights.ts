@@ -1,8 +1,8 @@
-import { and, desc, eq, gte, inArray } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, like } from "drizzle-orm";
 import { addDaysStr, dayOfWeek, localDateOf } from "@/lib/dates";
 import { rankInsights, type SkyAction, type SkyInsight, type Weather } from "@/lib/sky-insights";
 import type { UserScope } from "../db/with-user";
-import { jarvisMessages } from "../db/schema";
+import { inboxItems, jarvisMessages, type InboxFiled } from "../db/schema";
 import { allInsights } from "../briefing/rules";
 import type { Insight, LifeSnapshot } from "../briefing/types";
 
@@ -53,6 +53,47 @@ function fromRule(i: Insight): SkyInsight {
     money: i.money ?? MONEY_ICONS.has(i.icon),
     score: i.score,
   };
+}
+
+/** What a find from email is about money: a bill, a charge or a reminder to pay (left out under the Money lock). */
+const MONEY_FINDS = new Set<InboxFiled["kind"]>(["recurring", "recurring_update", "transaction", "transaction_note", "paycheck"]);
+
+/**
+ * What the morning's Gmail look found (owner via the COO, 2026-11-12: "I don't even notice that it's connected"): each
+ * email filed in the last two days, said once, marked as from email, with the place it landed. A moved exam is a heads-up.
+ */
+async function emailFinds(scope: UserScope, now: Date): Promise<SkyInsight[]> {
+  const rows = await scope.tx
+    .select({ id: inboxItems.id, filed: inboxItems.filed })
+    .from(inboxItems)
+    .where(
+      and(
+        eq(inboxItems.userId, scope.userId),
+        eq(inboxItems.status, "filed"),
+        like(inboxItems.externalId, "gmail:%"),
+        gte(inboxItems.createdAt, new Date(now.getTime() - 2 * 86_400_000)),
+      ),
+    )
+    .orderBy(desc(inboxItems.createdAt))
+    .limit(3);
+  return rows.flatMap((r) => {
+    const f = r.filed.find((x) => !x.stale);
+    if (!f) return [];
+    const moved = f.kind === "assignment_update";
+    const money = MONEY_FINDS.has(f.kind) || (f.kind === "task" && /^Reminder: pay /.test(f.label));
+    return [
+      {
+        id: `email-${r.id}`,
+        kind: "from_email",
+        weather: moved ? ("grey" as const) : ("clear" as const),
+        headline: `${f.label.replace(/\.$/, "")} (from your email)`,
+        why: "It's on your sky now. Undo is on Updates if it's wrong.",
+        action: f.href ? { type: "open" as const, label: "See it", href: f.href } : null,
+        money,
+        score: moved ? 66 : 50,
+      },
+    ];
+  });
 }
 
 function fromMessage(m: Row): SkyInsight {
@@ -116,5 +157,6 @@ export async function skyInsights(scope: UserScope, snapshot: LifeSnapshot, opts
     .filter((i) => !LEFT_OUT.test(i.id) && !(i.id.startsWith("exam-") && offered.has(i.id.slice(5))))
     .map(fromRule)
     .filter((i) => !(opts.moneyLocked && i.money));
-  return rankInsights([...stored.map(fromMessage), ...live]);
+  const email = (await emailFinds(scope, s.now)).filter((i) => !(opts.moneyLocked && i.money));
+  return rankInsights([...stored.map(fromMessage), ...live, ...email]);
 }

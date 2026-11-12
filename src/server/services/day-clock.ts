@@ -494,7 +494,10 @@ export function purchaseMarks(rows: PurchaseRow[], o: { tz: string; today: strin
   }
   for (const [d, dayRows] of byDay) {
     const total = summarizeCashflow(dayRows).netSpendingCents;
-    const bought = spend.filter((t) => purchaseDay(t, o.tz) === d).sort((a, b) => (a.authorizedAt?.getTime() ?? 0) - (b.authorizedAt?.getTime() ?? 0));
+    // by time, then by name (the bank's rows can come back in any order when they were saved together)
+    const bought = spend
+      .filter((t) => purchaseDay(t, o.tz) === d)
+      .sort((a, b) => (a.authorizedAt?.getTime() ?? 0) - (b.authorizedAt?.getTime() ?? 0) || name(a, 30).localeCompare(name(b, 30)));
     if (total <= 0 || !bought.length) continue;
     const isToday = d === o.today;
     const list = bought.slice(0, 6).map((t) => `${name(t, 30)} ${price(t.amountCents)}`);

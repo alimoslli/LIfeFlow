@@ -366,6 +366,7 @@ export async function getAgenda(
         subtitle: a.course.code ?? a.course.name,
         href: `/school/courses/${a.course.id}`,
         blocksTime: false,
+        ...(a.source === "email" ? { sources: ["email"] } : {}),
       });
     }
   }

@@ -145,12 +145,13 @@ const SOURCE_WORDS: Record<string, string> = {
   canvas: "Canvas",
   ukg: "your work schedule",
   schedule: "your schedule",
+  email: "your email",
 };
 
 /** "From Google Calendar", "From your work schedule", "Added in LifeFlow". */
 export function sourceFor(origin: AgendaOrigin, sources: string[] | undefined): string {
   if (origin === "shift") return "From your work schedule";
-  if (origin === "assignment") return "From your classes";
+  if (origin === "assignment") return sources?.includes("email") ? "From your email" : "From your classes";
   if (origin === "task") return "From your to-dos";
   const named = [...new Set((sources ?? []).map((s) => SOURCE_WORDS[s]).filter((x): x is string => !!x))];
   return named.length ? `From ${named.join(" and ")}` : "Added in LifeFlow";

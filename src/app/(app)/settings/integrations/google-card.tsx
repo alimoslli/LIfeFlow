@@ -13,7 +13,7 @@ export function GoogleCard({
 }: {
   configured: boolean;
   connection: { email: string; status: string; lastSynced: string | null; error: string | null } | null;
-  /** Jarvis files new school, bill and work emails each morning. */
+  /** Each morning the skyling puts what it finds in email on the sky (on unless turned off). */
   filing?: boolean;
 }) {
   return (
@@ -33,7 +33,8 @@ export function GoogleCard({
         </Badge>
       </div>
       <p className="mt-3 text-sm text-text-2">
-        <AssistantName start /> reads and drafts email. Sending always asks you first.
+        Each morning <AssistantName /> reads new mail for due dates, exam changes, bills, receipts, deliveries and bookings, and puts them on your sky, marked
+        &ldquo;From your email&rdquo;, with Undo. Only mail Gmail confirms came from its sender. It never sends anything without asking you.
       </p>
 
       {!configured ? (
@@ -52,10 +53,8 @@ export function GoogleCard({
             className="flex min-h-11 items-center justify-between gap-3 rounded-2xl bg-surface-2 px-4 py-2 text-left text-sm"
           >
             <span>
-              <span className="block font-medium">File school, bill and work emails</span>
-              <span className="text-xs text-muted">
-                Each morning <AssistantName /> checks new mail for due dates, bills and shifts and files them, with Undo.
-              </span>
+              <span className="block font-medium">Put what&apos;s in my email on my sky</span>
+              <span className="text-xs text-muted">The first look goes back two weeks, then each morning checks new mail.</span>
             </span>
             <span className={filing ? "font-medium text-accent" : "text-muted"}>{filing ? "On" : "Off"}</span>
           </ActionButton>
