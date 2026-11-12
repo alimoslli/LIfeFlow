@@ -276,8 +276,8 @@
   }
 }
 
-/* typing to the skyling (owner, 2026-11-12: "make sure when we text ray they dont get in the way"): while the chat box has
-   focus or words in it, the clouds step down and away; they come back when it's empty again */
+/* typing to the skyling (owner, 2026-11-12: "make sure when we text ray they dont get in the way", then "the other cloud
+   flows in never empty"): while the chat box has focus or words in it, the cloud dims and holds still, never gone */
 .lf-idea-stack {
   transition:
     opacity 0.3s ease,
@@ -285,9 +285,7 @@
 }
 /* only the box in view counts: Today's docked bar on a phone, or the skyling's message box (a laptop's hidden bar is filled too) */
 body:has(:is(.dc-dock, .lf-composer) textarea:is(:focus, :not(:placeholder-shown))) .lf-idea-stack {
-  opacity: 0;
-  transform: translateY(0.75rem);
-  pointer-events: none;
+  opacity: 0.5;
 }
 @media (prefers-reduced-motion: reduce) {
   .lf-idea-stack {

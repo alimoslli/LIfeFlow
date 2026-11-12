@@ -505,6 +505,13 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   };
 
   type Fact = { kind: string; tag: string; now: string; then?: string };
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  /** The calendar date of a moment on the line, as "Nov 13". */
+  const dateOf = (t: number, data: ClockData) => {
+    const [y, m, d] = data.today.split("-").map(Number);
+    const at = new Date(Date.UTC(y, m - 1, d + dayOf(t)));
+    return `${MONTHS[at.getUTCMonth()]} ${at.getUTCDate()}`;
+  };
   const dayWord = (t: number, data: ClockData) => {
     const d = dayOf(t);
     return d === 0 ? "Today" : d === 1 ? "Tomorrow" : d === -1 ? "Yesterday" : (data.days.find((x) => x.offset === d)?.short ?? "");
@@ -546,7 +553,8 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       if (bill)
         facts.push({
           kind: "bill",
-          tag: `Next bill · ${esc(dayWord(bill.start, data))}`,
+          // when, in plain words and the date: "Due tomorrow · Nov 13" (owner, 2026-11-12: "state when the rent is")
+          tag: `Due ${esc(dayWord(bill.start, data).replace(/^(Today|Tomorrow)$/, (w) => w.toLowerCase()))} · ${dateOf(bill.start, data)}`,
           now: `💵 ${esc(bill.title)}${bill.amountCents != null ? ` ${cents(bill.amountCents)}` : ""}`,
         });
       if (data.steps != null) facts.push({ kind: "steps", tag: "Steps today", now: `👟 ${data.steps.toLocaleString("en-US")}` });

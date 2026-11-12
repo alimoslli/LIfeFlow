@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, useTransition, type CSSProperties } from "react";
 import { flyToBar } from "@/components/motion/fly-to-bar";
+import { LEAD_USED } from "@/components/skylings/idea-clouds";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import type { SkyInsight } from "@/lib/sky-insights";
@@ -45,7 +46,13 @@ export function SkyNote({
   const { openJarvis } = useShell();
   const cloudRef = useRef<HTMLDivElement>(null);
   // on a phone the question floats down into Today's bar and waits there; elsewhere the chat opens and sends it
-  const ask = onAsk ? (prompt: string) => flyToBar(cloudRef.current, () => onAsk(prompt)) : (prompt: string) => openJarvis(prompt, { send: true });
+  const ask = onAsk
+    ? (prompt: string) =>
+        flyToBar(cloudRef.current, () => {
+          onAsk(prompt);
+          window.dispatchEvent(new Event(LEAD_USED));
+        })
+    : (prompt: string) => openJarvis(prompt, { send: true });
   const [pending, start] = useTransition();
   // what was just done stays in view with its Undo for a few seconds, even after the refresh brings the next note
   const [done, setDone] = useState<{ insight: SkyInsight; text: string; undo: () => Promise<ActionState> } | null>(null);

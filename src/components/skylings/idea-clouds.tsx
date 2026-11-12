@@ -50,22 +50,47 @@ export function IdeaClouds({
   const [busy, setBusy] = useState<string | null>(null);
   const [done, setDone] = useState<Record<string, Done>>({});
   const [failed, setFailed] = useState<Record<string, string>>({});
-  const visible = clouds.slice(0, show);
-  const count = visible.length + (lead ? 1 : 0);
+  // a cloud whose question went into the chat box leaves, and the next flows in (owner, 2026-11-12: "then the other cloud
+  // flows in never empty"); once every one is used they all come back
+  const [used, setUsed] = useState<string[]>([]);
+  const fresh = clouds.slice(0, show).filter((c) => !used.includes(c.key));
+  const leadOn = !!lead && !used.includes(LEAD);
+  const allUsed = !fresh.length && !leadOn;
+  const visible = allUsed ? clouds.slice(0, show) : fresh;
+  const showLead = allUsed ? !!lead : leadOn;
+  const count = visible.length + (showLead ? 1 : 0);
   const [at, setAt] = useState(() => (count > 1 ? start % count : 0));
   const [held, setHeld] = useState(false);
+  const [typing, setTyping] = useState(false);
+  // typing to the skyling: the clouds hold still (and dim, thought.css) so they don't get in the way
+  useEffect(() => {
+    if (!big) return;
+    const inBox = (e: FocusEvent) => e.target instanceof Element && !!e.target.closest("[data-cloud-target]");
+    const on = (e: FocusEvent) => inBox(e) && setTyping(true);
+    const off = (e: FocusEvent) => inBox(e) && setTyping(false);
+    // the skyling's own note asks through Today's bar too: its question going in counts as that cloud used
+    const usedLead = () => setUsed((u) => (u.includes(LEAD) ? u : [...u, LEAD]));
+    document.addEventListener("focusin", on);
+    document.addEventListener("focusout", off);
+    window.addEventListener(LEAD_USED, usedLead);
+    return () => {
+      document.removeEventListener("focusin", on);
+      document.removeEventListener("focusout", off);
+      window.removeEventListener(LEAD_USED, usedLead);
+    };
+  }, [big]);
   const cur = count ? at % count : 0;
   const swipe = useRef<number | null>(null);
   const step = (by: number) => setAt((a) => (a + by + count) % count);
   // the next idea drifts in on its own, unless they're touching, reading with the keyboard, or just did one (its Undo stays)
   const busyOrDone = !!busy || Object.keys(done).length > 0;
   useEffect(() => {
-    if (!big || count < 2 || held || busyOrDone) return;
+    if (!big || count < 2 || held || typing || busyOrDone) return;
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     if (navigator.webdriver && !/[?&]clouds=1/.test(location.search)) return;
     const t = window.setTimeout(() => setAt((a) => (a + 1) % count), CHANGE_MS);
     return () => window.clearTimeout(t);
-  }, [big, count, held, busyOrDone, at]);
+  }, [big, count, held, typing, busyOrDone, at]);
   if (!clouds.length && !lead) return null;
 
   async function go(c: IdeaCloud, el?: HTMLElement | null) {
@@ -84,7 +109,10 @@ export function IdeaClouds({
       return;
     }
     // a question floats down into the chat box and merges into it, then waits there to be sent
-    flyToBar(el, () => onPick(c.ask));
+    flyToBar(el, () => {
+      onPick(c.ask);
+      if (big) setUsed((u) => [...u, c.key]);
+    });
   }
 
   async function undo(c: IdeaCloud) {
@@ -122,7 +150,7 @@ export function IdeaClouds({
         onBlur: () => setHeld(false),
       })}
     >
-      {lead && (
+      {showLead && (
         <li className="lf-idea-lead" data-k={0} data-on={!stack || cur === 0 ? "" : undefined}>
           {lead}
         </li>
@@ -133,7 +161,7 @@ export function IdeaClouds({
         const weather = d ? "tip" : c.weather;
         const t = CLOUD_TEXT[weather];
         // the big cumulus (owner, 2026-11-12): the skyling's thought, or on a phone's Today every cloud; rain under a storm
-        const isThought = !!thought && !lead && i === 0 && !!c.thought;
+        const isThought = !!thought && !showLead && i === 0 && !!c.thought;
         const large = big || isThought;
         const storm = weather === "storm";
         const kicker = isThought ? `${thought} thought about this` : c.key.startsWith("insight:") && thought ? `${thought} noticed` : "Try this";
@@ -152,7 +180,10 @@ export function IdeaClouds({
               } as CSSProperties
             }
           >
-            <span className="lf-idea-body" style={(large ? thoughtCloudStyle(weather, i + (lead ? 1 : 0)) : weatherCloudStyle(i, weather)) as CSSProperties}>
+            <span
+              className="lf-idea-body"
+              style={(large ? thoughtCloudStyle(weather, i + (showLead ? 1 : 0)) : weatherCloudStyle(i, weather)) as CSSProperties}
+            >
               {storm && !large && <span className="lf-idea-rain" aria-hidden="true" />}
               {c.bolt && !d && !large && (
                 <svg className="lf-idea-bolt" viewBox="0 0 8 12" aria-hidden="true" shapeRendering="crispEdges">
@@ -206,8 +237,8 @@ export function IdeaClouds({
             <li
               key={c.key}
               className="lf-idea-lead"
-              data-k={i + (lead ? 1 : 0)}
-              data-on={!stack || cur === i + (lead ? 1 : 0) ? "" : undefined}
+              data-k={i + (showLead ? 1 : 0)}
+              data-on={!stack || cur === i + (showLead ? 1 : 0) ? "" : undefined}
               style={{ "--i": i } as CSSProperties}
             >
               <section
@@ -253,3 +284,6 @@ export function IdeaClouds({
 
 /** How long one idea stays before the next drifts in. */
 const CHANGE_MS = 9000;
+const LEAD = "lead";
+/** The skyling's note (the `lead`) put its question in the chat box: it leaves like any used cloud. */
+export const LEAD_USED = "lf:cloud-lead-used";

@@ -73,7 +73,11 @@ test("a busy student sees real insights, as weather; a tap fills the bar or does
       .click();
     await expect(box).toHaveValue(/^Help me finish Quiz 2 before it's due/);
     await expect(page.locator(".lf-bubble-me")).toHaveCount(0);
-    await expect(page.locator(".lf-idea-stack")).toHaveCSS("opacity", "0");
+    // the used cloud leaves and the next flows in, never an empty sky ("the other cloud flows in never empty"); while the
+    // box has words the cloud dims and holds still
+    await expect(row(page).getByRole("button", { name: /Quiz 2 due/ })).toHaveCount(0);
+    await expect(shown).toHaveCount(1);
+    await expect(page.locator(".lf-idea-stack")).toHaveCSS("opacity", "0.5");
     await box.fill("");
     await box.blur();
     await expect(page.locator(".lf-idea-stack")).toHaveCSS("opacity", "1");
