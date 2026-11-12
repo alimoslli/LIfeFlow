@@ -46,9 +46,20 @@ describe("per-person limits", () => {
   });
 
   it("after launch, a Pro allowance is off until the owner picks a number", () => {
-    expect(personLimits(person({ plan: "pro" }), STRIPE, {} as never)).toEqual({});
-    expect(personLimits(person({ plan: "pro" }), STRIPE, { AI_PRO_MONTH_DOLLARS: 12 } as never)).toEqual({ microsPerMonth: 12_000_000 });
-    expect(personLimits(person({ plan: "free" }), STRIPE, { AI_PRO_MONTH_DOLLARS: 12 } as never)).toEqual({});
+    expect(personLimits(person({ plan: "pro" }), STRIPE, {} as never).microsPerMonth).toBeUndefined();
+    expect(personLimits(person({ plan: "pro" }), STRIPE, { AI_PRO_MONTH_DOLLARS: 12 } as never).microsPerMonth).toBe(12_000_000);
+    expect(personLimits(person({ plan: "free" }), STRIPE, { AI_PRO_MONTH_DOLLARS: 12 } as never).microsPerMonth).toBeUndefined();
+  });
+
+  it("after launch, one person may use at most a fifth of the company's daily ceiling in a day, with no Pro number set", () => {
+    expect(personLimits(person({ plan: "pro" }), STRIPE, {} as never)).toEqual({ microsPerDay: 2_000_000 });
+    expect(personLimits(person({ plan: "pro" }), STRIPE, { AI_GLOBAL_DAY_DOLLARS: 40 } as never)).toEqual({ microsPerDay: 8_000_000 });
+    // not in testing (the owner's $4 a month rule is unchanged), and never for admins
+    expect(personLimits(person(), null, {} as never).microsPerDay).toBeUndefined();
+    expect(personLimits(person({ isAdmin: true, plan: "pro" }), STRIPE, {} as never)).toEqual({});
+    const l = personLimits(person({ plan: "pro" }), STRIPE, {} as never);
+    const lines = budgetLines(person({ plan: "pro" }), { feature: "chat", firstStep: false, estimateMicros: 90_000 }, NOW, l, companyLimits({} as never));
+    expect(lines[0]).toEqual({ key: `u:${person().userId}:2026-11-12:micros`, kind: "micros", amount: 90_000, limit: 2_000_000 });
   });
 });
 
@@ -157,5 +168,33 @@ describe("what the person reads", () => {
   it("never names a model, a setting or tokens", () => {
     for (const k of ["u:x:2026-11:micros", "u:x:2026-11:vsecs", "g:2026-11-12:micros", "u:x:2026-11:msgs"])
       expect(refusalMessage(refusalOf(k, []), subject, NOW)).not.toMatch(/token|model|gpt|openai|AI_|JARVIS/i);
+  });
+});
+
+describe("which work has a price set (admin AI panel)", () => {
+  it("says dollars aren't counting when nothing is priced, and always lists voice", async () => {
+    const { priceCoverage } = await import("@/server/services/ai-prices");
+    const none = priceCoverage({ OPENAI_MODEL: "big", OPENAI_MODEL_SMALL: "mini" } as never);
+    expect(none.dollarsCounting).toBe(false);
+    expect(none.unpriced).toEqual(expect.arrayContaining(["Chat and texts (main model)", "Reading documents", "Web search", "Voice"]));
+    const mainOnly = priceCoverage({
+      OPENAI_MODEL: "big",
+      OPENAI_MODEL_SMALL: "mini",
+      JARVIS_PRICE_INPUT_PER_MTOK: 1,
+      JARVIS_PRICE_OUTPUT_PER_MTOK: 5,
+    } as never);
+    expect(mainOnly.dollarsCounting).toBe(true);
+    expect(mainOnly.unpriced).not.toContain("Reading documents");
+    expect(mainOnly.unpriced).toEqual(expect.arrayContaining(["Quick chat turns and tidying transactions (small model)", "Web search", "Voice"]));
+    const all = priceCoverage({
+      OPENAI_MODEL: "big",
+      OPENAI_MODEL_SMALL: "mini",
+      JARVIS_PRICE_INPUT_PER_MTOK: 1,
+      JARVIS_PRICE_OUTPUT_PER_MTOK: 5,
+      JARVIS_PRICE_SMALL_INPUT_PER_MTOK: 1,
+      JARVIS_PRICE_SMALL_OUTPUT_PER_MTOK: 5,
+      JARVIS_PRICE_WEB_SEARCH_PER_1K_CALLS: 10,
+    } as never);
+    expect(all.unpriced).toEqual(["Voice"]);
   });
 });

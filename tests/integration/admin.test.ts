@@ -240,6 +240,8 @@ describe("AI use, limits and invites", () => {
     const { usage, usageFor, resetLimits } = await import("@/server/services/admin");
     expect(await usageFor(db(), user.id)).toMatchObject({ messagesToday: 3, messagesMonth: 3, voiceToday: 1, voiceMonth: 0 });
     const all = await usage(db());
+    expect(all.pricing.unpriced).toContain("Voice"); // voice is never priced
+    expect(typeof all.pricing.dollarsCounting).toBe("boolean");
     expect(all.people.find((p) => p.userId === user.id)).toMatchObject({ email: user.email, messagesMonth: 3 });
 
     await resetLimits(db(), admin, user.id);

@@ -5,6 +5,7 @@ import { adminActions, aiBudgets, announcements, appAccess, errorReports, ownerI
 import { todayIn } from "@/lib/dates";
 import { isAdminEmail, type Admin } from "../auth/admin";
 import { billingConfig, inTestingPhase, TESTING_LIMITS } from "../billing";
+import { priceCoverage, type PriceCoverage } from "./ai-prices";
 import { emailConfig } from "../integrations/email";
 import { googleConfig } from "../integrations/google";
 import { plaidConfig } from "../integrations/plaid";
@@ -402,7 +403,15 @@ export async function health(db: Database, env: Record<string, string | undefine
  * per-user private data). A person's day and month are in their own time zone. Counts include what is set aside for work in progress.
  */
 export type UsageRow = { userId: string; email: string | null; messagesToday: number; messagesMonth: number; voiceToday: number; voiceMonth: number };
-export type Usage = { testing: boolean; limits: typeof TESTING_LIMITS; messagesToday: number; voiceToday: number; people: UsageRow[]; atLimit: number };
+export type Usage = {
+  pricing: PriceCoverage;
+  testing: boolean;
+  limits: typeof TESTING_LIMITS;
+  messagesToday: number;
+  voiceToday: number;
+  people: UsageRow[];
+  atLimit: number;
+};
 
 /** The counter keys of one person's current day and month (their time zone). */
 function periodsFor(tz: string, now = new Date()) {
@@ -456,6 +465,7 @@ export async function usage(db: Database): Promise<Usage> {
     const emailOf = new Map(emails.map((e) => [e.id, e.email]));
     const L = TESTING_LIMITS;
     return {
+      pricing: priceCoverage(),
       testing: inTestingPhase(),
       limits: L,
       messagesToday: people.reduce((n, p) => n + Math.min(p.messagesToday, L.messagesPerDay), 0),

@@ -55,3 +55,23 @@ export function priceSearch(model: string | null | undefined, usage: TokenUsage 
   if (tokens.costMicros == null || fee == null) return { costMicros: null, priceKey: null };
   return { costMicros: tokens.costMicros + fee * searchCalls, priceKey: tokens.priceKey };
 }
+
+export type PriceCoverage = { dollarsCounting: boolean; unpriced: string[] };
+
+/**
+ * Which kinds of paid work have a configured price, for the admin AI panel. The dollar limits and ceilings count only priced work;
+ * the rest is held by counted limits. Voice has no price setting at all, so it is always listed.
+ */
+export function priceCoverage(e = env()): PriceCoverage {
+  const set = (i?: number, o?: number) => i != null && o != null;
+  const main = set(e.JARVIS_PRICE_INPUT_PER_MTOK, e.JARVIS_PRICE_OUTPUT_PER_MTOK);
+  const small = set(e.JARVIS_PRICE_SMALL_INPUT_PER_MTOK, e.JARVIS_PRICE_SMALL_OUTPUT_PER_MTOK);
+  const searchModel = e.OPENAI_SEARCH_MODEL ?? e.OPENAI_MODEL;
+  const searchTokens = searchModel === e.OPENAI_MODEL ? main : searchModel === e.OPENAI_MODEL_SMALL ? small : false;
+  const unpriced: string[] = [];
+  if (!main) unpriced.push("Chat and texts (main model)", "Reading documents");
+  if (!small) unpriced.push("Quick chat turns and tidying transactions (small model)");
+  if (!searchTokens || e.JARVIS_PRICE_WEB_SEARCH_PER_1K_CALLS == null) unpriced.push("Web search");
+  unpriced.push("Voice");
+  return { dollarsCounting: main || small, unpriced };
+}

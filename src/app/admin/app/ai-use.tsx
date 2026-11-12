@@ -22,6 +22,12 @@ export async function AiUseSection() {
                 a month, {use.data.limits.voiceCallMinutes} min each). Your account isn&apos;t limited.
               </p>
             )}
+            <p className="mt-2 text-sm text-text-2" data-testid="ai-pricing">
+              {use.data.pricing.dollarsCounting
+                ? "Dollar limits and the company ceilings count only work that has a price set. No price is set for: "
+                : "No prices are set, so the dollar limits and the company ceilings aren't counting yet. Work is held to the counted limits only. No price is set for: "}
+              {use.data.pricing.unpriced.join(", ")}.
+            </p>
             <p className="mt-2 text-sm text-text-2">
               {use.data.messagesToday} messages and {use.data.voiceToday} voice calls today.
             </p>

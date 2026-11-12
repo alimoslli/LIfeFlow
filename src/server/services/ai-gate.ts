@@ -143,6 +143,9 @@ export async function companyPaused(subject: AiSubject, now: Date, limits: Perso
     ...(limits.microsPerMonth != null
       ? [{ key: `u:${subject.userId}:${todayIn(subject.tz, now).slice(0, 7)}:micros`, kind: "micros" as const, amount: 0, limit: limits.microsPerMonth }]
       : []),
+    ...(limits.microsPerDay != null
+      ? [{ key: `u:${subject.userId}:${todayIn(subject.tz, now)}:micros`, kind: "micros" as const, amount: 0, limit: limits.microsPerDay }]
+      : []),
     { key: companyKey(companyMonth(now), "micros"), kind: "micros", amount: 0, limit: c.monthMicros },
     { key: companyKey(companyDay(now), "micros"), kind: "micros", amount: 0, limit: c.dayMicros },
     ...(c.monthCalls != null ? [{ key: companyKey(companyMonth(now), "calls"), kind: "count" as const, amount: 0, limit: c.monthCalls }] : []),

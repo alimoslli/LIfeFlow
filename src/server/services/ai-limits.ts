@@ -18,6 +18,8 @@ export type PersonLimits = {
   msgsPerDay?: number;
   msgsPerMonth?: number;
   microsPerMonth?: number;
+  /** A per-person dollar guard for one day (after launch, so one account can't use up the company's day alone). */
+  microsPerDay?: number;
   voiceCallsPerDay?: number;
   voiceCallsPerMonth?: number;
   voiceSecondsPerMonth?: number;
@@ -65,12 +67,17 @@ export function personLimits(
     };
   }
   // After launch (decision 7): a Pro person keeps a monthly dollar allowance instead of no limit. The number is the owner's to pick and
-  // is OFF (no per-person dollar limit) until AI_PRO_MONTH_DOLLARS is set.
-  if (isPro(subject, cfg) && e.AI_PRO_MONTH_DOLLARS != null) return { microsPerMonth: Math.round(e.AI_PRO_MONTH_DOLLARS * MICROS_PER_DOLLAR) };
-  return {};
+  // is OFF (no per-person monthly limit) until AI_PRO_MONTH_DOLLARS is set. Meanwhile, and always after launch, one person may use at
+  // most a fifth of the company's daily ceiling in a day, so a single account can't use up the day for everyone (counted only where priced).
+  const guard = { microsPerDay: Math.round(companyLimits(e).dayMicros * PERSON_DAY_SHARE) };
+  if (isPro(subject, cfg) && e.AI_PRO_MONTH_DOLLARS != null) return { ...guard, microsPerMonth: Math.round(e.AI_PRO_MONTH_DOLLARS * MICROS_PER_DOLLAR) };
+  return guard;
 }
 
 export type CompanyLimits = { monthMicros: number; dayMicros: number; monthCalls: number | null; dayCalls: number | null };
+
+/** One person's share of the company's daily dollar ceiling after launch (a guard I chose, not a price: 20%, so five people can reach the ceiling). */
+export const PERSON_DAY_SHARE = 0.2;
 
 /** Owner's numbers for the 10-student test (decision 5): $50 a month, $10 a day, unless settings say otherwise. */
 export const COMPANY_DEFAULT_MONTH_DOLLARS = 50;
@@ -132,7 +139,10 @@ export function budgetLines(
       mine(day, "tidy", 1, limits.tidyRunsPerDay);
       break;
   }
-  if (money != null) mine(month, "micros", money, limits.microsPerMonth, "micros");
+  if (money != null) {
+    mine(month, "micros", money, limits.microsPerMonth, "micros");
+    mine(day, "micros", money, limits.microsPerDay, "micros");
+  }
   // The company's counters. Admins are counted but never stopped by them.
   const stop = (limit: number | null) => (subject.isAdmin ? null : limit);
   if (money != null) {
