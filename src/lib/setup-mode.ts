@@ -1,8 +1,7 @@
 /**
- * Which setup a new account sees (owner, 2026-11-12: "why is the setup not how the app is?"). The owner is comparing the two:
- * "app" is setup on the real Today (the skyling guides it), "old" is the separate /welcome screens. `SETUP_IN_APP=1` makes the
- * app one the default; the cookie (set by /setup) picks either one for the person looking. Nothing else reads it.
+ * Which setup a new account sees (owner, 2026-11-12: "why is the setup not how the app is?"; yes to setup inside the app).
+ * Setup on the real Today is the default. `/setup?old=1` still shows the separate /welcome screens for the owner's comparison,
+ * under the same rules (a real birthday and one real thing on the sky). Nothing else reads the cookie.
  */
 export const SETUP_COOKIE = "lf_setup";
-export const inAppSetup = (cookie: string | undefined, env: string | undefined = process.env.SETUP_IN_APP) =>
-  cookie === "app" ? true : cookie === "old" ? false : env === "1";
+export const inAppSetup = (cookie: string | undefined) => cookie !== "old";

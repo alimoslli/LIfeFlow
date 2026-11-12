@@ -153,7 +153,7 @@ describe("live voice", () => {
     const { client } = fakeOpenAI();
     const call = await startVoiceSession(a.session, "home", client);
     const input = { voiceSessionId: call.voiceSessionId, conversationId: call.conversationId, callId: "p1", name: "list_tasks", arguments: "{}" };
-    await expect(relayVoiceTool({ ...a.session, preferences: {} }, input)).rejects.toThrow(/AI|allow/i);
+    await expect(relayVoiceTool({ ...a.session, preferences: {} }, input)).rejects.toThrow(/help with your data/i);
     vi.stubEnv("STRIPE_SECRET_KEY", "sk_test");
     vi.stubEnv("STRIPE_WEBHOOK_SECRET", "whsec");
     vi.stubEnv("STRIPE_PRICE_ID", "price_1");

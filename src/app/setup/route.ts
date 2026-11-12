@@ -8,6 +8,6 @@ import { SETUP_COOKIE } from "@/lib/setup-mode";
 export function GET(req: NextRequest) {
   const old = req.nextUrl.searchParams.get("old") === "1";
   const res = NextResponse.redirect(new URL(old ? "/welcome" : "/", req.nextUrl.origin), 303);
-  res.cookies.set(SETUP_COOKIE, old ? "old" : "app", { path: "/", sameSite: "lax", maxAge: 60 * 60 * 24 * 30 });
+  res.cookies.set(SETUP_COOKIE, old ? "old" : "app", { path: "/", sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * 24 * 30 });
   return res;
 }

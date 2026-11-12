@@ -1,12 +1,14 @@
 import { afterAll, describe, expect, it } from "vitest";
+import { BIRTHDAY_NEEDED } from "@/lib/birthday";
 import { eq } from "drizzle-orm";
 import { closeDb } from "@/server/db/client";
-import { integrations } from "@/server/db/schema";
+import { calendarEvents, courses, financialAccounts, integrations } from "@/server/db/schema";
+import { createManualAccount } from "@/server/services/finance/accounts";
 import { finishOnboarding, saveWelcomeProgress } from "@/server/services/onboarding";
 import { createEvent } from "@/server/services/calendar";
 import { keptSchema, proposalFrom } from "@/server/services/schedule-photo";
 import { setUpSchedule } from "@/server/services/schedule-setup";
-import { FIRST_CONNECTION_NEEDED, firstConnection, requireFirstConnection } from "@/server/services/setup-first";
+import { FIRST_CONNECTION_NEEDED, finishSetup, firstConnection, requireFirstConnection } from "@/server/services/setup-first";
 import { TZ, makeUser } from "../helpers";
 
 afterAll(closeDb);
@@ -19,16 +21,35 @@ describe("the first connection", () => {
     await expect(run((s) => requireFirstConnection(s))).rejects.toThrow(FIRST_CONNECTION_NEEDED);
   });
 
-  it("counts a connected Canvas, but not one that failed or was disconnected", async () => {
+  it("doesn't count a bare connection: a Canvas, Google, Outlook or bank link with nothing behind it", async () => {
     const { user, run } = await makeUser();
-    const [row] = await run((s) =>
-      s.tx.insert(integrations).values({ userId: user.id, provider: "canvas", status: "error", displayName: "x" }).returning({ id: integrations.id }),
-    );
+    for (const provider of ["canvas", "google", "outlook", "plaid"] as const)
+      await run((s) => s.tx.insert(integrations).values({ userId: user.id, provider, status: "connected", displayName: "x" }));
     expect(await run((s) => firstConnection(s))).toBeNull();
-    await run((s) => s.tx.update(integrations).set({ status: "disconnected" }).where(eq(integrations.id, row.id)));
+    await expect(run((s) => requireFirstConnection(s))).rejects.toThrow(FIRST_CONNECTION_NEEDED);
+    // a bank account the person typed in by hand isn't a linked account either
+    await run((s) => createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 1000 }));
     expect(await run((s) => firstConnection(s))).toBeNull();
-    await run((s) => s.tx.update(integrations).set({ status: "connected" }).where(eq(integrations.id, row.id)));
-    expect(await run((s) => requireFirstConnection(s))).toBe("canvas");
+  });
+
+  it("counts a connection through what it brought: a Canvas class, a Google or Outlook event, a linked bank account", async () => {
+    const canvas = await makeUser();
+    await canvas.run((s) => s.tx.insert(courses).values({ userId: canvas.user.id, name: "BIO 110", source: "canvas" }));
+    expect(await canvas.run((s) => firstConnection(s))).toBe("canvas");
+    for (const source of ["google", "outlook"] as const) {
+      const u = await makeUser();
+      await u.run(async (s) => {
+        const e = await createEvent(s, TZ, { title: "Standup", date: "2030-01-08", startTime: "09:00", endTime: "09:30" }, "jarvis");
+        await s.tx.update(calendarEvents).set({ source }).where(eq(calendarEvents.id, e.id));
+      });
+      expect(await u.run((s) => firstConnection(s))).toBe(source);
+    }
+    const bank = await makeUser();
+    await bank.run(async (s) => {
+      const a = await createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 1000 });
+      await s.tx.update(financialAccounts).set({ source: "plaid" }).where(eq(financialAccounts.id, a.id));
+    });
+    expect(await bank.run((s) => firstConnection(s))).toBe("bank");
   });
 
   it("counts classes saved from a picture (through setUpSchedule), and a work schedule's shifts", async () => {
@@ -52,7 +73,16 @@ describe("the first connection", () => {
     await run((s) => setUpSchedule(s, TZ, { classes: [{ name: "ENG 101", days: [2], startTime: "13:00", endTime: "14:15" }] }));
     await expect(run((s) => finishOnboarding(s, {}, TZ))).rejects.toThrow();
     await run((s) => saveWelcomeProgress(s, TZ, { birthDate: "2000-01-15" }));
-    await run((s) => finishOnboarding(s, {}, TZ));
+    await run((s) => finishSetup(s, TZ));
+  });
+
+  it("finishSetup is the one way through: a birthday first, then something real on the sky", async () => {
+    const { run } = await makeUser();
+    await expect(run((s) => finishSetup(s, TZ))).rejects.toThrow(BIRTHDAY_NEEDED);
+    await run((s) => saveWelcomeProgress(s, TZ, { birthDate: "2000-01-15" }));
+    await expect(run((s) => finishSetup(s, TZ))).rejects.toThrow(FIRST_CONNECTION_NEEDED);
+    await run((s) => setUpSchedule(s, TZ, { classes: [{ name: "ENG 101", days: [2], startTime: "13:00", endTime: "14:15" }] }));
+    await run((s) => finishSetup(s, TZ));
   });
 });
 

@@ -1,10 +1,9 @@
 "use server";
 import { mutate, type ActionState } from "@/server/actions";
-import { finishOnboarding } from "@/server/services/onboarding";
 import { keptSchema } from "@/server/services/schedule-photo";
 import { setUpSchedule } from "@/server/services/schedule-setup";
 import { ServiceError } from "@/server/services/errors";
-import { requireFirstConnection } from "@/server/services/setup-first";
+import { finishSetup } from "@/server/services/setup-first";
 
 /**
  * Setup in the app. The picture was read into a proposal (api/setup/schedule); this saves only what the person kept, through
@@ -31,7 +30,6 @@ export async function saveSchedulePhotoAction(kept: unknown): Promise<ActionStat
  */
 export async function finishSetupAction(): Promise<ActionState> {
   return mutate("onboarding.completed", async (s, u) => {
-    await requireFirstConnection(s);
-    await finishOnboarding(s, {}, u.timezone || "UTC");
+    await finishSetup(s, u.timezone || "UTC");
   });
 }

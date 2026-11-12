@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { pool } from "./helpers";
+import { pool, afterSignUp, skipSetup } from "./helpers";
 import { PNG_BYTES } from "./hq-cards-helpers";
 
 const ADMIN_EMAIL = "admin-owner@example.com"; // matches ADMIN_EMAILS in playwright.config.ts
@@ -14,10 +14,10 @@ async function ownerPage(browser: Browser): Promise<Page> {
   await op.getByLabel("Email").fill(ADMIN_EMAIL);
   await op.getByLabel("Password").fill("correct horse battery");
   await op.getByRole("button", { name: "Create account" }).click();
-  await op.waitForURL("**/welcome");
+  await op.waitForURL(afterSignUp);
   // Sign-up takes only email and password; give the owner a name so greetings read "Good morning, Owner."
   await pool.query(`update users set name = $1, preferences = preferences || '{"birthDate":"1990-06-15"}'::jsonb where email = $2`, ["Owner Olu", ADMIN_EMAIL]);
-  await op.getByRole("button", { name: "Skip setup" }).click();
+  await skipSetup(op);
   await op.waitForURL((u) => u.pathname === "/");
   await pool.query("update users set totp_enabled_at = now() where email = $1", [ADMIN_EMAIL]);
   return op;
@@ -32,7 +32,7 @@ test("HQ is owner-only: signed out or signed in, everyone else gets a 404", asyn
   await page.getByLabel("Email").fill(`rhea-${Date.now()}@example.com`);
   await page.getByLabel("Password").fill("correct horse battery");
   await page.getByRole("button", { name: "Create account" }).click();
-  await page.waitForURL("**/welcome");
+  await page.waitForURL(afterSignUp);
   for (const path of [
     "/admin",
     "/admin/work",

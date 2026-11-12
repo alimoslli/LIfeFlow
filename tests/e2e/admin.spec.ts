@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { pool, signUp } from "./helpers";
+import { pool, signUp, afterSignUp, skipSetup } from "./helpers";
 
 const ADMIN_EMAIL = "admin-owner@example.com"; // matches ADMIN_EMAILS in playwright.config.ts
 
@@ -25,12 +25,12 @@ test("admin page: 404 for everyone but the owner, and the owner can manage users
   await op.getByLabel("Email").fill(ADMIN_EMAIL);
   await op.getByLabel("Password").fill("correct horse battery");
   await op.getByRole("button", { name: "Create account" }).click();
-  await op.waitForURL("**/welcome");
+  await op.waitForURL(afterSignUp);
   // Sign-up takes only email and password; give the owner a name so greetings read "Good morning, Owner."
   await pool.query(`update users set name = $1, preferences = preferences || '{"birthDate":"1990-06-15"}'::jsonb where email = $2`, ["Owner Olu", ADMIN_EMAIL]);
   expect((await op.goto("/admin"))?.status()).toBe(404);
   await op.goto("/welcome");
-  await op.getByRole("button", { name: "Skip setup" }).click();
+  await skipSetup(op);
   await op.waitForURL((u) => u.pathname === "/");
   await pool.query("update users set totp_enabled_at = now() where email = $1", [ADMIN_EMAIL]);
 

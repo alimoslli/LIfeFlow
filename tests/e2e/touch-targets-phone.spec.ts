@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { expect, test, type Page } from "@playwright/test";
-import { signUp, fillBirthday } from "./helpers";
+import { signUp, fillBirthday, giveSomething } from "./helpers";
 
 test.use({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true });
 
@@ -91,6 +91,7 @@ test("393px: every control on onboarding and the main screens is at least 44x44"
   await check("welcome/connect");
   await page.getByRole("button", { name: "I'll connect later" }).click();
   await check("welcome/learn");
+  await giveSomething(email);
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL((u) => u.pathname === "/");
 

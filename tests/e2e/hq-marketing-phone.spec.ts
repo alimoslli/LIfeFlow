@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { pool } from "./helpers";
+import { pool, afterSignUp, skipSetup } from "./helpers";
 import { insertCard } from "./hq-cards-helpers";
 
 test.use({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true });
@@ -14,10 +14,10 @@ async function owner(page: Page) {
   await page.getByLabel("Email").fill(ADMIN_EMAIL);
   await page.getByLabel("Password").fill("correct horse battery");
   await page.getByRole("button", { name: "Create account" }).click();
-  await page.waitForURL("**/welcome");
+  await page.waitForURL(afterSignUp);
   // Sign-up takes only email and password; give the owner a name so greetings read "Good morning, Owner."
   await pool.query(`update users set name = $1, preferences = preferences || '{"birthDate":"1990-06-15"}'::jsonb where email = $2`, ["Owner Olu", ADMIN_EMAIL]);
-  await page.getByRole("button", { name: "Skip setup" }).click();
+  await skipSetup(page);
   await page.waitForURL((u) => u.pathname === "/");
   await pool.query("update users set totp_enabled_at = now() where email = $1", [ADMIN_EMAIL]);
 }

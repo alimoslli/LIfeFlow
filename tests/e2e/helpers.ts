@@ -3,26 +3,46 @@ import { Pool } from "pg";
 
 export const pool = new Pool({ connectionString: process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" });
 
-export async function signUp(page: Page, name = "Jordan Lee", opts: { onboarding?: "skip" | "stay"; ai?: boolean } = {}) {
+/** Where sign-up lands: setup on Today (the default) or, through /welcome, the old screens. */
+export const afterSignUp = (u: URL) => u.pathname === "/" || u.pathname === "/welcome";
+
+/**
+ * Tests that aren't about setup skip it directly: the account's setup is marked done (the birthday is on the account already).
+ * The real finish needs one real thing on the sky, so a test of the real finish gives the account one first (giveSomething).
+ */
+export async function skipSetup(page: Page) {
+  await pool.query(
+    `update users set preferences = preferences || '{"onboarding":"done","tour":"done"}'::jsonb where preferences->>'onboarding' = 'pending' and preferences ? 'birthDate'`,
+  );
+  await page.goto("/");
+}
+
+/** One real class on the account, so the real finish of setup (which needs something on the sky) can be tested. */
+export async function giveSomething(email: string) {
+  await queryAsUser(email, "insert into courses (user_id, name) select id, 'BIO 110' from users where email = $1", [email]);
+}
+
+export async function signUp(page: Page, name = "Jordan Lee", opts: { onboarding?: "skip" | "stay" | "app"; ai?: boolean } = {}) {
   const email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@example.com`;
   // Every test signs up from the same IP; reset only the sign-up limiter so the suite can grow past its 10/hour cap.
   await pool.query("delete from rate_limit_buckets where key like 'signup:ip:%'");
+  // the old welcome screens, for the tests that are about them (setup in the app is the default)
+  if (opts.onboarding === "stay") await page.context().addCookies([{ name: "lf_setup", value: "old", url: "http://localhost:3100" }]);
   await page.goto("/signup");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("correct horse battery");
   await page.getByRole("button", { name: "Create account" }).click();
-  await page.waitForURL("**/welcome");
+  await page.waitForURL(afterSignUp);
   // Sign-up asks only for email and password; the name is asked on the first screen after. Tests set it directly so greetings read the same.
   await pool.query("update users set name = $1 where email = $2", [name, email]);
   // Tests talk to Jarvis; the "Before we start" consent is tested on its own.
   if (opts.ai !== false)
     await pool.query(`update users set preferences = preferences || '{"aiConsentAt":"2026-01-01T00:00:00.000Z"}'::jsonb where email = $1`, [email]);
-  if (opts.onboarding === "stay") return email;
+  if (opts.onboarding === "stay" || opts.onboarding === "app") return email;
   // New accounts start in first-run setup; most tests skip it (no tour follows it since item 7). Setup can only be skipped with a
   // birthday on the account (owner, 2026-11-10), so the test sets one the way it sets the name.
   await pool.query(`update users set preferences = preferences || '{"birthDate":"2000-01-15"}'::jsonb where email = $1`, [email]);
-  await page.getByRole("button", { name: "Skip setup" }).click();
-  await page.waitForURL((u) => u.pathname === "/");
+  await skipSetup(page);
   await expect(page.getByRole("dialog", { name: "Welcome to LifeFlow" })).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(name.split(" ")[0]);
   return email;

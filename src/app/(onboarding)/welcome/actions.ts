@@ -9,15 +9,8 @@ import { audit } from "@/server/services/audit";
 import { dayClockData } from "@/server/services/day-clock";
 import { ServiceError } from "@/server/services/errors";
 import { AGE_LINE } from "@/lib/birthday";
-import {
-  afterAgeLock,
-  completeOnboarding,
-  finishOnboarding,
-  saveWelcomeProgress,
-  setDisplayName,
-  setTourState,
-  type OnboardingInput,
-} from "@/server/services/onboarding";
+import { afterAgeLock, completeOnboarding, saveWelcomeProgress, setDisplayName, setTourState, type OnboardingInput } from "@/server/services/onboarding";
+import { finishSetup, requireFirstConnection } from "@/server/services/setup-first";
 import { after } from "next/server";
 import { getDb } from "@/server/db/client";
 import { AuthError, deleteLockedAccount } from "@/server/services/accounts";
@@ -69,13 +62,15 @@ export async function saveWelcomeAction(input: Parameters<typeof saveWelcomeProg
 export async function completeOnboardingAction(input: OnboardingInput): Promise<ActionState> {
   return mutate("onboarding.completed", async (s, u) => {
     await completeOnboarding(s, input, u.timezone);
+    // one real thing on their sky first (in the same save: if there is none, nothing here is kept)
+    await requireFirstConnection(s);
   });
 }
 
 export async function skipOnboardingAction(): Promise<ActionState> {
-  // skipping still needs a birthday (the welcome sends them to "About you" first); the server checks it too
+  // skipping still needs a birthday and one real thing on the sky; the server checks both, whoever calls this
   return mutate("onboarding.skipped", async (s, u) => {
-    await finishOnboarding(s, {}, u.timezone || "UTC");
+    await finishSetup(s, u.timezone || "UTC");
   });
 }
 

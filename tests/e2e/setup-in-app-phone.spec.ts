@@ -159,6 +159,15 @@ test("a picture of a class schedule: read, checked with one tap, and it lands on
   expect((await queryAsUser<{ name: string }>(email, "select name from courses")).map((c) => c.name)).toEqual(["BIO 110"]);
 });
 
+test("a plain sign-up lands in the in-app setup by default, and /welcome only forwards there", async ({ page }) => {
+  await signUp(page, "Dana Default", { onboarding: "app", ai: false });
+  await page.waitForURL((u) => u.pathname === "/");
+  await expect(page.locator(".dc-today[data-setup=meet]")).toBeVisible();
+  await page.goto("/welcome");
+  await page.waitForURL((u) => u.pathname === "/");
+  await expect(page.locator(".dc-today[data-setup]")).toBeVisible();
+});
+
 test("under 13 locks setup in the app exactly as before", async ({ page }) => {
   const email = await signUp(page, "Kid Example", { onboarding: "stay", ai: false });
   await page.goto("/setup");

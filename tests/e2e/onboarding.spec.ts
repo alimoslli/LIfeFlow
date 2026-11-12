@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { pool, queryAsUser, signUp, fillBirthday } from "./helpers";
+import { pool, queryAsUser, signUp, fillBirthday, giveSomething } from "./helpers";
 
 test("a new user meets the skylings, tells theirs about themselves, sees how to connect their sky, learns it by doing, then the tour", async ({ page }) => {
   const email = await signUp(page, "Maya Chen", { onboarding: "stay" });
@@ -69,6 +69,8 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
   await page.keyboard.press("Escape");
   await expect(clock).toHaveAttribute("data-state", "clock");
   await expect(page.getByText("Fold it back (done)")).toBeAttached();
+  // finishing needs one real thing on the sky (owner, 2026-11-12), so the account has a class
+  await giveSomething(email);
   await page.getByRole("button", { name: "Go to my sky" }).click();
 
   // Today, and no tour after the welcome (owner's program, item 7: the welcome taught what the tour did).
@@ -142,13 +144,14 @@ test("reduced motion: never a splash, even when requested", async ({ page }) => 
 });
 
 test("the app follows what fills your week: tabs and pills adapt", async ({ page }) => {
-  await signUp(page, "Sam Ortiz", { onboarding: "stay" });
+  const email = await signUp(page, "Sam Ortiz", { onboarding: "stay" });
   await page.getByRole("button", { name: "Continue" }).click(); // picking a skyling is optional
   await page.getByLabel("What should I call you?").fill("Sam");
   await fillBirthday(page, "2001-09-30");
   await page.getByRole("radio", { name: /^Work/ }).click();
   await page.getByRole("button", { name: "Connect my sky" }).click();
-  await page.getByRole("button", { name: "I'll connect later" }).click(); // connecting is optional
+  await page.getByRole("button", { name: "I'll connect later" }).click();
+  await giveSomething(email); // finishing needs one real thing on the sky
   await page.getByRole("button", { name: "Go to my sky" }).click();
   await page.waitForURL((u) => u.pathname === "/");
 
@@ -177,7 +180,7 @@ test("the app follows what fills your week: tabs and pills adapt", async ({ page
 });
 
 test("setup needs a birthday: Skip goes to About you first", async ({ page }) => {
-  await signUp(page, "Lee Park", { onboarding: "stay" });
+  const email = await signUp(page, "Lee Park", { onboarding: "stay" });
   await page.getByRole("button", { name: "Skip setup" }).click();
   await expect(page.getByRole("heading", { name: /^Hi/ })).toBeVisible();
   await expect(page.getByText("Add your birthday to finish setting up.")).toBeVisible();
@@ -185,6 +188,10 @@ test("setup needs a birthday: Skip goes to About you first", async ({ page }) =>
   await fillBirthday(page, "2002-02-02");
   await page.getByRole("radio", { name: /^Neither/ }).click();
   await page.getByRole("button", { name: "Connect my sky" }).click();
+  // skipping with nothing on the sky is refused; with one real thing it goes through
+  await page.getByRole("button", { name: "Skip setup" }).click();
+  await expect(page.getByText("Connect one thing first", { exact: false })).toBeVisible();
+  await giveSomething(email);
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL((u) => u.pathname === "/");
 });

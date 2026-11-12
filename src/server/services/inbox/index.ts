@@ -606,7 +606,7 @@ export async function processDocument(
   let ex: Extraction;
   try {
     const [owner] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId));
-    if (!aiAllowed(owner?.preferences)) throw new Error("Saved. Allow your skyling to use AI (in Settings) to have it read and filed automatically.");
+    if (!aiAllowed(owner?.preferences)) throw new Error("Saved. Let your skyling help with your data (in Settings) to have it read and filed automatically.");
     ex = await extract({ ...doc, today }, { userId: scope.userId, door: opts.door ?? (doc.channel === "email" ? "email_in" : doc.channel) });
   } catch (e) {
     const [failed] = await scope.tx

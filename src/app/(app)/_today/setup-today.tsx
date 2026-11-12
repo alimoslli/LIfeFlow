@@ -987,8 +987,8 @@ function TellWay({ who, aiOn, onAllowed, onSent }: { who: string; aiOn: boolean;
       </p>
       {!aiOn && (
         <p className="text-xs text-muted">
-          To read it, {nameAtStart(who)} sends your message to OpenAI, our provider, who don&apos;t use it to train their models. Sending or talking allows
-          this. You can turn it off anytime in Settings.
+          To read it, {nameAtStart(who)} sends what you type or say to OpenAI, our provider, who don&apos;t use it to train their models. Sending or talking
+          allows this. You can turn it off anytime in Settings.
         </p>
       )}
       {talking ? (
