@@ -15,6 +15,7 @@ import { executeToolCall, serializeResult } from "./executor";
 import { describeToolCall, describeToolResult, memoryProposalOf } from "./labels";
 import { selectMemories } from "./memory-retrieval";
 import { recordRun } from "./metrics";
+import { recordAiQuiet, settleVoiceUsage } from "../services/ai-usage";
 import { buildSystemPrompt, PROMPT_VERSION } from "./prompt";
 import { toolSpecs } from "./registry";
 
@@ -122,6 +123,20 @@ export async function startVoiceSession(user: SessionUser, module: JarvisModule 
       .values({ userId: s.userId, conversationId: c.id, expiresAt: new Date(Date.now() + (maxSeconds + VOICE_GRACE_SECONDS) * 1000) })
       .returning({ id: voiceSessions.id });
     return { id: c.id, voiceSessionId: vs.id };
+  });
+  // The usage record (ADR 0034): held now for the longest the call can run, settled from our own clock when it ends,
+  // or closed as expired by the daily clean-up if no end ever arrives. Prices for voice aren't configured, so the cost stays unknown.
+  await recordAiQuiet({
+    userId: user.id,
+    feature: "voice",
+    door: "voice_session",
+    provider: "openai-realtime",
+    model: e.OPENAI_REALTIME_MODEL,
+    state: "held",
+    conversationId: conversation.id,
+    holdId: conversation.voiceSessionId,
+    seconds: maxSeconds,
+    usageFrom: "server_clock",
   });
   return {
     voiceSessionId: conversation.voiceSessionId,
@@ -287,6 +302,9 @@ export type VoiceEndStats = {
 /** One metrics row per call (same table as typed turns; content-free). */
 export async function recordVoiceRun(user: SessionUser, conversationId: string, stats: VoiceEndStats) {
   await ownedConversation(user, conversationId);
+  await settleVoiceUsage(user.id, conversationId, { ...stats, error: !!stats.error }).catch((e) =>
+    console.error("[ai-usage] could not settle the call", e instanceof Error ? e.name : typeof e),
+  );
   const usage =
     stats.inputTokens != null
       ? { inputTokens: stats.inputTokens, cachedInputTokens: stats.cachedInputTokens ?? 0, outputTokens: stats.outputTokens ?? 0, reasoningTokens: 0 }

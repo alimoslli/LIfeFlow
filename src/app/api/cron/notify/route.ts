@@ -10,6 +10,7 @@ import { purgeUnusedPreviews } from "@/server/services/hq-files";
 import { purgeOldRateLimits } from "@/server/rate-limit";
 import { purgeExpiredConfirmCodes } from "@/server/services/email-confirm";
 import { purgeExpiredVoiceSessions } from "@/server/jarvis/voice";
+import { expireStaleAiUsage } from "@/server/services/ai-usage";
 import { purgeOldSmsInbound } from "@/server/services/sms";
 import { pushImportant, runDueSlot } from "@/server/services/proactive/engine";
 import { runNotifications, sendOnce, webPushSender } from "@/server/services/push";
@@ -51,6 +52,8 @@ async function runNotify() {
   for (const u of all) {
     // Ended voice calls and their saved tool results (RLS: per user).
     await withUser(u.id, (s) => purgeExpiredVoiceSessions(s)).catch(() => undefined);
+    // Usage rows that were held and never settled (a closed tab, a crashed request) are closed as expired.
+    await withUser(u.id, (s) => expireStaleAiUsage(s)).catch(() => undefined);
     // the demo account, and an account locked under 13 (nothing of theirs is kept, and nothing is sent to them)
     // A suspended account gets nothing either.
     if (u.kind === "demo" || u.prefs?.ageBlockedAt || u.suspended) continue;
