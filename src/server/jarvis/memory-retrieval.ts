@@ -29,7 +29,19 @@ export type RetrievalQuery = {
 
 export type Scored<M> = M & { score: number; why: "instruction" | "relevant" };
 
-export const RETRIEVAL_DEFAULTS = { limit: 12, maxChars: 2400, minScore: 0.35, maxInstructions: 15 };
+export const RETRIEVAL_DEFAULTS = {
+  limit: 12,
+  maxChars: 2400,
+  minScore: 0.35,
+  maxInstructions: 15,
+  /**
+   * Meaning matching (docs/backlog/2026-11-12-local-models.md, off unless LOCAL_MODEL_MEMORY is on): how close a memory's
+   * meaning must be to the request (cosine, from local-models/memory.ts) to count on its own.
+   */
+  meaningMin: 0.3,
+};
+/** How close each memory's meaning is to the request (cosine by memory id), when meaning matching is on. */
+export type MeaningScores = Map<string, number>;
 
 const STOP = new Set(
   "a an the and or but if so to of in on at for by with from about into over under up down out off is am are was were be been being do does did have has had i me my mine we our you your yours he she it its they them their this that these those what which who whom whose when where why how can could would should will shall may might must just also very really any some all no not only than then there here too again more most much many few each every other such own same as like get got make made let know think want need please thanks thank hi hello hey ok okay yes yeah jarvis prefer prefers user".split(
@@ -117,7 +129,11 @@ function intentsOf(toks: Iterable<string>): Set<string> {
 }
 
 /** Ranks memories for a request. Instructions (how to behave) are always included. */
-export function selectMemories<M extends RetrievableMemory>(all: M[], q: RetrievalQuery, opts: Partial<typeof RETRIEVAL_DEFAULTS> = {}): Scored<M>[] {
+export function selectMemories<M extends RetrievableMemory>(
+  all: M[],
+  q: RetrievalQuery,
+  opts: Partial<typeof RETRIEVAL_DEFAULTS> & { meaning?: MeaningScores } = {},
+): Scored<M>[] {
   const o = { ...RETRIEVAL_DEFAULTS, ...opts };
   const instructions = all
     .filter((m) => m.category === "instruction")
@@ -157,7 +173,11 @@ export function selectMemories<M extends RetrievableMemory>(all: M[], q: Retriev
       else if (recentIntents.has(i)) topic = Math.max(topic, 0.4);
       else if (moduleIntents.has(i)) topic = Math.max(topic, 0.2); // where Jarvis was opened: a nudge, never enough alone
     }
-    const score = lexical + topic + (m.category === "temporary" && (lexical > 0 || topic > 0) ? 0.1 : 0);
+    const words = lexical + topic + (m.category === "temporary" && (lexical > 0 || topic > 0) ? 0.1 : 0);
+    // meaning, when on, only ever adds: a memory close enough in meaning counts even with no shared word
+    const sim = o.meaning?.get(m.id);
+    const close = sim !== undefined && sim >= o.meaningMin;
+    const score = close ? Math.max(words, o.minScore) + (sim - o.meaningMin) : words;
     if (score >= o.minScore) scored.push({ ...m, score, why: "relevant" });
   }
   scored.sort((a, b) => b.score - a.score || b.updatedAt.getTime() - a.updatedAt.getTime());
