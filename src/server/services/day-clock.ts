@@ -56,6 +56,21 @@ export function toClockItem(a: AgendaItem, tz: string, today: string): ClockItem
 /** Dollars for a card line ("$1,850"). */
 const usd = (cents: number) => `$${Math.round(Math.abs(cents) / 100).toLocaleString("en-US")}`;
 
+type BillRow = Awaited<ReturnType<typeof upcomingBills>>[number];
+function billItem(b: BillRow, money: Pick<ClockItem, "kind" | "cat" | "end" | "allDay" | "subtitle">, dayAt: (date: string) => number): ClockItem {
+  return {
+    ...money,
+    id: `bill:${b.key}`,
+    icon: "💳",
+    title: b.name,
+    start: dayAt(b.date),
+    href: "/finances/bills",
+    source: b.found ? "Found in your bank activity" : "From your bills",
+    amountCents: Math.abs(b.amountCents),
+    origin: "bill",
+  };
+}
+
 /**
  * Everything the clock and the timeline show, in one read (owner, 2026-11-08: every piece of data that has a time
  * flows in). From the person's own data only, nothing guessed:
@@ -64,14 +79,14 @@ const usd = (cents: number) => `$${Math.round(Math.abs(cents) / 100).toLocaleStr
  *   routine (an event that repeats three or more times in that stretch, or shifts), so the far line stays clear;
  * - every open to-do at its due time, and its reminder when it rings well before (an hour or more);
  * - milestones and goals reached behind, goals ahead by their day; undated to-dos and goals under "Someday";
- * - with the Money lock open (`money`): bills and trial ends in the next 30 days, money goals by their day,
+ * - the welcome (`ownBills`, no `money`) adds only bills the person typed in; with the Money lock open (`money`): bills and trial ends in the next 30 days, money goals by their day,
  *   salaried pay as expected (never counted), and what was spent today;
  * - what happened (owner, 2026-11-10: "it's supposed to show your life on it"): to-dos and assignments ticked off where
  *   they were done, promises at their time (and kept ones where they were kept; never the broken ones), and for each past
  *   day of the week one short recap from real records: sleep, steps, active minutes, habits done, and with the Money lock
  *   open what went out and came in.
  */
-export async function dayClockData(scope: UserScope, tz: string, now = new Date(), opts: { money?: boolean } = {}): Promise<ClockData> {
+export async function dayClockData(scope: UserScope, tz: string, now = new Date(), opts: { money?: boolean; ownBills?: boolean } = {}): Promise<ClockData> {
   const today = todayIn(tz, now);
   const from = addDaysStr(today, -CLOCK_SPAN);
   const to = addDaysStr(today, CLOCK_SPAN);
@@ -177,18 +192,7 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
       () => queryAllTransactions(scope, { from, to: today }),
     );
     const money = { kind: "due" as const, cat: "due" as const, end: null, allDay: true, subtitle: null };
-    for (const b of bills)
-      items.push({
-        ...money,
-        id: `bill:${b.key}`,
-        icon: "💳",
-        title: b.name,
-        start: dayAt(b.date),
-        href: "/finances/bills",
-        source: b.found ? "Found in your bank activity" : "From your bills",
-        amountCents: Math.abs(b.amountCents),
-        origin: "bill",
-      });
+    for (const b of bills) items.push(billItem(b, money, dayAt));
     for (const t of trials)
       if (t.trialEndsOn)
         items.push({
@@ -238,6 +242,11 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
     spentByDay = new Map([...byDay].map(([d, rows]) => [d, { out: summarizeCashflow(rows).netSpendingCents, in: summarizeCashflow(rows).incomeCents }]));
     const spent = spentByDay.get(today)?.out ?? 0;
     spentTodayCents = spent > 0 ? spent : null;
+  } else if (opts.ownBills) {
+    // the welcome has no money on its sky, except the bills the person typed in themselves (never found in a bank)
+    const bills = await upcomingBills(scope, today, today, addDaysStr(today, 30));
+    const money = { kind: "due" as const, cat: "due" as const, end: null, allDay: true, subtitle: null };
+    for (const b of bills) if (!b.found) items.push(billItem(b, money, dayAt));
   }
   items.push(...(await dayRecaps(scope, today, from, spentByDay)));
   items.sort((a, b) => a.start - b.start);

@@ -39,7 +39,7 @@ import { webSearchClient } from "../../integrations/web-search";
 import { eveningWrap, goalForecast, habitCoach, monthlyReview, morningBrief, weeklyLearned, weeklyReview } from "./reviews";
 
 /** "09:00" -> "9 AM", "15:30" -> "3:30 PM". */
-const clockTime = (hm: string) => {
+export const clockTime = (hm: string) => {
   const [h, m] = hm.split(":").map(Number);
   return `${h % 12 || 12}${m ? `:${String(m).padStart(2, "0")}` : ""} ${h < 12 ? "AM" : "PM"}`;
 };

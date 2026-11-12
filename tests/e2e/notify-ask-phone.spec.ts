@@ -16,6 +16,7 @@ test("the welcome ends with one calm ask for notifications, and Not now is remem
   );
   await page.goto("/welcome");
   await page.getByRole("button", { name: "I'll connect later" }).click();
+  await page.getByRole("button", { name: "Show me how to read it" }).click();
   const ask = page.getByRole("region", { name: "Notifications" });
   await expect(ask).toContainText("check-ins as notifications?");
   await expect(ask.getByRole("button", { name: "Turn on" })).toBeVisible();
@@ -24,6 +25,7 @@ test("the welcome ends with one calm ask for notifications, and Not now is remem
   // back to the same beat: not asked again on this device
   await page.reload();
   await page.getByRole("button", { name: "I'll connect later" }).click();
+  await page.getByRole("button", { name: "Show me how to read it" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.getByRole("region", { name: "Notifications" })).toHaveCount(0);
 });

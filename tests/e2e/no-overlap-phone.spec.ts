@@ -250,6 +250,8 @@ for (const size of SIZES)
       await page.getByRole("button", { name: "Connect my sky" }).click();
       await check("welcome/connect");
       await page.getByRole("button", { name: "I'll connect later" }).click();
+      await check("welcome/week");
+      await page.getByRole("button", { name: "Show me how to read it" }).click();
       await check("welcome/learn");
       await page.getByRole("button", { name: "Skip setup" }).click();
       await page.waitForURL((u) => u.pathname === "/");

@@ -68,6 +68,8 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   await page.getByRole("button", { name: "Connect my sky" }).click();
   await expectNoJarvis(page, "welcome: connect your sky");
   await page.getByRole("button", { name: "I'll connect later" }).click();
+  await expectNoJarvis(page, "welcome: here's your week so far");
+  await page.getByRole("button", { name: "Show me how to read it" }).click();
   await expectNoJarvis(page, "welcome: read your sky");
   await page.getByRole("button", { name: "Go to my sky" }).click();
   await page.waitForURL((u) => u.pathname === "/");

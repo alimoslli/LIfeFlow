@@ -60,7 +60,27 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
   await page.getByRole("button", { name: "Connect my sky" }).click();
   await page.getByRole("button", { name: "I'll connect later" }).click();
 
-  // 4. Read your sky: folded back to the wheel, and opening it is ticked off when they do it.
+  // 4. Here's your week so far: nothing connected, so nothing is invented. Four tiles, one real thing saved through the
+  // existing service, and it lands on the same wheel above. The step says what it changes; five steps now.
+  await expect(page.getByRole("heading", { name: "Here's your week so far" })).toBeVisible();
+  await expect(page.getByRole("img", { name: "Step 4 of 5" })).toBeVisible();
+  await expect(page.getByText("Your skyling changes nothing unless you say yes", { exact: false })).toBeVisible();
+  await expect(clock).toHaveAttribute("data-state", "timeline");
+  await expect(page.getByTestId("week-counts")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^Pick up meds, / })).toHaveCount(0);
+  const tiles = page.getByRole("list", { name: "Add one real thing" });
+  for (const t of ["Class", "Shift", "Bill", "To-do"]) await expect(tiles.getByRole("button", { name: new RegExp(`^${t}`) })).toBeVisible();
+  expect(await queryAsUser(email, "select id from tasks")).toEqual([]);
+  await tiles.getByRole("button", { name: /^To-do/ }).click();
+  const form = page.getByRole("form", { name: "Add a to-do" });
+  await form.getByLabel("What needs doing?").fill("Pick up meds");
+  await form.getByRole("button", { name: "Save this to-do" }).click();
+  await expect(page.getByTestId("week-counts")).toContainText("in the next 7 days.");
+  await expect(page.getByRole("button", { name: /^Pick up meds, / }).first()).toBeAttached();
+  expect((await queryAsUser<{ title: string }>(email, "select title from tasks")).map((t) => t.title)).toEqual(["Pick up meds"]);
+  await page.getByRole("button", { name: "Show me how to read it" }).click();
+
+  // 5. Read your sky: folded back to the wheel, and opening it is ticked off when they do it.
   await expect(page.getByRole("heading", { name: "Read your sky" })).toBeVisible();
   await expect(clock).toHaveAttribute("data-state", "clock");
   await page.getByRole("button", { name: /^Today\. Now / }).click();
@@ -149,6 +169,7 @@ test("the app follows what fills your week: tabs and pills adapt", async ({ page
   await page.getByRole("radio", { name: /^Work/ }).click();
   await page.getByRole("button", { name: "Connect my sky" }).click();
   await page.getByRole("button", { name: "I'll connect later" }).click(); // connecting is optional
+  await page.getByRole("button", { name: "Show me how to read it" }).click();
   await page.getByRole("button", { name: "Go to my sky" }).click();
   await page.waitForURL((u) => u.pathname === "/");
 
@@ -287,4 +308,71 @@ test("an account made before birthdays were asked gets one small card on Today, 
   await expect(card).toHaveCount(0);
   const [row] = await queryAsUser<{ p: { birthDate?: string } }>(email, "select preferences as p from users where email = $1", [email]);
   expect(row.p.birthDate).toBe("1998-08-08");
+});
+
+test("what landed: the week in words on the real wheel, one first fix with Yes and Undo, Not now steps away", async ({ page }) => {
+  const email = await signUp(page, "Dana Wu", { onboarding: "stay" });
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByLabel("What should I call you?").fill("Dana");
+  await page.getByRole("radio", { name: /^Classes/ }).click();
+  await fillBirthday(page, "2004-06-01");
+  await page.getByRole("button", { name: "Connect my sky" }).click();
+  await expect(page.getByRole("heading", { name: "Connect your sky" })).toBeVisible();
+  // something real landed from their own connection: a class with a due date four days out
+  await queryAsUser(
+    email,
+    `with c as (insert into courses (user_id, name) select id, 'BIO 101' from users where email = $1 returning id, user_id)
+     insert into assignments (user_id, course_id, title, due_at, dedupe_key) select user_id, id, 'Lab report', now() + interval '4 days', 'e2e-lab-report' from c`,
+    [email],
+  );
+  await page.goto("/welcome"); // coming back (as after Google): the connect step, with the sky as it is now
+  await page.getByRole("button", { name: "I'll connect later" }).click();
+
+  await expect(page.getByRole("heading", { name: "Here's your week so far" })).toBeVisible();
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "timeline");
+  await expect(page.getByTestId("week-counts")).toHaveText("1 due date in the next 7 days.");
+  await expect(page.getByRole("list", { name: "Coming up" })).toContainText("Lab report");
+  // landed, so no tiles
+  await expect(page.getByRole("list", { name: "Add one real thing" })).toHaveCount(0);
+
+  // the one first fix: nothing changes until Yes
+  const card = page.getByRole("region", { name: /first fix$/ });
+  await expect(card).toContainText("Lab report is due");
+  await expect(card).toContainText("Want me to block 2 hours on");
+  expect(await queryAsUser(email, "select id from calendar_events")).toEqual([]);
+  await card.getByRole("button", { name: "Yes" }).click();
+  await expect(card.getByRole("status")).toContainText("Work on Lab report");
+  expect((await queryAsUser<{ kind: string }>(email, "select kind from calendar_events")).map((e) => e.kind)).toEqual(["study"]);
+  await expect(page.getByRole("button", { name: /^Work on Lab report, / }).first()).toBeAttached();
+  // Undo puts it back
+  await card.getByRole("button", { name: "Undo" }).click();
+  await expect.poll(async () => (await queryAsUser(email, "select id from calendar_events")).length).toBe(0);
+  await expect(page.getByRole("button", { name: /^Work on Lab report, / })).toHaveCount(0);
+
+  // going on: Read your sky, and the welcome still finishes with the birthday on the account
+  await page.getByRole("button", { name: "Show me how to read it" }).click();
+  await expect(page.getByRole("heading", { name: "Read your sky" })).toBeVisible();
+  await page.getByRole("button", { name: "Go to my sky" }).click();
+  await page.waitForURL((u) => u.pathname === "/");
+});
+
+test("Not now on the first fix steps away and changes nothing", async ({ page }) => {
+  const email = await signUp(page, "Eli Ross", { onboarding: "stay" });
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByLabel("What should I call you?").fill("Eli");
+  await page.getByRole("radio", { name: /^Classes/ }).click();
+  await fillBirthday(page, "2004-06-01");
+  await page.getByRole("button", { name: "Connect my sky" }).click();
+  await queryAsUser(
+    email,
+    `with c as (insert into courses (user_id, name) select id, 'ENG 201' from users where email = $1 returning id, user_id)
+     insert into assignments (user_id, course_id, title, due_at, dedupe_key) select user_id, id, 'Essay', now() + interval '3 days', 'e2e-essay' from c`,
+    [email],
+  );
+  await page.goto("/welcome");
+  await page.getByRole("button", { name: "I'll connect later" }).click();
+  const card = page.getByRole("region", { name: /first fix$/ });
+  await card.getByRole("button", { name: "Not now" }).click();
+  await expect(card).toHaveCount(0);
+  expect(await queryAsUser(email, "select id from calendar_events")).toEqual([]);
 });

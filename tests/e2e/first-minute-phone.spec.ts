@@ -28,9 +28,15 @@ test("the first minute: the real welcome ends on Today with the told week on the
   await expect(page.getByRole("status").filter({ hasText: /^Done|Saved/ })).toBeVisible({ timeout: 30_000 });
   // the sky above has it, and the step now goes on like a connection
   await expect(page.getByRole("button", { name: /^BIO 101, / }).first()).toBeAttached();
+  await page.getByRole("button", { name: "See my week so far" }).click();
+
+  // 4. here's your week so far: the told class is counted and drawn by the same wheel; nothing is invented
+  await expect(page.getByRole("heading", { name: "Here's your week so far" })).toBeVisible();
+  await expect(page.getByTestId("week-counts")).toContainText("class");
+  await expect(page.getByRole("list", { name: "Add one real thing" })).toHaveCount(0);
   await page.getByRole("button", { name: "Show me how to read it" }).click();
 
-  // 4. read your sky, then their own Today: no tour, the class on it
+  // 5. read your sky, then their own Today: no tour, the class on it
   await page.getByRole("button", { name: "Go to my sky" }).click();
   await page.waitForURL((u) => u.pathname === "/");
   await expect(page.getByTestId("day-clock")).toBeVisible();

@@ -62,6 +62,13 @@ const KINDS: Record<string, (f: F) => Parts> = {
         : `Want me to block ${s(f, "blockWhen")}?`,
     mood: "warn",
   }),
+  // the welcome's first fix (services/welcome-week.ts): a due date with nothing set aside for it yet
+  study_block: (f) => ({
+    headline: `${s(f, "assignment")} is due ${s(f, "dueDay")}`,
+    fact: `${s(f, "assignment")} is due ${s(f, "dueDay")}, and nothing in your week is set aside for it yet.`,
+    ask: f.done ? `I blocked ${s(f, "blockWhen")} for it.` : `Want me to block ${s(f, "blockWhen")} for it?`,
+    mood: "info",
+  }),
   bill_short: (f) => ({
     headline: `${s(f, "bill")} may not be covered`,
     fact: `${s(f, "bill")} (${usd(n(f, "billCents"))}) is due ${s(f, "dueIn")} and your checking is ${usd(n(f, "shortCents"))} short.`,
@@ -329,6 +336,7 @@ export const KIND_LABELS: Record<string, string> = {
   spending_pace: "Spending pace in a budget",
   goal_milestone: "Goal milestones",
   deadline_conflict: "Deadlines that clash with shifts",
+  study_block: "Study time before a due date",
   bill_short: "Bills you might be short for",
   bill_due: "Bills coming due",
   payday_split: "Payday plans",

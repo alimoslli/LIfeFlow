@@ -28,7 +28,7 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
   // their own sky (no money on it), and what's connected already (coming back from Google or Microsoft)
   const { clock, list, canvas } = await withCurrentUser(async (s, u) => {
     const [clock, list, canvas] = await series(
-      () => dayClockData(s, u.timezone || "UTC", new Date(), { money: false }),
+      () => dayClockData(s, u.timezone || "UTC", new Date(), { money: false, ownBills: true }),
       () => integrationStatus(s),
       () => canvasConnection(s),
     );

@@ -90,6 +90,8 @@ test("393px: every control on onboarding and the main screens is at least 44x44"
   await page.getByRole("button", { name: "Connect my sky" }).click();
   await check("welcome/connect");
   await page.getByRole("button", { name: "I'll connect later" }).click();
+  await check("welcome/week");
+  await page.getByRole("button", { name: "Show me how to read it" }).click();
   await check("welcome/learn");
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL((u) => u.pathname === "/");

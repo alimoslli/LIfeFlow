@@ -25,6 +25,7 @@ import type { PixelName } from "@/components/pixel/art";
 import { NotifyAsk } from "@/components/jarvis/notify-ask";
 import { completeOnboardingAction, saveWelcomeAction, skipOnboardingAction, skyNowAction } from "./actions";
 import { BirthdayField } from "@/components/ui/birthday-field";
+import { WeekStep } from "./week-step";
 import { useLink } from "@/components/finance/plaid-link";
 
 /**
@@ -36,17 +37,20 @@ import { useLink } from "@/components/finance/plaid-link";
  *      or work;
  *   3. connect: their real sky, opened into the week, and one tap each for Canvas, Google Calendar and Outlook; what a
  *      connection brings in lands on the sky (Google and Microsoft come back here, to this step);
- *   4. learn: they turn the wheel, open it into the week and fold it back themselves, each one ticked off.
+ *   4. week: "Here's your week so far" (owner, 2026-11-12): what landed, on the same wheel, and one first fix to say yes to
+ *      (or, with nothing connected, one real thing to add);
+ *   5. learn: they turn the wheel, open it into the week and fold it back themselves, each one ticked off.
  * No made-up demo day: everything on screen is theirs. The bank waits for Money (research: never in the first minute).
  */
-type StepId = "skyling" | "about" | "connect" | "learn";
-const STEPS: StepId[] = ["skyling", "about", "connect", "learn"];
+type StepId = "skyling" | "about" | "connect" | "week" | "learn";
+const STEPS: StepId[] = ["skyling", "about", "connect", "week", "learn"];
 
 /** What each step changes (research 2026-11-09, proposal 3: a step that changes nothing is cut). */
 const CHANGES: Record<StepId, string> = {
   skyling: "Changes who sits on top of your sky, and how it talks to you.",
   about: "Helps your skyling plan around you. Private to your account.",
   connect: "What you connect lands on your sky and stays up to date. Your skyling asks before it deletes or sends anything.",
+  week: "Shows what landed. Your skyling changes nothing unless you say yes, and Undo is right there.",
   learn: "Nothing to save here. Just try it.",
 };
 
@@ -286,7 +290,7 @@ export function Onboarding({
       ) : (
         <div className="lf-welcome-sky relative mx-auto w-full max-w-3xl pb-8 md:pt-4">
           {/* connecting: opened into the week, so what comes in lands on its day; learning: folded back to turn and open */}
-          <DayClock data={clock} mode="full" companion={companion} open={step === "connect" ? true : step === "learn" ? false : undefined} />
+          <DayClock data={clock} mode="full" companion={companion} open={step === "connect" || step === "week" ? true : step === "learn" ? false : undefined} />
         </div>
       )}
 
@@ -514,6 +518,7 @@ export function Onboarding({
             </>
           )}
 
+          {step === "week" && <WeekStep clock={clock} who={shown ?? (chosen ? chosen.name : "your skyling")} skyling={drawn ?? "ray"} onClock={setClock} />}
           {step === "learn" && <Learn />}
           {/* the welcome's last beat: a calm ask for notifications (owner's program, item 3); nothing if they can't come */}
           {step === "learn" && (
@@ -546,7 +551,15 @@ export function Onboarding({
               day={step === "connect" && !anyLinked}
               className="w-full justify-between pl-6"
             >
-              {step === "about" ? "Connect my sky" : step === "connect" ? (anyLinked ? "Show me how to read it" : "I'll connect later") : "Continue"}
+              {step === "about"
+                ? "Connect my sky"
+                : step === "connect"
+                  ? anyLinked
+                    ? "See my week so far"
+                    : "I'll connect later"
+                  : step === "week"
+                    ? "Show me how to read it"
+                    : "Continue"}
             </SkyButton>
           )}
         </div>

@@ -20,6 +20,7 @@ import {
 } from "@/server/services/onboarding";
 import { after } from "next/server";
 import { getDb } from "@/server/db/client";
+import { firstFix, saveFirstThing, type FirstThing, type WeekFix } from "@/server/services/welcome-week";
 import { AuthError, deleteLockedAccount } from "@/server/services/accounts";
 
 /** The person's sky as it is now (no money on it), for "Connect your sky" after Canvas connects; or why it couldn't load. */
@@ -33,7 +34,7 @@ async function onSky(name: string, save?: (s: Parameters<Parameters<typeof withC
         await save(s, tz);
         await audit(s, "user", name);
       }
-      return { ok: true as const, clock: await dayClockData(s, tz, new Date(), { money: false }) };
+      return { ok: true as const, clock: await dayClockData(s, tz, new Date(), { money: false, ownBills: true }) };
     });
   } catch (e) {
     unstable_rethrow(e);
@@ -44,6 +45,22 @@ async function onSky(name: string, save?: (s: Parameters<Parameters<typeof withC
 
 export async function skyNowAction(): Promise<SkyResult> {
   return onSky("onboarding.sky");
+}
+
+/** "Here's your week so far": the one first fix for what landed (an ordinary skyling suggestion; Yes and Undo are its own), or none. */
+export async function weekFixAction(): Promise<{ ok: true; fix: WeekFix | null } | { ok: false; error: string }> {
+  try {
+    const fix = await withCurrentUser((s, u) => firstFix(s, u.timezone || "UTC", u.preferences));
+    return { ok: true, fix };
+  } catch (e) {
+    unstable_rethrow(e);
+    return { ok: false, error: e instanceof ServiceError ? e.message : "Couldn't look at your week. Try again." };
+  }
+}
+
+/** With nothing connected: one real class, shift, bill or to-do, saved like the forms do, and the sky back with it. */
+export async function saveFirstThingAction(input: FirstThing): Promise<SkyResult> {
+  return onSky("onboarding.first_thing", (s, tz) => saveFirstThing(s, tz, input));
 }
 /**
  * Keeps the skyling and "about you" on the account, so connecting (which leaves the page) can come back to them. Under
