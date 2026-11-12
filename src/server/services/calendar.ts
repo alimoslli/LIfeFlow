@@ -8,6 +8,7 @@ import { getAssignment, listAssignments, updateAssignment } from "./school";
 import { getTask, listTasks, updateTask } from "./tasks";
 import { listShifts } from "./work";
 import { mergeCrossSource, sourceLabel } from "./calendar-merge";
+import { courseLabel } from "@/lib/course-label";
 
 export const EVENT_KINDS = ["personal", "class", "exam", "work", "study", "appointment", "reminder", "other"] as const;
 
@@ -363,7 +364,7 @@ export async function getAgenda(
         allDay: a.dueAllDay,
         kind: a.kind === "exam" ? "exam" : "deadline",
         color: a.course.color,
-        subtitle: a.course.code ?? a.course.name,
+        subtitle: courseLabel(a.course) ?? a.course.name,
         href: `/school/courses/${a.course.id}`,
         blocksTime: false,
         ...(a.source === "email" ? { sources: ["email"] } : {}),

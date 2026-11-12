@@ -6,6 +6,7 @@ import { freeSlots, getAgenda, type AgendaItem } from "../calendar";
 import { listAssignments } from "../school";
 import type { Candidate, Detector } from "./detectors";
 import { lastMinutePattern } from "./reviews";
+import { courseLabel, examLabel } from "@/lib/course-label";
 
 /**
  * Study time offered before it's needed (owner, 2026-11-12; docs/backlog/2026-11-12-useful-sky.md, parts 1 and 2):
@@ -93,12 +94,13 @@ export const examStudy: Detector = async ({ scope, tz, today, now }) => {
   const agenda = await getAgenda(scope, tz, today, addDaysStr(today, 7), { now, include: ["event", "shift"] });
   const out: Candidate[] = [];
   for (const a of fresh.slice(0, 3)) {
-    const course = a.course.code ?? a.course.name;
-    if (bookedFor(agenda, now, a.dueAt!, [course, a.course.name, a.title])) continue;
+    const course = courseLabel(a.course);
+    const what = examLabel(course, a.kind, a.title);
+    if (bookedFor(agenda, now, a.dueAt!, [course ?? a.title, a.course.name, a.title])) continue;
     const examDate = localDateOf(a.dueAt!, tz);
     const minutes = a.kind === "exam" ? 90 : 60;
     const block = latestFree(agenda, tz, today, addDaysStr(examDate, -1), hours, minutes, now);
-    const facts = { course, kind: a.kind, exam: a.title, examDay: formatDateStr(examDate, "EEEE"), minutes };
+    const facts = { course: course ?? "", what, kind: a.kind, exam: a.title, examDay: formatDateStr(examDate, "EEEE"), minutes };
     out.push(
       block
         ? {
@@ -106,7 +108,7 @@ export const examStudy: Detector = async ({ scope, tz, today, now }) => {
             topic: "school",
             dedupeKey: `exam_study:${a.id}`,
             facts: { ...facts, blockWhen: `${formatDateStr(block.date, "EEEE")} at ${clockOf(block.start)}` },
-            action: { type: "block_time", label: "Block it", date: block.date, start: block.start, end: block.end, title: `Study for ${course} ${a.kind}` },
+            action: { type: "block_time", label: "Block it", date: block.date, start: block.start, end: block.end, title: `Study for ${what}` },
             priority: 76,
           }
         : {
@@ -144,7 +146,7 @@ export const startEarlier: Detector = async (ctx) => {
   const hours = await studyHours(scope);
   const agenda = await getAgenda(scope, tz, today, addDaysStr(today, 7), { now, include: ["event", "shift"] });
   for (const a of fresh) {
-    const course = a.course.code ?? a.course.name;
+    const course = courseLabel(a.course) ?? "";
     if (bookedFor(agenda, now, a.dueAt!, [a.title])) continue;
     const dueDate = localDateOf(a.dueAt!, tz);
     // at least two clear days before it's due

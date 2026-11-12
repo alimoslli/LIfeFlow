@@ -5,6 +5,7 @@
  */
 
 import { formatDateStr } from "./dates";
+import { bareCode, examLabel } from "./course-label";
 
 export type JarvisTone = "coach" | "friend" | "direct";
 export type Mood = "win" | "warn" | "info";
@@ -18,6 +19,8 @@ export const usd = (cents: number) => {
 const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
 type F = Record<string, unknown>;
 const s = (f: F, k: string) => String(f[k] ?? "");
+// an exam by its class, or by its own title while the class has only a number (owner, 2026-11-12; older cards carry the number)
+const examWhat = (f: F) => (f.what ? s(f, "what") : examLabel(bareCode(s(f, "course")) ? null : s(f, "course"), s(f, "kind"), s(f, "exam") || s(f, "kind")));
 const n = (f: F, k: string) => Number(f[k] ?? 0);
 
 /** "22:00" as "10 PM", "23:30" as "11:30 PM". */
@@ -54,10 +57,10 @@ const KINDS: Record<string, (f: F) => Parts> = {
   }),
   // owner, 2026-11-12: study time offered before an exam, one tap to book it
   exam_study: (f) => ({
-    headline: `${s(f, "course")} ${s(f, "kind")} ${s(f, "examDay")}`,
+    headline: `${examWhat(f)} ${s(f, "examDay")}`,
     fact: f.noFreeBlock
-      ? `Your ${s(f, "course")} ${s(f, "kind")} is ${s(f, "examDay")}, and your days before it are full.`
-      : `Your ${s(f, "course")} ${s(f, "kind")} is ${s(f, "examDay")}, and nothing is booked to study for it yet.`,
+      ? `Your ${examWhat(f)} is ${s(f, "examDay")}, and your days before it are full.`
+      : `Your ${examWhat(f)} is ${s(f, "examDay")}, and nothing is booked to study for it yet.`,
     ask: f.noFreeBlock
       ? "Want to look at your week together and find some time?"
       : f.done

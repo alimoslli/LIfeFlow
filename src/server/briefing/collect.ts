@@ -13,6 +13,7 @@ import { summarizeCashflow } from "../services/finance/cashflow";
 import { listAssignments } from "../services/school";
 import { listTasks } from "../services/tasks";
 import type { LifeSnapshot, MoneySnapshot } from "./types";
+import { courseLabel } from "@/lib/course-label";
 
 /** Reads everything the briefing needs, in one RLS-scoped pass. */
 export async function collectSnapshot(s: UserScope, user: Pick<SessionUser, "timezone" | "name" | "preferences">, now = new Date()): Promise<LifeSnapshot> {
@@ -50,7 +51,7 @@ export async function collectSnapshot(s: UserScope, user: Pick<SessionUser, "tim
       ...overdueA.map((a) => ({
         id: a.id,
         title: a.title,
-        context: a.course.code ?? a.course.name,
+        context: courseLabel(a.course) ?? "Class",
         dueAt: a.dueAt!,
         kind: "assignment" as const,
         href: `/school/courses/${a.course.id}`,
@@ -62,7 +63,7 @@ export async function collectSnapshot(s: UserScope, user: Pick<SessionUser, "tim
       .map((a) => ({
         id: a.id,
         title: a.title,
-        course: a.course.code ?? a.course.name,
+        course: courseLabel(a.course) ?? "",
         dueAt: a.dueAt!,
         kind: a.kind,
         href: `/school/courses/${a.course.id}`,
@@ -73,7 +74,7 @@ export async function collectSnapshot(s: UserScope, user: Pick<SessionUser, "tim
       .map((a) => ({
         id: a.id,
         title: a.title,
-        course: a.course.code ?? a.course.name,
+        course: courseLabel(a.course) ?? "",
         dueAt: a.dueAt!,
         kind: a.kind,
         href: `/school/courses/${a.course.id}`,

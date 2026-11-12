@@ -8,6 +8,7 @@ import { balancesOf } from "./finance/overview";
 import { upcomingRecurring } from "./finance/planning";
 import { listAssignments } from "./school";
 import { listTasks } from "./tasks";
+import { courseLabel } from "@/lib/course-label";
 
 /** The week ahead's life load from the user's own records (ADR 0020). Money is left out when it's locked. */
 export async function lifeLoad(scope: UserScope, tz: string, today: string, opts: { includeMoney?: boolean } = {}) {
@@ -37,7 +38,7 @@ export async function lifeLoad(scope: UserScope, tz: string, today: string, opts
       })),
     deadlines: [...overdue, ...upcoming]
       .filter((a) => a.dueAt && a.status !== "done" && localDateOf(a.dueAt, tz) <= horizon)
-      .map((a) => ({ date: localDateOf(a.dueAt!, tz), title: a.title, kind: a.kind, course: a.course.code ?? a.course.name })),
+      .map((a) => ({ date: localDateOf(a.dueAt!, tz), title: a.title, kind: a.kind, course: courseLabel(a.course) ?? "" })),
     tasks: tasks.filter((t) => t.dueAt).map((t) => ({ date: localDateOf(t.dueAt!, tz), title: t.title, priority: t.priority })),
     bills: money?.[0].filter((b) => b.amountCents < 0).map((b) => ({ date: b.date, name: b.name, amountCents: -b.amountCents })),
     liquidCents: money ? balancesOf(money[1]).cashCents : null,

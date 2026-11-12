@@ -16,6 +16,7 @@ import {
 } from "../../services/school";
 import { dateArg, defineTool, idArg, timeArg, type ToolContext } from "../tool";
 import { CANVAS_BUSY, syncCanvas, withCanvasLock } from "../../integrations/canvas";
+import { courseLabel } from "@/lib/course-label";
 
 export function presentAssignment(
   a: {
@@ -34,7 +35,12 @@ export function presentAssignment(
   return {
     id: a.id,
     title: a.title,
-    course: a.course.code ? `${a.course.code} · ${a.course.name}` : a.course.name,
+    // a class Canvas only knows by a number is said as such, so the skyling asks its name instead of reading the number out (owner, 2026-11-12)
+    course: !courseLabel(a.course)
+      ? `${a.course.name} (Canvas sent only this number; ask the user which class it is)`
+      : a.course.code
+        ? `${a.course.code} · ${a.course.name}`
+        : a.course.name,
     courseId: a.course.id,
     kind: a.kind,
     status: a.status,

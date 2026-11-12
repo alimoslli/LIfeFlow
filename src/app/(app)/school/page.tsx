@@ -16,6 +16,7 @@ import { ActionButton } from "@/components/action-form";
 import { createAssignmentAction, createCourseAction, mergeDuplicateClassesAction } from "./actions";
 import { AssignmentDialog, CourseDialog } from "./forms";
 import { canvasConnection } from "@/server/integrations/canvas";
+import { courseLabel } from "@/lib/course-label";
 
 export const metadata: Metadata = { title: "School" };
 
@@ -96,7 +97,8 @@ export default async function SchoolPage({ searchParams }: { searchParams: Promi
                     {first.title}
                   </Link>
                   <p className="mt-1.5 max-w-[68%] text-sm text-white/80">
-                    {first.course.code ?? first.course.name} · <span className={firstDue.overdue ? "font-semibold text-dawn-1" : ""}>{firstDue.text}</span>
+                    {courseLabel(first.course) ?? first.course.name} ·{" "}
+                    <span className={firstDue.overdue ? "font-semibold text-dawn-1" : ""}>{firstDue.text}</span>
                   </p>
                   <p className="lf-sw-glass mt-3 inline-flex rounded-full px-3 py-1 text-xs">
                     {plural(d.all.length, "thing")} open across {plural(d.courses.length, "class")}

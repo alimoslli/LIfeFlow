@@ -8,6 +8,7 @@ import type { UserScope } from "../db/with-user";
 import { assertOwned, notFound, ServiceError } from "./errors";
 import { parsePatch } from "./patch";
 import { awardStar, takeBack } from "./sky-home";
+import { bareCode } from "@/lib/course-label";
 
 export const ASSIGNMENT_KINDS = ["assignment", "exam", "quiz", "project", "reading", "lab", "discussion", "other"] as const;
 
@@ -55,6 +56,15 @@ export async function createCourse(scope: UserScope, input: z.input<typeof cours
 
 export async function updateCourse(scope: UserScope, id: string, patch: Partial<z.input<typeof courseInputSchema>>) {
   const data = parsePatch(courseInputSchema.partial(), patch);
+  // naming a class that only had a number ("23543" from Canvas's feed) keeps the number as its code, so the next sync
+  // still finds it by that number instead of making a second class (owner, 2026-11-12)
+  if (data.name && data.code === undefined) {
+    const [was] = await scope.tx
+      .select({ name: courses.name, code: courses.code })
+      .from(courses)
+      .where(and(eq(courses.id, id), eq(courses.userId, scope.userId)));
+    if (was && !was.code && bareCode(was.name) && was.name.trim() && was.name !== data.name) data.code = was.name.trim().slice(0, 40);
+  }
   const [row] = await scope.tx
     .update(courses)
     .set(data)

@@ -3,6 +3,7 @@ import { formatCents } from "@/lib/money";
 import { findConflicts, type AgendaItem } from "../services/calendar";
 import { dueMathRule, freeGapRule, tonightRule } from "./sky-rules";
 import type { Briefing, DayGlance, Insight, LifeSnapshot } from "./types";
+import { examLabel } from "@/lib/course-label";
 
 /** Sentences read better with whole dollars: "$1,842", "$12.50" only under $100. */
 const money = (c: number) => (Math.abs(c) >= 10_000 ? formatCents(Math.round(c / 100) * 100).replace(/\.00$/, "") : formatCents(c).replace(/\.00$/, ""));
@@ -96,11 +97,11 @@ const examRule: Rule = (s) => {
       id: `exam-${exam.id}`,
       tone: daysAway <= 3 ? "attention" : "heads-up",
       icon: "book",
-      text: `${exam.course} ${exam.kind} ${daysAway === 0 ? "is today" : `is ${dayName(date, s.today)}`}${exam.kind === "exam" ? "" : `: ${exam.title}`}.`,
+      text: `${examLabel(exam.course || null, exam.kind, exam.title)} ${daysAway === 0 ? "is today" : `is ${dayName(date, s.today)}`}${exam.kind === "exam" || !exam.course ? "" : `: ${exam.title}`}.`,
       detail: daysAway > 0 ? windows : undefined,
       action: {
         label: "Plan study time",
-        prompt: `Plan study sessions${pref} for my ${exam.course} ${exam.kind} (${exam.title}) around my classes and shifts, and add them to my calendar.`,
+        prompt: `Plan study sessions${pref} for my ${examLabel(exam.course || null, exam.kind, exam.title)}${exam.course ? ` (${exam.title})` : ""} around my classes and shifts, and add them to my calendar.`,
       },
       score: 80 - daysAway * 3,
     },

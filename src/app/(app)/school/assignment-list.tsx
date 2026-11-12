@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import type { listAssignments } from "@/server/services/school";
 import { deleteAssignmentAction, toggleAssignmentAction, updateAssignmentAction } from "./actions";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
+import { courseLabel } from "@/lib/course-label";
 
 type A = Awaited<ReturnType<typeof listAssignments>>[number];
 
@@ -44,7 +45,7 @@ export function AssignmentList({ items, tz, showCourse = true, today }: { items:
                         {showCourse && (
                           <span className="flex items-center gap-1.5">
                             <span className="h-1.5 w-1.5 rounded-full" style={{ background: a.course.color ?? "var(--accent)" }} />
-                            {a.course.code ?? a.course.name}
+                            {courseLabel(a.course) ?? a.course.name}
                           </span>
                         )}
                         {a.kind !== "assignment" && (
@@ -108,7 +109,7 @@ export function AssignmentList({ items, tz, showCourse = true, today }: { items:
                 </a>
               ) : (
                 <Link href={`/school/courses/${editing.course.id}`} className="flex min-h-11 items-center text-sm text-accent">
-                  Open {editing.course.code ?? editing.course.name}
+                  Open {courseLabel(editing.course) ?? editing.course.name}
                 </Link>
               )}
               <ActionButton
