@@ -12,10 +12,12 @@ import type { InsightProducer } from "../insights";
  */
 export const courseNames: InsightProducer = async (scope, _tz, _prefs, now) => {
   const rows = await scope.tx
-    .select({ id: courses.id, name: courses.name, code: courses.code })
+    .select({ id: courses.id, name: courses.name, code: courses.code, source: courses.source })
     .from(courses)
     .where(and(eq(courses.userId, scope.userId), isNull(courses.archivedAt)));
-  const nameless = rows.filter((c) => bareCode(c.code) && bareCode(c.name) && c.name.trim());
+  // only a class Canvas made that still carries the feed's number as its name: once the person names it (even "101"), the
+  // number moves to its code and it is never asked about again (COO review L1)
+  const nameless = rows.filter((c) => c.source === "canvas" && !c.code && bareCode(c.name) && c.name.trim());
   if (!nameless.length) return [];
   const busy = await scope.tx
     .selectDistinct({ courseId: assignments.courseId })

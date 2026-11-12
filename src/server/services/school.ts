@@ -8,7 +8,6 @@ import type { UserScope } from "../db/with-user";
 import { assertOwned, notFound, ServiceError } from "./errors";
 import { parsePatch } from "./patch";
 import { awardStar, takeBack } from "./sky-home";
-import { bareCode } from "@/lib/course-label";
 
 export const ASSIGNMENT_KINDS = ["assignment", "exam", "quiz", "project", "reading", "lab", "discussion", "other"] as const;
 
@@ -56,14 +55,20 @@ export async function createCourse(scope: UserScope, input: z.input<typeof cours
 
 export async function updateCourse(scope: UserScope, id: string, patch: Partial<z.input<typeof courseInputSchema>>) {
   const data = parsePatch(courseInputSchema.partial(), patch);
-  // naming a class that only had a number ("23543" from Canvas's feed) keeps the number as its code, so the next sync
-  // still finds it by that number instead of making a second class (owner, 2026-11-12)
-  if (data.name && data.code === undefined) {
+  // A class made from Canvas's feed is found again on the next sync by the label the feed sends ("23543"), held in its name
+  // until it's renamed and in its code after. So when it's renamed, or saved, without a code of its own (the form sends an
+  // empty box as null, the skyling may send ""), the label stays as the code; without that the next sync makes a second
+  // class (owner, 2026-11-12; COO review M1). Kept whole, at the name's own cap, so a long label still matches (L2).
+  const ownCode = typeof data.code === "string" && data.code.trim() !== "";
+  if (!ownCode && (data.name !== undefined || data.code !== undefined)) {
     const [was] = await scope.tx
-      .select({ name: courses.name, code: courses.code })
+      .select({ name: courses.name, code: courses.code, source: courses.source })
       .from(courses)
       .where(and(eq(courses.id, id), eq(courses.userId, scope.userId)));
-    if (was && !was.code && bareCode(was.name) && was.name.trim() && was.name !== data.name) data.code = was.name.trim().slice(0, 40);
+    if (was?.source === "canvas") {
+      const label = was.code?.trim() || (data.name !== undefined && data.name !== was.name ? was.name.trim() : "");
+      if (label) data.code = label.slice(0, 200);
+    }
   }
   const [row] = await scope.tx
     .update(courses)
