@@ -83,7 +83,7 @@ describe("voice is limited on the server", () => {
     expect(calls.n).toBe(0);
   });
 
-  it("the minutes are counted from our clock when the call ends, not the longest it could run", async () => {
+  it("an early end can't free minutes: the call counts as long as it could have run, so the minutes limit can't be sidestepped", async () => {
     const { session } = await voiceUser();
     const { client } = fakeRealtime();
     const call = await startVoiceSession(session, "home", client);
@@ -94,7 +94,19 @@ describe("voice is limited on the server", () => {
     await recordVoiceRun(session, call.conversationId, { durationMs: 99_999_999, responses: 1, toolCalls: 0, toolErrors: 0, confirmations: 0 });
     const after = (await readBudgets([key])).get(key)!;
     expect(after.held).toBe(0);
-    expect(after.used).toBeLessThan(10);
+    expect(after.used).toBe(call.maxSeconds);
+  });
+
+  it("ten calls each ended at once still use up the 30 minutes", async () => {
+    const { session } = await voiceUser();
+    const { client, calls } = fakeRealtime();
+    const { recordVoiceRun } = await import("@/server/jarvis/voice");
+    await fillUp(session.id, month(), "vsecs", 1620, "seconds"); // 9 calls' worth
+    const call = await startVoiceSession(session, "home", client);
+    await recordVoiceRun(session, call.conversationId, { durationMs: 1, responses: 0, toolCalls: 0, toolErrors: 0, confirmations: 0 });
+    // the browser says it hung up after a moment, but the minutes are spent: the next call is refused on minutes
+    await expect(startVoiceSession(session, "home", client)).rejects.toThrow(/skyling limit/);
+    expect(calls.n).toBe(1);
   });
 
   it("a call whose voice service refuses to create it gives its minutes back", async () => {

@@ -32,7 +32,7 @@ async function voiceUser() {
 const stats = { durationMs: 5_000_000, responses: 1, toolCalls: 0, toolErrors: 0, confirmations: 0 };
 
 describe("voice usage from our own clock", () => {
-  it("holds the longest call when it starts, and settles with our clock, not the browser's", async () => {
+  it("holds the longest call when it starts, and an early end from the browser frees nothing", async () => {
     const { session } = await voiceUser();
     const call = await startVoiceSession(session, "home", fakeOpenAI());
     let [r] = await ledger(session.id);
@@ -49,7 +49,7 @@ describe("voice usage from our own clock", () => {
     await recordVoiceRun(session, call.conversationId, { ...stats, inputTokens: 123, outputTokens: 45 });
     [r] = await ledger(session.id);
     expect(r.state).toBe("settled");
-    expect(r.seconds).toBeLessThan(10);
+    expect(r.seconds).toBe(call.maxSeconds); // an early end frees nothing
     expect(r).toMatchObject({ usageFrom: "browser", inputTokens: 123, outputTokens: 45, costMicros: null });
   });
 

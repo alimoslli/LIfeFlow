@@ -127,9 +127,9 @@ export async function expireStaleAiUsage(s: UserScope, now = new Date()) {
 }
 
 /**
- * Settles a voice call's row when the call ends. The length comes from our own clock (the call row's creation to now), capped at what
- * was reserved plus a minute of grace; whatever the browser reported (token counts) is kept but marked as the browser's and never
- * changes the length. A repeat finds nothing held and changes nothing.
+ * Closes a voice call's row when the browser says the call ended. Minutes are counted at what was reserved (the longest the call could
+ * run), whatever the browser says: an early "end" can't free minutes while the same session secret keeps working. Whatever the browser
+ * reported (token counts) is kept but marked as the browser's. A repeat finds nothing held and changes nothing.
  */
 export async function settleVoiceUsage(
   userId: string,
@@ -150,8 +150,12 @@ export async function settleVoiceUsage(
         .limit(1)
         .for("update");
       if (!held) return null;
+      // The server never sees the call itself close: the browser's "end" is only a request, and the same client secret keeps working
+      // until its time is up. So an early end frees nothing: the call counts as long as it could have run. The elapsed time is
+      // used only if it is longer (it can't be, but the clock decides, never the browser).
       const elapsed = Math.max(0, Math.round((now.getTime() - held.createdAt.getTime()) / 1000));
-      const seconds = Math.min(elapsed, (held.seconds ?? elapsed) + graceSeconds);
+      const reserved = held.seconds ?? elapsed;
+      const seconds = Math.min(Math.max(elapsed, reserved), reserved + graceSeconds);
       const reported = browser.inputTokens != null || browser.outputTokens != null;
       await s.tx
         .update(aiUsage)
@@ -169,9 +173,8 @@ export async function settleVoiceUsage(
     },
     db,
   ).then(async (done) => {
-    // The minutes really used (our clock) replace what was set aside. A hold that already expired was counted in full and stays so.
-    if (done?.holdId)
-      await settleBudget(done.holdId, { seconds: done.seconds }, db).catch((e) => console.error("[ai-budget] settle", e instanceof Error ? e.name : typeof e));
+    // The hold becomes "used" at the full reserved time (an early end frees nothing). A hold that already expired was counted in full and stays so.
+    if (done?.holdId) await settleBudget(done.holdId, {}, db).catch((e) => console.error("[ai-budget] settle", e instanceof Error ? e.name : typeof e));
     return done && { id: done.id, seconds: done.seconds };
   });
 }
