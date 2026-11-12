@@ -48,6 +48,17 @@ export default defineConfig({
         INBOX_DOMAIN: "in.example.com",
         INBOX_WEBHOOK_SECRET: "e2e-inbox-secret",
         ADMIN_EMAILS: "admin-owner@example.com",
+        // The plans switch is off unless a run turns it on (E2E_PLANS=on: tests/e2e/plans.spec.ts, test-mode made-up Stripe keys, never reachable).
+        PLANS_PAYWALL: process.env.E2E_PLANS === "on" ? "on" : "",
+        ...(process.env.E2E_PLANS === "on"
+          ? {
+              STRIPE_SECRET_KEY: "sk_test_e2e_made_up",
+              STRIPE_WEBHOOK_SECRET: "whsec_e2e_made_up",
+              STRIPE_PRICE_STUDENT_OPENAI: "price_e2e_sa",
+              STRIPE_PRICE_STANDARD_OPENAI: "price_e2e_na",
+              APP_URL: `http://localhost:${PORT}`,
+            }
+          : {}),
         // no email service in the tests, whatever this machine has set (the waitlist confirm card answers "isn't available yet")
         RESEND_API_KEY: "",
         EMAIL_FROM: "",

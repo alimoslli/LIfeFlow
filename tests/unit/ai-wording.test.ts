@@ -11,7 +11,7 @@ describe("honest wording about limits (owner, 2026-11-12)", () => {
     expect(plan).not.toMatch(/unlimited/i);
     expect(plan).toContain("More messages with your skyling");
     expect(chat).not.toMatch(/no daily limit/i);
-    expect(chat).toContain("LifeFlow Pro has a much bigger daily allowance");
+    expect(chat).toContain("has a much bigger daily allowance");
   });
 
   it("no user-facing file promises unlimited use of the skyling", () => {

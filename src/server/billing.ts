@@ -16,7 +16,8 @@ export type BillingConfig = { secretKey: string; webhookSecret: string; priceId:
 export function billingConfig(env: Record<string, string | undefined> = process.env): BillingConfig | null {
   const secretKey = env.STRIPE_SECRET_KEY?.trim();
   const webhookSecret = env.STRIPE_WEBHOOK_SECRET?.trim();
-  const priceId = env.STRIPE_PRICE_ID?.trim();
+  // The plans (server/plans.ts) have their own price ids; any one of them also counts as "Stripe is set up".
+  const priceId = (env.STRIPE_PRICE_ID || env.STRIPE_PRICE_STUDENT_OPENAI || env.STRIPE_PRICE_STANDARD_OPENAI || "").trim();
   const appUrl = env.APP_URL?.trim().replace(/\/$/, "");
   return secretKey && webhookSecret && priceId && appUrl ? { secretKey, webhookSecret, priceId, appUrl } : null;
 }
@@ -125,13 +126,18 @@ export async function cancelSubscriptionsNow(cfg: BillingConfig, customerId: str
 }
 
 /** A Stripe Checkout page for Pro. The webhook (not this redirect) turns Pro on. */
-export function checkoutUrl(cfg: BillingConfig, user: { id: string; email: string; stripeCustomerId: string | null }, fetchImpl?: typeof fetch) {
+export function checkoutUrl(
+  cfg: BillingConfig,
+  user: { id: string; email: string; stripeCustomerId: string | null },
+  fetchImpl?: typeof fetch,
+  priceId: string = cfg.priceId,
+) {
   return stripe(
     cfg,
     "checkout/sessions",
     {
       mode: "subscription",
-      "line_items[0][price]": cfg.priceId,
+      "line_items[0][price]": priceId,
       "line_items[0][quantity]": "1",
       client_reference_id: user.id,
       ...(user.stripeCustomerId ? { customer: user.stripeCustomerId } : { customer_email: user.email }),
