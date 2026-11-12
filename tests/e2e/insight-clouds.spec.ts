@@ -32,7 +32,7 @@ test("a busy student on a laptop: one big cloud, the next by dot or arrow key, a
 
   const said = (await row(page).locator(".lf-idea-head").allInnerTexts()).map((t) => t.trim());
   expect(said.length).toBeLessThanOrEqual(3);
-  expect(said[0]).toMatch(/^Rent \$850 due \w+, you have \$620$/);
+  expect(said[0]).toMatch(/^Rent \$850 due \w+, \$230 short$/);
   expect(said.join(" | ")).not.toMatch(/did you know|assistant|\bAI\b|—|missed|behind|slipping/i);
   await expect(row(page).locator(".lf-idea-cloud").first()).toHaveAttribute("data-weather", "storm");
   // only the bar on screen holds the chat: the small row of clouds by the bar is gone

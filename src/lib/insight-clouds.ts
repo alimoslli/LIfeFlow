@@ -82,8 +82,9 @@ export function describe(f: RawInsight, skyling = "Ray"): Described {
       const soon = f.dueIn === "today" || f.dueIn === "tomorrow";
       const day = when(f.dueIn, f.dueDate, shortDay);
       return {
-        say: fit(`${name(f.bill, 14)} ${usd(f.billCents)} due ${day}, you have ${usd(f.cashCents)}`, `${name(f.bill, 14)} ${usd(f.billCents)} due ${day}`),
-        why: `That's ${usd(f.shortCents)} short, so there's time to plan it.`,
+        // what it means, not the balance (owner, 2026-11-12: "you have 620 is cheap words")
+        say: fit(`${name(f.bill, 14)} ${usd(f.billCents)} due ${day}, ${usd(f.shortCents)} short`, `${name(f.bill, 14)} ${usd(f.billCents)} due ${day}`),
+        why: `You have ${usd(f.cashCents)} now, so there's time to plan it.`,
         cta: f.action ? "Remind me to cover it" : "Show me my options",
         weather: "storm",
         bolt: soon,
@@ -98,7 +99,12 @@ export function describe(f: RawInsight, skyling = "Ray"): Described {
       const soon = f.dueIn === "today" || f.dueIn === "tomorrow";
       const day = when(f.dueIn, f.dueDate, shortDay);
       return {
-        say: fit(`${name(f.bill, 14)} ${usd(f.billCents)} due ${day}, you have ${usd(f.cashCents)}`, `${name(f.bill, 14)} ${usd(f.billCents)} due ${day}`),
+        say: fit(
+          f.cashCents >= f.billCents
+            ? `${name(f.bill, 14)} ${usd(f.billCents)} due ${day}, ${usd(f.cashCents - f.billCents)} left after`
+            : `${name(f.bill, 14)} ${usd(f.billCents)} due ${day}`,
+          `${name(f.bill, 14)} ${usd(f.billCents)} due ${day}`,
+        ),
         why: f.cashCents >= f.billCents ? `That leaves ${usd(f.cashCents - f.billCents)} after it.` : "Checking plus cash, right now.",
         cta: "See what's left",
         weather: soon ? "heads-up" : "tip",

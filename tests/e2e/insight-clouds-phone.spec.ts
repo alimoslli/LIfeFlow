@@ -30,7 +30,7 @@ test("a busy student sees real insights, as weather; a tap fills the bar or does
   const said = await heads(page);
   expect(said.length).toBeLessThanOrEqual(3);
   // rank: the shortfall first (real names, day, amounts), then the clash, never two about the same thing
-  expect(said[0]).toMatch(/^Rent \$850 due \w+, you have \$620$/);
+  expect(said[0]).toMatch(/^Rent \$850 due \w+, \$230 short$/);
   expect(said[1]).toMatch(/^Lab 4 (is )?due \w+, you work /);
   expect(said.join(" | ")).not.toMatch(/did you know|assistant|\bAI\b|—|missed|behind|slipping/i);
   for (const t of said) expect(t.split(/\s+/).length, t).toBeLessThanOrEqual(9);

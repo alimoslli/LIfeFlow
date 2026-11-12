@@ -114,7 +114,7 @@ describe("insight clouds come from the person's own rows (owner, 2026-11-12)", (
     // the page's three: the shortfall first, then the clash, never two about the same thing
     const top = await run((s) => ideaClouds(s, TZ, prefs, "Ray", NOW));
     expect(top.map((c) => c.key)).toEqual(["insight:bill_short", "insight:conflict", "insight:due_soon"]);
-    expect(top[0]).toMatchObject({ say: "Rent $850 due Fri, you have $620", weather: "storm", cta: "Remind me to cover it", act: { type: "do" } });
+    expect(top[0]).toMatchObject({ say: "Rent $850 due Fri, $230 short", weather: "storm", cta: "Remind me to cover it", act: { type: "do" } });
     expect(top[1]).toMatchObject({ weather: "storm", cta: "Work on it Wed 9 AM" });
     // reading for Today records nothing: no message rows, so a push later still goes out
     expect(pickInsights(facts, { noteId: "overdraft" }).map((c) => c.key)).not.toContain("insight:bill_short");

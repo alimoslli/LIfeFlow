@@ -40,8 +40,8 @@ const all: RawInsight[] = [
 describe("insight clouds (owner, 2026-11-12)", () => {
   it("word every insight with its real names, days and amounts, in about eight words", () => {
     const said = all.map((f) => say(f).say);
-    expect(said).toContain("Rent $850 due Fri, you have $620");
-    expect(said).toContain("Rent $850 due Fri, you have $1,020");
+    expect(said).toContain("Rent $850 due Fri, $230 short");
+    expect(said).toContain("Rent $850 due Fri, $170 left after");
     expect(said).toContain("Thu: 2 due, 5 to 10 PM shift");
     expect(said).toContain("Netflix and Hulu: about $306 a year");
     expect(said).toContain("2 free hours before your 2 PM class");
