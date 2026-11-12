@@ -753,7 +753,7 @@ export function JarvisChat({
                   }}
                   // a third cloud only when the screen is tall enough to show it whole above the message box (a
                   // phone in a browser cut it in half; owner, 2026-11-10: nothing lies over anything)
-                  className="mt-5 justify-center [@media(max-height:760px)]:[&>li:nth-child(n+3)]:hidden"
+                  className="mt-5"
                 />
               ) : null}
               {empty && aiConsent && connect && connect.length > 0 && (

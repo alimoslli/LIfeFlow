@@ -3,52 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DayClock } from "@/components/day-clock/day-clock";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
-import type { ClockData, ClockItem } from "@/lib/day-clock";
-import { addDaysStr, formatDateStr } from "@/lib/dates";
+import { SkyScene } from "@/components/sky/sky-scene";
 import { cn } from "@/lib/utils";
-
-/** "Now" in the example: 11:30 in the morning, so the class, the clash and the due time are all still ahead. */
-const NOW = 11 * 60 + 30;
-
-/**
- * One made-up day, built here and nowhere else: never read from or saved to the database (owner, 2026-11-12). Dates are
- * the visitor's own calendar day so the weekday names look right; everything on it is an invented example.
- */
-function exampleDay(): ClockData {
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-  const item = (id: string, o: Partial<ClockItem> & Pick<ClockItem, "title" | "icon" | "cat" | "kind" | "start">): ClockItem => ({
-    id,
-    end: null,
-    allDay: false,
-    href: "/waitlist",
-    source: "Example",
-    subtitle: null,
-    ...o,
-  });
-  const items: ClockItem[] = [
-    item("ex-class", { title: "Biology lecture", icon: "🎓", cat: "class", kind: "block", start: 13 * 60, end: 14 * 60 + 15, origin: "event" }),
-    item("ex-shift", { title: "Work", subtitle: "Campus cafe", icon: "💼", cat: "work", kind: "block", start: 14 * 60, end: 18 * 60, origin: "shift" }),
-    item("ex-due", { title: "Lab report due", icon: "📄", cat: "due", kind: "due", start: 17 * 60, origin: "assignment" }),
-    item("ex-night", { title: "Lights out", icon: "🔔", cat: "other", kind: "due", start: 22 * 60 + 30, origin: "reminder" }),
-    item("ex-class2", { title: "Statistics", icon: "🎓", cat: "class", kind: "block", start: 1440 + 9 * 60, end: 1440 + 10 * 60 + 15, origin: "event" }),
-    item("ex-shift2", {
-      title: "Work",
-      subtitle: "Campus cafe",
-      icon: "💼",
-      cat: "work",
-      kind: "block",
-      start: 1440 + 16 * 60,
-      end: 1440 + 20 * 60,
-      origin: "shift",
-    }),
-  ];
-  const days = [-3, -2, -1, 0, 1, 2, 3].map((offset) => {
-    const date = addDaysStr(today, offset);
-    return { offset, date, short: offset === 0 ? "Today" : formatDateStr(date, "EEE"), long: formatDateStr(date, "EEE, MMM d") };
-  });
-  return { tz, today, base: Date.now() - NOW * 60_000, days, items, steps: null, sleepHours: null, spentTodayCents: null, empty: false };
-}
+import { exampleDay } from "./sky-explainer-day";
+import { SkyLabels } from "./sky-explainer-labels";
 
 type Step = "turn" | "open" | "fold";
 
@@ -96,24 +54,31 @@ function useWheelSteps() {
 }
 
 const TRY: [Step, string, string][] = [
-  ["turn", "Turning", "Drag the sky sideways. Things rise on the right and set on the left, so you can look ahead or back."],
-  ["open", "Opening", "Tap the sky. It pours into a line of your whole week."],
-  ["fold", "Folding", "Pull the line down, or tap Back to now, and it folds back into the wheel."],
+  ["turn", "Turn it", "Drag the sky sideways. Things rise on the right and set on the left, so you can look ahead or back."],
+  ["open", "Open it", "Tap the sky. It pours into a line of your whole week."],
+  ["fold", "Fold it", "Tap the skyling on the line, or press Escape, and it folds back into the wheel."],
 ];
 
 const PARTS: [string, string][] = [
   ["The wheel is your day", "The arc is the sun's path across your day, sunrise to sunset. Everything you have sits on it at the time it happens."],
   ["Now", "The top of the wheel is now, with the skyling's picture on it. Turn the wheel and a button brings you back."],
-  ["The stops", "Each stop is a class, a shift or something due. Tap one to read it in a card. The icon says what kind it is."],
-  ["A clash", "When two things share the same time, their stops sit on top of each other. Here the lecture and the shift overlap at 2 PM."],
-  ["The timeline", "Open the sky and it becomes a line of your week: the days across the top, every stop in order below."],
-  ["The night", "On the line, each night is a dip between two days. Tonight's last stop, Lights out, sits at the bottom of it."],
+  ["A stop", "A class, a shift or something due. The icon says what kind it is; tap one to read it in a card."],
+  ["A clash", "When two things share the same time, their stops sit together. Here the Statistics class and the shift overlap at 2 PM."],
+  ["The timeline", "Open the sky and it becomes a line of your week: the days across the top, every stop in order along it."],
+  ["The night", "Under the horizon is the night. On the line each night is a dip between two days, with sleep and what happened."],
 ];
 
-export default function SkyExplainerBody({ name, onClose }: { name: string; onClose: () => void }) {
-  const data = useMemo(() => exampleDay(), []);
-  const example = useMemo(() => ({ now: NOW }), []);
+/**
+ * "How your sky works" (owner, 2026-11-12: "same exact thing, but not the whole picture, just the mechanism"): the real Today
+ * screen with only the wheel and its timeline left in, on a made-up day. It renders the same shell pieces Today sits in (the
+ * glass, the sky scene, the page's width and padding, the phone's top bar row, `dc-today`, the real `DayClock`) and leaves out
+ * the tabs, the chat bar, the clouds, Money and the skyling's note. A state of the waitlist page, never a route.
+ */
+export default function SkyExplainerBody({ name, tz, companion, onClose }: { name: string; tz: string; companion?: string | null; onClose: () => void }) {
+  const data = useMemo(() => exampleDay(tz), [tz]);
+  const example = useMemo(() => ({}), []);
   const root = useRef<HTMLDivElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const done = useWheelSteps();
 
@@ -158,68 +123,77 @@ export default function SkyExplainerBody({ name, onClose }: { name: string; onCl
       data-testid="sky-explainer"
       className="lf-glass fixed inset-0 z-50 overflow-y-auto bg-bg text-text"
     >
-      <div className="mx-auto w-full max-w-3xl px-5 pt-4 pb-[max(2rem,env(safe-area-inset-bottom))]">
-        <div className="flex min-h-11 items-center justify-between">{back}</div>
-        <p className="mt-4 text-[0.75rem] font-semibold tracking-[0.14em] text-muted uppercase">An example day</p>
-        <h2 id="sky-ex-title" ref={heading} tabIndex={-1} className="mt-1 font-display text-[2.125rem] leading-tight font-medium tracking-tight outline-none">
+      <SkyScene tz={tz} />
+      {/* the same page frame as the app shell's main (width, padding), without its tabs */}
+      <main className="mx-auto w-full max-w-5xl px-5 pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-8 md:max-w-6xl md:px-6 md:pt-5">
+        <h2 id="sky-ex-title" ref={heading} tabIndex={-1} className="sr-only outline-none">
           How your sky works
         </h2>
-        <p className="mt-2 text-[0.9375rem] text-muted">
-          This day is made up, so you can learn the moves. Nothing here is yours, and nothing is saved. Your own sky fills from what you connect.
-        </p>
-
-        <p className="mt-4">
+        {/* the row Today's phone app bar and laptop top bar occupy: here it holds the way back and the Example tag */}
+        <header className="sticky top-0 z-30 -mx-5 mb-2 flex h-12 items-center justify-between gap-2 px-3 pt-[env(safe-area-inset-top)] sm:-mx-8 md:static md:mx-0 md:mb-3 md:h-11 md:px-0">
+          {back}
           <span
             data-testid="sky-example-tag"
             className="inline-block rounded-full bg-ink-night px-2.5 py-1 text-[0.6875rem] font-bold tracking-[0.12em] text-white uppercase"
           >
             Example
           </span>
-          <span className="ml-2 text-sm text-muted">Made up, not your day</span>
-        </p>
-        <div className="lf-welcome-sky relative mt-2">
-          <DayClock data={data} mode="full" example={example}>
-            <p className="px-5 pt-2 text-center text-sm text-muted">Example: {name} would say &ldquo;Your lecture and your shift overlap at 2.&rdquo;</p>
-          </DayClock>
-        </div>
+        </header>
 
-        <h3 className="mt-6 text-sm font-medium text-text-2">Try it on the wheel above</h3>
-        <ol className="mt-2 flex flex-col gap-2.5" aria-label="Try it">
-          {TRY.map(([k, t, d]) => (
-            <li
-              key={k}
-              data-testid={`try-${k}`}
-              data-done={done[k]}
-              className={cn(
-                "flex items-start gap-3 rounded-2xl px-4 py-3.5 transition-colors duration-300",
-                done[k] ? "bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night" : "bg-surface shadow-soft",
-              )}
-            >
-              <PixelIcon name={done[k] ? "todo" : "box"} className="mt-0.5 h-6 w-6 shrink-0" aria-hidden />
-              <span>
-                <span className="block text-[0.9375rem] font-medium">
-                  {t}
-                  {done[k] && <span className="sr-only"> (done)</span>}
-                </span>
-                <span className={cn("block text-sm", done[k] ? "text-ink-night/75" : "text-muted")}>{d}</span>
-              </span>
-            </li>
-          ))}
-        </ol>
-
-        <h3 className="mt-6 text-sm font-medium text-text-2">What everything means</h3>
-        <dl className="mt-2 grid gap-2.5 sm:grid-cols-2">
-          {PARTS.map(([t, d]) => (
-            <div key={t} className="rounded-2xl bg-surface px-4 py-3.5 shadow-soft">
-              <dt className="text-[0.9375rem] font-medium">{t}</dt>
-              <dd className="mt-0.5 text-sm text-muted">{d}</dd>
+        <div className="md:pt-2">
+          <div className="dc-today flex flex-col gap-5">
+            <section aria-label="Your day (an example)" className="-mx-5 sm:-mx-8 md:mx-0">
+              <div ref={stage} className="relative">
+                <DayClock data={data} mode="full" companion={companion} example={example} />
+                <SkyLabels stage={stage} />
+              </div>
+            </section>
+            {/* the room Today gives its middle: what this is */}
+            <div className="dc-middle md:hidden">
+              <p className="text-[0.9375rem] text-muted">
+                A made-up day, so you can learn the moves. Nothing here is yours or saved. {name} and your own sky fill from what you connect.
+              </p>
             </div>
-          ))}
-        </dl>
 
-        <p className="mt-6 text-[0.9375rem] font-medium">The rest opens when you&apos;re let in.</p>
-        <div className="mt-3">{back}</div>
-      </div>
+            <div className="mx-auto w-full max-w-3xl">
+              <h3 className="text-sm font-medium text-text-2">Try it on the wheel</h3>
+              <ol className="mt-2 flex flex-col gap-2.5" aria-label="Try it">
+                {TRY.map(([k, t, d]) => (
+                  <li
+                    key={k}
+                    data-testid={`try-${k}`}
+                    data-done={done[k]}
+                    className={cn(
+                      "flex items-start gap-3 rounded-2xl px-4 py-3.5 transition-colors duration-300",
+                      done[k] ? "bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night" : "bg-surface shadow-soft",
+                    )}
+                  >
+                    <PixelIcon name={done[k] ? "todo" : "box"} className="mt-0.5 h-6 w-6 shrink-0" aria-hidden />
+                    <span>
+                      <span className="block text-[0.9375rem] font-medium">
+                        {t}
+                        {done[k] && <span className="sr-only"> (done)</span>}
+                      </span>
+                      <span className={cn("block text-sm", done[k] ? "text-ink-night/75" : "text-muted")}>{d}</span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+              <h3 className="mt-6 text-sm font-medium text-text-2">What everything means</h3>
+              <dl className="mt-2 grid gap-2.5 sm:grid-cols-2">
+                {PARTS.map(([t, d]) => (
+                  <div key={t} className="rounded-2xl bg-surface px-4 py-3.5 shadow-soft">
+                    <dt className="text-[0.9375rem] font-medium">{t}</dt>
+                    <dd className="mt-0.5 text-sm text-muted">{d}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="mt-6 text-[0.9375rem] font-medium">The rest opens when you&apos;re let in.</p>
+              <div className="mt-3">{back}</div>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

@@ -11,7 +11,7 @@ const Explainer = dynamic(() => import("./sky-explainer-body"), { ssr: false });
  * timeline on a made-up day. It is a state of this page, never a route, so nobody waiting gains a way into the app. The
  * wheel's code loads only when it's opened.
  */
-export function SkyExplainer({ name }: { name: string }) {
+export function SkyExplainer({ name, tz, companion }: { name: string; tz: string; companion?: string | null }) {
   const [open, setOpen] = useState(false);
   const entry = useRef<HTMLButtonElement>(null);
   const was = useRef(false);
@@ -40,7 +40,7 @@ export function SkyExplainer({ name }: { name: string }) {
           <PixelIcon name="arrow" className="h-4 w-4" aria-hidden />
         </button>
       </section>
-      {open && <Explainer name={name} onClose={() => setOpen(false)} />}
+      {open && <Explainer name={name} tz={tz} companion={companion} onClose={() => setOpen(false)} />}
     </>
   );
 }

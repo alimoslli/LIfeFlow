@@ -405,7 +405,7 @@ export function TodayMiddle({
           </button>
         </section>
       )}
-      <IdeaClouds clouds={clouds} show={note ? 2 : 3} onPick={fillBar} className="justify-center" />
+      <IdeaClouds clouds={clouds} show={3} onPick={fillBar} />
     </div>
   );
 }

@@ -194,7 +194,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
           </ul>
         </section>
 
-        <SkyExplainer name={assistantProfile(user.preferences, user.timezone).name} />
+        <SkyExplainer name={assistantProfile(user.preferences, user.timezone).name} tz={user.timezone ?? "UTC"} companion={user.preferences?.companion} />
 
         <p className={`${kicker} mt-2 text-center leading-relaxed text-star-gold/90`}>{w.launchNote ?? DEFAULT_LAUNCH}</p>
 

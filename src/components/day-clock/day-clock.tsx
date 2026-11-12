@@ -35,8 +35,8 @@ export function DayClock({
   example,
   children,
 }: {
-  /** A made-up example (waitlist explainer): fixed "now", cards are read-only, nothing can be pinned, edited or opened, no refresh. */
-  example?: { now: number };
+  /** A made-up example (waitlist explainer): cards are read-only, nothing can be pinned, edited or opened, no refresh. "now" is the real time unless one is given. */
+  example?: { now?: number };
   data: ClockData;
   /** Today's note is a clash: after its hello, the skyling looks surprised for a moment. */
   clash?: boolean;
@@ -65,6 +65,7 @@ export function DayClock({
     return () => (window.clearTimeout(t), window.clearTimeout(later));
   }, [clash]);
   const router = useRouter();
+  const isExample = !!example;
   const exampleNow = example?.now;
   const first = useRef(data);
   // Where a new pin goes (minutes from the start of today), while its sheet is open.
@@ -81,9 +82,9 @@ export function DayClock({
     const sky = createSky(root, reduced);
     engine.current = createDayClock(root, first.current, {
       sky: sky.draw,
-      onOpen: (href) => exampleNow == null && router.push(href),
-      onNewDay: () => exampleNow == null && router.refresh(),
-      onPin: ({ start }) => exampleNow == null && setPinAt(start),
+      onOpen: (href) => !isExample && router.push(href),
+      onNewDay: () => !isExample && router.refresh(),
+      onPin: ({ start }) => !isExample && setPinAt(start),
       // Done right on the card: the same actions as To-dos and School; the line refreshes in place.
       onDone: async (it, at) => {
         if (!it.ref) return;
@@ -103,7 +104,7 @@ export function DayClock({
         else router.push(it.href);
       },
       reducedMotion: reduced,
-      example: exampleNow == null ? undefined : { now: exampleNow },
+      example: isExample ? { now: exampleNow } : undefined,
     });
     // Diagnostics only (?debug=1): hold the motion at any point, for looking at it frame by frame.
     if (new URLSearchParams(window.location.search).get("debug") === "1")
@@ -120,7 +121,7 @@ export function DayClock({
       engine.current?.destroy();
       engine.current = null;
     };
-  }, [router, exampleNow]);
+  }, [router, isExample, exampleNow]);
 
   useEffect(() => {
     if (data !== first.current) engine.current?.update(data);

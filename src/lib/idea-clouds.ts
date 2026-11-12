@@ -4,6 +4,9 @@
  * the person's real data (never guessed), what they haven't tried first, and every one maps to a tool that works today.
  * Tapping fills the chat bar with `ask`, ready to send, never sent for them. The skyling then does it for real.
  *
+ * Since 2026-11-12 these are the calm fallback: Today shows real insights first (lib/insight-clouds.ts) and a single feature cloud
+ * from here only when there is nothing worth noticing.
+ *
  * Pure: the page gathers the facts (services/idea-clouds.ts) and this picks. Tested in tests/unit/idea-clouds.test.ts.
  */
 
@@ -183,8 +186,43 @@ export const CLOUDS: Cloud[] = [
   },
 ];
 
-/** A cloud ready to show: what it says, and what lands in the bar. */
-export type IdeaCloud = { key: CloudKey; say: string; ask: string };
+/** How serious it is, as weather: a white cloud is a tip, a grey one a heads-up, a dark one with rain real trouble (with a way out). */
+export type Weather = "tip" | "heads-up" | "storm";
+
+/**
+ * A cloud ready to show (owner, 2026-11-12): a short headline, one line of why, and one button. `key` is a feature key, or
+ * `insight:<kind>` for an insight (lib/insight-clouds.ts). The button either fills the chat bar with `ask` (never sent for
+ * them), opens a page, or does the one fix (`do`, by `ref`: the server finds the fix again itself, with Undo).
+ */
+export type IdeaCloud = {
+  key: string;
+  say: string;
+  why: string;
+  cta: string;
+  weather: Weather;
+  /** Lightning flicker: only the worst storms. */
+  bolt?: boolean;
+  ask: string;
+  act?: { type: "do"; ref: string } | { type: "open"; href: string };
+};
+
+/** One line of why for each feature cloud (a tip: what the skyling does with it). */
+export const CLOUD_WHY: Record<CloudKey, string> = {
+  plan_week: "It looks at what's due and your free time.",
+  promise: "It checks back with you tonight.",
+  afford: "It checks your bills and your free time.",
+  free_time: "It looks across your classes and shifts.",
+  shift_moved: "It updates your week for you.",
+  syllabus: "Every due date lands on your sky.",
+  bills_week: "From your own bills and balance.",
+  subscriptions: "It looks through your charges.",
+  finished: "It ticks it off for you.",
+  sleep: "From the sleep you've shared.",
+  break_project: "Small steps, each with a day.",
+  first_today: "It starts from what's on your sky.",
+  goal: "It keeps track of it with you.",
+  quick_win: "Something small to finish first.",
+};
 
 /** A small, stable shuffle for the day, so the clouds change from day to day but not on every refresh. */
 function rank(key: string, seed: number) {
@@ -205,5 +243,7 @@ export function pickClouds(f: CloudFacts, name: string, day: number, count = 3):
   // the first week: the major features first, so each gets its turn
   const fresh = f.ageDays < 7 ? [...order(unused.filter((c) => c.major)), ...order(unused.filter((c) => !c.major))] : order(unused);
   const used = day % 3 === 0 ? order(fits.filter((c) => f.used[c.key])) : [];
-  return [...fresh, ...used].slice(0, count).map((c) => ({ key: c.key, say: c.say(name, f), ask: c.ask(f) }));
+  return [...fresh, ...used]
+    .slice(0, count)
+    .map((c) => ({ key: c.key, say: c.say(name, f), why: CLOUD_WHY[c.key], cta: "Try it", weather: "tip" as const, ask: c.ask(f) }));
 }

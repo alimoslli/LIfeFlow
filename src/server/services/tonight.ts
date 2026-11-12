@@ -54,6 +54,8 @@ export async function tonight(scope: UserScope, tz: string, now: Date, opts: { i
     .filter((i) => i.blocksTime && i.endsAt && i.endsAt > now && i.startsAt < awakeEnd)
     .map((i) => ({
       title: i.title.replace(/^Work · /, "Work at "),
+      kind: i.kind as string,
+      startsAt: i.startsAt,
       from: formatIn(i.startsAt, tz, "h:mm a"),
       to: formatIn(i.endsAt!, tz, "h:mm a"),
       minutes: Math.round((Math.min(i.endsAt!.getTime(), awakeEnd.getTime()) - Math.max(i.startsAt.getTime(), now.getTime())) / 60_000),
