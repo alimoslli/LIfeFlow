@@ -20,13 +20,14 @@
     "db:seed-demo": "tsx scripts/seed-demo.ts",
     "db:collapse-inbox-dupes": "tsx scripts/collapse-inbox-dupes.ts",
     "db:studio": "drizzle-kit studio",
-    "vercel-build": "tsx scripts/deploy-db.ts && tsx scripts/build-skills.ts && next build",
+    "vercel-build": "tsx scripts/deploy-db.ts && tsx scripts/build-skills.ts && tsx --conditions=react-server scripts/fetch-local-models.mts --if-on && next build",
     "skills": "tsx scripts/build-skills.ts",
     "ios": "cap sync ios && cap open ios"
   },
   "dependencies": {
     "@date-fns/tz": "^1.5.0",
     "@gsap/react": "^2.1.2",
+    "@huggingface/tokenizers": "0.2.0",
     "@simplewebauthn/browser": "^14.0.0",
     "@simplewebauthn/server": "^14.0.3",
     "@zxcvbn-ts/core": "4.2.0",
@@ -39,6 +40,7 @@
     "jose": "^6.2.13",
     "lucide-react": "^1.61.0",
     "next": "16.4.3",
+    "onnxruntime-node": "1.30.0",
     "openai": "^7.44.0",
     "otpauth": "9.5.2",
     "pg": "^8.23.1",

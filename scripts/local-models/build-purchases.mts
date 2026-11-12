@@ -3,7 +3,7 @@
  * simulator (the personas' shops, then tests/fixtures/simulated-people and the situation cases' bank files), one per shop, each
  * labelled with the category the bank's own category gives it through our mapping (`mapPfc`). The sorter under test only
  * sees the statement line and the merchant name, as on a CSV or a manual add. Run once; the output is frozen:
- *   npx tsx scripts/local-models/build-purchases.ts
+ *   npx tsx scripts/local-models/build-purchases.mts
  */
 import { readFileSync, readdirSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
@@ -12,7 +12,13 @@ import { DEFAULT_CATEGORIES } from "../../src/server/services/finance/categories
 import { merchantKey } from "../../src/server/services/finance/recurring-detect";
 import { purchaseBank } from "../../tests/fixtures/purchases-bank";
 
-type Txn = { id: string; description: string; merchant_name: string | null; amount_cents: number; personal_finance_category: { primary: string; detailed: string } | null };
+type Txn = {
+  id: string;
+  description: string;
+  merchant_name: string | null;
+  amount_cents: number;
+  personal_finance_category: { primary: string; detailed: string } | null;
+};
 
 const files = [
   ...readdirSync("tests/fixtures/simulated-people").map((f) => path.join("tests/fixtures/simulated-people", f)),
@@ -25,7 +31,24 @@ for (const c of DEFAULT_CATEGORIES) for (const ch of c.children ?? []) parentOf.
 
 const seen = new Set<string>();
 const out: { id: string; description: string; merchant: string | null; amountCents: number; label: string; accept: string[] }[] = [];
-const PRIMARIES = ["BANK_FEES", "ENTERTAINMENT", "FOOD_AND_DRINK", "GENERAL_MERCHANDISE", "HOME_IMPROVEMENT", "MEDICAL", "PERSONAL_CARE", "GENERAL_SERVICES", "GOVERNMENT_AND_NON_PROFIT", "TRANSPORTATION", "TRAVEL", "RENT_AND_UTILITIES", "LOAN_PAYMENTS", "TRANSFER_OUT", "TRANSFER_IN", "INCOME"];
+const PRIMARIES = [
+  "BANK_FEES",
+  "ENTERTAINMENT",
+  "FOOD_AND_DRINK",
+  "GENERAL_MERCHANDISE",
+  "HOME_IMPROVEMENT",
+  "MEDICAL",
+  "PERSONAL_CARE",
+  "GENERAL_SERVICES",
+  "GOVERNMENT_AND_NON_PROFIT",
+  "TRANSPORTATION",
+  "TRAVEL",
+  "RENT_AND_UTILITIES",
+  "LOAN_PAYMENTS",
+  "TRANSFER_OUT",
+  "TRANSFER_IN",
+  "INCOME",
+];
 function take(id: string, t: { description: string; merchant_name: string | null; amount_cents: number }, pfc: Txn["personal_finance_category"]) {
   if (t.amount_cents >= 0) return;
   const m = mapPfc(pfc, t.amount_cents, `${t.merchant_name ?? ""} ${t.description}`);
@@ -35,10 +58,19 @@ function take(id: string, t: { description: string; merchant_name: string | null
   if (!key || seen.has(key)) return;
   seen.add(key);
   const parent = parentOf.get(m.category);
-  out.push({ id, description: t.description, merchant: t.merchant_name, amountCents: t.amount_cents, label: m.category, accept: parent ? [m.category, parent] : [m.category] });
+  out.push({
+    id,
+    description: t.description,
+    merchant: t.merchant_name,
+    amountCents: t.amount_cents,
+    label: m.category,
+    accept: parent ? [m.category, parent] : [m.category],
+  });
 }
 // the personas' spending habits: every shop they name, with the bank category the habit gives its charges
-for (const f of readdirSync("docs/situations/personas").filter((x) => x.endsWith(".json")).sort()) {
+for (const f of readdirSync("docs/situations/personas")
+  .filter((x) => x.endsWith(".json"))
+  .sort()) {
   const walk = (o: unknown): void => {
     if (Array.isArray(o)) return o.forEach(walk);
     if (!o || typeof o !== "object") return;

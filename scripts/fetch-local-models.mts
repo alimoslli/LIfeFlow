@@ -1,7 +1,7 @@
 /**
  * Fetches the pinned open models (src/server/local-models/models.ts) from Hugging Face into `.models/<key>/`, checking
  * every file's SHA-256 against the pinned one; a file that doesn't match is deleted and the run fails. Already there and
- * matching: nothing is downloaded. Run: `npx tsx scripts/fetch-local-models.ts [minilm|bge|all]` (default: the model
+ * matching: nothing is downloaded. Run: `npx tsx scripts/fetch-local-models.mts [minilm|bge|all]` (default: the model
  * LOCAL_MODEL picks). The build runs it only when a local-model switch is on (docs/backlog/2026-11-12-local-models.md).
  */
 import { createHash } from "node:crypto";
@@ -35,6 +35,20 @@ async function fetchModel(m: LocalModel) {
   }
 }
 
+// --if-on: the build's step. Nothing to do unless a local-model switch is on; a failed download then only warns (the
+// job falls back to today's way), so a Hugging Face outage never stops a deploy.
+if (process.argv.includes("--if-on")) {
+  if (process.env.LOCAL_MODEL_MEMORY !== "on") {
+    console.log("local models: off, nothing fetched");
+    process.exit(0);
+  }
+  try {
+    await fetchModel(LOCAL_MODELS[localModelKey()]);
+  } catch (e) {
+    console.warn("local models: not fetched, the job uses today's way:", e instanceof Error ? e.message : e);
+  }
+  process.exit(0);
+}
 const which = process.argv[2] ?? localModelKey();
 const models = which === "all" ? Object.values(LOCAL_MODELS) : [LOCAL_MODELS[which as LocalModel["key"]]];
 if (models.some((m) => !m)) throw new Error(`unknown model "${which}"`);
