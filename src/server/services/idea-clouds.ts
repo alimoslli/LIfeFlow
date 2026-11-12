@@ -2,7 +2,8 @@ import { and, eq, sql } from "drizzle-orm";
 import { todayIn } from "@/lib/dates";
 import { CLOUDS, pickClouds, type IdeaCloud } from "@/lib/idea-clouds";
 import { DOABLE } from "@/lib/insight-clouds";
-import { cloudsFrom } from "@/lib/insights";
+import { cloudsFrom, type Insight } from "@/lib/insights";
+import type { Weather as NoteWeather } from "@/lib/sky-insights";
 import type { UserScope } from "../db/with-user";
 import { jarvisMessages, users, type ProactiveAction, type UserPreferences } from "../db/schema";
 import { cloudFacts } from "./cloud-facts";
@@ -17,10 +18,18 @@ export { cloudFacts };
 /** The person's local day number, so the clouds change from day to day in their time zone. */
 export const localDay = (tz: string, now = new Date()) => Math.floor(Date.parse(`${todayIn(tz, now)}T00:00:00Z`) / 86_400_000);
 
+/** How serious, for comparing the note with the clouds: a storm over a heads-up over a tip. */
+const SERIOUS: Record<Insight["tone"] | NoteWeather, number> = { tip: 0, clear: 0, heads_up: 1, grey: 1, storm: 2 };
+const CLOUD_SERIOUS: Record<IdeaCloud["weather"], number> = { tip: 0, "heads-up": 1, storm: 2 };
+
 /**
  * The clouds for this person now (owner, 2026-11-12): up to three real insights from their own records, most useful first, none
- * the skyling's note on Today already says (`noteId`). The sky is never empty: with fewer than two insights, calm feature
+ * the skyling's note on Today already says (`note`). The sky is never empty: with fewer than two insights, calm feature
  * clouds (white tips) fill it to two.
+ *
+ * The note is the skyling's thought, so it must be the most serious thing on the sky: when a cloud is more serious than the
+ * note (a shortfall before the rent while the note says the rent is due), the note steps aside and that cloud becomes the
+ * thought (`thought: true`, first), so the two never say the same thing in different words.
  */
 export async function ideaClouds(
   scope: UserScope,
@@ -28,10 +37,17 @@ export async function ideaClouds(
   prefs: UserPreferences | undefined,
   name: string,
   now = new Date(),
-  opts: { noteId?: string | null } = {},
+  opts: { note?: { id: string; weather: NoteWeather } | null } = {},
 ): Promise<IdeaCloud[]> {
   const have = await cloudFacts(scope, tz, prefs, now);
-  const insights = cloudsFrom(await listInsights(scope, tz, prefs, now), { noteId: opts.noteId, count: 3 });
+  const list = await listInsights(scope, tz, prefs, now);
+  const note = opts.note;
+  const outranked = !!note && list.some((i) => i.key !== `sky:${note.id}` && SERIOUS[i.tone] > SERIOUS[note.weather]);
+  let insights = cloudsFrom(list, { noteId: outranked ? null : note?.id, count: 3 });
+  if (outranked) {
+    insights = [...insights].sort((a, b) => CLOUD_SERIOUS[b.weather] - CLOUD_SERIOUS[a.weather]);
+    insights[0] = { ...insights[0], thought: true };
+  }
   if (insights.length >= 2) return insights;
   return [...insights, ...pickClouds(have, name, localDay(tz, now), 2 - insights.length)];
 }

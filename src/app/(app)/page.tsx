@@ -66,7 +66,10 @@ export default async function TodayPage() {
     // its own step (Tonight, a free gap, a study block). Money stays quiet while locked; never a money warning, a budget nag
     // or "you have late to-dos" here (owner, 2026-11-11): Money and the line show those.
     const insights = await skyInsights(scope, snapshot, { moneyLocked: locked });
-    const sky = insights[0] ?? null;
+    const name = assistantProfile(user.preferences, user.timezone).name;
+    // idea clouds beside the chat bar, from their own data (lib/idea-clouds); a cloud more serious than the note becomes the thought
+    const clouds = await ideaClouds(scope, tz, user.preferences, name, new Date(), { note: insights[0] ?? null });
+    const sky = clouds[0]?.thought ? null : (insights[0] ?? null);
     // the Sunday review opens in a sheet with the whole look back and ahead
     const reviewRow = sky?.kind === "weekly_review" ? await getMessage(scope, sky.id) : null;
     const review = reviewRow ? toCard(reviewRow, tz, { moneyLocked: locked }) : null;
@@ -74,9 +77,8 @@ export default async function TodayPage() {
       clock,
       sky,
       review,
-      assistantName: assistantProfile(user.preferences, user.timezone).name,
-      // idea clouds beside the chat bar, from their own data (lib/idea-clouds)
-      clouds: await ideaClouds(scope, tz, user.preferences, assistantProfile(user.preferences, user.timezone).name, new Date(), { noteId: sky?.id }),
+      assistantName: name,
+      clouds,
       userId: user.id,
       setup,
       hello: `${greetingIn(tz)}, ${user.name.split(" ")[0]}`,

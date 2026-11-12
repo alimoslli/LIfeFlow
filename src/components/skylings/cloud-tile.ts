@@ -4,11 +4,10 @@
  * middle stretches, so one drawing fits a sentence of any length (CSS border-image). Three shapes, by day and at night.
  */
 type Shape = { puffs: [cx: number, cy: number, r: number][]; left: number; right: number };
+/** The tile's size in drawn pixels: `top` and `bottom` are the slices that hold the puffs and the underside. */
+type Grid = { w: number; h: number; top: number; bottom: number; corner: number };
 
-const W = 48;
-const H = 21;
-const TOP = 9;
-const BOTTOM = 5;
+const SMALL: Grid = { w: 48, h: 21, top: 9, bottom: 5, corner: 3.2 };
 /** Screen pixels per drawn pixel. */
 export const CLOUD_SCALE = 2;
 
@@ -65,13 +64,35 @@ export const CLOUD_TEXT: Record<CloudWeather, { text: string; muted: string; but
 /** The sky behind the clouds: the app's day background and the night one, and a mid sky blue for the day wheel. */
 export const SKY = { day: ["#f6f8fb", "#8fb6e8"], night: ["#152643", "#0a1630"] } as const;
 
-function tile(shape: Shape, c: Palette): string {
+/**
+ * The skyling's own thought (owner, 2026-11-12: "a bigger cloud showing it as skylings insight"): a wide cumulus with
+ * puffs all along its top, so a big cloud still reads as a cloud, not a card. Its left and right slices meet in a small
+ * valley in the middle, the only part that stretches, so the puffs keep their shape at any width.
+ */
+const BIG: Grid = { w: 150, h: 34, top: 16, bottom: 5, corner: 6 };
+const THOUGHT: Shape = {
+  puffs: [
+    [15, 17, 8],
+    [33, 12, 11],
+    [53, 15, 9],
+    [67, 16, 6],
+    [83, 16, 6],
+    [97, 13, 10],
+    [117, 10, 9.5],
+    [135, 16, 8],
+  ],
+  left: 74,
+  right: 74,
+};
+
+function tile(shape: Shape, c: Palette, grid: Grid = SMALL): string {
+  const { w: W, h: H } = grid;
   const inBody = (x: number, y: number) => {
     const x0 = 1;
     const x1 = W - 2;
-    const y0 = TOP;
+    const y0 = grid.top;
     const y1 = H - 2;
-    const r = 3.2;
+    const r = grid.corner;
     if (x < x0 || x > x1 || y < y0 || y > y1) return false;
     const cx = x < x0 + r ? x0 + r : x > x1 - r ? x1 - r : x;
     const cy = y < y0 + r ? y0 + r : y > y1 - r ? y1 - r : y;
@@ -121,22 +142,42 @@ export type CloudStyle = {
 const made = new Map<string, CloudStyle>();
 
 /**
- * The style for cloud number `i` (the three shapes take turns) in a kind of weather. Made once per shape, weather and size.
- * `scale` is screen pixels per drawn pixel: 2 for the idea clouds, 3 for the skyling's own thought (bigger puffs).
+ * The style for cloud number `i` (the three shapes take turns) in a kind of weather. Made once per shape and weather.
  */
-export function weatherCloudStyle(i: number, weather: CloudWeather, scale = CLOUD_SCALE): CloudStyle {
+export function weatherCloudStyle(i: number, weather: CloudWeather): CloudStyle {
   const k = ((i % SHAPES.length) + SHAPES.length) % SHAPES.length;
-  const id = `${k}:${weather}:${scale}`;
+  const id = `${k}:${weather}`;
   let s = made.get(id);
   if (!s) {
     const shape = SHAPES[k];
     s = {
       "--cloud-day": tile(shape, CLOUD_PALETTES[weather].day),
       "--cloud-night": tile(shape, CLOUD_PALETTES[weather].night),
-      "--cloud-slice": `${TOP} ${shape.right} ${BOTTOM} ${shape.left} fill`,
-      "--cloud-l": `${shape.left * scale}px`,
-      "--cloud-r": `${shape.right * scale}px`,
-      borderWidth: `${TOP * scale}px ${shape.right * scale}px ${BOTTOM * scale}px ${shape.left * scale}px`,
+      ...slices(shape, SMALL, CLOUD_SCALE),
+    };
+    made.set(id, s);
+  }
+  return s;
+}
+
+function slices(shape: Shape, grid: Grid, scale: number) {
+  return {
+    "--cloud-slice": `${grid.top} ${shape.right} ${grid.bottom} ${shape.left} fill`,
+    "--cloud-l": `${shape.left * scale}px`,
+    "--cloud-r": `${shape.right * scale}px`,
+    borderWidth: `${grid.top * scale}px ${shape.right * scale}px ${grid.bottom * scale}px ${shape.left * scale}px`,
+  };
+}
+
+/** The skyling's thought: the big cumulus in a kind of weather, 2 screen pixels a drawn pixel. */
+export function thoughtCloudStyle(weather: CloudWeather): CloudStyle {
+  const id = `thought:${weather}`;
+  let s = made.get(id);
+  if (!s) {
+    s = {
+      "--cloud-day": tile(THOUGHT, CLOUD_PALETTES[weather].day, BIG),
+      "--cloud-night": tile(THOUGHT, CLOUD_PALETTES[weather].night, BIG),
+      ...slices(THOUGHT, BIG, CLOUD_SCALE),
     };
     made.set(id, s);
   }

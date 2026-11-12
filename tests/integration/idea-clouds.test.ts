@@ -118,6 +118,20 @@ describe("insight clouds come from the person's own rows (owner, 2026-11-12)", (
     expect(top[1]).toMatchObject({ weather: "storm", cta: "Block Wed 9 AM" });
     // reading for Today records nothing: no message rows, so a push later still goes out
     expect(pickInsights(facts, { noteId: "overdraft" }).map((c) => c.key)).not.toContain("insight:bill_short");
+    expect(top.some((c) => c.thought)).toBe(false);
+  });
+
+  it("the thought is the most serious thing: a calmer note steps aside for a storm, which leads as the thought", async () => {
+    const { user, run } = await busyStudent();
+    const prefs = await prefsOf(user.id);
+    // the note says the rent is due (a calm line); the shortfall before it is a storm, so it becomes the thought instead
+    const calm = await run((s) => ideaClouds(s, TZ, prefs, "Ray", NOW, { note: { id: "bills-soon", weather: "clear" } }));
+    expect(calm[0]).toMatchObject({ key: "insight:bill_short", thought: true, weather: "storm" });
+    expect(calm.filter((c) => c.thought)).toHaveLength(1);
+    // a storm note stays the thought, and the clouds leave out what it says
+    const storm = await run((s) => ideaClouds(s, TZ, prefs, "Ray", NOW, { note: { id: "overdraft", weather: "storm" } }));
+    expect(storm.some((c) => c.thought)).toBe(false);
+    expect(storm.map((c) => c.key)).not.toContain("insight:bill_short");
   });
 
   it("the same person with the Money lock on: no money insight at all", async () => {

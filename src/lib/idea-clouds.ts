@@ -196,6 +196,8 @@ export type IdeaCloud = {
   bolt?: boolean;
   ask: string;
   act?: { type: "do"; ref: string } | { type: "open"; href: string };
+  /** It is the skyling's thought on Today (more serious than its own note, which then steps aside). */
+  thought?: boolean;
 };
 
 /** One line of why for each feature cloud (a tip: what the skyling does with it). */

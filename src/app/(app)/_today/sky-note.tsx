@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import type { SkyInsight } from "@/lib/sky-insights";
 import { haptic } from "@/lib/haptics";
-import { CLOUD_TEXT, weatherCloudStyle, type CloudWeather } from "@/components/skylings/cloud-tile";
+import { CLOUD_TEXT, thoughtCloudStyle, type CloudWeather } from "@/components/skylings/cloud-tile";
 import "@/components/skylings/skylings.css";
 import "./sky-note.css";
 import { cheerSkylings } from "@/components/skylings/night";
@@ -137,12 +137,7 @@ export function SkyNote({
           } as CSSProperties
         }
       >
-        <span className="lf-idea-body" style={weatherCloudStyle(1, weather, 3) as CSSProperties}>
-          {storm && !done && (
-            <svg className="lf-idea-bolt lf-thought-bolt" viewBox="0 0 8 12" aria-hidden="true" shapeRendering="crispEdges">
-              <path d="M5 0h2v1H6v2h2v2H5v2h1v2H5v2H3V9h1V7H2V5h2V3h1z" fill="currentColor" />
-            </svg>
-          )}
+        <span className="lf-idea-body" style={thoughtCloudStyle(weather) as CSSProperties}>
           <span className="lf-idea-in">
             <span className="lf-thought-who">{name} thought about this</span>
             <b className="lf-idea-head" data-testid="assistant-line">
@@ -152,7 +147,14 @@ export function SkyNote({
             {step}
           </span>
         </span>
-        {storm && !done && <span className="lf-thought-rain" aria-hidden="true" />}
+        {storm && !done && (
+          <>
+            <span className="lf-thought-rain" aria-hidden="true" />
+            <svg className="lf-idea-bolt lf-thought-bolt" viewBox="0 0 8 12" aria-hidden="true" shapeRendering="crispEdges">
+              <path d="M5 0h2v1H6v2h2v2H5v2h1v2H5v2H3V9h1V7H2V5h2V3h1z" fill="currentColor" />
+            </svg>
+          </>
+        )}
       </div>
       <span className="lf-thought-puffs" aria-hidden="true">
         <i />

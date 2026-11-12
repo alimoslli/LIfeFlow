@@ -7,7 +7,11 @@
   max-width: 22rem;
   margin-inline: auto;
   /* room under the cloud for its rain and the puffs */
-  padding-bottom: 1.25rem;
+  padding-bottom: 2rem;
+}
+/* the row holding the thought never squeezes it: the middle scrolls instead, so the rain and the puffs are never cut off */
+.lf-idea-row:has(.lf-thought) {
+  flex-shrink: 0;
 }
 .lf-thought[data-layout="card"] {
   max-width: none;
@@ -32,11 +36,16 @@
 .lf-thought-done {
   color: var(--t-text);
 }
+/* the lightning strikes out from under the storm cloud, among the rain */
+.lf-thought-cloud {
+  position: relative;
+}
 .lf-thought-bolt {
-  top: 2px;
-  right: 6px;
-  width: 1rem;
-  height: 1.5rem;
+  top: calc(100% - 6px);
+  right: 24%;
+  z-index: 1;
+  width: 1.25rem;
+  height: 1.875rem;
 }
 /* the puffs: two small pixel clouds stepping down to the skyling on the bar (bottom left), in the cloud's own colours */
 .lf-thought-puffs {
@@ -103,32 +112,40 @@
   position: absolute;
   left: 22%;
   right: 18%;
-  top: calc(100% - 6px);
-  height: 22px;
+  top: calc(100% - 4px);
+  height: 30px;
   overflow: hidden;
   pointer-events: none;
   background-image:
-    repeating-linear-gradient(90deg, #8aa4dc 0 2px, transparent 2px 14px), repeating-linear-gradient(90deg, #8aa4dc 0 2px, transparent 2px 14px);
+    repeating-linear-gradient(90deg, var(--rain) 0 2px, transparent 2px 14px), repeating-linear-gradient(90deg, var(--rain) 0 2px, transparent 2px 14px);
   background-size:
-    100% 6px,
-    100% 6px;
+    100% 8px,
+    100% 8px;
   background-position:
     0 0,
     7px 11px;
   background-repeat: repeat-x;
   animation: lf-thought-rain 0.7s linear infinite;
-  opacity: 0.85;
+  --rain: #4f6fb3;
+}
+:root[data-theme="dark"] .lf-thought-rain {
+  --rain: #9fb6ea;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lf-thought-rain {
+    --rain: #9fb6ea;
+  }
 }
 @keyframes lf-thought-rain {
   from {
     background-position:
-      0 -6px,
-      7px 5px;
+      0 -8px,
+      7px 7px;
   }
   to {
     background-position:
-      0 16px,
-      7px 27px;
+      0 22px,
+      7px 37px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

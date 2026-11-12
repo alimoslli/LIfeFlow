@@ -419,6 +419,7 @@ export function TodayMiddle({
         clouds={clouds}
         show={sky ? 2 : note ? 2 : 3}
         onPick={fillBar}
+        thought={name}
         lead={sky ? <SkyNote insight={sky} name={name} review={review} layout="middle" onAsk={(p) => void askOnToday(p, refresh)} /> : undefined}
       />
     </div>

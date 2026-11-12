@@ -5,7 +5,7 @@ import { doCloudAction, tapIdeaCloudAction } from "@/app/(app)/jarvis/actions";
 import { respondAction } from "@/app/(app)/jarvis/proactive-actions";
 import type { IdeaCloud } from "@/lib/idea-clouds";
 import { cn } from "@/lib/utils";
-import { weatherCloudStyle, CLOUD_TEXT } from "./cloud-tile";
+import { thoughtCloudStyle, weatherCloudStyle, CLOUD_TEXT } from "./cloud-tile";
 import "./skylings.css";
 
 /** What a tapped fix did: the words, and the message id Undo needs. */
@@ -24,10 +24,13 @@ export function IdeaClouds({
   onPick,
   className,
   lead,
+  thought,
 }: {
   clouds: IdeaCloud[];
   /** The skyling's own thought (Today's note), first in the row and bigger; the clouds float after it. */
   lead?: React.ReactNode;
+  /** The skyling's name: a cloud marked `thought` is drawn as its thought, big and first (Today's middle on a phone). */
+  thought?: string;
   /** The most to show. */
   show?: number;
   onPick: (ask: string) => void;
@@ -78,49 +81,81 @@ export function IdeaClouds({
         // a finished fix settles into a white cloud: the trouble is handled
         const weather = d ? "tip" : c.weather;
         const t = CLOUD_TEXT[weather];
+        // the skyling's thought (owner, 2026-11-12): the big cumulus, "<name> thought about this", rain under a storm
+        const big = !!thought && !lead && i === 0 && !!c.thought;
+        const storm = weather === "storm";
+        const cloud = (
+          <div
+            className={cn("lf-idea-cloud lf-idea-thick", big && "lf-thought-cloud")}
+            data-weather={weather}
+            data-bolt={c.bolt && !d ? "true" : undefined}
+            style={
+              {
+                "--t-text": t.text,
+                "--t-muted": t.muted,
+                "--t-btn": t.buttonBg,
+                "--t-btn-text": t.buttonText,
+                "--t-btn-line": t.buttonOutline,
+              } as CSSProperties
+            }
+          >
+            <span className="lf-idea-body" style={(big ? thoughtCloudStyle(weather) : weatherCloudStyle(i, weather)) as CSSProperties}>
+              {storm && !big && <span className="lf-idea-rain" aria-hidden="true" />}
+              {c.bolt && !d && !big && (
+                <svg className="lf-idea-bolt" viewBox="0 0 8 12" aria-hidden="true" shapeRendering="crispEdges">
+                  <path d="M5 0h2v1H6v2h2v2H5v2h1v2H5v2H3V9h1V7H2V5h2V3h1z" fill="currentColor" />
+                </svg>
+              )}
+              <span className="lf-idea-in">
+                {big && <span className="lf-thought-who">{thought} thought about this</span>}
+                <b className="lf-idea-head">{c.say}</b>
+                <span className="lf-idea-why" role={failed[c.key] ? "alert" : undefined}>
+                  {failed[c.key] || d?.text || c.why}
+                </span>
+                {d ? (
+                  d.undone || !d.id ? null : (
+                    <button type="button" className="lf-idea-go" disabled={busy === c.key} onClick={() => void undo(c)}>
+                      <span className="sr-only">{c.say}: </span>Undo
+                    </button>
+                  )
+                ) : (
+                  <button type="button" className="lf-idea-go" disabled={busy === c.key} onClick={() => void go(c)}>
+                    <span className="sr-only">{c.say}: </span>
+                    {busy === c.key ? "Working…" : c.cta}
+                  </button>
+                )}
+              </span>
+            </span>
+            {big && storm && (
+              <>
+                <span className="lf-thought-rain" aria-hidden="true" />
+                <svg className="lf-idea-bolt lf-thought-bolt" viewBox="0 0 8 12" aria-hidden="true" shapeRendering="crispEdges">
+                  <path d="M5 0h2v1H6v2h2v2H5v2h1v2H5v2H3V9h1V7H2V5h2V3h1z" fill="currentColor" />
+                </svg>
+              </>
+            )}
+          </div>
+        );
+        if (big)
+          return (
+            <li key={c.key} className="lf-idea-lead">
+              <section
+                aria-label={storm ? "Heads up" : "From your skyling"}
+                data-weather={storm ? "storm" : "clear"}
+                data-layout="middle"
+                className="lf-thought"
+              >
+                {cloud}
+                <span className="lf-thought-puffs" aria-hidden="true">
+                  <i />
+                  <i />
+                </span>
+              </section>
+            </li>
+          );
         return (
           <li key={c.key} className="lf-idea" style={{ "--i": i } as CSSProperties}>
-            <div
-              className="lf-idea-cloud lf-idea-thick"
-              data-weather={weather}
-              data-bolt={c.bolt && !d ? "true" : undefined}
-              style={
-                {
-                  "--t-text": t.text,
-                  "--t-muted": t.muted,
-                  "--t-btn": t.buttonBg,
-                  "--t-btn-text": t.buttonText,
-                  "--t-btn-line": t.buttonOutline,
-                } as CSSProperties
-              }
-            >
-              <span className="lf-idea-body" style={weatherCloudStyle(i, weather) as CSSProperties}>
-                {weather === "storm" && <span className="lf-idea-rain" aria-hidden="true" />}
-                {c.bolt && !d && (
-                  <svg className="lf-idea-bolt" viewBox="0 0 8 12" aria-hidden="true" shapeRendering="crispEdges">
-                    <path d="M5 0h2v1H6v2h2v2H5v2h1v2H5v2H3V9h1V7H2V5h2V3h1z" fill="currentColor" />
-                  </svg>
-                )}
-                <span className="lf-idea-in">
-                  <b className="lf-idea-head">{c.say}</b>
-                  <span className="lf-idea-why" role={failed[c.key] ? "alert" : undefined}>
-                    {failed[c.key] || d?.text || c.why}
-                  </span>
-                  {d ? (
-                    d.undone || !d.id ? null : (
-                      <button type="button" className="lf-idea-go" disabled={busy === c.key} onClick={() => void undo(c)}>
-                        <span className="sr-only">{c.say}: </span>Undo
-                      </button>
-                    )
-                  ) : (
-                    <button type="button" className="lf-idea-go" disabled={busy === c.key} onClick={() => void go(c)}>
-                      <span className="sr-only">{c.say}: </span>
-                      {busy === c.key ? "Working…" : c.cta}
-                    </button>
-                  )}
-                </span>
-              </span>
-            </div>
+            {cloud}
           </li>
         );
       })}
