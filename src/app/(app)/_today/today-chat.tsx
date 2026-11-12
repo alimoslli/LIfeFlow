@@ -1,4 +1,7 @@
 "use client";
+import { SkyNote } from "./sky-note";
+import type { SkyInsight } from "@/lib/sky-insights";
+import type { CardMessage } from "@/components/jarvis/message-card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useSyncExternalStore } from "react";
@@ -361,12 +364,18 @@ export function TodayMiddle({
   name,
   clouds,
   note,
+  sky,
+  review,
   children,
 }: {
   name: string;
   clouds: IdeaCloud[];
   /** The skyling's one note: a link, a question it sends, or words it puts in the bar. */
   note: { text: string; href?: string; prompt?: string; fill?: string; attention?: boolean } | null;
+  /** What the sky noticed (lib/sky-insights), in the note's place, with its one step. */
+  sky?: SkyInsight | null;
+  /** The Sunday review's card, for its sheet. */
+  review?: CardMessage | null;
   /** Something that must come first (the birthday question). */
   children?: React.ReactNode;
 }) {
@@ -393,7 +402,8 @@ export function TodayMiddle({
   if (children) return <div className="h-full overflow-y-auto">{children}</div>;
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 overflow-hidden px-1">
-      {note && (
+      {sky && <SkyNote insight={sky} name={name} review={review} layout="middle" onAsk={(p) => void askOnToday(p, refresh)} />}
+      {!sky && note && (
         <section aria-label={note.attention ? "Heads up" : "From your skyling"} className="contents">
           <button
             type="button"
@@ -405,7 +415,8 @@ export function TodayMiddle({
           </button>
         </section>
       )}
-      <IdeaClouds clouds={clouds} show={note ? 2 : 3} onPick={fillBar} className="justify-center" />
+      {/* a note with its own step leaves room for one cloud */}
+      <IdeaClouds clouds={clouds} show={sky?.action ? 1 : sky || note ? 2 : 3} onPick={fillBar} className="justify-center" />
     </div>
   );
 }

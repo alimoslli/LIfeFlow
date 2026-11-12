@@ -36,6 +36,7 @@ import { transactionsToReview } from "../finance/categorize";
 import { lifeLoad } from "../life-load";
 import { billsToReview, findSavings, listSavings } from "../finance/savings-finder";
 import { webSearchClient } from "../../integrations/web-search";
+import { examStudy, startEarlier } from "./study";
 import { eveningWrap, goalForecast, habitCoach, monthlyReview, morningBrief, weeklyLearned, weeklyReview } from "./reviews";
 
 /** "09:00" -> "9 AM", "15:30" -> "3:30 PM". */
@@ -645,8 +646,25 @@ const subscriptionWatch: Detector = async ({ scope, today }) => {
         urgent: f.daysLeft <= 2,
       });
   }
+  const report = await subscriptionReport(scope, today);
+  // What they add up to (owner, 2026-11-12: "subscriptions that add up"), once a month, never pushed (priority 40).
+  const subs = report.items.filter((i) => i.kind === "subscription");
+  if (subs.length >= 2)
+    out.push({
+      kind: "subscription_total",
+      topic: "money",
+      dedupeKey: `sub_total:${today.slice(0, 7)}`,
+      facts: {
+        count: subs.length,
+        monthlyCents: Math.round(report.subscriptionsYearlyCents / 12),
+        yearlyCents: report.subscriptionsYearlyCents,
+        top: subs[0].name,
+      },
+      action: { type: "open", label: "See them", href: "/finances/bills" },
+      priority: 40,
+    });
   // Two paid services doing the same job (Netflix and Hulu): said once for that set, not only on the Subscriptions page.
-  for (const g of (await subscriptionReport(scope, today)).overlaps.slice(0, 1))
+  for (const g of report.overlaps.slice(0, 1))
     out.push({
       kind: "subscription_overlap",
       topic: "money",
@@ -717,26 +735,31 @@ export const DETECTORS = {
   moneyFinds,
   reviewTransactions,
   weekAhead,
+  examStudy,
+  startEarlier,
 };
 export type DetectorName = keyof typeof DETECTORS;
 
 /** Which detectors run when. Events run right after the change that triggered them. */
 export const RUNS: Record<string, DetectorName[]> = {
-  morning: ["emailBrief", "morningBrief", "monthlyReview", "savingsCheck", "billsDue", "paydaySplit", "deadlineConflicts", "goalMilestones", "savedMore"],
+  morning: [
+    "emailBrief",
+    "morningBrief",
+    "monthlyReview",
+    "savingsCheck",
+    "billsDue",
+    "paydaySplit",
+    "deadlineConflicts",
+    "examStudy",
+    "startEarlier",
+    "goalMilestones",
+    "savedMore",
+  ],
   midday: ["spendingPace", "unusualSpend", "billsDue", "overdueTasks", "subscriptionWatch", "moneyFinds", "reviewTransactions"],
   // The evening wrap-up offers to move what's left, so late to-dos are raised at midday.
-  evening: [
-    "goalCheckin",
-    "eveningWrap",
-    "weeklyReview",
-    "weekAhead",
-    "weeklyLearned",
-    "goalForecast",
-    "habitCoach",
-    "taskStreak",
-    "goalMilestones",
-    "deadlineConflicts",
-  ],
+  evening: ["goalCheckin", "eveningWrap", "weeklyLearned", "goalForecast", "habitCoach", "taskStreak", "goalMilestones", "deadlineConflicts", "examStudy"],
+  // Sundays from 6 PM, once (owner, 2026-11-12): the look back at the week and the look ahead at the next one.
+  sunday: ["weeklyReview", "weekAhead"],
   transaction: ["spendingPace", "unusualSpend", "billsDue", "goalMilestones", "moneyFinds"],
   shift: ["deadlineConflicts"],
   goal: ["goalMilestones"],

@@ -18,11 +18,14 @@ import { listPlaidConnections, plaidConfig } from "@/server/integrations/plaid";
 import { integrationStatus } from "@/server/services/integrations";
 import { dayClockData } from "@/server/services/day-clock";
 import { AskBar } from "./_today/day-plan";
-import { AssistantLine, type AssistantNote } from "./_today/assistant-line";
+import { SkyNote } from "./_today/sky-note";
 import { TodayMiddle, TodayOwner } from "./_today/today-chat";
 import { BirthdayCard } from "./_today/birthday-card";
 import { EmptyNext } from "./_today/empty-next";
 import { ideaClouds } from "@/server/services/idea-clouds";
+import { skyInsights } from "@/server/services/sky-insights";
+import { getMessage } from "@/server/services/proactive/engine";
+import { toCard } from "@/server/services/proactive/present";
 
 /**
  * Today (v3): your time as a clock that opens into the timeline of your week (docs/design/clock/spec.md),
@@ -46,11 +49,11 @@ export default async function TodayPage() {
     await withUser(me.id, (scope) => runProactive({ scope, tz: me.timezone, prefs: me.preferences, trigger: "promise" })).catch((e) =>
       console.error("promise check failed", e instanceof Error ? e.name : e),
     );
-  const { clock, note, assistantName, setup, hello, clouds, userId } = await withCurrentUser(async (scope, user) => {
+  const { clock, sky, review, assistantName, setup, hello, clouds, userId } = await withCurrentUser(async (scope, user) => {
     const tz = user.timezone ?? "UTC";
     // Money (bills due, spent today) joins the clock only while the Money lock is open.
     const clock = await dayClockData(scope, tz, new Date(), { money: !locked });
-    const { briefing } = await getBriefing(scope, user);
+    const { snapshot } = await getBriefing(scope, user);
     const [integrationList, banks] = await series(
       () => integrationStatus(scope),
       () => listPlaidConnections(scope),
@@ -59,20 +62,18 @@ export default async function TodayPage() {
       googleConfig() && !integrationList.find((i) => i.provider === "google")?.connections.length ? "your calendar" : null,
       plaidConfig() && !banks.length ? "your bank" : null,
     ].filter((x): x is string => !!x);
-    // The one thing worth saying: something that needs attention first, then a heads-up. Money stays quiet while locked.
-    const insights = briefing.insights.filter((i) => !locked || (i.icon !== "money" && i.icon !== "trend" && i.icon !== "goal"));
-    // Late to-dos come last: the timeline and To-dos already carry them; a money or schedule warning comes first.
-    // Only what they might not have seen: a clash, an exam coming, a busy tomorrow, a bill on its way. Never what an
-    // organized person already knows (owner, 2026-11-11: "we shouldnt think our users are dumb ... he def knows he could
-    // run out of money"): no money warnings, budget nags or "you have late to-dos" here; Money and the line show those.
-    const ranked = insights.filter((i) => !/^(overdraft|budget-|pace-|overdue)/.test(i.id));
-    const top = ranked.find((i) => i.tone === "attention") ?? ranked.find((i) => i.tone === "heads-up") ?? null;
-    const note: AssistantNote | null = top
-      ? { id: top.id, text: top.text, tone: top.tone, href: top.action?.href, prompt: top.action?.prompt, label: top.action?.label }
-      : null;
+    // The one thing worth saying (lib/sky-insights, owner 2026-11-12): real trouble first, then a heads-up, then an idea with
+    // its own step (Tonight, a free gap, a study block). Money stays quiet while locked; never a money warning, a budget nag
+    // or "you have late to-dos" here (owner, 2026-11-11): Money and the line show those.
+    const insights = await skyInsights(scope, snapshot, { moneyLocked: locked });
+    const sky = insights[0] ?? null;
+    // the Sunday review opens in a sheet with the whole look back and ahead
+    const reviewRow = sky?.kind === "weekly_review" ? await getMessage(scope, sky.id) : null;
+    const review = reviewRow ? toCard(reviewRow, tz, { moneyLocked: locked }) : null;
     return {
       clock,
-      note,
+      sky,
+      review,
       assistantName: assistantProfile(user.preferences, user.timezone).name,
       // idea clouds beside the chat bar, from their own data (lib/idea-clouds)
       clouds: await ideaClouds(scope, tz, user.preferences, assistantProfile(user.preferences, user.timezone).name),
@@ -91,15 +92,15 @@ export default async function TodayPage() {
       <ClaimStars />
       <TodayOwner userId={userId} />
       <section aria-label="Your day" data-tour="today-page" className="-mx-5 sm:-mx-8 md:mx-0">
-        <DayClock data={clock} mode={mode} companion={me.preferences?.companion} clash={!!note?.id?.startsWith("conflict")}>
+        <DayClock data={clock} mode={mode} companion={me.preferences?.companion} clash={!!sky?.id.startsWith("conflict")}>
           {/* a laptop's and a tablet's sky have these under the wheel; a phone has them in the middle (TodayMiddle) */}
           <div className="max-md:hidden">
             {/* accounts made before the birthday was required are asked once, first (owner, 2026-11-10; not a lockout) */}
             {!me.preferences?.birthDate && <BirthdayCard />}
-            {me.preferences?.birthDate && note && <AssistantLine name={assistantName} note={note} />}
+            {me.preferences?.birthDate && sky && <SkyNote insight={sky} name={assistantName} review={review} layout="card" />}
             {/* nothing planned yet: one next step, on the first screen (connect what can be connected, else tell the skyling) */}
             {me.preferences?.birthDate &&
-              !note &&
+              !sky &&
               clock.empty &&
               (setup.length > 0 ? (
                 <Link href="/settings/integrations" className="flex min-h-16 items-center gap-3 rounded-3xl bg-surface px-5 py-3 shadow-soft">
@@ -130,16 +131,16 @@ export default async function TodayPage() {
         <TodayMiddle
           name={assistantName}
           clouds={clouds}
+          sky={me.preferences?.birthDate ? sky : null}
+          review={review}
           note={
-            !me.preferences?.birthDate
+            !me.preferences?.birthDate || sky
               ? null
-              : note
-                ? { text: note.text, href: note.href, prompt: note.prompt, attention: note.tone === "attention" }
-                : clock.empty
-                  ? setup.length > 0
-                    ? { text: `Connect ${setup.join(" and ")} to fill your sky`, href: "/settings/integrations" }
-                    : { text: `Tell ${assistantName} your week in one message`, fill: "My week: " }
-                  : null
+              : clock.empty
+                ? setup.length > 0
+                  ? { text: `Connect ${setup.join(" and ")} to fill your sky`, href: "/settings/integrations" }
+                  : { text: `Tell ${assistantName} your week in one message`, fill: "My week: " }
+                : null
           }
         >
           {!me.preferences?.birthDate && <BirthdayCard />}

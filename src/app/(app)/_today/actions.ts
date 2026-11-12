@@ -1,6 +1,6 @@
 "use server";
 import { formObject, mutate, type ActionState } from "@/server/actions";
-import { DATE_RE, TIME_RE, todayIn } from "@/lib/dates";
+import { addDaysStr, DATE_RE, formatDateStr, TIME_RE, todayIn } from "@/lib/dates";
 import { createEvent } from "@/server/services/calendar";
 import { createMilestone } from "@/server/services/milestones";
 import { createPersonalGoal } from "@/server/services/personal-goals";
@@ -15,7 +15,7 @@ import { after } from "next/server";
 import { audit } from "@/server/services/audit";
 import { revalidatePath } from "next/cache";
 import { redirect, unstable_rethrow } from "next/navigation";
-import { getEvent } from "@/server/services/calendar";
+import { deleteEvent, getEvent } from "@/server/services/calendar";
 import { getAssignment } from "@/server/services/school";
 import { getShift } from "@/server/services/work";
 import type { Block } from "@/app/(app)/plan/block-editor";
@@ -160,3 +160,44 @@ export async function claimStarsAction(): Promise<Star[]> {
     return [];
   }
 }
+
+/**
+ * "Block it" on something the sky noticed (lib/sky-insights `SkyBlock`): books that free time as a study block, the same
+ * event the skyling's "Block it" makes. `undo` carries the new event's id for `unblockTimeAction` (not a trash id).
+ */
+export async function blockTimeAction(block: { date: string; start: string; end: string; title: string }): Promise<ActionState> {
+  const ok =
+    DATE_RE.test(block.date) &&
+    TIME_RE.test(block.start) &&
+    TIME_RE.test(block.end) &&
+    block.start < block.end &&
+    typeof block.title === "string" &&
+    block.title.trim().length > 0 &&
+    block.title.length <= 200;
+  if (!ok) return { ok: false, error: "That time isn't available anymore.", at: Date.now() };
+  return mutate("insight.block", async (s, u) => {
+    const today = todayIn(u.timezone);
+    if (block.date < today || block.date > addDaysStr(today, 14)) throw new ServiceError("That time isn't available anymore.");
+    const ev = await createEvent(s, u.timezone, { title: block.title.trim(), date: block.date, startTime: block.start, endTime: block.end, kind: "study" });
+    return {
+      message: `Blocked ${clockWords(block.start)} to ${clockWords(block.end)} ${block.date === today ? "today" : formatDateStr(block.date, "EEEE")}.`,
+      undo: ev.id,
+    };
+  });
+}
+
+/** Undo for `blockTimeAction`: removes that study block (only a study block, only theirs). */
+export async function unblockTimeAction(eventId: string): Promise<ActionState> {
+  if (!new RegExp(`^${UUID}$`).test(eventId)) return { ok: false, error: "That block is already gone.", at: Date.now() };
+  return mutate("insight.unblock", async (s) => {
+    const e = await getEvent(s, eventId);
+    if (e.kind !== "study") throw new ServiceError("That block is already gone.");
+    await deleteEvent(s, eventId);
+    return "Removed the block.";
+  });
+}
+
+const clockWords = (hhmm: string) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return `${h % 12 || 12}${m ? `:${String(m).padStart(2, "0")}` : ""} ${h < 12 ? "AM" : "PM"}`;
+};

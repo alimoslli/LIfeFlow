@@ -52,6 +52,26 @@ const KINDS: Record<string, (f: F) => Parts> = {
     ask: n(f, "weeksAhead") < 0 && n(f, "extraCents") ? `Adding ${usd(n(f, "extraCents"))} a week gets you back on track.` : undefined,
     mood: "win",
   }),
+  // owner, 2026-11-12: study time offered before an exam, one tap to book it
+  exam_study: (f) => ({
+    headline: `${s(f, "course")} ${s(f, "kind")} ${s(f, "examDay")}`,
+    fact: f.noFreeBlock
+      ? `Your ${s(f, "course")} ${s(f, "kind")} is ${s(f, "examDay")}, and your days before it are full.`
+      : `Your ${s(f, "course")} ${s(f, "kind")} is ${s(f, "examDay")}, and nothing is booked to study for it yet.`,
+    ask: f.noFreeBlock
+      ? "Want to look at your week together and find some time?"
+      : f.done
+        ? `I blocked ${n(f, "minutes")} minutes ${s(f, "blockWhen")}.`
+        : `${s(f, "blockWhen")} is free. Want me to block ${n(f, "minutes")} minutes?`,
+    mood: f.noFreeBlock ? "warn" : "info",
+  }),
+  // owner, 2026-11-12: gentle, only when it helps, never naming the habit; it says what the earlier start buys
+  start_earlier: (f) => ({
+    headline: `A head start on ${s(f, "assignment")}`,
+    fact: `${s(f, "assignment")} is due ${s(f, "dueDay")}. Starting ${s(f, "blockWhen")} leaves you ${plural(n(f, "roomDays"), "day")} of room.`,
+    ask: f.done ? `I blocked 90 minutes ${s(f, "blockWhen")}.` : "Want me to block 90 minutes then?",
+    mood: "info",
+  }),
   deadline_conflict: (f) => ({
     headline: `${s(f, "assignment")} vs. your shift`,
     fact: `${s(f, "assignment")} is due ${s(f, "dueDay")} and you work ${s(f, "shiftWhen")}.`,
@@ -147,7 +167,7 @@ const KINDS: Record<string, (f: F) => Parts> = {
   weekly_review: (f) => ({
     headline: "Your week in review",
     // no spending line when it was kept off the lock screen (the Money lock, `pushText`)
-    fact: `${plural(n(f, "done"), "to-do")} done, ${n(f, "slipped")} still open${f.spentCents === undefined ? "" : `, ${usd(n(f, "spentCents"))} spent${n(f, "budgetCents") ? ` of about ${usd(n(f, "budgetCents"))} budgeted` : ""}`}.`,
+    fact: `${plural(n(f, "done"), "to-do")} done, ${n(f, "slipped")} still open${f.spentCents === undefined ? "" : `, ${usd(n(f, "spentCents"))} spent${n(f, "budgetCents") ? ` of about ${usd(n(f, "budgetCents"))} budgeted` : ""}`}.${f.heaviest ? ` Next week, ${s(f, "heaviest")} is the heaviest day.` : ""}`,
     ask: f.change ? `One change for next week: ${s(f, "change")}` : undefined,
     mood: "info",
   }),
@@ -192,6 +212,12 @@ const KINDS: Record<string, (f: F) => Parts> = {
     fact: `${s(f, "name")} went from ${usd(n(f, "fromCents"))} to ${usd(n(f, "toCents"))}, ${usd(n(f, "yearlyExtraCents"))} more a year.`,
     ask: "Keep it, or want cancel steps?",
     mood: "warn",
+  }),
+  subscription_total: (f) => ({
+    headline: `Your subscriptions: ${usd(n(f, "monthlyCents"))} a month`,
+    fact: `${plural(n(f, "count"), "subscription")} come to ${usd(n(f, "monthlyCents"))} a month, ${usd(n(f, "yearlyCents"))} a year. The biggest is ${s(f, "top")}.`,
+    ask: "Want to go through them?",
+    mood: "info",
   }),
   trial_ending: (f) => ({
     headline: `${s(f, "name")} trial ends ${n(f, "daysLeft") === 0 ? "today" : `in ${plural(n(f, "daysLeft"), "day")}`}`,
@@ -329,6 +355,9 @@ export const KIND_LABELS: Record<string, string> = {
   spending_pace: "Spending pace in a budget",
   goal_milestone: "Goal milestones",
   deadline_conflict: "Deadlines that clash with shifts",
+  exam_study: "Study time before exams",
+  start_earlier: "A head start on big assignments",
+  subscription_total: "What your subscriptions add up to",
   bill_short: "Bills you might be short for",
   bill_due: "Bills coming due",
   payday_split: "Payday plans",

@@ -1,5 +1,5 @@
 import { and, desc, eq, gte, inArray, isNotNull, sql } from "drizzle-orm";
-import { addDaysStr, localTimeOf, todayIn } from "@/lib/dates";
+import { addDaysStr, dayOfWeek, localTimeOf, todayIn } from "@/lib/dates";
 import { composeMessage, hasAmount, KIND_LABELS, LOCKED_MONEY_PUSH, pushText, type JarvisTone } from "@/lib/jarvis-voice";
 import { assistantProfile } from "@/lib/assistant";
 import { jarvisMessages, notificationLog, type JarvisSettings, type UserPreferences } from "../../db/schema";
@@ -104,7 +104,7 @@ type RunInput = {
   scope: UserScope;
   tz: string;
   prefs: UserPreferences | undefined;
-  trigger: Slot | "transaction" | "shift" | "goal" | "task" | "promise";
+  trigger: Slot | "transaction" | "shift" | "goal" | "task" | "promise" | "sunday";
   now?: Date;
 };
 
@@ -200,6 +200,30 @@ export function scheduledFrom(slot: Slot, quietEnd: string): string {
 
 /** Runs the current slot once per day (morning, midday, evening). Cheap when already done. */
 export async function runDueSlot(scope: UserScope, tz: string, prefs: UserPreferences | undefined, now = new Date(), opts: { scheduled?: boolean } = {}) {
+  const sunday = await runSundayLook(scope, tz, prefs, now);
+  return [...sunday, ...(await runSlot(scope, tz, prefs, now, opts))];
+}
+
+/** The hour the Sunday look runs from (owner, 2026-11-12: "around 6 PM"). */
+export const SUNDAY_LOOK_AT = "18:00";
+
+/**
+ * Sundays from 6 PM, once a Sunday: the weekly review (the week that ended and the one coming) and the week ahead. Its
+ * push follows the usual rules (quiet hours, the push limit, the Money lock). Today shows it through Monday (sky-insights).
+ */
+export async function runSundayLook(scope: UserScope, tz: string, prefs: UserPreferences | undefined, now = new Date()) {
+  const today = todayIn(tz, now);
+  if (dayOfWeek(today) !== 0 || localTimeOf(now, tz) < SUNDAY_LOOK_AT) return [];
+  const [first] = await scope.tx
+    .insert(notificationLog)
+    .values({ userId: scope.userId, key: `slot:${today}:sunday`, title: "sunday" })
+    .onConflictDoNothing()
+    .returning({ id: notificationLog.id });
+  if (!first) return [];
+  return runProactive({ scope, tz, prefs, trigger: "sunday", now });
+}
+
+async function runSlot(scope: UserScope, tz: string, prefs: UserPreferences | undefined, now: Date, opts: { scheduled?: boolean }) {
   const localTime = localTimeOf(now, tz);
   const slot = slotOf(localTime);
   // from the scheduler: not before the slot's time has come (nothing is logged, so the next run tries again)
