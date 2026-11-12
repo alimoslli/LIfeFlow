@@ -17,6 +17,7 @@ import { listProjects } from "@/server/services/notes";
 import { listCourses } from "@/server/services/school";
 import { listTasks, subtaskCounts } from "@/server/services/tasks";
 import { createTaskAction, deleteTaskAction, toggleTaskAction } from "./actions";
+import { courseLabel } from "@/lib/course-label";
 
 export const metadata: Metadata = { title: "To-dos" };
 
@@ -57,7 +58,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
         ]
       : [{ key: "all", label: "", items: tasks }];
 
-  const courseName = new Map(data.courses.map((c) => [c.id, c.code ?? c.name]));
+  const courseName = new Map(data.courses.map((c) => [c.id, courseLabel(c) ?? c.name]));
   const projectName = new Map(data.projects.map((p) => [p.id, p.name]));
 
   return (

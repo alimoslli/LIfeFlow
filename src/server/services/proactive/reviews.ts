@@ -19,6 +19,7 @@ import { listAssignments, listCourses } from "../school";
 import { listShifts } from "../work";
 import { lifeLoad } from "../life-load";
 import type { Candidate, DetectContext, Detector } from "./detectors";
+import { courseLabel, examLabel } from "@/lib/course-label";
 
 /**
  * One part of a review's sheet. `money` marks what's about money (spending, money goals, spending patterns), set here where
@@ -202,7 +203,7 @@ export const weeklyReview: Detector = async (ctx) => {
   const heavy = ahead.heaviest.hours >= 4 ? ahead.heaviest : null;
   const nextLines = [
     heavy ? `${formatDateStr(heavy.date, "EEEE")} is the heaviest day, about ${Math.round(heavy.hours)} hours` : null,
-    ...exams.slice(0, 3).map((e) => `${e.course.code ?? e.course.name} ${e.kind} ${formatDateStr(localDateOf(e.dueAt!, tz), "EEEE")}`),
+    ...exams.slice(0, 3).map((e) => `${examLabel(courseLabel(e.course), e.kind, e.title)} ${formatDateStr(localDateOf(e.dueAt!, tz), "EEEE")}`),
     dueCount ? `${dueCount} assignment${dueCount === 1 ? "" : "s"} due` : null,
   ].filter((l): l is string => !!l);
   // nothing to say: nothing done, nothing open, no spending and nothing next week (owner: skipped, never an empty review)

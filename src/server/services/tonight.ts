@@ -7,6 +7,7 @@ import { balancesOf } from "./finance/overview";
 import { upcomingRecurring } from "./finance/planning";
 import { listAssignments } from "./school";
 import { listTasks } from "./tasks";
+import { courseLabel } from "@/lib/course-label";
 
 /**
  * "Tonight": the next 24 hours of a life on one small page, from the person's own records and nothing else (the north star, ADR 0033).
@@ -40,10 +41,10 @@ export async function tonight(scope: UserScope, tz: string, now: Date, opts: { i
 
   const when = (d: Date) => `${localDateOf(d, tz) === today ? "today" : "tomorrow"} ${formatIn(d, tz, "h:mm a")}`;
   const due = [
-    ...overdue.map((a) => ({ what: a.title, course: a.course.code ?? a.course.name, kind: a.kind as string, due: "overdue", late: true })),
+    ...overdue.map((a) => ({ what: a.title, course: courseLabel(a.course) ?? "", kind: a.kind as string, due: "overdue", late: true })),
     ...upcoming
       .filter((a) => a.dueAt && a.dueAt <= horizon)
-      .map((a) => ({ what: a.title, course: a.course.code ?? a.course.name, kind: a.kind as string, due: when(a.dueAt!), late: false })),
+      .map((a) => ({ what: a.title, course: courseLabel(a.course) ?? "", kind: a.kind as string, due: when(a.dueAt!), late: false })),
     ...tasks
       .filter((t) => t.dueAt)
       .map((t) => ({ what: t.title, course: null as string | null, kind: "to-do", due: t.dueAllDay ? "today" : when(t.dueAt!), late: t.dueAt! < now })),

@@ -5,6 +5,7 @@ import type { UserScope } from "../../db/with-user";
 import { listCourses } from "../school";
 import { listEmployers } from "../work";
 import type { Candidate } from "./detectors";
+import { courseLabel } from "@/lib/course-label";
 
 /**
  * Get-to-know questions (ADR 0012). Asked only with learning consent, one at a
@@ -194,7 +195,7 @@ export async function openQuestions(scope: UserScope, prefs: UserPreferences | u
   const known: Known = {
     student: stage ? stage === "student" || stage === "both" : courses.length > 0,
     worker: stage ? stage === "working" || stage === "both" : employers.length > 0,
-    courses: courses.map((c) => c.code || c.name),
+    courses: courses.map((c) => courseLabel(c) ?? c.name),
     employers: employers.length,
   };
   const done = new Set(asked.map((a) => a.key.slice("question:".length)));

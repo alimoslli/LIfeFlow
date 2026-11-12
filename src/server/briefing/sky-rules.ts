@@ -2,6 +2,7 @@ import { addDaysStr, daysBetween, formatDateStr, formatIn, localDateOf, localTim
 import { formatCents } from "@/lib/money";
 import type { AgendaItem } from "../services/calendar";
 import type { Insight, LifeSnapshot } from "./types";
+import { examLabel } from "@/lib/course-label";
 
 /**
  * The small decisions before you ask (owner, 2026-11-12; docs/backlog/2026-11-12-useful-sky.md, part 2): Tonight from
@@ -78,7 +79,7 @@ const nextQuarter = (t: number) => Math.ceil(t / (15 * MIN)) * 15 * MIN;
 const dueBefore = (s: LifeSnapshot, until: Date) =>
   [
     ...(s.due ?? []).map((a) => ({ title: a.title, at: a.dueAt })),
-    ...s.exams.map((e) => ({ title: `${e.course} ${e.kind}`, at: e.dueAt })),
+    ...s.exams.map((e) => ({ title: examLabel(e.course || null, e.kind, e.title), at: e.dueAt })),
     ...(s.todos ?? []).map((t) => ({ title: t.title, at: t.dueAt })),
   ]
     .filter((x) => x.at > s.now && x.at <= until)

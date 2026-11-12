@@ -6,6 +6,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/field";
 import type { ActionState } from "@/server/actions";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
+import { courseLabel } from "@/lib/course-label";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -63,7 +64,7 @@ export function EventDialog({
                 <option value="">None</option>
                 {courses.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.code ?? c.name}
+                    {courseLabel(c) ?? c.name}
                   </option>
                 ))}
               </Select>
