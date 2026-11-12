@@ -320,6 +320,38 @@ export type ImportOutcome = {
  * Never guesses a course: unmatched or ambiguous items are returned in
  * `needsCourse` so the user can choose. Duplicates are skipped, not doubled.
  */
+const titleWords = (t: string) =>
+  new Set(
+    t
+      .toLowerCase()
+      .split(/[^\p{L}\p{N}]+/u)
+      .filter(Boolean),
+  );
+
+/** An assignment in this class due the same day whose title's words all appear in the other's (either way round). */
+async function resemblingAssignment(scope: UserScope, tz: string, courseId: string, title: string, dueDate: string) {
+  const mine = titleWords(title);
+  if (!mine.size) return null;
+  const rows = await scope.tx
+    .select({ id: assignments.id, title: assignments.title })
+    .from(assignments)
+    .where(
+      and(
+        eq(assignments.userId, scope.userId),
+        eq(assignments.courseId, courseId),
+        gte(assignments.dueAt, startOfLocalDay(dueDate, tz)),
+        lt(assignments.dueAt, startOfLocalDay(addDaysStr(dueDate, 1), tz)),
+      ),
+    );
+  const within = (a: Set<string>, b: Set<string>) => [...a].every((w) => b.has(w));
+  return (
+    rows.find((r) => {
+      const theirs = titleWords(r.title);
+      return theirs.size > 0 && (within(mine, theirs) || within(theirs, mine));
+    }) ?? null
+  );
+}
+
 export async function importAssignments(
   scope: UserScope,
   tz: string,
@@ -352,6 +384,13 @@ export async function importAssignments(
     }
     if (item.dueDate && item.dueDate < addDaysStr(today, -30)) {
       out.warnings.push(`"${item.title}" is due ${item.dueDate}, more than 30 days ago. Check the year.`);
+    }
+    // the same piece of work said another way ("Argument essay" for "Argument essay draft", same class, same day) is the one
+    // already there, never a second copy (it once saved a duplicate essay on a "write my intro" request, 2026-11-07/12)
+    const twin = item.dueDate ? await resemblingAssignment(scope, tz, course.id, item.title, item.dueDate) : null;
+    if (twin) {
+      out.duplicates.push({ id: twin.id, title: twin.title, course: course.name });
+      continue;
     }
     try {
       const res = await createAssignment(scope, tz, { ...item, courseId: course.id }, opts.source ?? "manual");
