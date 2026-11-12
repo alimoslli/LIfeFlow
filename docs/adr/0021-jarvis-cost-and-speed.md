@@ -48,3 +48,17 @@ A fixed level in the environment still wins. The level stays the same within a t
 - A new tool must be added to a group in `GROUP_TOOLS`. A unit test fails if a tool is in no group or in two.
 - A missed group costs one extra step (`load_tools`), not a wrong answer.
 - Voice still sends all tools (Realtime sessions are set up once), minus `load_tools`.
+
+## Addendum (2026-11-12): the long-chat trim and the cache
+
+`keepRecentToolSteps` (src/server/jarvis/history-trim.ts) sends earlier turns' words but only the last two turns' tool steps; a step that saved or changed something leaves one line with its outcome, a confirm card says what really became of it (from `pending_actions`), and a turn that ended without an answer is never trimmed. The tool groups are picked from the trimmed history, so a group used early in a chat can leave the list and come back, which breaks the cached start of those requests.
+
+Chosen: the smaller list. Measured free on the 12 eval questions in one chat (request bodies from `tests/integration/request-size.test.ts`, OpenAI's tokenizer, OpenAI's documented prefix cache, gpt-5.5's published $5 and $0.50 per million):
+
+| | Input tokens | Cacheable | Input cost per answer |
+|---|---|---|---|
+| No trim | 465,928 | 72.2% | $0.0679 |
+| Trim, groups from the trimmed history (chosen) | 315,699 | 68.5% | $0.0505 |
+| Trim, groups from the whole history | 408,776 | 75.4% | $0.0548 |
+
+The cache share drops a little, but the requests are a third smaller, so each answer costs less. Revisit if real `ai_usage` rows show a lower cached share than this.

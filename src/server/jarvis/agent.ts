@@ -3,12 +3,12 @@ import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import { todayIn } from "@/lib/dates";
 import { truncate } from "@/lib/utils";
 import { assistantProfile, nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
-import { attachments, conversations, messages, type JarvisModule, type JarvisRunOutcome, type ToolResultRecord } from "../db/schema";
+import { attachments, conversations, messages, pendingActions, type JarvisModule, type JarvisRunOutcome, type ToolResultRecord } from "../db/schema";
 import { withUser } from "../db/with-user";
 import type { SessionUser } from "../auth/sessions";
 import { listActiveMemories, touchMemories } from "../services/memory";
 import { createConversation, getConversation, loadHistory } from "./conversations";
-import { keepRecentToolSteps } from "./history-trim";
+import { confirmCallIds, keepRecentToolSteps, type ConfirmOutcome } from "./history-trim";
 import { stopRequested } from "./stop";
 import { claimContinuation, turnStateOf, TURN_DEADLINE_MS } from "./turn-state";
 import { executeToolCall, serializeResult } from "./executor";
@@ -190,7 +190,20 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   }
   const { conversation, history: fullHistory, approved, curious } = opened;
   // only the last two turns keep their tool steps (cost; history-trim.ts)
-  const history = keepRecentToolSteps(fullHistory);
+  // a confirm card from an earlier turn says what really became of it (pending_actions), so "send it again" sees it
+  const cards = confirmCallIds(fullHistory);
+  const confirmed: Record<string, ConfirmOutcome> = {};
+  if (cards.length) {
+    const rows = await run((s) =>
+      s.tx
+        .select({ callId: pendingActions.toolCallId, status: pendingActions.status, expiresAt: pendingActions.expiresAt })
+        .from(pendingActions)
+        .where(and(eq(pendingActions.conversationId, conversation.id), inArray(pendingActions.toolCallId, cards))),
+    );
+    for (const r of rows)
+      confirmed[r.callId] = r.status === "pending" && r.expiresAt < now ? "expired" : r.status === "running" ? "pending" : (r.status as ConfirmOutcome);
+  }
+  const history = keepRecentToolSteps(fullHistory, { confirmed });
   emit({ type: "conversation", id: conversation.id, title: conversation.title });
   const openedFrom = input.module ?? conversation.contextModule;
   // Only memories relevant to this request (and earlier messages in this chat) reach the model.

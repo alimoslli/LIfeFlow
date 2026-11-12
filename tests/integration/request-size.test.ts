@@ -25,8 +25,12 @@ function fakeProvider(plan: { tool: string; args: Record<string, unknown> }[], a
     const output = first
       ? plan.map((p, i) => ({ type: "function_call", id: `fc${i}`, call_id: `c${i}`, name: p.tool, arguments: JSON.stringify(p.args), status: "completed" }))
       : [{ type: "message", id: "m1", role: "assistant", status: "completed", content: [{ type: "output_text", text: answer, annotations: [] }] }];
-    const ev = { type: "response.completed", sequence_number: 0, response: { id: "r", object: "response", status: "completed", output, usage } };
-    return new Response(`event: response.completed\ndata: ${JSON.stringify(ev)}\n\n`, { status: 200, headers: { "content-type": "text/event-stream" } });
+    const ev = { type: "response.completed", sequence_number: 1, response: { id: "r", object: "response", status: "completed", output, usage } };
+    // the answer streams as text, as the real model's does, so it is saved as the turn's answer
+    const delta = { type: "response.output_text.delta", sequence_number: 0, item_id: "m1", output_index: 0, content_index: 0, delta: answer, logprobs: [] };
+    const events = first ? [ev] : [delta, ev];
+    const body = events.map((e) => `event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join("");
+    return new Response(body, { status: 200, headers: { "content-type": "text/event-stream" } });
   }) as typeof fetch;
   return new OpenAIProvider({ apiKey: "sk-fake", model: "gpt-5.5", smallModel: "gpt-5.4-mini", baseURL: "http://fake.invalid/v1", fetch: fetchImpl });
 }
