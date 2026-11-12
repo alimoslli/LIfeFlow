@@ -295,7 +295,9 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     factAt = (k + factN) % factN;
     words.querySelectorAll(".dc-fact").forEach((el, i) => {
       el.toggleAttribute("data-on", i === factAt);
-      el.toggleAttribute("aria-hidden", i !== factAt);
+      // "true", not an empty value: an empty aria-hidden counts as not hidden
+      if (i === factAt) el.removeAttribute("aria-hidden");
+      else el.setAttribute("aria-hidden", "true");
     });
     words.querySelectorAll("[data-fact]").forEach((el, i) => (i === factAt ? el.setAttribute("aria-current", "true") : el.removeAttribute("aria-current")));
     // the stored copy no longer matches what's shown, so the next redraw writes it again with this one on

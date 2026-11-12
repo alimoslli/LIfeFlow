@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { COMPOSER, queryAsUser, signUp } from "./helpers";
+import { COMPOSER, daytimeZone, queryAsUser, signUp } from "./helpers";
 
 /**
  * Idea clouds (owner, 2026-11-10): beside Today's chat bar and under the skyling in the empty chat, a few short clouds,
@@ -8,6 +8,8 @@ import { COMPOSER, queryAsUser, signUp } from "./helpers";
  */
 const FOR_ANYONE = ["What should I do first today?", "Find me 2 free hours this week.", "My goal: read 12 books this year."];
 const ANY = new RegExp(`^(${FOR_ANYONE.map((s) => s.replace(/[?.]/g, "\\$&")).join("|")})$`);
+// a new account's tips are the same at any hour the suite runs: after 4 PM a real Tonight cloud would join them
+test.use({ timezoneId: daytimeZone() });
 
 test("idea clouds: short, from real data, a tap fills the box and sends nothing", async ({ page }) => {
   const email = await signUp(page, "Cleo Cloud");

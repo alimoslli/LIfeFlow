@@ -1,6 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { queryAsUser, signUp } from "./helpers";
+import { queryAsUser, daytimeZone, signUp } from "./helpers";
 import { seedBusyStudent } from "./insight-seed";
 
 /**
@@ -140,19 +140,23 @@ test("the Money lock on: no money insight at all, only the rest of the week", as
   await shoot(page, "money-lock-on");
 });
 
-test("a new account with nothing: a couple of calm white tips, never an empty sky; a tap fills the bar", async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await signUp(page, "Cleo Cloud");
-  await page.goto("/");
-  const buttons = row(page).getByRole("button");
-  await expect(buttons).toHaveCount(2);
-  for (const c of await row(page).locator(".lf-idea-cloud").all()) await expect(c).toHaveAttribute("data-weather", "tip");
-  await expect(row(page).locator(".lf-idea-rain, .lf-thought-rain")).toHaveCount(0);
-  await expect(buttons.first()).toContainText("Try it");
-  await shoot(page, "new-account");
-  await buttons.first().click();
-  await expect(page.locator('textarea[aria-label="Message Ray"]:visible').first()).not.toHaveValue("");
-  await expect(page.locator(".lf-bubble-me")).toHaveCount(0);
+test.describe("at any hour", () => {
+  // the tips are the same whenever the suite runs: after 4 PM a real Tonight cloud would join them
+  test.use({ timezoneId: daytimeZone() });
+  test("a new account with nothing: a couple of calm white tips, never an empty sky; a tap fills the bar", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await signUp(page, "Cleo Cloud");
+    await page.goto("/");
+    const buttons = row(page).getByRole("button");
+    await expect(buttons).toHaveCount(2);
+    for (const c of await row(page).locator(".lf-idea-cloud").all()) await expect(c).toHaveAttribute("data-weather", "tip");
+    await expect(row(page).locator(".lf-idea-rain, .lf-thought-rain")).toHaveCount(0);
+    await expect(buttons.first()).toContainText("Try it");
+    await shoot(page, "new-account");
+    await buttons.first().click();
+    await expect(page.locator('textarea[aria-label="Message Ray"]:visible').first()).not.toHaveValue("");
+    await expect(page.locator(".lf-bubble-me")).toHaveCount(0);
+  });
 });
 
 test("rain and lightning are CSS only: they move normally and stand still under reduced motion", async ({ page }) => {
@@ -181,7 +185,7 @@ test("the facts under the sky: dots the keyboard reaches, the arrow keys move th
   await page.goto("/");
   const strip = page.getByRole("group", { name: "About today" });
   const dots = strip.getByRole("button", { name: /^Fact \d of \d$/ });
-  expect(await dots.count()).toBeGreaterThanOrEqual(2);
+  await expect.poll(() => dots.count(), { timeout: 15_000 }).toBeGreaterThanOrEqual(2);
   expect(await dots.first().getAttribute("tabindex")).toBeNull();
   await dots.first().focus();
   await page.keyboard.press("ArrowRight");

@@ -1,6 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { queryAsUser, signUp } from "./helpers";
+import { queryAsUser, daytimeZone, signUp } from "./helpers";
 import { seedBusyStudent } from "./insight-seed";
 
 /**
@@ -99,11 +99,15 @@ test("a laptop with the Money lock on shows no money insight", async ({ page }) 
   expect(await row(page).innerText()).not.toMatch(/\$|Rent|available|bill|spent|checking|savings/i);
 });
 
-test("a new account on a laptop: calm white tips, never an empty sky", async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await signUp(page, "Cleo Cloud");
-  await page.goto("/");
-  await expect(row(page).getByRole("button")).toHaveCount(2);
-  await expect(shown(page)).toHaveCount(1);
-  await expect(row(page).locator(".lf-idea-cloud").first()).toHaveAttribute("data-weather", "tip");
+test.describe("at any hour", () => {
+  // the tips are the same whenever the suite runs: after 4 PM a real Tonight cloud would join them
+  test.use({ timezoneId: daytimeZone() });
+  test("a new account on a laptop: calm white tips, never an empty sky", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await signUp(page, "Cleo Cloud");
+    await page.goto("/");
+    await expect(row(page).getByRole("button")).toHaveCount(2);
+    await expect(shown(page)).toHaveCount(1);
+    await expect(row(page).locator(".lf-idea-cloud").first()).toHaveAttribute("data-weather", "tip");
+  });
 });

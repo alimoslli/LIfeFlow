@@ -80,6 +80,40 @@ export async function openQuickAdd(page: Page) {
   }).toPass({ timeout: 15_000 });
 }
 
+/**
+ * A time zone where it is daytime right now (10 AM to 2 PM there), for tests whose server reads the real clock: an account
+ * signed up in it sees no evening Tonight cloud and no night sky, whatever hour the suite runs. Use with test.use({ timezoneId }).
+ */
+export function daytimeZone(now = new Date()) {
+  const zones = [
+    "Pacific/Honolulu",
+    "America/Anchorage",
+    "America/Los_Angeles",
+    "America/Denver",
+    "America/Chicago",
+    "America/New_York",
+    "America/Sao_Paulo",
+    "Atlantic/Azores",
+    "Europe/London",
+    "Europe/Berlin",
+    "Europe/Athens",
+    "Asia/Dubai",
+    "Asia/Karachi",
+    "Asia/Dhaka",
+    "Asia/Bangkok",
+    "Asia/Shanghai",
+    "Asia/Tokyo",
+    "Australia/Brisbane",
+    "Pacific/Noumea",
+    "Pacific/Auckland",
+    "Pacific/Tongatapu",
+  ];
+  const hour = (tz: string) => Number(new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "2-digit", hourCycle: "h23" }).format(now));
+  const zone = zones.find((z) => hour(z) >= 10 && hour(z) < 14);
+  if (!zone) throw new Error("no daytime zone");
+  return zone;
+}
+
 /** A moment today at hour:minute on the clock in `tz` (for page.clock: tests that must not depend on the hour they run). */
 export function localInstant(tz: string, hour: number, minute: number) {
   const parts = (d: Date) =>
