@@ -11,6 +11,7 @@ import { purgeOldRateLimits } from "@/server/rate-limit";
 import { purgeExpiredConfirmCodes } from "@/server/services/email-confirm";
 import { purgeExpiredVoiceSessions } from "@/server/jarvis/voice";
 import { expireStaleAiUsage } from "@/server/services/ai-usage";
+import { purgeOldBudgets, sweepBudgets } from "@/server/services/ai-budget";
 import { purgeOldSmsInbound } from "@/server/services/sms";
 import { pushImportant, runDueSlot } from "@/server/services/proactive/engine";
 import { runNotifications, sendOnce, webPushSender } from "@/server/services/push";
@@ -69,6 +70,9 @@ async function runNotify() {
   }
   // Housekeeping that must not depend on sign-ins: old limit buckets, Stop and continuation marks.
   await purgeOldRateLimits(getDb()).catch(() => undefined);
+  // Holds nobody settled count as used; counters older than 13 months go.
+  await sweepBudgets(getDb()).catch(() => undefined);
+  await purgeOldBudgets(getDb()).catch(() => undefined);
   await purgeOldSmsInbound(getDb()).catch(() => undefined);
   await purgeExpiredConfirmCodes(getDb()).catch(() => undefined);
   // HQ housekeeping: pictures no decision card uses any more. Never blocks the run.

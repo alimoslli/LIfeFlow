@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, like, sql } from "drizzle-orm";
 import { z } from "zod";
 import { AGE_LINE, CHECK_YEAR, birthDateProblem, isUnderAge } from "@/lib/birthday";
 import { COMPANIONS, companionOf, isCompanionKey, SKY_CHOICE, SKY_CHOICE_LABEL } from "@/lib/companions";
@@ -8,7 +8,7 @@ import { ServiceError } from "./errors";
 import { hashPassword, verifyPassword } from "../auth/password";
 import { revokeRememberedDevices } from "../auth/remembered-devices";
 import type { Database } from "../db/client";
-import { ownerInbox, users, type UserPreferences } from "../db/schema";
+import { aiBudgets, ownerInbox, users, type UserPreferences } from "../db/schema";
 import { withUser } from "../db/with-user";
 import { lockQueue } from "./waitlist";
 import { fingerprintAdminLogEmail, forgetFriend } from "./referrals";
@@ -275,5 +275,7 @@ export async function deleteAccount(db: Database, userId: string, password: stri
     await forgetFriend(tx, userId);
     await fingerprintAdminLogEmail(tx, userId, user.email);
     await tx.delete(users).where(eq(users.id, userId));
+    // their AI allowance counters (numbers keyed by their id; not a table with a user column)
+    await tx.delete(aiBudgets).where(like(aiBudgets.key, `u:${userId}:%`));
   });
 }

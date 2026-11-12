@@ -1,7 +1,19 @@
-import { and, count, desc, eq, ilike, inArray, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, like, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
 import { microsoftConfig } from "../integrations/microsoft";
 import type { Database } from "../db/client";
-import { adminActions, announcements, appAccess, errorReports, ownerInbox, passkeys, rateLimitBuckets, rememberedDevices, sessions, users } from "../db/schema";
+import {
+  adminActions,
+  aiBudgets,
+  announcements,
+  appAccess,
+  errorReports,
+  ownerInbox,
+  passkeys,
+  rateLimitBuckets,
+  rememberedDevices,
+  sessions,
+  users,
+} from "../db/schema";
 import { isAdminEmail, type Admin } from "../auth/admin";
 import { billingConfig, inTestingPhase, LIMIT_MONTH_SECONDS, TESTING_LIMITS } from "../billing";
 import { emailConfig } from "../integrations/email";
@@ -320,6 +332,7 @@ export async function deleteUser(db: Database, actor: Admin, userId: string, con
     await forgetFriend(tx, u.id);
     await fingerprintAdminLogEmail(tx, u.id, u.email);
     await tx.delete(users).where(eq(users.id, u.id));
+    await tx.delete(aiBudgets).where(like(aiBudgets.key, `u:${u.id}:%`));
   });
 }
 

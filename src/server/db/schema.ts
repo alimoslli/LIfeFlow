@@ -1790,6 +1790,31 @@ export const aiUsage = pgTable(
 );
 
 /**
+ * Counters for AI allowances and spending ceilings (migration 0067, ADR 0034). Operations data like rate_limit_buckets: a key
+ * ("u:<user>:2026-11:msgs", "g:2026-11:micros"), what has been used and what is set aside right now. Numbers only, no RLS.
+ * Written only by the SQL functions ai_reserve / ai_settle / ai_release / ai_sweep through services/ai-budget.ts.
+ */
+export const aiBudgets = pgTable("ai_budgets", {
+  key: text("key").primaryKey(),
+  used: bigint("used", { mode: "number" }).notNull().default(0),
+  held: bigint("held", { mode: "number" }).notNull().default(0),
+  updatedAt: tstz("updated_at").notNull().defaultNow(),
+});
+
+/** Amounts set aside for work in progress, one row per counter key. An expired hold is counted as used by the next reservation on its key. */
+export const aiHolds = pgTable(
+  "ai_holds",
+  {
+    holdId: uuid("hold_id").notNull(),
+    key: text("key").notNull(),
+    amount: bigint("amount", { mode: "number" }).notNull(),
+    kind: text("kind").notNull(),
+    expiresAt: tstz("expires_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.holdId, t.key] }), index("ai_holds_key_idx").on(t.key, t.expiresAt)],
+);
+
+/**
  * A live voice call the server started (migration 0062): created when the one-time client secret is issued, bound to the user and the
  * conversation, short expiry. Tool calls from the browser are accepted only for a live row of their own user and conversation.
  */
