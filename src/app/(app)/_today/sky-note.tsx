@@ -6,7 +6,7 @@ import type { SkyInsight } from "@/lib/sky-insights";
 import { haptic } from "@/lib/haptics";
 import { CLOUD_TEXT, thoughtCloudStyle, type CloudWeather } from "@/components/skylings/cloud-tile";
 import "@/components/skylings/skylings.css";
-import "./sky-note.css";
+import "@/components/skylings/thought.css";
 import { cheerSkylings } from "@/components/skylings/night";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { useShell } from "@/components/shell/app-shell";

@@ -1,12 +1,13 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { doCloudAction, tapIdeaCloudAction } from "@/app/(app)/jarvis/actions";
 import { respondAction } from "@/app/(app)/jarvis/proactive-actions";
 import type { IdeaCloud } from "@/lib/idea-clouds";
 import { cn } from "@/lib/utils";
 import { thoughtCloudStyle, weatherCloudStyle, CLOUD_TEXT } from "./cloud-tile";
 import "./skylings.css";
+import "./thought.css";
 
 /** What a tapped fix did: the words, and the message id Undo needs. */
 type Done = { text: string; id?: string; undone?: boolean };
@@ -25,12 +26,15 @@ export function IdeaClouds({
   className,
   lead,
   thought,
+  big,
 }: {
   clouds: IdeaCloud[];
   /** The skyling's own thought (Today's note), first in the row and bigger; the clouds float after it. */
   lead?: React.ReactNode;
-  /** The skyling's name: a cloud marked `thought` is drawn as its thought, big and first (Today's middle on a phone). */
+  /** The skyling's name: a cloud marked `thought` is its thought, first; the others say "<name> noticed". */
   thought?: string;
+  /** Today on a phone: every cloud a big cumulus nearly the screen's width, one at a time, swiped sideways with dots. */
+  big?: boolean;
   /** The most to show. */
   show?: number;
   onPick: (ask: string) => void;
@@ -40,8 +44,18 @@ export function IdeaClouds({
   const [busy, setBusy] = useState<string | null>(null);
   const [done, setDone] = useState<Record<string, Done>>({});
   const [failed, setFailed] = useState<Record<string, string>>({});
+  const [at, setAt] = useState(0);
+  const rowRef = useRef<HTMLUListElement>(null);
   if (!clouds.length && !lead) return null;
   const visible = clouds.slice(0, show);
+  const count = visible.length + (lead ? 1 : 0);
+  // which cloud is in view, for the dots (the row snaps one cloud at a time)
+  const onScroll = () => {
+    const el = rowRef.current;
+    const first = el?.firstElementChild as HTMLElement | null;
+    if (!el || !first) return;
+    setAt(Math.min(count - 1, Math.max(0, Math.round(el.scrollLeft / (first.offsetWidth + 8)))));
+  };
 
   async function go(c: IdeaCloud) {
     // counts the tap (which cloud, never the message), so a feature they've tried shows less
@@ -73,20 +87,22 @@ export function IdeaClouds({
     } else setFailed((f) => ({ ...f, [c.key]: r?.error ?? "That didn't work. Try again." }));
   }
 
-  return (
-    <ul className={cn("lf-idea-row", className)} aria-label="Ideas to try">
+  const row = (
+    <ul ref={rowRef} onScroll={big ? onScroll : undefined} className={cn("lf-idea-row", big && "lf-idea-big", className)} aria-label="Ideas to try">
       {lead && <li className="lf-idea-lead">{lead}</li>}
       {visible.map((c, i) => {
         const d = done[c.key];
         // a finished fix settles into a white cloud: the trouble is handled
         const weather = d ? "tip" : c.weather;
         const t = CLOUD_TEXT[weather];
-        // the skyling's thought (owner, 2026-11-12): the big cumulus, "<name> thought about this", rain under a storm
-        const big = !!thought && !lead && i === 0 && !!c.thought;
+        // the big cumulus (owner, 2026-11-12): the skyling's thought, or on a phone's Today every cloud; rain under a storm
+        const isThought = !!thought && !lead && i === 0 && !!c.thought;
+        const large = big || isThought;
         const storm = weather === "storm";
+        const kicker = isThought ? `${thought} thought about this` : c.key.startsWith("insight:") && thought ? `${thought} noticed` : "Try this";
         const cloud = (
           <div
-            className={cn("lf-idea-cloud lf-idea-thick", big && "lf-thought-cloud")}
+            className={cn("lf-idea-cloud lf-idea-thick", large && "lf-thought-cloud")}
             data-weather={weather}
             data-bolt={c.bolt && !d ? "true" : undefined}
             style={
@@ -99,15 +115,15 @@ export function IdeaClouds({
               } as CSSProperties
             }
           >
-            <span className="lf-idea-body" style={(big ? thoughtCloudStyle(weather) : weatherCloudStyle(i, weather)) as CSSProperties}>
-              {storm && !big && <span className="lf-idea-rain" aria-hidden="true" />}
-              {c.bolt && !d && !big && (
+            <span className="lf-idea-body" style={(large ? thoughtCloudStyle(weather, i + (lead ? 1 : 0)) : weatherCloudStyle(i, weather)) as CSSProperties}>
+              {storm && !large && <span className="lf-idea-rain" aria-hidden="true" />}
+              {c.bolt && !d && !large && (
                 <svg className="lf-idea-bolt" viewBox="0 0 8 12" aria-hidden="true" shapeRendering="crispEdges">
                   <path d="M5 0h2v1H6v2h2v2H5v2h1v2H5v2H3V9h1V7H2V5h2V3h1z" fill="currentColor" />
                 </svg>
               )}
               <span className="lf-idea-in">
-                {big && <span className="lf-thought-who">{thought} thought about this</span>}
+                {large && <span className="lf-thought-who">{kicker}</span>}
                 <b className="lf-idea-head">{c.say}</b>
                 <span className="lf-idea-why" role={failed[c.key] ? "alert" : undefined}>
                   {failed[c.key] || d?.text || c.why}
@@ -126,30 +142,36 @@ export function IdeaClouds({
                 )}
               </span>
             </span>
-            {big && storm && (
+            {large && storm && (
               <>
                 <span className="lf-thought-rain" aria-hidden="true" />
-                <svg className="lf-idea-bolt lf-thought-bolt" viewBox="0 0 8 12" aria-hidden="true" shapeRendering="crispEdges">
-                  <path d="M5 0h2v1H6v2h2v2H5v2h1v2H5v2H3V9h1V7H2V5h2V3h1z" fill="currentColor" />
-                </svg>
+                {/* lightning only for the worst (lib/insights `bolt`) */}
+                {c.bolt && (
+                  <svg className="lf-idea-bolt lf-thought-bolt" viewBox="0 0 8 12" aria-hidden="true" shapeRendering="crispEdges">
+                    <path d="M5 0h2v1H6v2h2v2H5v2h1v2H5v2H3V9h1V7H2V5h2V3h1z" fill="currentColor" />
+                  </svg>
+                )}
               </>
             )}
           </div>
         );
-        if (big)
+        if (large)
           return (
-            <li key={c.key} className="lf-idea-lead">
+            <li key={c.key} className={cn("lf-idea-lead", big && "lf-idea")} style={{ "--i": i } as CSSProperties}>
               <section
-                aria-label={storm ? "Heads up" : "From your skyling"}
+                aria-label={isThought ? (storm ? "Heads up" : "From your skyling") : undefined}
                 data-weather={storm ? "storm" : "clear"}
                 data-layout="middle"
                 className="lf-thought"
               >
                 {cloud}
-                <span className="lf-thought-puffs" aria-hidden="true">
-                  <i />
-                  <i />
-                </span>
+                {/* the little puffs down to the skyling: only its own thought */}
+                {isThought && (
+                  <span className="lf-thought-puffs" aria-hidden="true">
+                    <i />
+                    <i />
+                  </span>
+                )}
               </section>
             </li>
           );
@@ -160,5 +182,16 @@ export function IdeaClouds({
         );
       })}
     </ul>
+  );
+  if (!big || count < 2) return row;
+  return (
+    <div className="min-w-0">
+      {row}
+      <div className="lf-idea-dots" aria-hidden="true">
+        {Array.from({ length: count }, (_, k) => (
+          <i key={k} data-on={k === at ? "" : undefined} />
+        ))}
+      </div>
+    </div>
   );
 }

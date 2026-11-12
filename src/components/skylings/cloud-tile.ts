@@ -52,7 +52,7 @@ export type CloudWeather = "tip" | "heads-up" | "storm";
  */
 export const CLOUD_PALETTES: Record<CloudWeather, { day: Palette; night: Palette }> = {
   tip: { day: { ink: "#262320", body: "#ffffff", shade: "#d6e4f7" }, night: { ink: "#0a1630", body: "#eef3ff", shade: "#bac9ea" } },
-  "heads-up": { day: { ink: "#262320", body: "#d3d9e4", shade: "#a9b3c6" }, night: { ink: "#0a1630", body: "#b9c3d8", shade: "#8e9ab5" } },
+  "heads-up": { day: { ink: "#262320", body: "#c5cddb", shade: "#97a3b9" }, night: { ink: "#0a1630", body: "#b9c3d8", shade: "#8e9ab5" } },
   storm: { day: { ink: "#141b2c", body: "#3a4560", shade: "#283148" }, night: { ink: "#b4c5f2", body: "#3c496f", shade: "#2e3a60" } },
 };
 /** Text and button colours that sit on each cloud (day and night share them; only the body changes). */
@@ -69,23 +69,57 @@ export const SKY = { day: ["#f6f8fb", "#8fb6e8"], night: ["#152643", "#0a1630"] 
  * puffs all along its top, so a big cloud still reads as a cloud, not a card. Its left and right slices meet in a small
  * valley in the middle, the only part that stretches, so the puffs keep their shape at any width.
  */
-const BIG: Grid = { w: 150, h: 34, top: 16, bottom: 5, corner: 6 };
-const THOUGHT: Shape = {
-  puffs: [
-    [15, 17, 8],
-    [33, 12, 11],
-    [53, 15, 9],
-    [67, 16, 6],
-    [83, 16, 6],
-    [97, 13, 10],
-    [117, 10, 9.5],
-    [135, 16, 8],
-  ],
-  left: 74,
-  right: 74,
-};
+const BIG: Grid = { w: 150, h: 34, top: 16, bottom: 6, corner: 6 };
+/** Three cumulus shapes, so a row of them never looks stamped out. */
+const THOUGHTS: Shape[] = [
+  {
+    puffs: [
+      [15, 17, 8],
+      [33, 12, 11],
+      [53, 15, 9],
+      [67, 16, 6],
+      [83, 16, 6],
+      [97, 13, 10],
+      [117, 10, 9.5],
+      [135, 16, 8],
+    ],
+    left: 74,
+    right: 74,
+  },
+  {
+    puffs: [
+      [12, 18, 7],
+      [28, 13, 10],
+      [47, 11, 10.5],
+      [64, 16, 7],
+      [84, 16, 6],
+      [101, 11.5, 11],
+      [121, 14, 9],
+      [138, 18, 6],
+    ],
+    left: 74,
+    right: 74,
+  },
+  {
+    puffs: [
+      [16, 15, 9],
+      [36, 11, 10],
+      [54, 16, 7],
+      [68, 16, 5],
+      [82, 15, 7],
+      [96, 14, 9],
+      [114, 10, 9.5],
+      [133, 15, 9],
+    ],
+    left: 74,
+    right: 74,
+  },
+];
 
-function tile(shape: Shape, c: Palette, grid: Grid = SMALL): string {
+/** How many rows of shade the underside has: a heavy cloud (a heads-up, a storm) hangs low and dark. */
+const BELLY: Record<CloudWeather, number> = { tip: 2, "heads-up": 4, storm: 4 };
+
+function tile(shape: Shape, c: Palette, grid: Grid = SMALL, belly = 2): string {
   const { w: W, h: H } = grid;
   const inBody = (x: number, y: number) => {
     const x0 = 1;
@@ -105,8 +139,10 @@ function tile(shape: Shape, c: Palette, grid: Grid = SMALL): string {
     for (let x = 0; x < W; x++) g[y].push(filled(x, y) ? "w" : ".");
   }
   const at = (x: number, y: number) => (x < 0 || y < 0 || x >= W || y >= H ? "." : g[y][x]);
-  // the underside: the body's two lowest rows
-  for (let x = 0; x < W; x++) for (let y = H - 4; y < H; y++) if (g[y][x] === "w" && (at(x, y + 1) === "." || at(x, y + 2) === ".")) g[y][x] = "s";
+  // the underside: the body's lowest rows (two, or four on a heavy cloud)
+  for (let x = 0; x < W; x++)
+    for (let y = H - 2 - belly; y < H; y++)
+      if (g[y][x] === "w" && Array.from({ length: belly }, (_, k) => at(x, y + k + 1)).includes(".")) g[y][x] = "s";
   const out = g.map((row) => [...row]);
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) if (g[y][x] === "." && [at(x - 1, y), at(x + 1, y), at(x, y - 1), at(x, y + 1)].some((ch) => ch !== ".")) out[y][x] = "k";
@@ -169,15 +205,17 @@ function slices(shape: Shape, grid: Grid, scale: number) {
   };
 }
 
-/** The skyling's thought: the big cumulus in a kind of weather, 2 screen pixels a drawn pixel. */
-export function thoughtCloudStyle(weather: CloudWeather): CloudStyle {
-  const id = `thought:${weather}`;
+/** The big cumulus (the skyling's thought, and every cloud on a phone's Today) number `i`, in a kind of weather. */
+export function thoughtCloudStyle(weather: CloudWeather, i = 0): CloudStyle {
+  const k = ((i % THOUGHTS.length) + THOUGHTS.length) % THOUGHTS.length;
+  const id = `thought:${k}:${weather}`;
   let s = made.get(id);
   if (!s) {
+    const shape = THOUGHTS[k];
     s = {
-      "--cloud-day": tile(THOUGHT, CLOUD_PALETTES[weather].day, BIG),
-      "--cloud-night": tile(THOUGHT, CLOUD_PALETTES[weather].night, BIG),
-      ...slices(THOUGHT, BIG, CLOUD_SCALE),
+      "--cloud-day": tile(shape, CLOUD_PALETTES[weather].day, BIG, BELLY[weather]),
+      "--cloud-night": tile(shape, CLOUD_PALETTES[weather].night, BIG, BELLY[weather]),
+      ...slices(shape, BIG, CLOUD_SCALE),
     };
     made.set(id, s);
   }

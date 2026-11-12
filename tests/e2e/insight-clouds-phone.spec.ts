@@ -38,7 +38,21 @@ test("a busy student sees real insights, as weather; a tap fills the bar or does
   const clouds = row(page).locator(".lf-idea-cloud");
   await expect(clouds.nth(0)).toHaveAttribute("data-weather", "storm");
   await expect(clouds.nth(1)).toHaveAttribute("data-weather", "storm");
-  await expect(row(page).locator(".lf-idea-rain").first()).toBeAttached();
+  await expect(row(page).locator(".lf-thought-rain").first()).toBeAttached();
+  // a phone's Today (owner, 2026-11-12: "make each cloud fit the screen almost ... smoothly scroll through them sideways"):
+  // each cloud nearly the screen's width, one at a time; a swipe moves to the next and the dots follow
+  const first = (await clouds.nth(0).boundingBox())!;
+  expect(first.width).toBeGreaterThanOrEqual(393 * 0.85);
+  expect(first.x).toBeGreaterThanOrEqual(0);
+  expect(first.x + first.width).toBeLessThanOrEqual(393);
+  const dots = page.locator(".lf-idea-dots:visible i");
+  await expect(dots).toHaveCount(said.length);
+  await expect(dots.nth(0)).toHaveAttribute("data-on", "");
+  await row(page).evaluate((el) => el.scrollBy({ left: el.clientWidth / 2, behavior: "instant" }));
+  await expect(dots.nth(1)).toHaveAttribute("data-on", "");
+  await expect.poll(async () => (await clouds.nth(1).boundingBox())!.x).toBeLessThan(393 * 0.15);
+  await row(page).evaluate((el) => el.scrollTo({ left: 0, behavior: "instant" }));
+  await expect(dots.nth(0)).toHaveAttribute("data-on", "");
   // the cloud's whole body is one tap target, at least 44 px tall
   for (const b of await row(page).getByRole("button").all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(30);
   for (const c of await clouds.all()) expect((await c.boundingBox())!.height).toBeGreaterThanOrEqual(44);
@@ -104,7 +118,7 @@ test("a new account with nothing: a couple of calm white tips, never an empty sk
   const buttons = row(page).getByRole("button");
   await expect(buttons).toHaveCount(2);
   for (const c of await row(page).locator(".lf-idea-cloud").all()) await expect(c).toHaveAttribute("data-weather", "tip");
-  await expect(row(page).locator(".lf-idea-rain")).toHaveCount(0);
+  await expect(row(page).locator(".lf-idea-rain, .lf-thought-rain")).toHaveCount(0);
   await expect(buttons.first()).toContainText("Try it");
   await shoot(page, "new-account");
   await buttons.first().click();
@@ -123,9 +137,9 @@ test("rain and lightning are CSS only: they move normally and stand still under 
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/");
   await expect(row(page).getByRole("button").first()).toBeVisible();
-  expect(await anim('[aria-label="Ideas to try"]:visible .lf-idea-rain', "::before")).toBe("lf-rain");
+  expect(await anim('[aria-label="Ideas to try"]:visible .lf-thought-rain')).toBe("lf-thought-rain");
   await expect(row(page).locator(".lf-idea-bolt").first()).toBeAttached();
   await page.emulateMedia({ reducedMotion: "reduce" });
-  expect(await anim('[aria-label="Ideas to try"]:visible .lf-idea-rain', "::before")).toBe("none");
+  expect(await anim('[aria-label="Ideas to try"]:visible .lf-thought-rain')).toBe("none");
   expect(await anim('[aria-label="Ideas to try"]:visible .lf-idea-bolt')).toBe("none");
 });

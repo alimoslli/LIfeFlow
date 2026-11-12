@@ -153,3 +153,54 @@
     animation: none;
   }
 }
+
+/* ---- Today on a phone (owner, 2026-11-12: "make each cloud fit the screen almost and then he can just smoothly scroll
+   through them sideways"): one big cumulus at a time, nearly the screen's width, the next one peeking at the edge; a swipe
+   moves exactly one, and the dots under them say how many there are. White is an idea, heavy grey a heads-up, dark with
+   rain and lightning real trouble. ---- */
+.lf-idea-row.lf-idea-big {
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem 0.125rem;
+  scroll-padding-inline: 1.25rem;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  overscroll-behavior-x: contain;
+  align-items: flex-end;
+}
+.lf-idea-row.lf-idea-big > li,
+.lf-idea-row.lf-idea-big > li.lf-idea-lead {
+  flex: 0 0 100%;
+  margin: 0;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
+.lf-idea-big .lf-thought {
+  max-width: none;
+}
+.lf-idea-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 0.25rem 0 0.375rem;
+}
+.lf-idea-dots i {
+  width: 6px;
+  height: 6px;
+  background: var(--color-muted, #5d6b86);
+  opacity: 0.35;
+  transition:
+    opacity 0.2s,
+    width 0.2s;
+}
+.lf-idea-dots i[data-on] {
+  width: 14px;
+  opacity: 0.9;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lf-idea-row.lf-idea-big {
+    scroll-behavior: auto;
+  }
+  .lf-idea-dots i {
+    transition: none;
+  }
+}

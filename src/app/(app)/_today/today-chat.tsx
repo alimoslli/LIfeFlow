@@ -420,6 +420,7 @@ export function TodayMiddle({
         show={sky ? 2 : note ? 2 : 3}
         onPick={fillBar}
         thought={name}
+        big
         lead={sky ? <SkyNote insight={sky} name={name} review={review} layout="middle" onAsk={(p) => void askOnToday(p, refresh)} /> : undefined}
       />
     </div>
