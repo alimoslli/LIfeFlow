@@ -16,7 +16,8 @@ const TONE: Record<Weather, InsightTone> = { clear: "tip", grey: "heads_up", sto
 
 /** Topics, so a cloud and another producer's never say the same thing (lib/insights `about`). */
 const ABOUT: Record<string, string[]> = {
-  tonight: ["tonight"],
+  // Tonight names what's due by tomorrow noon, so it also says the "due" one
+  tonight: ["tonight", "due"],
   gap: ["free"],
   due: ["due"],
   exam: ["exam"],

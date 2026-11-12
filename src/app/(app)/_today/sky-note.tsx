@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState, useTransition, type CSSProperties } from "react";
+import { useEffect, useRef, useState, useTransition, type CSSProperties } from "react";
+import { flyToBar } from "@/components/motion/fly-to-bar";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import type { SkyInsight } from "@/lib/sky-insights";
@@ -42,7 +43,9 @@ export function SkyNote({
 }) {
   const router = useRouter();
   const { openJarvis } = useShell();
-  const ask = onAsk ?? ((prompt: string) => openJarvis(prompt, { send: true }));
+  const cloudRef = useRef<HTMLDivElement>(null);
+  // on a phone the question floats down into Today's bar and waits there; elsewhere the chat opens and sends it
+  const ask = onAsk ? (prompt: string) => flyToBar(cloudRef.current, () => onAsk(prompt)) : (prompt: string) => openJarvis(prompt, { send: true });
   const [pending, start] = useTransition();
   // what was just done stays in view with its Undo for a few seconds, even after the refresh brings the next note
   const [done, setDone] = useState<{ insight: SkyInsight; text: string; undo: () => Promise<ActionState> } | null>(null);
@@ -125,6 +128,7 @@ export function SkyNote({
     <section aria-label={storm ? "Heads up" : "From your skyling"} data-weather={insight.weather} data-layout={layout} className="lf-thought">
       <span className="lf-thought-who">{name} thought about this</span>
       <div
+        ref={cloudRef}
         className="lf-idea-cloud lf-idea-thick lf-thought-cloud"
         data-weather={weather}
         data-bolt={storm && !done ? "true" : undefined}

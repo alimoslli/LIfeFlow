@@ -884,6 +884,7 @@ export function JarvisChat({
                 e.preventDefault();
                 send(input);
               }}
+              data-cloud-target
               className="lf-composer flex items-end gap-1 rounded-[1.5rem] bg-surface p-2 shadow-lift ring-1 ring-border/70 transition-shadow focus-within:ring-2 focus-within:ring-dawn-2/60"
             >
               <input ref={fileRef} type="file" accept={ACCEPT} multiple hidden onChange={(e) => upload(e.target.files)} />

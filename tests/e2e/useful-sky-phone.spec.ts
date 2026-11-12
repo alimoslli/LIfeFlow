@@ -5,7 +5,8 @@ import { pool, signUp } from "./helpers";
 // Owner, 2026-11-12 (docs/backlog/2026-11-12-useful-sky.md): the sky does more with what it knows. Today's note is the first
 // thing it noticed, with its one step done right there; real trouble wears the storm; purchases sit on the line.
 
-test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+// reduced motion: the clouds float gently, and a test can only tap a still button
+test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
 
 const seed = (email: string, scene: "gap" | "tonight" | "storm") =>
   execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/dev/seed-useful-sky.ts", email, scene], {
@@ -55,10 +56,17 @@ test("from 4 PM, Tonight: the free hours and what's due by tomorrow noon", async
   const email = await signUp(page, "Tonight Plan");
   seed(email, "tonight");
   await page.goto("/");
-  const note = page.locator(".dc-middle").getByRole("region", { name: "From your skyling" });
-  await expect(note).toContainText(/Tonight: [\d.]+ hours? free/);
-  await expect(note).toContainText("Essay draft is due tomorrow 9 AM.");
-  await expect(note.getByRole("button", { name: "Plan tonight" })).toBeVisible();
+  // the clash before the essay leads as the skyling's thought (real trouble first); Tonight is the next cloud
+  const row = page.locator(".dc-middle").getByRole("list", { name: "Ideas to try" });
+  await expect(row.getByRole("region", { name: "Heads up" })).toContainText("Essay draft due");
+  const tonight = row.locator("li").filter({ hasText: /Tonight: [\d.]+ hours? free/ });
+  await expect(tonight).toContainText("Essay draft is due tomorrow 9 AM.");
+  await page
+    .getByRole("button", { name: `Idea ${(await row.locator("li").evaluateAll((els) => els.findIndex((e) => /Tonight:/.test(e.textContent ?? "")))) + 1} of` })
+    .click();
+  await expect(tonight.getByRole("button", { name: /Plan tonight/ })).toBeVisible();
+  // it says the essay once: no separate "due tomorrow" cloud beside Tonight
+  await expect(row.locator("li").filter({ hasText: /^.*Block an hour/ })).toHaveCount(0);
 });
 
 test("purchases on the line: a mark at the bank's own time, and the day's total with every purchase", async ({ page }) => {

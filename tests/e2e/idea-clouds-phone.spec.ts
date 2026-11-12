@@ -29,25 +29,19 @@ test("idea clouds: short, from real data, a tap fills the box and sends nothing"
     const box = (await above.boundingBox())!;
     expect(box.y + box.height).toBeLessThanOrEqual(barTop + 0.5);
   }
-  // The empty chat: the catchphrase and three clouds; a tap fills the box and sends nothing. With reduced motion the
-  // clouds stand still (and a test can only click a still element).
+  // The empty chat: the catchphrase and one cloud at a time, another than Today's first (owner, 2026-11-12: "one idea on
+  // the main page one on the skyling page and they change"); a tap fills the box and sends nothing. With reduced motion
+  // the clouds stand still (and a test can only click a still element).
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/jarvis");
-  expect(
-    await page
-      .locator(".lf-idea")
-      .first()
-      .evaluate((el) => getComputedStyle(el).animationName),
-  ).toBe("none");
   await expect(page.getByRole("heading", { name: "Let's clear your sky." })).toBeVisible();
-  const clouds = page.getByRole("list", { name: "Ideas to try" }).getByRole("button");
-  // three on a tall screen; a phone in a browser (664 px) shows two, so none is cut in half by the message box
-  await expect(clouds).toHaveCount(2);
-  for (const c of await clouds.all()) {
-    const [cloud, box] = [await c.boundingBox(), await page.getByLabel(COMPOSER).boundingBox()];
-    expect(cloud!.y + cloud!.height).toBeLessThanOrEqual(box!.y);
-  }
-  await clouds.first().click();
+  const shown = page.getByRole("list", { name: "Ideas to try" }).locator("li[data-on]");
+  await expect(shown).toHaveCount(1);
+  expect(await shown.evaluate((el) => getComputedStyle(el).animationName)).toBe("none");
+  const cloud = shown.getByRole("button");
+  const [cloudBox, composerBox] = [await cloud.boundingBox(), await page.getByLabel(COMPOSER).boundingBox()];
+  expect(cloudBox!.y + cloudBox!.height).toBeLessThanOrEqual(composerBox!.y);
+  await cloud.click();
   const box = page.getByLabel(COMPOSER);
   await expect(box).toHaveValue(ANY);
   await expect(page.locator(".lf-bubble-me")).toHaveCount(0);

@@ -5,6 +5,7 @@ import { doCloudAction, tapIdeaCloudAction } from "@/app/(app)/jarvis/actions";
 import { respondAction } from "@/app/(app)/jarvis/proactive-actions";
 import type { IdeaCloud } from "@/lib/idea-clouds";
 import { cn } from "@/lib/utils";
+import { flyToBar } from "@/components/motion/fly-to-bar";
 import { thoughtCloudStyle, weatherCloudStyle, CLOUD_TEXT } from "./cloud-tile";
 import "./skylings.css";
 import "./thought.css";
@@ -67,7 +68,7 @@ export function IdeaClouds({
   }, [big, count, held, busyOrDone, at]);
   if (!clouds.length && !lead) return null;
 
-  async function go(c: IdeaCloud) {
+  async function go(c: IdeaCloud, el?: HTMLElement | null) {
     // counts the tap (which cloud, never the message), so a feature they've tried shows less
     void tapIdeaCloudAction(c.key).catch(() => {});
     if (c.act?.type === "open") return router.push(c.act.href);
@@ -82,7 +83,8 @@ export function IdeaClouds({
       } else setFailed((f) => ({ ...f, [c.key]: r?.error ?? "That didn't work. Try again." }));
       return;
     }
-    onPick(c.ask);
+    // a question floats down into the chat box and merges into it, then waits there to be sent
+    flyToBar(el, () => onPick(c.ask));
   }
 
   async function undo(c: IdeaCloud) {
@@ -174,7 +176,12 @@ export function IdeaClouds({
                     </button>
                   )
                 ) : (
-                  <button type="button" className="lf-idea-go" disabled={busy === c.key} onClick={() => void go(c)}>
+                  <button
+                    type="button"
+                    className="lf-idea-go"
+                    disabled={busy === c.key}
+                    onClick={(e) => void go(c, e.currentTarget.closest<HTMLElement>(".lf-idea-cloud"))}
+                  >
                     <span className="sr-only">{c.say}: </span>
                     {busy === c.key ? "Working…" : c.cta}
                   </button>

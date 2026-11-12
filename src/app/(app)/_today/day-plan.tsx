@@ -131,6 +131,7 @@ export function AskBar({
               void askOnToday(typed, () => router.refresh());
             } else router.push("/jarvis?voice=1");
           }}
+          data-cloud-target
           className="lf-ask flex min-h-14 w-full items-end gap-3 rounded-[1.5rem] bg-surface py-1.5 pr-2 pl-5 shadow-lift ring-1 ring-border/70 focus-within:ring-2 focus-within:ring-accent"
         >
           <textarea

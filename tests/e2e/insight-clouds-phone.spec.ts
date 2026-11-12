@@ -39,39 +39,45 @@ test("a busy student sees real insights, as weather; a tap fills the bar or does
   await expect(clouds.nth(0)).toHaveAttribute("data-weather", "storm");
   await expect(clouds.nth(1)).toHaveAttribute("data-weather", "storm");
   await expect(row(page).locator(".lf-thought-rain").first()).toBeAttached();
-  // a phone's Today (owner, 2026-11-12: "make each cloud fit the screen almost ... smoothly scroll through them sideways"):
-  // each cloud nearly the screen's width, one at a time; a swipe moves to the next and the dots follow
-  const first = (await clouds.nth(0).boundingBox())!;
-  expect(first.width).toBeGreaterThanOrEqual(393 * 0.85);
+  // a phone's Today (owner, 2026-11-12: "make each cloud fit the screen almost", then "one idea on the main page ... and
+  // they change"): one cloud at a time, nearly the screen's width; a dot (or a swipe) brings the next, the others wait unseen
+  const shown = row(page).locator("li[data-on]");
+  await expect(shown).toHaveCount(1);
+  const first = (await shown.locator(".lf-idea-cloud").boundingBox())!;
+  expect(first.width).toBeGreaterThanOrEqual(393 * 0.75);
   expect(first.x).toBeGreaterThanOrEqual(0);
   expect(first.x + first.width).toBeLessThanOrEqual(393);
-  const dots = page.locator(".lf-idea-dots:visible i");
+  const dots = page.getByRole("button", { name: /^Idea \d of \d$/ });
   await expect(dots).toHaveCount(said.length);
-  await expect(dots.nth(0)).toHaveAttribute("data-on", "");
-  await row(page).evaluate((el) => el.scrollBy({ left: el.clientWidth / 2, behavior: "instant" }));
-  await expect(dots.nth(1)).toHaveAttribute("data-on", "");
-  await expect.poll(async () => (await clouds.nth(1).boundingBox())!.x).toBeLessThan(393 * 0.15);
-  await row(page).evaluate((el) => el.scrollTo({ left: 0, behavior: "instant" }));
-  await expect(dots.nth(0)).toHaveAttribute("data-on", "");
-  // the cloud's whole body is one tap target, at least 44 px tall
-  for (const b of await row(page).getByRole("button").all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(30);
-  for (const c of await clouds.all()) expect((await c.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await expect(dots.nth(0)).toHaveAttribute("aria-current", "true");
+  await dots.nth(1).click();
+  await expect(dots.nth(1)).toHaveAttribute("aria-current", "true");
+  await expect(shown).toContainText(said[1]);
+  await dots.nth(0).click();
+  await expect(shown).toContainText(said[0]);
+  // the cloud's button is a real tap target, and the cloud sits above Today's bar, never on it
+  expect((await shown.getByRole("button").first().boundingBox())!.height).toBeGreaterThanOrEqual(30);
   await shoot(page, "busy-student-day");
-
-  // the cloud sits above Today's bar, never on it
   const bar = page.locator('form[data-tour="skyling"]:visible').first();
   const barTop = (await bar.boundingBox())!.y;
-  for (const c of await clouds.all()) {
-    const box = (await c.boundingBox())!;
-    if (box.x + box.width > 0 && box.x < 393) expect(box.y + box.height).toBeLessThanOrEqual(barTop + 0.5);
-  }
+  expect(first.y + first.height).toBeLessThanOrEqual(barTop + 0.5);
 
-  // a tap that asks: the grey heads-up fills the bar, nothing is sent
-  const quiz = row(page).getByRole("button", { name: /Quiz 2 due/ });
-  if (await quiz.count()) {
-    await quiz.click();
-    await expect(page.locator('textarea[aria-label="Message Ray"]:visible').first()).toHaveValue(/^Help me finish Quiz 2 before it's due/);
+  // a tap that asks: the grey heads-up fills the bar, nothing is sent; while the bar has words the clouds step aside
+  // (owner, 2026-11-12: "make sure when we text ray they dont get in the way")
+  const box = page.locator('textarea[aria-label="Message Ray"]:visible').first();
+  const quizAt = said.findIndex((t) => /^Quiz 2 due/.test(t));
+  if (quizAt >= 0) {
+    await dots.nth(quizAt).click();
+    await row(page)
+      .getByRole("button", { name: /Quiz 2 due/ })
+      .click();
+    await expect(box).toHaveValue(/^Help me finish Quiz 2 before it's due/);
     await expect(page.locator(".lf-bubble-me")).toHaveCount(0);
+    await expect(page.locator(".lf-idea-stack")).toHaveCSS("opacity", "0");
+    await box.fill("");
+    await box.blur();
+    await expect(page.locator(".lf-idea-stack")).toHaveCSS("opacity", "1");
+    await dots.nth(0).click();
   }
 
   // a tap that does the one fix: the reminder to cover the rent, with what changed and Undo
@@ -90,12 +96,17 @@ test("a busy student sees real insights, as weather; a tap fills the bar or does
   await page.goto("/");
   await expect(row(page).getByRole("button").first()).toBeVisible();
   await shoot(page, "busy-student-night");
-  // swipe to the grey heads-up
-  await row(page).evaluate((el) => el.scrollTo({ left: el.scrollWidth }));
+  // on to the grey heads-up, the last one
+  const last = () =>
+    page
+      .getByRole("button", { name: /^Idea \d of \d$/ })
+      .last()
+      .click();
+  await last();
   await shoot(page, "busy-student-night-grey");
   await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "light" });
   await page.goto("/");
-  await row(page).evaluate((el) => el.scrollTo({ left: el.scrollWidth }));
+  await last();
   await shoot(page, "busy-student-day-grey");
 });
 
