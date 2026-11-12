@@ -214,6 +214,11 @@ export const users = pgTable("users", {
    * (owner, 2026-11-11). A friend's invite counts only after this. Existing accounts stay null.
    */
   emailVerifiedAt: tstz("email_verified_at"),
+  /**
+   * Whether this account's invite link can move its inviter up (owner, 2026-11-12: the people already in line before referral
+   * boosts launched stay where they are). False for every account that was already invited when migration 0064 ran.
+   */
+  referralCounts: boolean("referral_counts").notNull().default(true),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });

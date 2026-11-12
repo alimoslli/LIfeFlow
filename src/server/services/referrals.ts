@@ -67,10 +67,11 @@ export async function creditReferral(tx: Tx, inviteeId: string, now = new Date()
   await lockQueue(tx);
   const none = { recorded: false, moved: false };
   const [me] = await tx
-    .select({ email: users.email, kind: users.accountKind, by: users.invitedBy, verifiedAt: users.emailVerifiedAt })
+    .select({ email: users.email, kind: users.accountKind, by: users.invitedBy, verifiedAt: users.emailVerifiedAt, counts: users.referralCounts })
     .from(users)
     .where(eq(users.id, inviteeId));
-  if (!me || !me.by || !me.verifiedAt || me.kind !== "standard" || me.by === inviteeId) return none;
+  // `counts` is false for friends who joined through a link before referral boosts launched: they were already in line.
+  if (!me || !me.by || !me.verifiedAt || !me.counts || me.kind !== "standard" || me.by === inviteeId) return none;
   const [inviter] = await tx
     .select({ id: users.id, email: users.email, kind: users.accountKind, prefs: users.preferences })
     .from(users)

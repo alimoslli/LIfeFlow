@@ -1,6 +1,15 @@
 -- Confirm your email, and friends who count (owner, 2026-11-11). Safe to re-run. Existing accounts stay unverified (null).
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "email_verified_at" timestamp with time zone;
 --> statement-breakpoint
+-- Friends who joined through a link before referral boosts launched don't count (owner, 2026-11-12: they are already in line).
+-- Only on the first run, so an account invited later is never switched off by a re-run.
+DO $$ BEGIN
+	IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'referral_counts') THEN
+		ALTER TABLE "users" ADD COLUMN "referral_counts" boolean DEFAULT true NOT NULL;
+		UPDATE "users" SET "referral_counts" = false WHERE "invited_by" IS NOT NULL;
+	END IF;
+END $$;
+--> statement-breakpoint
 -- The 6-digit code for "Confirm your email": only a hash, one row per person. Account data like login_challenges, so no RLS.
 CREATE TABLE IF NOT EXISTS "email_confirmations" (
 	"account_id" uuid PRIMARY KEY NOT NULL,

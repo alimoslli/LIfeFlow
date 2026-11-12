@@ -223,6 +223,16 @@ describe("referral credit", () => {
     expect(await place(inviter.id)).toBe(1);
   });
 
+  it("a friend who joined through the link before referral boosts launched doesn't move the inviter when they confirm", async () => {
+    const { first, inviter, friend } = await inviterAndFriend();
+    // what migration 0064 sets for every account that was already invited when it ran
+    await db.update(users).set({ referralCounts: false }).where(eq(users.id, friend.id));
+    const r = await verifyEmail(db, friend.id);
+    expect(r).toEqual({ verified: true, recorded: false, moved: false });
+    expect([await place(first.id), await place(inviter.id)]).toEqual([1, 2]);
+    expect(await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id))).toHaveLength(0);
+  });
+
   it("credits once even when two confirmations arrive at the same moment", async () => {
     const { inviter, friend } = await inviterAndFriend();
     const results = await Promise.all([verifyEmail(db, friend.id), verifyEmail(db, friend.id), verifyEmail(db, friend.id)]);

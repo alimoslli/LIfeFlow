@@ -1,6 +1,6 @@
 # ADR 0034: Waitlist referrals
 
-Date: 2026-11-11. Status: **proposed until the owner says yes.** The owner has answered (2026-11-11): a friend's fingerprint is kept after they delete; earlier friends count when they confirm; Google and Apple verified emails count without the code. The rest below is the team's reading of how to keep it honest and the owner has not yet approved it as a whole.
+Date: 2026-11-11. Status: **accepted** (owner, 2026-11-12: "yes"). The owner has answered: a friend's fingerprint is kept after they delete (2026-11-11, confirmed 2026-11-12); friends who joined through a link before this launched do **not** count, because they are already in line (2026-11-12, reversing 2026-11-11; `users.referral_counts`, set false by migration 0064 for every account already invited); Google and Apple verified emails count without the code. The rest below is the team's reading of how to keep it honest and the owner has not yet approved it as a whole.
 
 ## Why
 A friend's invite moves someone up the waitlist, so it is worth cheating. We want the line to be fair, without asking people for anything they would not give to a friend (no phone numbers, no ID).
