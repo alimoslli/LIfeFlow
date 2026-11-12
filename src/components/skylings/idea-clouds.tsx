@@ -62,20 +62,28 @@ export function IdeaClouds({
   const [at, setAt] = useState(() => (count > 1 ? start % count : 0));
   const [held, setHeld] = useState(false);
   const [typing, setTyping] = useState(false);
-  // typing to the skyling: the clouds hold still (and dim, thought.css) so they don't get in the way
+  // typing to the skyling: while the chat box in view has focus or words, the cloud dims and holds still (thought.css), so it
+  // doesn't get in the way. Read from the box on screen only: Today keeps a hidden copy of the bar for the other screen size.
   useEffect(() => {
     if (!big) return;
-    const inBox = (e: FocusEvent) => e.target instanceof Element && !!e.target.closest("[data-cloud-target]");
-    const on = (e: FocusEvent) => inBox(e) && setTyping(true);
-    const off = (e: FocusEvent) => inBox(e) && setTyping(false);
+    let frame = 0;
+    const check = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const box = [...document.querySelectorAll<HTMLElement>("[data-cloud-target]")].find((el) => el.getClientRects().length > 0);
+        const field = box?.querySelector<HTMLTextAreaElement>("textarea");
+        setTyping(!!field && (document.activeElement === field || field.value.trim() !== ""));
+      });
+    };
     // the skyling's own note asks through Today's bar too: its question going in counts as that cloud used
     const usedLead = () => setUsed((u) => (u.includes(LEAD) ? u : [...u, LEAD]));
-    document.addEventListener("focusin", on);
-    document.addEventListener("focusout", off);
+    const events = ["focusin", "focusout", "input"] as const;
+    events.forEach((t) => document.addEventListener(t, check));
     window.addEventListener(LEAD_USED, usedLead);
+    check();
     return () => {
-      document.removeEventListener("focusin", on);
-      document.removeEventListener("focusout", off);
+      cancelAnimationFrame(frame);
+      events.forEach((t) => document.removeEventListener(t, check));
       window.removeEventListener(LEAD_USED, usedLead);
     };
   }, [big]);
@@ -269,7 +277,17 @@ export function IdeaClouds({
   );
   if (!stack) return row;
   return (
-    <div className={cn("lf-idea-stack w-full min-w-0", className)}>
+    <div
+      className={cn("lf-idea-stack w-full min-w-0", className)}
+      data-typing={typing ? "" : undefined}
+      // a laptop's arrow keys move to the next or the last idea
+      onKeyDown={(e) => {
+        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+        if (e.target instanceof HTMLElement && e.target.closest("input, textarea")) return;
+        e.preventDefault();
+        step(e.key === "ArrowRight" ? 1 : -1);
+      }}
+    >
       {row}
       <div className="lf-idea-dots">
         {Array.from({ length: count }, (_, k) => (

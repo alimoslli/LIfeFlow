@@ -414,15 +414,36 @@ export function TodayMiddle({
           </button>
         </section>
       )}
-      {/* the skyling's own thought leads the row as a big cloud, and a couple of clouds float after it (owner, 2026-11-12) */}
-      <IdeaClouds
-        clouds={clouds}
-        show={sky ? 2 : note ? 2 : 3}
-        onPick={fillBar}
-        thought={name}
-        big
-        lead={sky ? <SkyNote insight={sky} name={name} review={review} layout="middle" onAsk={fillBar} /> : undefined}
-      />
+      <TodayClouds name={name} clouds={clouds} sky={sky} review={review} show={sky ? 2 : note ? 2 : 3} />
     </div>
+  );
+}
+
+/**
+ * Today's clouds, the same on a phone and a laptop (owner, 2026-11-12: "i want the same for laptop and mobile"): one big
+ * cloud at a time, the skyling's thought first, a question floating down into the chat bar.
+ */
+export function TodayClouds({
+  name,
+  clouds,
+  sky,
+  review,
+  show = 3,
+}: {
+  name: string;
+  clouds: IdeaCloud[];
+  sky?: SkyInsight | null;
+  review?: CardMessage | null;
+  show?: number;
+}) {
+  return (
+    <IdeaClouds
+      clouds={clouds}
+      show={show}
+      onPick={fillBar}
+      thought={name}
+      big
+      lead={sky ? <SkyNote insight={sky} name={name} review={review} layout="middle" onAsk={fillBar} /> : undefined}
+    />
   );
 }

@@ -18,8 +18,7 @@ import { listPlaidConnections, plaidConfig } from "@/server/integrations/plaid";
 import { integrationStatus } from "@/server/services/integrations";
 import { dayClockData } from "@/server/services/day-clock";
 import { AskBar } from "./_today/day-plan";
-import { SkyNote } from "./_today/sky-note";
-import { TodayMiddle, TodayOwner } from "./_today/today-chat";
+import { TodayClouds, TodayMiddle, TodayOwner } from "./_today/today-chat";
 import { BirthdayCard } from "./_today/birthday-card";
 import { EmptyNext } from "./_today/empty-next";
 import { ideaClouds } from "@/server/services/idea-clouds";
@@ -99,7 +98,10 @@ export default async function TodayPage() {
           <div className="max-md:hidden">
             {/* accounts made before the birthday was required are asked once, first (owner, 2026-11-10; not a lockout) */}
             {!me.preferences?.birthDate && <BirthdayCard />}
-            {me.preferences?.birthDate && sky && <SkyNote insight={sky} name={assistantName} review={review} layout="card" />}
+            {/* the same clouds as a phone's (owner, 2026-11-12): one big cloud at a time, the skyling's thought first */}
+            {me.preferences?.birthDate && (sky || clouds.length > 0) && (
+              <TodayClouds name={assistantName} clouds={clouds} sky={sky} review={review} show={sky ? 2 : 3} />
+            )}
             {/* nothing planned yet: one next step, on the first screen (connect what can be connected, else tell the skyling) */}
             {me.preferences?.birthDate &&
               !sky &&
@@ -122,7 +124,7 @@ export default async function TodayPage() {
           {/* a laptop's full sky has the ask bar beside the wheel, under the skyling's line (CSS shows one of the two) */}
           {mode === "full" && (
             <div className="dc-ask">
-              <AskBar name={assistantName} chips={false} clouds={clouds} />
+              <AskBar name={assistantName} chips={false} />
             </div>
           )}
         </DayClock>
@@ -155,7 +157,7 @@ export default async function TodayPage() {
       </div>
       <div className="dc-after-dock mx-auto flex w-full max-w-[640px] flex-col gap-4 max-md:hidden">
         <div className={mode === "full" ? "dc-ask-below max-md:hidden" : "max-md:hidden"}>
-          <AskBar name={assistantName} chips={false} clouds={clouds} />
+          <AskBar name={assistantName} chips={false} />
         </div>
       </div>
     </div>

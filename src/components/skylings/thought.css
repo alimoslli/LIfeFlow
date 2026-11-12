@@ -283,9 +283,21 @@
     opacity 0.3s ease,
     transform 0.35s ease;
 }
-/* only the box in view counts: Today's docked bar on a phone, or the skyling's message box (a laptop's hidden bar is filled too) */
-body:has(:is(.dc-dock, .lf-composer) textarea:is(:focus, :not(:placeholder-shown))) .lf-idea-stack {
+/* set by IdeaClouds from the chat box on screen (Today keeps a hidden copy of the bar for the other screen size) */
+.lf-idea-stack[data-typing] {
   opacity: 0.5;
+}
+/* a laptop: the cloud nearly fills the sky area, never edge to edge; the keyboard's place is always visible */
+@media (min-width: 768px) {
+  .lf-idea-stack {
+    max-width: 38rem;
+    margin-inline: auto;
+  }
+}
+.lf-idea-stack :is(button, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-accent, #2f6fd1);
+  outline-offset: 3px;
+  border-radius: 999px;
 }
 @media (prefers-reduced-motion: reduce) {
   .lf-idea-stack {
