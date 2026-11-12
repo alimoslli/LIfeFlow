@@ -1,8 +1,11 @@
 import OpenAI from "openai";
 import { describe, expect, it, vi } from "vitest";
+vi.mock("@/server/services/ai-usage", () => ({ recordAiQuiet: async () => null }));
 import { parseSearchResponse, searchWeb, WebSearchError } from "@/server/integrations/web-search";
 
 const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+
+const CTX = { userId: "00000000-0000-4000-8000-000000000000", door: "chat_tool" as const };
 
 describe("web search", () => {
   it("takes sources only from citations and the search's own source list, never from URLs in the text", () => {
@@ -65,7 +68,7 @@ describe("web search", () => {
         });
       }) as typeof fetch,
     });
-    const r = await searchWeb("cheapest unlimited phone plan", { search: { client, model: "gpt-test" }, country: "US" });
+    const r = await searchWeb("cheapest unlimited phone plan", CTX, { search: { client, model: "gpt-test" }, country: "US" });
     expect(r.sources).toEqual([{ url: "https://x.example.com", title: "X" }]);
     expect(sent).toMatchObject({
       model: "gpt-test",
@@ -76,7 +79,7 @@ describe("web search", () => {
   });
 
   it("says plainly when it isn't set up or fails", async () => {
-    await expect(searchWeb("x", { search: null })).rejects.toThrow(WebSearchError);
+    await expect(searchWeb("x", CTX, { search: null })).rejects.toThrow(WebSearchError);
     const client = new OpenAI({
       apiKey: "sk",
       baseURL: "http://fake.local/v1",
@@ -84,7 +87,7 @@ describe("web search", () => {
       fetch: (async () => reply({ error: { message: "boom" } }, 500)) as typeof fetch,
     });
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
-    await expect(searchWeb("x", { search: { client, model: "m" } })).rejects.toThrow("Live web search isn't available right now.");
+    await expect(searchWeb("x", CTX, { search: { client, model: "m" } })).rejects.toThrow("Live web search isn't available right now.");
     log.mockRestore();
   });
 
@@ -97,7 +100,7 @@ describe("web search", () => {
       fetch: (async () => reply({ error: { message: raw, type: "invalid_request_error", code: "invalid_api_key" } }, 401)) as typeof fetch,
     });
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
-    const err = await searchWeb("x", { search: { client, model: "m" } }).catch((e: unknown) => e);
+    const err = await searchWeb("x", CTX, { search: { client, model: "m" } }).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(WebSearchError);
     expect((err as Error).message).toBe("Live web search isn't available right now.");
     expect(log).toHaveBeenCalled();

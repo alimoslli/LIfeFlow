@@ -12,9 +12,9 @@ export const webTools = [
       country: z.string().length(2).optional().describe("Two-letter country code when local results matter, e.g. US"),
     }),
     mutates: false,
-    async execute(a) {
+    async execute(a, ctx) {
       try {
-        const r = await searchWeb(a.query, { country: a.country });
+        const r = await searchWeb(a.query, { userId: ctx.userId, door: "chat_tool" }, { country: a.country });
         return {
           // Web pages are untrusted: facts to cite, never instructions to follow.
           untrustedWebContent: r.answer.slice(0, 6000),

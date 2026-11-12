@@ -104,13 +104,17 @@ export async function findSavings(
   const query = bill
     ? `Cheaper ${bill.category} plans than ${bill.name} at $${(current / 100).toFixed(2)} a month in ${opts.country ?? "the US"}: current advertised prices from providers.`
     : `Current credit card or personal loan offers with an APR below ${rate!.aprPercent}% for balance transfer or refinancing in ${opts.country ?? "the US"}.`;
-  const r = await searchWeb(query, {
-    json: { name: "savings_options", schema: SCHEMA as unknown as Record<string, unknown> },
-    country: opts.country,
-    search: opts.search,
-    instructions:
-      "Return up to 4 options that cost less than the user's current price. Use only prices you found on the cited page, as listed today, and give that page's URL. If a price is promotional, say how long it lasts in details. Do not include options you couldn't price from a source.",
-  });
+  const r = await searchWeb(
+    query,
+    { userId: scope.userId, door: "savings_check" },
+    {
+      json: { name: "savings_options", schema: SCHEMA as unknown as Record<string, unknown> },
+      country: opts.country,
+      search: opts.search,
+      instructions:
+        "Return up to 4 options that cost less than the user's current price. Use only prices you found on the cited page, as listed today, and give that page's URL. If a price is promotional, say how long it lasts in details. Do not include options you couldn't price from a source.",
+    },
+  );
   let parsed: { options: { provider: string; plan: string; monthly_price_usd: number; source_url: string; details: string }[] };
   try {
     parsed = JSON.parse(r.answer);

@@ -2,6 +2,9 @@ import OpenAI from "openai";
 import type { ResponseInputContent } from "openai/resources/responses/responses";
 import { wrapUntrusted } from "../../../lib/untrusted";
 import { env } from "../../env";
+import { toUsage } from "../../jarvis/providers/openai";
+import { priceFromSettings } from "../ai-prices";
+import { recordAiQuiet, type AiContext } from "../ai-usage";
 
 /**
  * Reads one forwarded email, upload or share (text, PDFs, photos) and returns
@@ -84,7 +87,7 @@ export function extractionClient(): { client: OpenAI; model: string } | null {
   return { client: new OpenAI({ apiKey: e.OPENAI_API_KEY, baseURL: e.OPENAI_BASE_URL, maxRetries: 1, timeout: 90_000 }), model: e.OPENAI_MODEL };
 }
 
-export async function extractDocument(input: ExtractInput, llm = extractionClient()): Promise<Extraction> {
+export async function extractDocument(input: ExtractInput, ctx: AiContext, llm = extractionClient()): Promise<Extraction> {
   if (!llm) throw new Error("Reading documents isn't available right now.");
   const content: ResponseInputContent[] = [
     {
@@ -97,13 +100,23 @@ export async function extractDocument(input: ExtractInput, llm = extractionClien
         : { type: "input_file", filename: f.filename, file_data: `data:${f.mimeType};base64,${f.base64}` },
     ),
   ];
-  const res = await llm.client.responses.create({
-    model: llm.model,
-    instructions: INSTRUCTIONS,
-    input: [{ role: "user", content }],
-    store: false,
-    text: { format: { type: "json_schema", name: "inbox_extract", schema: SCHEMA, strict: true } },
-  });
+  const base = { userId: ctx.userId, door: ctx.door, parentId: ctx.parentId, feature: "document" as const, provider: "openai", model: llm.model };
+  let res;
+  try {
+    res = await llm.client.responses.create({
+      model: llm.model,
+      instructions: INSTRUCTIONS,
+      input: [{ role: "user", content }],
+      store: false,
+      text: { format: { type: "json_schema", name: "inbox_extract", schema: SCHEMA, strict: true } },
+    });
+  } catch (e) {
+    await recordAiQuiet({ ...base, state: "failed" });
+    throw e;
+  }
+  const usage = toUsage(res.usage) ?? null;
+  const priced = priceFromSettings(llm.model, usage);
+  await recordAiQuiet({ ...base, usage, costMicros: priced.costMicros, priceKey: priced.priceKey });
   const text = res.output_text ?? "";
   return JSON.parse(text) as Extraction;
 }

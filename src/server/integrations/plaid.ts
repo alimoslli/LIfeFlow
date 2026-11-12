@@ -396,7 +396,7 @@ export async function syncItem(scope: UserScope, integrationId: string, tz: stri
     .values({ userId: scope.userId, integrationId, kind: "plaid.sync", status: "succeeded", startedAt: started, finishedAt: new Date(), stats: result.stats });
   await recordNetWorth(scope, todayIn(tz));
   // Plain vendor names and categories for what just arrived. Never lets a tidy-up problem fail the sync.
-  await tidyForUser(scope).catch((e) => console.error("[tidy]", e instanceof Error ? e.name : e));
+  await tidyForUser(scope, "plaid_sync").catch((e) => console.error("[tidy]", e instanceof Error ? e.name : e));
   return result.stats;
 }
 

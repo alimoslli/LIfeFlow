@@ -72,6 +72,7 @@ export async function fileFromGmail(scope: UserScope, tz: string, today: string,
         authenticated: true,
       },
       deps.extract,
+      { door: "gmail_filing" },
     );
     if (row.status === "filed") filed++;
   }

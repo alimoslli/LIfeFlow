@@ -223,9 +223,13 @@ export async function trackFound(scope: UserScope, today: string, key: string) {
 /** Live search for the official way to cancel; keeps the answer and the sources it cited. */
 export async function findCancelHelp(scope: UserScope, id: string) {
   const s = await owned(scope, id);
-  const r = await searchWeb(`How do I cancel my ${s.name} subscription? Official steps and the direct cancellation page.`, {
-    instructions: "Use the company's own help pages when you can. Give short numbered steps and the direct link to the page where you cancel.",
-  });
+  const r = await searchWeb(
+    `How do I cancel my ${s.name} subscription? Official steps and the direct cancellation page.`,
+    { userId: scope.userId, door: "cancel_help" },
+    {
+      instructions: "Use the company's own help pages when you can. Give short numbered steps and the direct link to the page where you cancel.",
+    },
+  );
   const help = { answer: r.answer.slice(0, 3000), sources: r.sources, at: r.searchedAt };
   await scope.tx.update(recurringItems).set({ cancelHelp: help }).where(eq(recurringItems.id, id));
   return help;

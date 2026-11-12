@@ -18,6 +18,7 @@ import { createTask, deleteTask } from "../tasks";
 import { addPaycheck, deletePaycheck, listEmployers } from "../work";
 import { restoreMerged } from "./cleanup";
 import { extractDocument, type ExtractInput, type Extraction } from "./extract";
+import type { AiDoor } from "../ai-usage";
 import {
   attachReceipt,
   handAccount,
@@ -572,7 +573,7 @@ export async function processDocument(
   today: string,
   doc: IncomingDocument,
   extract = extractDocument,
-  opts: { suggestOnly?: boolean } = {},
+  opts: { suggestOnly?: boolean; door?: AiDoor } = {},
 ) {
   const messageId = normalizeMessageId(doc.messageId);
   // One delivery at a time per mail: a second copy waits here, then sees the first one's committed row.
@@ -606,7 +607,7 @@ export async function processDocument(
   try {
     const [owner] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId));
     if (!aiAllowed(owner?.preferences)) throw new Error("Saved. Allow your skyling to use AI (in Settings) to have it read and filed automatically.");
-    ex = await extract({ ...doc, today });
+    ex = await extract({ ...doc, today }, { userId: scope.userId, door: opts.door ?? (doc.channel === "email" ? "email_in" : doc.channel) });
   } catch (e) {
     const [failed] = await scope.tx
       .update(inboxItems)

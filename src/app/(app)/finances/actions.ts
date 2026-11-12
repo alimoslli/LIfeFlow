@@ -279,7 +279,7 @@ export async function setBankAccountUsedAction(id: string, use: boolean): Promis
 /** Plain vendor names and categories for every transaction that still needs them (the AI pass runs only if the user allowed AI). */
 export async function tidyTransactionsAction(): Promise<ActionState> {
   return mutate("transaction.tidy", async (s) => {
-    const r = await tidyForUser(s);
+    const r = await tidyForUser(s, "tidy_button");
     if (!r.renamed && !r.categorized && !r.byAi) return "Everything already has a clear name and category.";
     return `Tidied up: ${r.renamed} vendor name${r.renamed === 1 ? "" : "s"} simplified, ${r.categorized + r.byAi} categor${r.categorized + r.byAi === 1 ? "y" : "ies"} filled in.`;
   });

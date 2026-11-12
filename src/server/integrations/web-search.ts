@@ -1,6 +1,9 @@
 import OpenAI from "openai";
 import type { Response as OpenAIResponse } from "openai/resources/responses/responses";
 import { env } from "../env";
+import { toUsage } from "../jarvis/providers/openai";
+import { priceSearch } from "../services/ai-prices";
+import { recordAiQuiet, type AiContext } from "../services/ai-usage";
 
 /**
  * Live web search through OpenAI's hosted web_search tool (Responses API).
@@ -65,6 +68,8 @@ const BASE_INSTRUCTIONS =
 /** Runs one search. With `json`, the answer must be JSON matching the schema (still searched and cited). */
 export async function searchWeb(
   query: string,
+  /** Whose search this is and which entrance it came through: every paid call is recorded (ADR 0034). */
+  ctx: AiContext,
   opts: { instructions?: string; json?: { name: string; schema: Record<string, unknown> }; search?: SearchClient | null; country?: string } = {},
 ): Promise<WebAnswer> {
   const search = opts.search === undefined ? webSearchClient() : opts.search;
@@ -83,10 +88,34 @@ export async function searchWeb(
       ...(opts.json && { text: { format: { type: "json_schema", name: opts.json.name, schema: opts.json.schema, strict: true } } }),
     });
   } catch (e) {
+    await recordAiQuiet({
+      userId: ctx.userId,
+      door: ctx.door,
+      parentId: ctx.parentId,
+      feature: "web_search",
+      provider: "openai",
+      model: search.model,
+      state: "failed",
+    });
     // The provider's details (which can name keys or settings) go to the server log only.
     console.error("[web-search] failed:", (e as { status?: number })?.status ?? null, e instanceof Error ? e.message.slice(0, 300) : e);
     throw new WebSearchError("Live web search isn't available right now.");
   }
+  const usage = toUsage(res.usage) ?? null;
+  const searchCalls = Math.max(1, (res.output ?? []).filter((i) => i.type === "web_search_call").length);
+  const priced = priceSearch(search.model, usage, searchCalls);
+  await recordAiQuiet({
+    userId: ctx.userId,
+    door: ctx.door,
+    parentId: ctx.parentId,
+    feature: "web_search",
+    provider: "openai",
+    model: search.model,
+    usage,
+    searchCalls,
+    costMicros: priced.costMicros,
+    priceKey: priced.priceKey,
+  });
   const { answer, sources } = parseSearchResponse(res);
   if (!answer) throw new WebSearchError("The web search returned nothing.");
   return { answer, sources, searchedAt: new Date().toISOString() };
