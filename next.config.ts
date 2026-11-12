@@ -8,12 +8,26 @@ const securityHeaders = [
   { key: "Content-Security-Policy", value: "frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" },
 ];
 
+/**
+ * Our own small model (docs/backlog/2026-11-12-local-models.md): its runtime and files go only into the chat's function,
+ * and only when LOCAL_MODEL_MEMORY is on for the build (the build fetches the pinned files then). Off, no function carries
+ * them. Only the Linux x64 runtime is kept: that is what Vercel runs.
+ */
+const localModel = process.env.LOCAL_MODEL_MEMORY === "on";
+const localModelKey = process.env.LOCAL_MODEL === "bge" ? "bge" : "minilm";
+const otherRuntimes = ["darwin", "win32", "linux/arm64"].map((p) => `node_modules/onnxruntime-node/bin/napi-v6/${p}/**`);
+
 const nextConfig: NextConfig = {
   // Every page shows one user's private, frequently-changing data, so we
   // render per request instead of using Cache Components (see docs/adr/0002).
   cacheComponents: false,
   poweredByHeader: false,
-  serverExternalPackages: ["pg"],
+  serverExternalPackages: ["pg", "onnxruntime-node"],
+  // the runtime's own library is loaded by its binding at run time, which the tracer can't see: it is listed here
+  outputFileTracingIncludes: localModel
+    ? { "/api/jarvis/chat": [`.models/${localModelKey}/**`, "node_modules/onnxruntime-node/bin/napi-v6/linux/x64/**"] }
+    : {},
+  outputFileTracingExcludes: { "*": localModel ? otherRuntimes : ["node_modules/onnxruntime-node/**", ".models/**"] },
   experimental: {
     serverActions: { bodySizeLimit: "6mb" },
     // Tabs feel instant: a page you've seen in the last 2 minutes opens from the browser's copy, and fully

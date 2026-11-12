@@ -12,6 +12,8 @@ import { stopRequested } from "./stop";
 import { claimContinuation, turnStateOf, TURN_DEADLINE_MS } from "./turn-state";
 import { executeToolCall, serializeResult } from "./executor";
 import { selectMemories } from "./memory-retrieval";
+import { MEANING_MIN, meaningScores } from "../local-models/memory";
+import { localModelKey } from "../local-models/embedder";
 import { addUsage, errorKindOf, recordRun, type ModelPrices } from "./metrics";
 import { pickPrices, priceTokens } from "../services/ai-prices";
 import { AiRefusedError, providerRefusedBeforeWork, subjectFor, reserveAi, type AiHold } from "../services/ai-gate";
@@ -192,7 +194,10 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   const openedFrom = input.module ?? conversation.contextModule;
   // Only memories relevant to this request (and earlier messages in this chat) reach the model.
   const earlier = history.flatMap((h) => (h.type === "user" ? [h.text] : [])).slice(0, -1);
-  const memories = selectMemories(approved, { text: input.text, recent: earlier, module: openedFrom });
+  const ask = { text: input.text, recent: earlier, module: openedFrom };
+  // by meaning too, when LOCAL_MODEL_MEMORY is on (our own small model, nothing stored; docs/backlog/2026-11-12-local-models.md)
+  const meaning = await meaningScores(approved, ask);
+  const memories = selectMemories(approved, ask, meaning ? { meaning, meaningMin: MEANING_MIN[localModelKey()] } : {});
   const skills = routeSkills(input.text, openedFrom);
   const coachMode = looksLikeGradedWork(input.text);
   const system = buildSystemPrompt({

@@ -1,0 +1,360 @@
+{
+  "model": "minilm",
+  "when": "2026-11-12",
+  "speed": {
+    "coldMs": 292,
+    "warmMedianMs": 1.5,
+    "warmP95Ms": 2.6,
+    "memoryPickingPerTurnMs": {
+      "25Memories": 41.8,
+      "100Memories": 158.9,
+      "200Memories": 161.4
+    }
+  },
+  "memories": {
+    "bar": 0.2,
+    "today": {
+      "existing": {
+        "recall": 1,
+        "falseRate": 0,
+        "avgSent": 4.2,
+        "misses": []
+      },
+      "dev": {
+        "recall": 0.548,
+        "falseRate": 0.025,
+        "avgSent": 5.8,
+        "misses": [
+          "missed \"lactose\" for \"What should I make for dinner tonight?\"",
+          "missed \"tea\" for \"Is it a good idea to grab a latte before class?\"",
+          "missed \"lactose\" for \"Is it a good idea to grab a latte before class?\"",
+          "sent \"lab\" for \"Is it a good idea to grab a latte before class?\"",
+          "missed \"trip\" for \"Can I swing a weekend in Chicago?\"",
+          "missed \"sleep\" for \"Is it okay to stay out late on a Tuesday?\"",
+          "missed \"roomies\" for \"What do I owe for the power bill?\"",
+          "missed \"major\" for \"Help me get ready for my clinical rotation\"",
+          "missed \"bike\" for \"What's the cheapest way to get around this week?\"",
+          "missed \"roomies\" for \"Can I host a dinner party at my place?\"",
+          "missed \"lactose\" for \"My stomach always hurts after pizza\"",
+          "missed \"dog\" for \"Can I go away for the weekend without worrying about home?\"",
+          "missed \"major\" for \"Plan a long study night for anatomy\"",
+          "missed \"major\" for \"What did I tell you about my career plans?\"",
+          "missed \"peanut\" for \"Grab me something from the vending machine\"",
+          "sent \"lab\" for \"Can I do a cooking class on Wednesday evening?\""
+        ]
+      },
+      "test": {
+        "recall": 0.697,
+        "falseRate": 0,
+        "avgSent": 5.5,
+        "misses": [
+          "missed \"dog\" for \"Plan my Wednesday morning\"",
+          "missed \"nerves\" for \"I have to speak in front of the class Friday and I'm freaking out\"",
+          "missed \"lab\" for \"Who am I doing the experiment with this week?\"",
+          "missed \"spanish\" for \"Quiz me on some vocab\"",
+          "missed \"lactose\" for \"Order me some ice cream\"",
+          "missed \"sleep\" for \"I'm wiped out, how do I get more rest?\"",
+          "missed \"lactose\" for \"Help me pick a breakfast that keeps me full\"",
+          "missed \"veg\" for \"What should I bring to the potluck?\"",
+          "missed \"peanut\" for \"What should I bring to the potluck?\"",
+          "missed \"lactose\" for \"What should I get at the coffee shop?\""
+        ]
+      }
+    },
+    "local": {
+      "existing": {
+        "recall": 1,
+        "falseRate": 0,
+        "avgSent": 4.5,
+        "misses": []
+      },
+      "dev": {
+        "recall": 0.839,
+        "falseRate": 0.012,
+        "avgSent": 7,
+        "misses": [
+          "missed \"lactose\" for \"What should I make for dinner tonight?\"",
+          "missed \"lactose\" for \"Is it a good idea to grab a latte before class?\"",
+          "sent \"lab\" for \"Is it a good idea to grab a latte before class?\"",
+          "missed \"roomies\" for \"Can I host a dinner party at my place?\"",
+          "missed \"dog\" for \"Can I go away for the weekend without worrying about home?\"",
+          "missed \"peanut\" for \"Grab me something from the vending machine\""
+        ]
+      },
+      "test": {
+        "recall": 0.818,
+        "falseRate": 0,
+        "avgSent": 6.9,
+        "misses": [
+          "missed \"dog\" for \"Plan my Wednesday morning\"",
+          "missed \"spanish\" for \"Quiz me on some vocab\"",
+          "missed \"sleep\" for \"I'm wiped out, how do I get more rest?\"",
+          "missed \"veg\" for \"What should I bring to the potluck?\"",
+          "missed \"peanut\" for \"What should I bring to the potluck?\"",
+          "missed \"lactose\" for \"What should I get at the coffee shop?\""
+        ]
+      }
+    }
+  },
+  "tools": {
+    "cases": 202,
+    "bar": 0.6,
+    "replaceBar": 0.6,
+    "meaningInsteadOfWords": {
+      "allNeeded": 1,
+      "avgExtraGroups": 0.24,
+      "misses": []
+    },
+    "noSkill": {
+      "words": {
+        "allNeeded": 0.447,
+        "avgExtraGroups": 0.45,
+        "misses": [
+          "\"Delete my 3pm event\" needed money_edit, school, habits",
+          "\"Update my phone bill to $70\" needed tasks_more, calendar, school, habits",
+          "\"Prep me for my interview\" needed notes, web",
+          "\"Help with a cover letter\" needed notes, web",
+          "\"Which is better, Spotify or Apple Music?\" needed web",
+          "\"Compare these two phone plans\" needed web",
+          "\"My midterm is in 10 days, help\" needed calendar",
+          "\"What should I study each day before the test?\" needed calendar",
+          "\"Fact check this claim\" needed web",
+          "\"Ask me some questions so you can help me\" needed memory",
+          "\"I saved $20 for my car today by not eating out\" needed habits",
+          "\"Help me build a reading routine\" needed habits"
+        ]
+      },
+      "meaning": {
+        "allNeeded": 0.294,
+        "avgExtraGroups": 0.65,
+        "misses": [
+          "\"I'm behind, help me catch up this week\" needed calendar",
+          "\"Delete my 3pm event\" needed money_edit, school",
+          "\"Update my phone bill to $70\" needed tasks_more, calendar, school, habits",
+          "\"When did I last pay Sam on Venmo?\" needed money",
+          "\"Prep me for my interview\" needed notes, web",
+          "\"Help with a cover letter\" needed notes, web",
+          "\"Which is better, Spotify or Apple Music?\" needed web",
+          "\"Compare these two phone plans\" needed web",
+          "\"What should I do today?\" needed calendar",
+          "\"What do I need to get done today?\" needed calendar",
+          "\"My midterm is in 10 days, help\" needed school, calendar",
+          "\"Fact check this claim\" needed web"
+        ]
+      },
+      "wordsAndMeaning": {
+        "allNeeded": 0.482,
+        "avgExtraGroups": 0.99,
+        "misses": [
+          "\"Delete my 3pm event\" needed money_edit, school",
+          "\"Update my phone bill to $70\" needed tasks_more, calendar, school, habits",
+          "\"Prep me for my interview\" needed notes, web",
+          "\"Help with a cover letter\" needed notes, web",
+          "\"Which is better, Spotify or Apple Music?\" needed web",
+          "\"Compare these two phone plans\" needed web",
+          "\"My midterm is in 10 days, help\" needed calendar",
+          "\"Fact check this claim\" needed web",
+          "\"Ask me some questions so you can help me\" needed memory",
+          "\"I saved $20 for my car today by not eating out\" needed habits",
+          "\"Help me build a reading routine\" needed habits",
+          "\"Help me get more exercise\" needed calendar"
+        ]
+      }
+    },
+    "today": {
+      "allNeeded": 1,
+      "avgExtraGroups": 0.44,
+      "misses": []
+    },
+    "wordsOnly": {
+      "allNeeded": 0.447,
+      "avgExtraGroups": 0.45,
+      "misses": [
+        "\"Delete my 3pm event\" needed money_edit, school, habits",
+        "\"Update my phone bill to $70\" needed tasks_more, calendar, school, habits",
+        "\"Prep me for my interview\" needed notes, web",
+        "\"Help with a cover letter\" needed notes, web",
+        "\"Which is better, Spotify or Apple Music?\" needed web",
+        "\"Compare these two phone plans\" needed web",
+        "\"My midterm is in 10 days, help\" needed calendar",
+        "\"What should I study each day before the test?\" needed calendar",
+        "\"Fact check this claim\" needed web",
+        "\"Ask me some questions so you can help me\" needed memory",
+        "\"I saved $20 for my car today by not eating out\" needed habits",
+        "\"Help me build a reading routine\" needed habits"
+      ]
+    },
+    "todayPlusLocal": {
+      "allNeeded": 1,
+      "avgExtraGroups": 0.44,
+      "misses": []
+    },
+    "dev": {
+      "today": {
+        "allNeeded": 1,
+        "avgExtraGroups": 0.43,
+        "misses": []
+      },
+      "todayPlusLocal": {
+        "allNeeded": 1,
+        "avgExtraGroups": 0.43,
+        "misses": []
+      }
+    }
+  },
+  "tidy": {
+    "purchases": 300,
+    "unknownToKeywords": 87,
+    "onTheUnknownTest": {
+      "paidAi": {
+        "n": 48,
+        "right": 37,
+        "wrong": 11,
+        "unsorted": 0,
+        "accuracy": 0.771,
+        "wrongs": [
+          "SQ *PAPER AND PETAL → Gifts & Donations (is Household)",
+          "BARNES & NOBLE #2217 → Books & Supplies (is Household)",
+          "SQ *GIFT SHOP → Gifts & Donations (is Household)",
+          "7-ELEVEN 20496 → Groceries (is Restaurants)",
+          "USPS PO 5120 → Fees & Interest (is Other)",
+          "CIRCLE K # 0441 → Groceries (is Restaurants)",
+          "CLAUDE.AI SUBSCRIPTION → Software (is Other)",
+          "ZELLE TO ROOMMATE CONF# C2ZUMR87 → Other (is Rent)",
+          "KIDS CLUB AFTERCARE → Education (is Other)",
+          "JOANN STORES #2232 → Shopping (is Hobbies & Sports)",
+          "SQ *ROSIES DONUTS → Coffee (is Restaurants)"
+        ]
+      },
+      "local": {
+        "n": 48,
+        "right": 10,
+        "wrong": 5,
+        "unsorted": 33,
+        "accuracy": 0.208,
+        "wrongs": [
+          "BARNES & NOBLE #2217 → Books & Supplies (is Household)",
+          "GOODWILL 2209 → Clothing (is Household)",
+          "SQ *THE DAILY GRIND → Lifestyle (is Coffee)",
+          "JOANN STORES #2232 → Clothing (is Hobbies & Sports)",
+          "EDIBLE ARRANGEMENTS 431 → Food Delivery (is Gifts & Donations)"
+        ]
+      }
+    },
+    "todayWithAiTest": {
+      "n": 150,
+      "right": 128,
+      "wrong": 22,
+      "unsorted": 0,
+      "accuracy": 0.853,
+      "wrongs": [
+        "TARGET 00018762 → Household (is Online Shopping)",
+        "SQ *PAPER AND PETAL → Gifts & Donations (is Household)",
+        "UBER EATS PENDING → Food Delivery (is Restaurants)",
+        "BARNES & NOBLE #2217 → Books & Supplies (is Household)",
+        "SQ *GIFT SHOP → Gifts & Donations (is Household)",
+        "7-ELEVEN 20496 → Groceries (is Restaurants)",
+        "USPS PO 5120 → Fees & Interest (is Other)",
+        "CIRCLE K # 0441 → Groceries (is Restaurants)",
+        "CLAUDE.AI SUBSCRIPTION → Software (is Other)",
+        "ZELLE TO ROOMMATE CONF# C2ZUMR87 → Other (is Rent)",
+        "KIDS CLUB AFTERCARE → Education (is Other)",
+        "SQ *LITTLE GYM CLASS → Fitness (is Other)",
+        "AMTRAK .COM 2311 → Public Transit (is Travel)",
+        "REGAL CINEMAS 1144 → Events (is Activities)",
+        "SQ *CLIMB NATION GYM DAY → Fitness (is Activities)"
+      ]
+    },
+    "bar": {
+      "min": 0.4,
+      "margin": 0.01
+    },
+    "keywordsAlone": {
+      "all": {
+        "n": 300,
+        "right": 189,
+        "wrong": 24,
+        "unsorted": 87,
+        "accuracy": 0.63,
+        "wrongs": [
+          "TARGET 00018762 → Household (is Online Shopping)",
+          "AMC 6512 ONLINE → Events (is Activities)",
+          "DOORDASH*THAI SPICE → Food Delivery (is Restaurants)",
+          "UBER EATS PENDING → Food Delivery (is Restaurants)",
+          "REGAL CINEMAS 0442 → Events (is Activities)",
+          "EVENTBRITE *TICKETS → Events (is Activities)",
+          "APPLE.COM/BILL → Subscriptions (is Household)",
+          "CAMPUS BOOKSTORE 3276 → Books & Supplies (is Household)",
+          "PEARSON *ACCESS CODE → Books & Supplies (is Household)",
+          "SQ *LITTLE GYM CLASS → Fitness (is Other)",
+          "INSTACART*SUBSCRIPTION → Food Delivery (is Groceries)",
+          "AMTRAK .COM 2311 → Public Transit (is Travel)",
+          "REGAL CINEMAS 1144 → Events (is Activities)",
+          "SQ *CLIMB NATION GYM DAY → Fitness (is Activities)",
+          "DICKS SPORTING GOODS 1204 → Sports (is Hobbies & Sports)"
+        ]
+      },
+      "unknownShare": 0.29
+    },
+    "test": {
+      "today": {
+        "n": 150,
+        "right": 91,
+        "wrong": 11,
+        "unsorted": 48,
+        "accuracy": 0.607,
+        "wrongs": [
+          "TARGET 00018762 → Household (is Online Shopping)",
+          "UBER EATS PENDING → Food Delivery (is Restaurants)",
+          "SQ *LITTLE GYM CLASS → Fitness (is Other)",
+          "AMTRAK .COM 2311 → Public Transit (is Travel)",
+          "REGAL CINEMAS 1144 → Events (is Activities)",
+          "SQ *CLIMB NATION GYM DAY → Fitness (is Activities)",
+          "DICKS SPORTING GOODS 1204 → Sports (is Hobbies & Sports)",
+          "SQ *CORE POWER YOGA → Lifestyle (is Fitness)",
+          "SMILE BRANDS DENTAL → Insurance (is Dental & Vision)",
+          "ASPEN DENTAL 1182 → Insurance (is Dental & Vision)",
+          "BANFIELD PET HOSPITAL → Medical (is Pets)"
+        ]
+      },
+      "todayPlusLocal": {
+        "n": 150,
+        "right": 101,
+        "wrong": 16,
+        "unsorted": 33,
+        "accuracy": 0.673,
+        "wrongs": [
+          "TARGET 00018762 → Household (is Online Shopping)",
+          "UBER EATS PENDING → Food Delivery (is Restaurants)",
+          "BARNES & NOBLE #2217 → Books & Supplies (is Household)",
+          "GOODWILL 2209 → Clothing (is Household)",
+          "SQ *LITTLE GYM CLASS → Fitness (is Other)",
+          "SQ *THE DAILY GRIND → Lifestyle (is Coffee)",
+          "AMTRAK .COM 2311 → Public Transit (is Travel)",
+          "REGAL CINEMAS 1144 → Events (is Activities)",
+          "SQ *CLIMB NATION GYM DAY → Fitness (is Activities)",
+          "JOANN STORES #2232 → Clothing (is Hobbies & Sports)",
+          "DICKS SPORTING GOODS 1204 → Sports (is Hobbies & Sports)",
+          "SQ *CORE POWER YOGA → Lifestyle (is Fitness)",
+          "SMILE BRANDS DENTAL → Insurance (is Dental & Vision)",
+          "ASPEN DENTAL 1182 → Insurance (is Dental & Vision)",
+          "BANFIELD PET HOSPITAL → Medical (is Pets)"
+        ]
+      },
+      "localOnTheUnknown": {
+        "n": 48,
+        "right": 10,
+        "wrong": 5,
+        "unsorted": 33,
+        "accuracy": 0.208,
+        "wrongs": [
+          "BARNES & NOBLE #2217 → Books & Supplies (is Household)",
+          "GOODWILL 2209 → Clothing (is Household)",
+          "SQ *THE DAILY GRIND → Lifestyle (is Coffee)",
+          "JOANN STORES #2232 → Clothing (is Hobbies & Sports)",
+          "EDIBLE ARRANGEMENTS 431 → Food Delivery (is Gifts & Donations)"
+        ]
+      }
+    }
+  }
+}

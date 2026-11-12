@@ -1,7 +1,7 @@
 /**
  * The open models we run on our own servers (docs/backlog/2026-11-12-local-models.md, owner's yes to Steps 0 and 1).
  * Each is pinned like Prettier: one exact revision on Hugging Face and the SHA-256 of every file, checked when the files
- * are fetched (scripts/fetch-local-models.ts) and again when they load. An upgrade is a new entry with its own
+ * are fetched (scripts/fetch-local-models.mts) and again when they load. An upgrade is a new entry with its own
  * side-by-side check. Only licences that allow business use (MIT, Apache 2.0).
  */
 export type LocalModel = {

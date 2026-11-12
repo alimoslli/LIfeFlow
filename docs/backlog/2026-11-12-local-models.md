@@ -2,7 +2,10 @@
 
 2026-11-12, LF Main, for the owner through the COO. Asked for by the owner: "write up the huggingface #1 proposal, let's make sure if we're finna replace the open ai api we do it right and ask the way through".
 
-Status: **Steps 0 and 1 approved** (owner via the COO, 2026-11-12: "yes to both"), with the ~12-call measuring run on the small model. Everything is behind switches that are off by default. Step 2 (on for the owner and the demo account) needs his next yes, with the comparison report. Every later step ends with a yes or no from the owner; nothing moves on, and nothing changes for users, without it.
+Status: **Steps 0 and 1 done (2026-11-12); the report is `docs/backlog/2026-11-12-local-models-report.md`.**
+- Memory picking wins and is built behind `LOCAL_MODEL_MEMORY`, off.
+- Tool choosing and purchase sorting lose to what we have, and stay as they are.
+- Step 2 (memory picking on for the owner and the demo account) needs his yes.
 
 ## In one line
 
@@ -178,4 +181,6 @@ Until a job passes its own tests and gets its own yes, OpenAI keeps doing it.
 ## What the owner has said
 
 - 2026-11-12: yes to Steps 0 and 1, and yes to the ~12-call run on the small model ("yes to both").
+- 2026-11-12: "go the hugging face", with a yes on the approval prompts for Hugging Face's hosts on the LifeFlow environment.
+  - The run needed 3 of the 12 calls, about $0.008.
 - Next: Step 2 comes back as its own yes or no, with the comparison report and its numbers.
