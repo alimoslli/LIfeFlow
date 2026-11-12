@@ -100,7 +100,7 @@ test("after setup, someone waiting lands on their place in line; the app stays c
   // The invite card sits at the bottom, after the line and the rules.
   const headings = await page.getByRole("heading", { level: 2 }).allTextContents();
   // The confirm card is a peer section, so its heading is an h2 too, and it comes first (it is the one thing to do here).
-  expect(headings).toEqual(["Confirm your email", "The front of the line", "How the line works", "Bring a friend, move up a spot."]);
+  expect(headings).toEqual(["Confirm your email", "The front of the line", "How the line works", "Bring a friend, move up a spot.", "See how your sky works"]);
 
   // The confirm card: with no email service in the test run, "Send code" answers plainly; a wrong code says so.
   const card = page.getByRole("region", { name: "Confirm your email" });

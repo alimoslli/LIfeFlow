@@ -32,8 +32,11 @@ export function DayClock({
   companion,
   open,
   clash = false,
+  example,
   children,
 }: {
+  /** A made-up example (waitlist explainer): fixed "now", cards are read-only, nothing can be pinned, edited or opened, no refresh. */
+  example?: { now: number };
   data: ClockData;
   /** Today's note is a clash: after its hello, the skyling looks surprised for a moment. */
   clash?: boolean;
@@ -62,6 +65,7 @@ export function DayClock({
     return () => (window.clearTimeout(t), window.clearTimeout(later));
   }, [clash]);
   const router = useRouter();
+  const exampleNow = example?.now;
   const first = useRef(data);
   // Where a new pin goes (minutes from the start of today), while its sheet is open.
   const [pinAt, setPinAt] = useState<number | null>(null);
@@ -77,9 +81,9 @@ export function DayClock({
     const sky = createSky(root, reduced);
     engine.current = createDayClock(root, first.current, {
       sky: sky.draw,
-      onOpen: (href) => router.push(href),
-      onNewDay: () => router.refresh(),
-      onPin: ({ start }) => setPinAt(start),
+      onOpen: (href) => exampleNow == null && router.push(href),
+      onNewDay: () => exampleNow == null && router.refresh(),
+      onPin: ({ start }) => exampleNow == null && setPinAt(start),
       // Done right on the card: the same actions as To-dos and School; the line refreshes in place.
       onDone: async (it, at) => {
         if (!it.ref) return;
@@ -99,6 +103,7 @@ export function DayClock({
         else router.push(it.href);
       },
       reducedMotion: reduced,
+      example: exampleNow == null ? undefined : { now: exampleNow },
     });
     // Diagnostics only (?debug=1): hold the motion at any point, for looking at it frame by frame.
     if (new URLSearchParams(window.location.search).get("debug") === "1")
@@ -115,7 +120,7 @@ export function DayClock({
       engine.current?.destroy();
       engine.current = null;
     };
-  }, [router]);
+  }, [router, exampleNow]);
 
   useEffect(() => {
     if (data !== first.current) engine.current?.update(data);
@@ -160,8 +165,8 @@ export function DayClock({
         </div>
         <div data-dc="detail" className="dc-detail" aria-live="polite" />
         {/* Pin anything: here, or tap any empty spot on the line. Hidden while a card is open (CSS). */}
-        <div data-dc="pinbar" className="dc-pinbar">
-          <button type="button" onClick={() => setPinAt(engine.current?.pinTime() ?? 0)}>
+        <div data-dc="pinbar" className="dc-pinbar" hidden={!!example} style={example ? { display: "none" } : undefined}>
+          <button type="button" tabIndex={example ? -1 : undefined} onClick={() => setPinAt(engine.current?.pinTime() ?? 0)}>
             <PixelIcon name="plus" className="h-4 w-4" aria-hidden />
             Pin something
           </button>
