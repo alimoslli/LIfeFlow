@@ -428,6 +428,13 @@
       "when": 1798300000000,
       "tag": "0064_email_verified",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1798500000000,
+      "tag": "0066_ai_usage",
+      "breakpoints": true
     }
   ]
 }

@@ -17,6 +17,7 @@ export function modelPrices(): ModelPrices {
     inputPerMTok: e.JARVIS_PRICE_INPUT_PER_MTOK,
     cachedInputPerMTok: e.JARVIS_PRICE_CACHED_INPUT_PER_MTOK,
     outputPerMTok: e.JARVIS_PRICE_OUTPUT_PER_MTOK,
+    forModel: e.JARVIS_PRICE_MODEL ?? e.OPENAI_MODEL,
   };
 }
 
@@ -27,6 +28,7 @@ export function smallModelPrices(): ModelPrices {
     inputPerMTok: e.JARVIS_PRICE_SMALL_INPUT_PER_MTOK,
     cachedInputPerMTok: e.JARVIS_PRICE_SMALL_CACHED_INPUT_PER_MTOK,
     outputPerMTok: e.JARVIS_PRICE_SMALL_OUTPUT_PER_MTOK,
+    forModel: e.JARVIS_PRICE_SMALL_MODEL ?? e.OPENAI_MODEL_SMALL,
   };
 }
 

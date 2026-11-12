@@ -3,7 +3,13 @@ import { jarvisRuns, type JarvisRunOutcome } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import type { TokenUsage } from "./providers/types";
 
-export type ModelPrices = { inputPerMTok?: number; cachedInputPerMTok?: number; outputPerMTok?: number };
+export type ModelPrices = {
+  inputPerMTok?: number;
+  cachedInputPerMTok?: number;
+  outputPerMTok?: number;
+  /** The model these prices were copied for. A different running model has an unknown cost, never a wrong one. */
+  forModel?: string;
+};
 
 export function addUsage(a: TokenUsage | null, b: TokenUsage | undefined): TokenUsage | null {
   if (!b) return a;

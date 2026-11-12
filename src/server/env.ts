@@ -56,6 +56,20 @@ const schema = z.object({
   JARVIS_PRICE_SMALL_INPUT_PER_MTOK: optionalNumber,
   JARVIS_PRICE_SMALL_CACHED_INPUT_PER_MTOK: optionalNumber,
   JARVIS_PRICE_SMALL_OUTPUT_PER_MTOK: optionalNumber,
+  /**
+   * The model each set of prices was copied for (ADR 0034). When the running model differs, its cost is unknown instead of
+   * mispriced. Unset: the prices belong to OPENAI_MODEL / OPENAI_MODEL_SMALL as configured.
+   */
+  JARVIS_PRICE_MODEL: z
+    .string()
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  JARVIS_PRICE_SMALL_MODEL: z
+    .string()
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  /** The provider's fee in US dollars per 1,000 web searches. Unset: a search's cost is unknown (never guessed). */
+  JARVIS_PRICE_WEB_SEARCH_PER_1K_CALLS: optionalNumber,
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
 

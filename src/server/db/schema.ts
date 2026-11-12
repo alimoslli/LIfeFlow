@@ -1738,6 +1738,57 @@ export const jarvisRuns = pgTable(
   (t) => [index("jarvis_runs_user_created_idx").on(t.userId, t.createdAt), index("jarvis_runs_conversation_idx").on(t.conversationId), ownerPolicy()],
 );
 
+export type AiFeature = "chat" | "sms" | "voice" | "web_search" | "document" | "tidy";
+export type AiState = "held" | "settled" | "expired" | "failed";
+export type AiUsageFrom = "provider" | "server_clock" | "browser";
+
+/**
+ * One row per paid AI use (migration 0066; ADR 0034): a chat or text turn, a voice call, a web search, a document read or a
+ * tidying batch. Numbers only: no prompts, queries, file or vendor names, phone numbers or error text. `cost_micros` is empty (never 0)
+ * when the cost isn't known (no price set, a model the prices weren't copied for, or no usage reported). It outlives its chat
+ * (`conversation_id` is set null when a chat is deleted), so deleting a chat never resets an allowance.
+ */
+export const aiUsage = pgTable(
+  "ai_usage",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    createdAt: createdAt(),
+    settledAt: tstz("settled_at"),
+    feature: text("feature").$type<AiFeature>().notNull(),
+    /** Which entrance it came through (chat_route, sms_inbound, voice_session, chat_tool, savings_check, cancel_help, upload, email_in, gmail_filing, plaid_sync, tidy_button...). */
+    door: text("door").notNull(),
+    provider: text("provider").notNull(),
+    model: text("model"),
+    state: text("state").$type<AiState>().notNull().default("settled"),
+    conversationId: uuid("conversation_id").references(() => conversations.id, { onDelete: "set null" }),
+    runId: uuid("run_id"),
+    parentId: uuid("parent_id"),
+    holdId: uuid("hold_id"),
+    inputTokens: integer("input_tokens"),
+    cachedInputTokens: integer("cached_input_tokens"),
+    outputTokens: integer("output_tokens"),
+    reasoningTokens: integer("reasoning_tokens"),
+    searchCalls: integer("search_calls"),
+    seconds: integer("seconds"),
+    steps: integer("steps"),
+    /** Who reported the numbers: the provider, our own clock, or the browser (browser numbers never lower a charge). */
+    usageFrom: text("usage_from").$type<AiUsageFrom>(),
+    /** Measured cost in millionths of a dollar; null = unknown. */
+    costMicros: bigint("cost_micros", { mode: "number" }),
+    /** Which configured price set priced it (a model name), null when unpriced. */
+    priceKey: text("price_key"),
+    /** What counted against allowances: the measured cost, else the estimate set aside, else null. */
+    countedMicros: bigint("counted_micros", { mode: "number" }),
+  },
+  (t) => [
+    index("ai_usage_user_created_idx").on(t.userId, t.createdAt),
+    index("ai_usage_user_feature_idx").on(t.userId, t.feature, t.createdAt),
+    index("ai_usage_hold_idx").on(t.holdId),
+    ownerPolicy(),
+  ],
+);
+
 /**
  * A live voice call the server started (migration 0062): created when the one-time client secret is issued, bound to the user and the
  * conversation, short expiry. Tool calls from the browser are accepted only for a live row of their own user and conversation.
