@@ -1,10 +1,10 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useLayoutEffect, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useSyncExternalStore } from "react";
 import { useShell } from "@/components/shell/app-shell";
 import { useNewDay } from "@/components/jarvis/use-new-day";
-import { currentChat, forgetChat, rememberChat, settleNewVisit, takeNewVisit } from "@/lib/chat-session";
+import { currentChat, forgetChat, joinNewVisit, onChatChanged, rememberChat, settleNewVisit, takeNewVisit } from "@/lib/chat-session";
 import { setAiConsentAction } from "@/app/(app)/settings/actions";
 import { undoChatToolsAction } from "@/app/(app)/jarvis/actions";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
@@ -74,6 +74,8 @@ export function TodayOwner({ userId }: { userId: string }) {
   useLayoutEffect(() => {
     if (state.tz !== tz) set({ tz });
   }, [tz]);
+  // another window changed the app's chat: this bar carries on that one
+  useEffect(() => onChatChanged(() => set({ conversationId: currentChat(tz) })), [tz]);
   // a chat is one day's: when the day changes while Today is open, the next message starts another
   useNewDay(tz, () => {
     forgetChat();
@@ -372,9 +374,19 @@ export function TodayMiddle({
   const { reply } = useTodayChat();
   // the chat this visit is in, read from the cookie (lib/chat-session.ts): a new visit starts without one
   const { tz } = useShell();
-  useLayoutEffect(() => {
-    set({ conversationId: takeNewVisit() ? null : currentChat(tz) });
-    settleNewVisit();
+  // the bar carries on the app's chat; a new window joins the open chat or starts fresh (lib/chat-session.ts)
+  useEffect(() => {
+    let alive = true;
+    const fresh = takeNewVisit();
+    void (async () => {
+      if (fresh) await joinNewVisit();
+      if (!alive) return;
+      settleNewVisit();
+      set({ conversationId: currentChat(tz) });
+    })();
+    return () => {
+      alive = false;
+    };
   }, [tz]);
   const refresh = () => router.refresh();
   if (reply) return <TodayReplyCard name={name} refresh={refresh} fill />;

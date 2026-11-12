@@ -275,6 +275,9 @@ function lineHitsBox(x1: number, y1: number, x2: number, y2: number, l: number, 
 }
 const overlaps = (a: Tile, x: number, y: number, w: number, h: number) => Math.abs(a.x - x) < (a.w + w) / 2 + 6 && Math.abs(a.y - y) < (a.h + h) / 2 + 6;
 
+/** The poses that still move with reduced motion: its reactions to the page (owner, 2026-11-12). */
+const REACTIONS = new Set<string>(["wave", "think", "surprised"]);
+
 export function createSky(root: HTMLElement, reduce: boolean) {
   const svgQ = root.querySelector<SVGSVGElement>("[data-dc=dome]");
   const whoQ = root.querySelector<HTMLCanvasElement>("[data-dc=who]");
@@ -439,35 +442,38 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         floating && cv === who,
       );
   };
-  // it jogs in place (a frame about every 180 ms, never with reduced motion); asleep it breathes slowly; at rest it blinks
+  // it jogs in place (a frame about every 180 ms); asleep it breathes slowly; at rest it blinks. With reduced motion only its
+  // reactions move, a cheer and the page's moments (owner, 2026-11-12: "i want the reactions ... that's not enough motion")
   let tick = 0;
-  const timer = reduce
-    ? 0
-    : window.setInterval(() => {
-        if (document.hidden) return;
-        tick++;
-        const cheering = performance.now() < cheerUntil;
-        const next = pickPose();
-        if (next !== pose) {
-          pose = next;
-          step = 0;
-          paintWho();
-          return;
-        }
-        // a page turns, a sip, a thought about every second; a wave quicker
-        if (!cheering && pose !== "walk" && pose !== "idle" && pose !== "sleep" && pose !== "celebrate" && tick % (pose === "wave" ? 2 : 6)) return;
-        if (!cheering && pose === "sleep" && tick % 6) return;
-        if (!cheering && pose === "idle") {
-          // a blink every few seconds
-          const blink = tick % 19 === 0;
-          if (blink === (step % 2 === 1)) return;
-          step = blink ? 1 : 0;
-        } else if (!cheering) step++;
-        paintWho();
-      }, 180);
+  const timer = window.setInterval(() => {
+    if (document.hidden) return;
+    tick++;
+    const cheering = performance.now() < cheerUntil;
+    const next = pickPose();
+    if (next !== pose) {
+      pose = next;
+      step = 0;
+      paintWho();
+      return;
+    }
+    if (reduce && !cheering && !REACTIONS.has(pose)) {
+      // still again once a cheer is over
+      if (who.dataset.pose !== pose) paintWho();
+      return;
+    }
+    // a page turns, a sip, a thought about every second; a wave quicker
+    if (!cheering && pose !== "walk" && pose !== "idle" && pose !== "sleep" && pose !== "celebrate" && tick % (pose === "wave" ? 2 : 6)) return;
+    if (!cheering && pose === "sleep" && tick % 6) return;
+    if (!cheering && pose === "idle") {
+      // a blink every few seconds
+      const blink = tick % 19 === 0;
+      if (blink === (step % 2 === 1)) return;
+      step = blink ? 1 : 0;
+    } else if (!cheering) step++;
+    paintWho();
+  }, 180);
   /** Something was done, or a visitor came: the skyling cheers (arms up, a jump) for a moment. */
   const cheer = (ms = 1200) => {
-    if (reduce) return;
     cheerFrom = performance.now();
     cheerUntil = cheerFrom + ms;
     paintWho();
@@ -548,7 +554,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     }
     const nextKey = skylingAt(vm, rise, set);
     if (nextKey !== viewKey) {
-      // the next one hops in (a cheer is skipped under reduced motion)
+      // the next one hops in
       const swapped = root.dataset.companion === SKY_CHOICE && root.dataset.skylingNow != null;
       viewKey = nextKey;
       if (swapped) cheer(700);
@@ -1051,7 +1057,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     if (last) draw(last);
   };
   window.addEventListener("resize", onResize);
-  // the page says what it's doing (waving, thinking, surprised): show it now, not at the next tick (no timer with reduced motion)
+  // the page says what it's doing (waving, thinking, surprised): show it now, not at the next tick
   const offDoes = onSkylingDoes(() => {
     const next = pickPose();
     if (next === pose) return;

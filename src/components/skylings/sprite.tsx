@@ -15,7 +15,8 @@ const HOP = 8; // two hops
 
 /**
  * A skyling that's alive: it blinks now and then, walks while `busy`, sleeps when `sleeping`, and hops when tapped or
- * when the page cheers (`cheerSkylings`). Still under reduced motion. Decorative; the words around it name it.
+ * when the page cheers (`cheerSkylings`). With reduced motion it stands still, but its reactions (a cheer, a wave, a thought)
+ * still play (owner, 2026-11-12). Decorative; the words around it name it.
  */
 export function SkylingSprite({
   companion,
@@ -39,9 +40,15 @@ export function SkylingSprite({
   const [hopAt, setHopAt] = useState<number | null>(null);
   const hopping = hopAt !== null && tick - hopAt < HOP;
 
+  // with reduced motion the clock only runs during a reaction, so it plays and then stops (it used to stay mid-jump)
+  const reacting = useRef(false);
   useEffect(() => {
-    if (still || prefersReducedMotion()) return;
-    const id = window.setInterval(() => setTick(++tickRef.current), TICK);
+    if (still) return;
+    const reduced = prefersReducedMotion();
+    const id = window.setInterval(() => {
+      if (reduced && !reacting.current) return;
+      setTick(++tickRef.current);
+    }, TICK);
     return () => window.clearInterval(id);
   }, [still]);
 
@@ -56,6 +63,10 @@ export function SkylingSprite({
   useEffect(() => (still ? undefined : onSkylingDoes(() => redraw((n) => n + 1))), [still]);
   const doing = still ? null : skylingDoing();
 
+  const isReacting = hopping || !!doing;
+  useEffect(() => {
+    reacting.current = isReacting;
+  }, [isReacting]);
   let pose: Pose = "idle";
   let frame = tick > 0 && tick % 26 === 0 ? 1 : 0;
   if (hopping) {

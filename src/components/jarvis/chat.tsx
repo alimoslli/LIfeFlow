@@ -5,11 +5,11 @@ import Link from "next/link";
 import { NotifyAsk } from "./notify-ask";
 import { ASK_EVENT, takeHandoff, type AskDetail } from "@/lib/ask-handoff";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, useTransition, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition, type CSSProperties } from "react";
 import { useAppBusy } from "@/lib/app-busy";
 import { Plug, Brain, CircleAlert, ImageIcon, Loader2, Square } from "lucide-react";
 import { useAutoGrow } from "@/components/ui/auto-grow";
-import { currentChat, pageIsStale, rememberChat, settleNewVisit, takeNewVisit } from "@/lib/chat-session";
+import { adoptPageChat, chatChangedAt, currentChat, joinNewVisit, onChatChanged, rememberChat, settleNewVisit, takeNewVisit } from "@/lib/chat-session";
 import { SkyHome, homeHeight } from "@/components/skylings/sky-home";
 import type { SkyCounts } from "@/lib/sky-home";
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
@@ -69,9 +69,12 @@ const ACCEPT =
   "application/pdf,.pdf,image/png,image/jpeg,image/webp,image/gif,text/plain,text/csv,text/markdown,application/json,.md,.csv,.txt,.docx,.pptx," +
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation";
 
+// one empty list for every render without messages, so a new page (not a re-render) is what changes the reference
+const NO_MESSAGES: UiMessage[] = [];
+
 export function JarvisChat({
   conversationId: initialId,
-  initialMessages = [],
+  initialMessages = NO_MESSAGES,
   module,
   availability,
   compact,
@@ -82,6 +85,7 @@ export function JarvisChat({
   ideas,
   startVoice,
   home,
+  pageVersion,
 }: {
   conversationId?: string | null;
   initialMessages?: UiMessage[];
@@ -100,6 +104,8 @@ export function JarvisChat({
   ideas?: IdeaCloud[];
   /** The skyling's cloud in its window (the skyling's own page), with its stars and suns. */
   home?: SkyCounts;
+  /** The id of the server render this chat was given (the page's, page.tsx): a new render is the only answer to a resync. */
+  pageVersion?: string;
 }) {
   const router = useRouter();
   const { assistantName, aiConsent, tz, skyling } = useShell();
@@ -110,34 +116,80 @@ export function JarvisChat({
   const [busy, setBusy] = useState(false);
   // set once the visit's chat is settled (below), so a question sent on mount is sent into the right chat
   const [settled, setSettled] = useState(false);
-  // A new visit (the app was closed) starts without the chat from before, which stays in the list (lib/chat-session.ts).
-  // This runs before the first paint, so the old messages never show. A deep link (?c=) keeps its chat. A page shown again
-  // from the browser's copy (back or forward) is rendered again when it's behind the chat this visit is in (pageIsStale).
-  useLayoutEffect(() => {
+  // A reply that changed data refreshes the page. In a new conversation that refresh also moves to /jarvis/<id>, and the
+  // page keys this chat by conversation, so it is rebuilt when the refresh lands. Until then nothing can be typed or
+  // sent here, or it would be wiped with the old chat.
+  const [refreshing, startRefresh] = useTransition();
+  // The skyling's chat in this window is the app's chat, which the browser keeps (lib/chat-session.ts). A new window joins the
+  // open chat or starts fresh, and its chat stays hidden until that's decided, so an old chat never shows. A deep link (?c=)
+  // opens its chat, and the address drops it once it's open.
+  // A refresh this window asks for renders the page again. That page is the server's view of the browser's chat, and this
+  // window adopts it (the effect below) unless the browser's chat changed after the refresh was asked for.
+  const resyncing = useRef<{ asked: number; from: string | undefined } | null>(null);
+  const resync = useCallback(() => {
+    resyncing.current = { asked: Date.now(), from: pageVersion };
+    startRefresh(() => router.refresh());
+  }, [router, pageVersion]);
+  useEffect(() => {
+    let alive = true;
     const fresh = takeNewVisit();
     const deepLink = new URLSearchParams(window.location.search).get("c");
-    settleNewVisit();
-    if (fresh && !deepLink) {
-      setConversationId(null);
-      setMessages([]);
-    } else if (deepLink && initialId) rememberChat(initialId);
-    else if (!fresh && pageIsStale(initialId ?? null, tz)) {
-      // the page is rendered again with the chat this visit is in; this component is rebuilt with it, and settles then
-      router.refresh();
-      return;
-    }
-    setSettled(true);
+    void (async () => {
+      const joinedOpen = fresh ? await joinNewVisit() : true;
+      if (!alive) return;
+      const linked = !!(deepLink && initialId);
+      if (linked) {
+        rememberChat(initialId);
+        if (!compact) window.history.replaceState(null, "", "/jarvis");
+      }
+      const blank = fresh && !joinedOpen && !linked;
+      if (blank) {
+        setConversationId(null);
+        setMessages([]);
+      }
+      settleNewVisit();
+      if (!blank && currentChat(tz) !== (initialId ?? null)) {
+        resync();
+        return;
+      }
+      setSettled(true);
+    })();
+    return () => {
+      alive = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialId]);
+  // A page rendered again for a refresh this window asked for is the server's view of the browser's chat, and this window
+  // adopts it, unless the browser's chat changed after the refresh was asked for (a newer refresh is on its way). Only a new
+  // server render counts (its version): the router can commit the page it already had again, and adopting that copy would take
+  // the chat it was rendered with, which is how a chat was let go on going back to the skyling page.
+  useEffect(() => {
+    const want = resyncing.current;
+    if (!want || want.from === pageVersion) return;
+    resyncing.current = null;
+    if (chatChangedAt() <= want.asked) adoptPageChat(initialId ?? null, tz);
+    setSettled(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageVersion]);
+  // another window changed the app's chat: this window renders it again, after a reply in flight
+  const busyRef = useRef(false);
+  const laterRefresh = useRef(false);
+  useEffect(() => {
+    busyRef.current = busy;
+  }, [busy]);
+  useEffect(
+    () =>
+      onChatChanged(() => {
+        if (busyRef.current) laterRefresh.current = true;
+        else resync();
+      }),
+    [resync],
+  );
   // the skyling thinks while it works on your answer (owner, 2026-11-11)
   useEffect(() => {
     if (busy) skylingDoes("think");
     else if (skylingDoing() === "think") skylingDoes(null);
   }, [busy]);
-  // A reply that changed data refreshes the page. In a new conversation that refresh also moves to /jarvis/<id>, and the
-  // page keys this chat by conversation, so it is rebuilt when the refresh lands. Until then nothing can be typed or
-  // sent here, or it would be wiped with the old chat.
-  const [refreshing, startRefresh] = useTransition();
   const [pending, setPending] = useState<(UiAttachment & { uploading?: boolean; error?: string })[]>([]);
   const [lastTool, setLastTool] = useState<string | null>(null);
   // a reply streaming or a file attached but not sent: an app update waits (components/pwa/app-updater.tsx)
@@ -269,7 +321,6 @@ export function JarvisChat({
       setConversationId(snap.conversationId);
       if (aliveRef.current) rememberChat(snap.conversationId);
       onConversation?.(snap.conversationId, snap.title);
-      if (!compact) window.history.replaceState(null, "", `/jarvis?c=${snap.conversationId}`);
     }
     const last = snap.messages.at(-1);
     if (last?.role === "assistant" && last.tools.some((t) => t.status === "ok")) startRefresh(() => router.refresh());
@@ -336,6 +387,13 @@ export function JarvisChat({
     const message = text.trim();
     const ready = again ? again.attachments : pending.filter((p) => !p.uploading && !p.error);
     if ((!message && !ready.length) || busy || refreshing || !availability.available) return;
+    // the message goes into the chat the browser says is the app's: a window that shows another one shows that one first, and
+    // the message waits in the box until it does
+    if (!again && currentChat(tz) !== (conversationId ?? null)) {
+      setInput(text);
+      resync();
+      return;
+    }
     setInput("");
     setPending([]);
     setBusy(true);
@@ -411,7 +469,6 @@ export function JarvisChat({
                 if (aliveRef.current) {
                   rememberChat(ev.id);
                   onConversation?.(ev.id, ev.title);
-                  if (!compact) window.history.replaceState(null, "", `/jarvis?c=${ev.id}`);
                 }
               }
               break;
@@ -475,10 +532,12 @@ export function JarvisChat({
       updateAssistant((a) => void (a.streaming = false));
       setBusy(false);
       abortRef.current = null;
-      if (mutated) {
+      // a window that New chat has left behind doesn't refresh the page the new chat is in
+      if (aliveRef.current && (mutated || laterRefresh.current)) {
         // their skyling hops: something got done
-        cheerSkylings();
-        startRefresh(() => router.refresh());
+        if (mutated) cheerSkylings();
+        laterRefresh.current = false;
+        resync();
       }
     }
   }
@@ -792,7 +851,6 @@ export function JarvisChat({
                 setConversationId(id);
                 if (aliveRef.current) rememberChat(id);
                 onConversation?.(id, `Talking with ${assistantName}`);
-                if (!compact) window.history.replaceState(null, "", `/jarvis?c=${id}`);
               }}
               onLine={(role, text) =>
                 setMessages((m) => [

@@ -30,6 +30,7 @@ export function JarvisPage({
   ideas,
   voice,
   home,
+  version,
 }: {
   conversations: Conv[];
   activeId: string | null;
@@ -45,6 +46,8 @@ export function JarvisPage({
   voice?: boolean;
   /** The skyling's cloud: its stars and suns. */
   home?: SkyCounts;
+  /** This server render's id (page.tsx). */
+  version: string;
 }) {
   const status = jarvisStatus();
   const items = conversations.map((c) => ({ id: c.id, title: c.title, when: formatIn(c.lastMessageAt, tz, "MMM d") }));
@@ -99,6 +102,7 @@ export function JarvisPage({
         <div className="min-h-0 flex-1">
           <ChatHost
             key={activeId ?? "new"}
+            pageVersion={version}
             conversationId={activeId}
             initialMessages={messages}
             initialPrompt={ask}

@@ -7,7 +7,7 @@ test("talking happens inside the chat: no call screen, same conversation, and a 
   const email = await signUp(page, "Voice Vee");
   await page.goto("/jarvis");
   await askJarvis(page, "hello there");
-  await expect(page).toHaveURL(/\/jarvis\?c=[0-9a-f-]{36}$/);
+  await expect(page).toHaveURL(/\/jarvis$/);
   const chatUrl = page.url();
 
   await page.getByRole("button", { name: "Talk to Ray" }).click();
@@ -20,7 +20,8 @@ test("talking happens inside the chat: no call screen, same conversation, and a 
   await expect(page.getByLabel(COMPOSER)).toBeVisible();
   // Still the same chat, and the call was recorded in that conversation (no content).
   expect(page.url()).toBe(chatUrl);
-  const conversationId = new URL(chatUrl).searchParams.get("c");
+  // the chat this window is in is the latest one of the person's (the address doesn't carry it)
+  const [{ id: conversationId }] = await queryAsUser<{ id: string }>(email, "select id from conversations order by last_message_at desc limit 1");
   await expect
     .poll(
       async () =>

@@ -10,6 +10,7 @@ import { openSettings, SettingsSheet } from "@/components/settings/settings-shee
 import { EverythingSheet, openEverything } from "./everything-sheet";
 import { cn } from "@/lib/utils";
 import { isChatPage } from "@/lib/app-routes";
+import { holdWindow } from "@/lib/chat-session";
 import { ASK_EVENT, handOff, type AskDetail } from "@/lib/ask-handoff";
 import { assistantLabel, nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
 import { isActive, tabsFor } from "./nav-items";
@@ -95,6 +96,10 @@ export function AppShell({
   const pathname = usePathname();
   const tabs = tabsFor(areas);
   const router = useRouter();
+  // this window is one of the app's open windows (a new window joins the open chat, lib/chat-session.ts)
+  useEffect(() => {
+    holdWindow();
+  }, []);
   // Keep every tab warm: after each move (and after a save clears the cache) prefetch the tabs again when idle,
   // so switching tabs opens a ready page instead of a skeleton. The chat page is the one tab never prefetched (isChatPage).
   const tabHrefs = tabs

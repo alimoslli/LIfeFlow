@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { prefersReducedMotion } from "@/components/motion/gsap";
 import { isSplashActive, onSplashEnd } from "@/components/motion/intro";
 import { skylingDoes } from "@/components/skylings/activity";
+import { SKYLINGS_CHEER } from "@/components/skylings/night";
 import { celebrate, hop } from "@/components/motion/burst";
 import type { ClockData } from "@/lib/day-clock";
 import type { TodayMode } from "@/lib/theme";
@@ -45,9 +46,9 @@ export function DayClock({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const engine = useRef<DayClockHandle | null>(null);
-  // the skyling says hello when you come (after the opening screen), and looks surprised at a clash (owner, 2026-11-11)
+  // the skyling says hello when you come (after the opening screen), and looks surprised at a clash (owner, 2026-11-11), with
+  // reduced motion too (owner, 2026-11-12: "i want the reactions ... that's not enough motion")
   useEffect(() => {
-    if (prefersReducedMotion()) return;
     let later = 0;
     const hello = () => {
       skylingDoes("wave", 2400);
@@ -105,7 +106,11 @@ export function DayClock({
         seek: (p) => engine.current?.seek(p),
         visit: sky.visit,
       };
+    // anything that cheers the skylings (a claimed star, a save from the bar) makes the one on the sky jump for joy too
+    const onCheer = () => sky.cheer();
+    window.addEventListener(SKYLINGS_CHEER, onCheer);
     return () => {
+      window.removeEventListener(SKYLINGS_CHEER, onCheer);
       sky.destroy();
       engine.current?.destroy();
       engine.current = null;

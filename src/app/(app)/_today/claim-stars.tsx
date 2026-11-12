@@ -4,6 +4,7 @@ import { celebrate, hop } from "@/components/motion/burst";
 import { STAR_FACES, STAR_LOOKS } from "@/components/motion/celebration-art";
 import { isSplashActive, onSplashEnd } from "@/components/motion/intro";
 import { MAX_STARS, moreLabel, runLabel, spokenStars } from "@/lib/stars";
+import { cheerSkylings } from "@/components/skylings/night";
 import { claimStarsAction } from "./actions";
 
 /** Time between stars: each one has landed and is floating off before the next jumps out. */
@@ -50,6 +51,7 @@ export function ClaimStars() {
         later(500 + i * GAP_MS, () => {
           // out of the skyling itself, so it has the sky above it to float into
           hop(document.querySelector('[data-testid="day-clock"] [data-dc="who"]'), 1);
+          cheerSkylings();
           celebrate(skylingAt(), "small", s.label, { who: starNo(i) });
         }),
       );

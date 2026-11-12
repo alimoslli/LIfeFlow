@@ -8,6 +8,7 @@ import { createCourse, createAssignment, updateAssignment } from "@/server/servi
 import { SUNS_A_DAY, TICK_STARS_A_DAY, awardStar, skyCounts } from "@/server/services/sky-home";
 import { createTask, updateTask } from "@/server/services/tasks";
 import { unlocked } from "@/lib/sky-home";
+import { localDateOf } from "@/lib/dates";
 import { makeUser, TZ } from "../helpers";
 
 afterAll(closeDb);
@@ -57,7 +58,8 @@ describe("stars and suns for the skyling's cloud", () => {
 
   it("a milestone that just happened is a sun; last year's or an import's is not; deleting takes it back; two a day at most", async () => {
     const { run } = await makeUser();
-    const today = new Date().toISOString().slice(0, 10);
+    // the person's own today (New York): the UTC date is tomorrow there for five hours each night, and a milestone tomorrow hasn't happened
+    const today = localDateOf(new Date(), TZ);
     expect((await run((s) => createMilestone(s, { title: "Graduated", when: "2019" }))).sun).toBe(false);
     expect((await run((s) => createMilestone(s, { title: "First job", when: today }, "import"))).sun).toBe(false);
     const first = await run((s) => createMilestone(s, { title: "Ran a 5K", when: today }));

@@ -14,7 +14,7 @@ export type PoseInputs = {
   morning: boolean;
   /** what the page says it's doing (waving, thinking, surprised), or null */
   doing: Activity | null;
-  /** reduced motion: still frames, no timer */
+  /** reduced motion: it stands still, apart from its reactions */
   reduce: boolean;
   /** a slow count, a few seconds per step, for the morning stretch */
   tick: number;
@@ -24,12 +24,12 @@ export type PoseInputs = {
  * The skyling's pose, in order (owner, 2026-11-11: "show some love and attention to the skylings, their life in the app"):
  * the page's own moment first (waving when you come, thinking while your answer comes, surprised at a clash), then asleep
  * late at night, then the day (reading through a class, a mug on a shift, a stretch now and then in the morning), and
- * otherwise a walk. Turning the wheel makes it run. With reduced motion it stands still (its first frame) and the page's
- * moments are left out.
+ * otherwise a walk. Turning the wheel makes it run. With reduced motion it stands still (its first frame), but the page's
+ * moments still show (owner, 2026-11-12: "i want the reactions ... that's not enough motion").
  */
 export function choosePose(i: PoseInputs): Pose {
   // it wakes up to say hello or to think about your answer, even at night
-  if (i.follow && !i.moved && !i.reduce && i.doing) return i.doing;
+  if (i.follow && !i.moved && i.doing) return i.doing;
   if (i.sleep) return "sleep";
   if (!i.follow || i.moved) return i.reduce && !i.moved ? "idle" : "walk";
   if (i.live === "class") return "read";

@@ -16,12 +16,14 @@ export const metadata: Metadata = { title: "Skyling" };
 /**
  * A chat changes without a save (Today's bar and the chat send to the route, and the cookie moves), so this page is never
  * reused from the router's two-minute cache. Going back to it (the browser's back, or a swipe) can show the copy the browser
- * kept; the page is then rendered again when it's behind the chat this visit is in (JarvisChat, pageIsStale in lib/chat-session.ts).
+ * kept; the page is then rendered again when it's behind the browser's chat (JarvisChat resyncs, lib/chat-session.ts).
  */
 export const unstable_dynamicStaleTime = 0;
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ ask?: string; voice?: string; c?: string }> }) {
   const { ask, voice, c } = await searchParams;
+  // one id per server render: the chat adopts the page it was given only when a new render arrives (components/jarvis/chat.tsx)
+  const version = crypto.randomUUID();
   const { conversations, tz, connect, ideas, messages, activeId, home } = await withCurrentUser(async (s, u) => {
     const conversations = await listConversations(s);
     // A link (?c=) opens that chat, however old, when it's theirs; otherwise this app's chat (lib/chat-session.ts) opens here,
@@ -57,6 +59,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
       ideas={ideas}
       voice={voice === "1"}
       home={home}
+      version={version}
     />
   );
 }

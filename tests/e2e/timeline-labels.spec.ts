@@ -118,11 +118,11 @@ for (const size of [
         env: { ...process.env, DATABASE_URL: E2E_DB },
       });
       if (when !== "now") {
-        // the same day at another hour: the night's low line and the evening's line near the horizon
-        const d = new Date();
+        // the same day at another hour, in the account's own zone (the day clock reads that zone, not the browser's): the
+        // night's low line and the evening's line near the horizon
+        const { rows } = await pool.query<{ timezone: string }>("select timezone from users where email = $1", [email.toLowerCase()]);
         const [h, m] = when === "1:05 AM" ? [1, 5] : [20, 10];
-        d.setHours(h, m, 0, 0);
-        await page.clock.setFixedTime(d);
+        await page.clock.setFixedTime(localInstant(rows[0].timezone, h, m));
       }
       await page.goto("/");
       expect(await walkTheLine(page)).toEqual([]);

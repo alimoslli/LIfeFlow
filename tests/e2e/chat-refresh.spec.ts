@@ -17,7 +17,7 @@ test("a message sent right after a reply that changed data is never lost", async
   });
 
   await askJarvis(page, `/tool create_tasks {"tasks":[{"title":"Pack lunch"}]}`);
-  await expect(page).toHaveURL(/\/jarvis\?c=[0-9a-f-]{36}$/);
+  await expect(page).toHaveURL(/\/jarvis$/);
 
   // At once, like a quick typist: a plain question that changes nothing, so no second refresh can repair the screen.
   const box = page.getByLabel(COMPOSER);
