@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import type { SkyInsight } from "@/lib/sky-insights";
@@ -16,13 +16,16 @@ import { respondAction } from "@/app/(app)/jarvis/proactive-actions";
 import type { ActionState } from "@/server/actions";
 import { blockTimeAction, unblockTimeAction } from "./actions";
 
+/** How long a step just taken stays in view with its Undo before the next note shows. */
+const UNDO_MS = 8000;
+
 /**
  * Today's one note from the sky (lib/sky-insights; owner, 2026-11-12): what it noticed, why, and its one step done right
  * here (Block it, with Undo; a message's Do it; a question for the skyling). A storm (real trouble) wears the warning
  * ring. The Sunday review opens in a sheet with the whole look back and ahead.
  */
 export function SkyNote({
-  insight,
+  insight: current,
   name,
   review,
   layout,
@@ -40,7 +43,14 @@ export function SkyNote({
   const { openJarvis } = useShell();
   const ask = onAsk ?? ((prompt: string) => openJarvis(prompt, { send: true }));
   const [pending, start] = useTransition();
-  const [done, setDone] = useState<{ text: string; undo: () => Promise<ActionState> } | null>(null);
+  // what was just done stays in view with its Undo for a few seconds, even after the refresh brings the next note
+  const [done, setDone] = useState<{ insight: SkyInsight; text: string; undo: () => Promise<ActionState> } | null>(null);
+  useEffect(() => {
+    if (!done) return;
+    const t = window.setTimeout(() => setDone(null), UNDO_MS);
+    return () => window.clearTimeout(t);
+  }, [done]);
+  const insight = done?.insight ?? current;
   const [sheet, setSheet] = useState(false);
   const a = insight.action;
   const storm = insight.weather === "storm";
@@ -56,7 +66,7 @@ export function SkyNote({
         if (!r?.ok) return void toast(r?.error ?? "That didn't save. Try again.", { tone: "danger" });
         const id = r.undo!;
         cheerSkylings();
-        setDone({ text: r.message ?? "Blocked.", undo: () => unblockTimeAction(id) });
+        setDone({ insight, text: r.message ?? "Blocked.", undo: () => unblockTimeAction(id) });
         return router.refresh();
       }
       const r = await respondAction(a.messageId, "do");
@@ -64,7 +74,7 @@ export function SkyNote({
       if (a.href) return router.push(a.href);
       if (a.prompt) return ask(a.prompt);
       cheerSkylings();
-      setDone({ text: r.message ?? "Done.", undo: () => respondAction(a.messageId, "undo") });
+      setDone({ insight, text: r.message ?? "Done.", undo: () => respondAction(a.messageId, "undo") });
       router.refresh();
     });
   const undo = () =>
