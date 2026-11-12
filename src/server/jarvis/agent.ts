@@ -12,7 +12,9 @@ import { stopRequested } from "./stop";
 import { claimContinuation, turnStateOf, TURN_DEADLINE_MS } from "./turn-state";
 import { executeToolCall, serializeResult } from "./executor";
 import { selectMemories } from "./memory-retrieval";
-import { addUsage, errorKindOf, estimateCostMicros, recordRun, type ModelPrices } from "./metrics";
+import { addUsage, errorKindOf, recordRun, type ModelPrices } from "./metrics";
+import { priceTokens } from "../services/ai-prices";
+import { recordAiQuiet, type AiDoor } from "../services/ai-usage";
 import { routeSkills } from "./skills";
 import { buildSystemPrompt, PROMPT_VERSION } from "./prompt";
 import type { ModelProvider, TokenUsage } from "./providers/types";
@@ -76,6 +78,8 @@ export type TurnInput = {
   smallPrices?: ModelPrices;
   /** Money is behind the Face ID lock right now (see auth/money-lock). */
   moneyLocked?: boolean;
+  /** Which entrance this turn came through, for the usage record (chat_route by default; texts say sms_inbound). */
+  door?: AiDoor;
 };
 
 export function makeToolContext(user: SessionUser, conversationId: string, now = new Date(), userText = "", moneyLocked = false): ToolContext {
@@ -339,20 +343,22 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
     await run((s) => s.tx.update(conversations).set({ lastMessageAt: new Date() }).where(eq(conversations.id, conversation.id)));
   }
   let runId: string | null = null;
+  const usedModel = turn.model ?? provider.model;
+  const priced = priceTokens(usedModel, tally.usage, input.prices, input.smallPrices, provider.model);
   try {
     runId = await run((s) =>
       recordRun(s, {
         conversationId: conversation.id,
         messageId: finalMessageId,
         provider: provider.name,
-        model: turn.model ?? provider.model,
+        model: usedModel,
         promptVersion: PROMPT_VERSION,
         outcome,
         errorKind,
         latencyMs: performance.now() - started,
         firstTokenMs,
         ...tally,
-        costMicros: estimateCostMicros(tally.usage, (turn.model && turn.model !== provider.model ? input.smallPrices : input.prices) ?? {}),
+        costMicros: priced.costMicros,
         memoryIds: memories.map((x) => x.id),
         skills: skills.map((k) => k.name),
       }),
@@ -361,6 +367,21 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
     // Metrics must never break a turn the user already received.
     console.error("[jarvis] could not record run metrics", e);
   }
+  // The usage record (ADR 0034): one row per turn, written in its own short transaction, so it exists even if the run row could not be saved.
+  await recordAiQuiet({
+    userId: user.id,
+    feature: input.door === "sms_inbound" ? "sms" : "chat",
+    door: input.door ?? "chat_route",
+    provider: provider.name,
+    model: usedModel,
+    state: outcome === "error" ? "failed" : "settled",
+    conversationId: conversation.id,
+    runId,
+    usage: tally.usage,
+    steps: tally.steps,
+    costMicros: priced.costMicros,
+    priceKey: priced.priceKey,
+  });
   emit({ type: "done", messageId: finalMessageId, runId });
   return { conversationId: conversation.id, runId };
 }

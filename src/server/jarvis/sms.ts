@@ -7,6 +7,7 @@ import { setSms, smsDecision, userForPhone } from "../services/sms";
 import { runJarvisTurn } from "./agent";
 import { decidePendingAction } from "./decide";
 import type { ModelProvider } from "./providers/types";
+import type { ModelPrices } from "./metrics";
 import { isPro } from "../billing";
 import { aiAllowed } from "@/lib/ai-consent";
 
@@ -20,7 +21,7 @@ export async function answerText(
   db: Database,
   from: string,
   body: string,
-  deps: { provider: () => ModelProvider; send: (to: string, text: string) => Promise<unknown> },
+  deps: { provider: () => ModelProvider; send: (to: string, text: string) => Promise<unknown>; prices?: ModelPrices; smallPrices?: ModelPrices },
 ) {
   const userId = await userForPhone(db, from);
   if (!userId) return null;
@@ -84,6 +85,9 @@ export async function answerText(
         text: body.slice(0, 4000),
         provider: deps.provider(),
         moneyLocked,
+        door: "sms_inbound",
+        prices: deps.prices,
+        smallPrices: deps.smallPrices,
         emit: (e) => {
           if (e.type === "tool_start") text = ""; // one reply, not "let me check…" first
           if (e.type === "text") text += e.delta;

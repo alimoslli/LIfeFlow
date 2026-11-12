@@ -5,7 +5,7 @@ import { sendSms, smsConfig, validTwilioRequest } from "@/server/integrations/tw
 import { answerText } from "@/server/jarvis/sms";
 import { legalDetails } from "@/lib/legal";
 import { claimInboundSms, smsHelpText, smsKeyword, unlinkPhone, userForPhone } from "@/server/services/sms";
-import { getProvider } from "@/server/jarvis/providers";
+import { getProvider, modelPrices, smallModelPrices } from "@/server/jarvis/providers";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -51,9 +51,12 @@ export async function POST(req: Request) {
     return EMPTY;
   }
   after(() =>
-    answerText(getDb(), from, body, { provider: getProvider, send: (to, text) => sendSms(cfg, to, text) }).catch((e) =>
-      console.error("[sms] reply failed", e instanceof Error ? e.name : e),
-    ),
+    answerText(getDb(), from, body, {
+      provider: getProvider,
+      send: (to, text) => sendSms(cfg, to, text),
+      prices: modelPrices(),
+      smallPrices: smallModelPrices(),
+    }).catch((e) => console.error("[sms] reply failed", e instanceof Error ? e.name : e)),
   );
   return EMPTY;
 }
