@@ -254,6 +254,9 @@ type TurnRecord = {
   httpRetries: number;
   httpErrors: { status: number; message: string }[];
   uiError: string | null;
+  /** Every paid call of the turn, from its ai_usage rows (tokens and the app's own priced cost). */
+  calls: { model: string | null; inputTokens: number | null; cachedInputTokens: number | null; outputTokens: number | null; costMicros: number | null }[];
+  costMicros: number;
 };
 type RunRecord = {
   qid: string;
@@ -289,6 +292,26 @@ async function runModel(modelId: string) {
   ]);
   type Provider = InstanceType<typeof OpenAIProvider>;
   type Effort = Parameters<Provider["startTurn"]>[0]["effort"];
+
+  // Prices come from a file filled from the providers' pricing pages (never hard-coded); every call is priced by the app's own
+  // priceTokens into ai_usage. A hard cap over every model's run together (owner via the COO, 2026-11-12: stop above $5):
+  // a turn starts only while the total spent plus a turn's worst case stays under it.
+  const pricesFile = arg("prices");
+  const priceList = pricesFile
+    ? (JSON.parse(readFileSync(pricesFile, "utf8")) as Record<string, { inputPerMTok: number; cachedInputPerMTok: number; outputPerMTok: number }>)
+    : {};
+  const prices = priceList[cand.model] ? { ...priceList[cand.model], forModel: cand.model } : undefined;
+  if (!prices) console.log(`[${modelId}] no price for ${cand.model}: the cap counts its tokens at the dearest listed price`);
+  const dearest = Object.values(priceList).reduce((a, p) => ({ i: Math.max(a.i, p.inputPerMTok), o: Math.max(a.o, p.outputPerMTok) }), { i: 5, o: 30 });
+  const capMicros = Math.round(Number(arg("cap", "5")) * 1_000_000);
+  const turnWorstMicros = Math.round(Number(arg("turn-worst", "0.35")) * 1_000_000);
+  const spendFile = join(OUT, "spend.json");
+  const spent = (): number => (existsSync(spendFile) ? (JSON.parse(readFileSync(spendFile, "utf8")) as { micros: number }).micros : 0);
+  const addSpend = (micros: number) => {
+    mkdirSync(OUT, { recursive: true });
+    writeFileSync(spendFile, JSON.stringify({ micros: spent() + micros }));
+  };
+  const once = argv.includes("--once");
 
   const Qs = await questions();
   const only = arg("only")?.split(",");
@@ -424,12 +447,15 @@ async function runModel(modelId: string) {
       let answer = "";
       const t0 = performance.now();
       let runId: string | null = null;
+      if (spent() + turnWorstMicros > capMicros) throw new Error(`spend cap: $${(spent() / 1e6).toFixed(2)} spent, a turn could pass $${capMicros / 1e6}`);
+      const turnStart = ((await run((s) => s.tx.execute(sql`select now()::text as n`))).rows[0] as { n: string }).n;
       try {
         const r = await runJarvisTurn({
           user: st.session,
           conversationId,
           text,
           provider,
+          prices,
           now: EVAL_NOW,
           emit: (e) => {
             if (e.type === "text") {
@@ -463,6 +489,29 @@ async function runModel(modelId: string) {
             )
           ).rows as { tool_name: string; tool_args: unknown; status: string }[])
         : [];
+      const callRows = (
+        await run((s) =>
+          s.tx.execute(
+            sql`select model, input_tokens, cached_input_tokens, output_tokens, cost_micros from ai_usage where created_at >= ${turnStart}::timestamptz order by created_at, id`,
+          ),
+        )
+      ).rows as {
+        model: string | null;
+        input_tokens: number | null;
+        cached_input_tokens: number | null;
+        output_tokens: number | null;
+        cost_micros: string | number | null;
+      }[];
+      const calls = callRows.map((c) => ({
+        model: c.model,
+        inputTokens: c.input_tokens,
+        cachedInputTokens: c.cached_input_tokens,
+        outputTokens: c.output_tokens,
+        costMicros: c.cost_micros == null ? null : Number(c.cost_micros),
+      }));
+      // an unpriced call still counts against the cap, at the dearest listed price
+      const turnMicros = calls.reduce((a, c) => a + (c.costMicros ?? Math.round((c.inputTokens ?? 0) * dearest.i + (c.outputTokens ?? 0) * dearest.o)), 0);
+      addSpend(turnMicros);
       const toolRows = allToolRows.slice(seenTools);
       seenTools = allToolRows.length;
       // The 2nd turn of a follow-up shares the conversation: keep only tool rows after this turn started.
@@ -484,6 +533,8 @@ async function runModel(modelId: string) {
         httpRetries: Math.max(0, stats.requests - ((runRow?.steps as number) ?? stats.requests)),
         httpErrors: [...stats.errors],
         uiError,
+        calls,
+        costMicros: turnMicros,
       });
     }
     const after = await snapshot();
@@ -517,7 +568,7 @@ async function runModel(modelId: string) {
     const tag = (r: RunRecord) =>
       `${r.failed ? "FAIL" : "ok  "} tools=${r.turns.flatMap((t) => t.tools.map((x) => x.name)).join(",") || "-"} ttft=${Math.round(r.turns[0].firstTokenMs ?? -1)}ms total=${Math.round(r.turns.reduce((a, t) => a + t.totalMs, 0))}ms ${r.failed ? JSON.stringify({ ...r.checks, errs: r.turns.map((t) => t.errorKind ?? t.uiError) }) : ""}${r.dirtyAfterCleanup.length ? " DIRTY:" + r.dirtyAfterCleanup : ""}`;
     console.log(`[${modelId}] ${q.id} #1 ${tag(rec)}`);
-    if (rec.failed) {
+    if (rec.failed && !once) {
       rec = await attempt(q, 2);
       results.push(rec);
       console.log(`[${modelId}] ${q.id} #2 ${tag(rec)}`);
