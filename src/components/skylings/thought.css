@@ -338,3 +338,15 @@ html:has([data-lf-tour]) .lf-idea-stack {
     flex-shrink: 0;
   }
 }
+/* on a laptop the label and the dots sit on the sky beside the wheel: they take the sky's own ink (day-clock.css data-ink),
+   light on a deep sky and dark on a pale one, so they read in both themes */
+.dc[data-ink] .lf-thought-who {
+  color: var(--dc-ink);
+  opacity: 0.85;
+}
+.dc[data-ink="light"] .lf-thought-who {
+  text-shadow: 0 1px 10px rgb(8 20 40 / 0.4);
+}
+.dc[data-ink] .lf-idea-dots i {
+  background: var(--dc-ink);
+}
