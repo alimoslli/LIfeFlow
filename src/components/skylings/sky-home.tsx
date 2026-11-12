@@ -154,13 +154,18 @@ export function SkyHome({ counts, skyling, name }: { counts: SkyCounts; skyling?
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={`${countLine(counts)} Open ${name}'s cloud`}
         className="lf-chip-night absolute top-3 left-3 z-20 flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-[0.8125rem] font-semibold"
       >
+        {/* the name is read from what's shown, so it holds the visible numbers (a11y-phone: label-content-name-mismatch) */}
         <Icon art={STAR_ICON} className="h-3.5 w-3.5" />
         {counts.stars.toLocaleString("en-US")}
+        <span className="sr-only"> {counts.stars === 1 ? "star" : "stars"},</span>
         <Icon art={SUN_ICON} className="ml-1 h-[1.125rem] w-[1.125rem]" />
         {counts.suns.toLocaleString("en-US")}
+        <span className="sr-only">
+          {" "}
+          {counts.suns === 1 ? "sun" : "suns"}. Open {name}&apos;s cloud
+        </span>
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title={`${name}'s cloud`}>
         <HomeSheet counts={counts} />

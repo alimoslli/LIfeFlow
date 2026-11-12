@@ -78,9 +78,9 @@ export default function PrivacyPolicy() {
           Google is connected and you have allowed the skyling, it also reads your new email automatically each morning (the first time, up to 50 emails from
           the last 30 days) for due dates, exam changes, bills, receipts, deliveries and bookings, and puts what it finds on your sky, with Undo. The same goes
           for any other email account you connect later. You can turn this off anytime in Settings, under Integrations, without disconnecting. We store your
-          Google access tokens encrypted. From each email it reads we keep what was found, meaning details such as amounts, dates and confirmation numbers, and
-          the email&apos;s sender, subject and message ID (so the same email is never filed twice), not the email itself or a copy of your mailbox. Calendar
-          events you sync are stored so they appear in your plan.
+          Google access tokens encrypted. From each email it reads we keep what was found, meaning details such as amounts, dates, confirmation numbers and the
+          last digits of a card or account, and the email&apos;s sender, subject and message ID (so the same email is never filed twice), not the email itself
+          or a copy of your mailbox. Calendar events you sync are stored so they appear in your plan.
         </li>
         <li>
           <strong>Apple Health:</strong> if you set up the LifeFlow shortcut on your iPhone, it sends the health measurements you choose (for example steps,

@@ -357,6 +357,14 @@ Last: done 2026-11-10 evening ([the walk and the numbers](audits/2026-11-10-prod
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-12, LF Main (COO's third review and the three bugs that failed on main too): on the branch, each with a test.
+  - The Hugging Face work moved to its own branch, `claude/local-models` (reverted here, no force-push).
+  - Cloud buttons are 44 px in every mode (`touch-targets-phone`).
+  - The email confirm button on Settings uses the app's colours (contrast).
+  - The cloud chip's name comes from its visible numbers (label-content-name-mismatch).
+  - Gmail counts a try only when Gmail itself refused that email: a removed connection, Google busy or a timeout never uses one up, and waits are read oldest first with a fixed order (`gmail-useful.test.ts`).
+  - The cloud's own dots cover no other control (`insight-clouds-phone.spec.ts`).
+  - The Google card says it keeps the last digits of a card or account.
 - 2026-11-12, LF Main (COO re-review of 75d5a1a): fixes on the branch, each with a test.
   - The Money lock is structural. A review marks each money part where it's made (`money: true` on Spending, Goals, Patterns, the morning brief's Money, and a money "One change"). `lockSafeText` drops those parts for the card and the sky alike; old reviews are read by heading, and an amount check is the last backstop. A money goal's "45%" no longer leaks (`useful-sky.test.ts`).
   - Gmail waits are read oldest first and stop after 5 refused tries with a fixed reason. One look reads at most its limit (50, then 10); the rest wait for the next look.

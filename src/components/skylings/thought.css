@@ -51,7 +51,8 @@
 }
 /* the one button: a soft pill that sits on the cloud and presses in */
 .lf-thought-cloud .lf-idea-go {
-  min-height: 2.25rem;
+  /* a whole 44 px target (COO, 2026-11-12: touch-targets-phone), in every cloud mode */
+  min-height: 2.75rem;
   padding: 0 1rem;
   font-size: 0.875rem;
   box-shadow: 0 3px 0 rgb(19 33 61 / 0.22);

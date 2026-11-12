@@ -17,6 +17,24 @@ const shoot = async (page: Page, name: string) => {
   await page.screenshot({ path: `${DIR}/${name}.png` });
 };
 const row = (page: Page) => page.locator('[aria-label="Ideas to try"]:visible').first();
+/** Each of these controls is a whole 44 px target and covers no other button, link or text box on the page (a rounding pixel allowed). */
+const coversNothing = (dots: ReturnType<Page["locator"]>) =>
+  dots.evaluateAll((els) => {
+    const out: string[] = [];
+    const others = [...document.querySelectorAll<HTMLElement>("button, a, [role=button], textarea")].filter(
+      (o) => !els.includes(o) && o.getClientRects().length && getComputedStyle(o).visibility !== "hidden" && !o.closest("[inert]"),
+    );
+    for (const d of els) {
+      const r = d.getBoundingClientRect();
+      if (r.width < 44 || r.height < 44) out.push(`small ${r.width}x${r.height}`);
+      for (const o of others) {
+        const q = o.getBoundingClientRect();
+        if (q.width && q.height && r.left < q.right - 1 && q.left < r.right - 1 && r.top < q.bottom - 1 && q.top < r.bottom - 1)
+          out.push(`${d.getAttribute("aria-label")} over ${o.getAttribute("aria-label") ?? o.textContent?.trim().slice(0, 30)}`);
+      }
+    }
+    return out;
+  });
 const heads = async (page: Page) => (await row(page).locator(".lf-idea-head").allInnerTexts()).map((t) => t.trim());
 
 test("a busy student sees real insights, as weather; a tap fills the bar or does the one fix, with Undo", async ({ page }) => {
@@ -59,10 +77,10 @@ test("a busy student sees real insights, as weather; a tap fills the bar or does
   // the keyboard's way and not read out
   const label = (await shown.locator(".lf-thought-who").boundingBox())!;
   for (const box of await dots.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().toJSON() as DOMRect))) {
-    expect(box.width).toBeGreaterThanOrEqual(44);
-    expect(box.height).toBeGreaterThanOrEqual(44);
     expect(box.x, "the dots never sit on the label").toBeGreaterThanOrEqual(label.x + label.width);
   }
+  // COO review: the cloud's dots reach into the cloud's top; they cover neither its button nor any other control
+  expect(await coversNothing(dots)).toEqual([]);
   expect(
     await row(page)
       .locator("li:not([data-on])")
@@ -188,24 +206,7 @@ test("the facts under the sky: dots the keyboard reaches, the arrow keys move th
   await expect.poll(() => dots.count(), { timeout: 15_000 }).toBeGreaterThanOrEqual(2);
   expect(await dots.first().getAttribute("tabindex")).toBeNull();
   // every dot is a whole 44 px target, and covers no other button or link on the page (COO re-review, 2026-11-12)
-  const clash = await dots.evaluateAll((els) => {
-    const out: string[] = [];
-    const others = [...document.querySelectorAll<HTMLElement>("button, a, [role=button], textarea")].filter(
-      (o) => !els.includes(o) && o.getClientRects().length && getComputedStyle(o).visibility !== "hidden",
-    );
-    for (const d of els) {
-      const r = d.getBoundingClientRect();
-      if (r.width < 44 || r.height < 44) out.push(`small ${r.width}x${r.height}`);
-      for (const o of others) {
-        const q = o.getBoundingClientRect();
-        // more than a rounding pixel's overlap
-        if (q.width && q.height && r.left < q.right - 1 && q.left < r.right - 1 && r.top < q.bottom - 1 && q.top < r.bottom - 1)
-          out.push(`${d.getAttribute("aria-label")} over ${o.getAttribute("aria-label") ?? o.textContent?.trim().slice(0, 30)}`);
-      }
-    }
-    return out;
-  });
-  expect(clash).toEqual([]);
+  expect(await coversNothing(dots)).toEqual([]);
   await dots.first().focus();
   await page.keyboard.press("ArrowRight");
   await expect(dots.nth(1)).toHaveAttribute("aria-current", "true");

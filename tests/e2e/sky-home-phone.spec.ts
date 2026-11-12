@@ -28,7 +28,7 @@ test("the skyling's cloud: a goal reached is a sun (and plays the sun), a to-do 
 
   // a new cloud: nothing on it yet, and the counts say so
   await page.goto("/jarvis");
-  await expect(page.getByRole("button", { name: "0 stars and 0 suns so far. Open Ray's cloud" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "0 stars, 0 suns. Open Ray's cloud" })).toBeVisible();
 
   // a goal reached: the sun plays, and a sun lands on the cloud (the balloon)
   await page.goto("/goals");
@@ -52,7 +52,7 @@ test("the skyling's cloud: a goal reached is a sun (and plays the sun), a to-do 
 
   // the skyling's page: its cloud with the balloon, and the sheet with what comes next
   await page.goto("/jarvis");
-  const counts = page.getByRole("button", { name: "1 star and 2 suns so far. Open Ray's cloud" });
+  const counts = page.getByRole("button", { name: "1 star, 2 suns. Open Ray's cloud" });
   await expect(counts).toBeVisible();
   await expect(page.getByTestId("sky-home").locator("svg[data-has]")).toHaveAttribute("data-has", "balloon");
   await counts.click();

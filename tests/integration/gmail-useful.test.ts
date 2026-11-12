@@ -34,13 +34,16 @@ const NOW = localToInstant("2026-11-17", "08:00", TZ);
 const base: Extraction = { type: "other", summary: "x", bill: null, receipt: null, school: null, travel: null, pay: null };
 
 /** A Gmail stand-in with one message per id; every URL asked for is kept. */
-function fakeGmail(ids: string[], fail: Record<string, number> = {}) {
+function fakeGmail(ids: string[], fail: Record<string, number> = {}, opts: { revoked?: boolean } = {}) {
   const asked: string[] = [];
   const f = (async (u: string | URL) => {
     const url = String(u);
     asked.push(url);
     const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json" } });
-    if (url.includes("oauth2")) return json({ access_token: "at", expires_in: 3600 });
+    // access removed in Google's settings: the token can't be refreshed
+    if (url.includes("oauth2")) return opts.revoked ? json({ error: "invalid_grant" }, 400) : json({ access_token: "at", expires_in: 3600 });
+    // and Gmail no longer accepts the token it had
+    if (opts.revoked) return json({ error: { status: "UNAUTHENTICATED", message: "no" } }, 401);
     if (url.includes("/messages?")) return json({ messages: ids.map((id) => ({ id })) });
     const id = url.match(/messages\/([^?]+)/)?.[1] ?? "x";
     // the full read fails for these (the search's metadata look still works)
@@ -190,6 +193,40 @@ describe("Gmail is on with the connection", () => {
     expect(later.asked.some((u) => u.includes(stuck))).toBe(false);
     expect(await reason()).toBe(GAVE_UP);
     void user;
+  });
+
+  // COO review, 2026-11-12: a week of removed access (or Google busy) must never use up the tries; only Gmail refusing counts
+  it("removed access or Google busy over many looks never gives up on a waiting email; after reconnecting it's read", async () => {
+    const { user, run } = await makeUser("Access Removed");
+    await connect(run);
+    const [a, b] = ["18c2a1b0f3d4e5f1", "18c2a1b0f3d4e5f2"];
+    const refused = (async () => {
+      throw new PlainReason(`${NOT_READ_YET} yet: this month's skyling allowance is used up. It opens up again on December 1.`);
+    }) as never;
+    const extract = (async () => base) as never;
+    // both wait (the monthly limit)
+    await run((s) => fileFromGmail(s, TZ, "2026-11-17", { fetch: fakeGmail([a, b]).f, extract: refused }));
+    const rows = () =>
+      run(async (s) =>
+        (await s.tx.select({ reason: inboxItems.reason, extracted: inboxItems.extracted }).from(inboxItems).where(eq(inboxItems.userId, user.id))).map(
+          (r) => `${r.reason} ${JSON.stringify(r.extracted)}`,
+        ),
+      );
+    // access removed for more looks than WAIT_TRIES: nothing can be read, and no try is used up
+    let day = 18;
+    for (let n = 0; n <= WAIT_TRIES; n++)
+      await run((s) => fileFromGmail(s, TZ, `2026-11-${day++}`, { fetch: fakeGmail([], {}, { revoked: true }).f, extract })).catch(() => undefined);
+    // then Google busy (429) and failing (503) for as long
+    for (let n = 0; n <= WAIT_TRIES; n++)
+      await run((s) => fileFromGmail(s, TZ, `2026-11-${day++}`, { fetch: fakeGmail([], { [a]: 429, [b]: 503 }).f, extract }));
+    for (const r of await rows()) {
+      expect(r).toMatch(new RegExp(`^${NOT_READ_YET}`));
+      expect(r).not.toMatch(/waitTries":[1-9]/);
+    }
+    // reconnected and calm again: both are read
+    const back = await run((s) => fileFromGmail(s, TZ, "2026-12-01", { fetch: fakeGmail([]).f, extract }));
+    expect(back).toMatchObject({ checked: 2 });
+    expect((await rows()).some((r) => r.includes(GAVE_UP))).toBe(false);
   });
 
   it("one look reads at most its limit, waiting ones first and oldest first; the rest wait, none dropped", async () => {

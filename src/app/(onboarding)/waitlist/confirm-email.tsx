@@ -94,7 +94,12 @@ export function ConfirmEmail({
                 className={`min-h-12 rounded-2xl px-4 text-lg tracking-[0.3em] outline-none ${t.input}`}
               />
             </label>
-            <button type="submit" disabled={checking} className="lf-sb lf-sb-glass lf-sb-sm min-h-12 min-w-11 disabled:opacity-60">
+            <button
+              type="submit"
+              disabled={checking}
+              // on Settings the app's own button: white on the night glass reads only on the waitlist's night sky (a11y-phone)
+              className={`lf-sb ${variant === "night" ? "lf-sb-glass" : "lf-sb-app"} lf-sb-sm min-h-12 min-w-11 disabled:opacity-60`}
+            >
               {checking ? "Checking…" : "Confirm"}
             </button>
           </form>
