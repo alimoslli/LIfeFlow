@@ -283,6 +283,10 @@
     opacity 0.3s ease,
     transform 0.35s ease;
 }
+/* the tour's card sits over Today's bar: the clouds step away until it ends (nothing lies over anything) */
+html:has([data-lf-tour]) .lf-idea-stack {
+  visibility: hidden;
+}
 /* set by IdeaClouds from the chat box on screen (Today keeps a hidden copy of the bar for the other screen size) */
 .lf-idea-stack[data-typing] {
   opacity: 0.5;

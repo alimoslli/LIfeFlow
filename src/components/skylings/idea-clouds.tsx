@@ -72,7 +72,10 @@ export function IdeaClouds({
       frame = requestAnimationFrame(() => {
         const box = [...document.querySelectorAll<HTMLElement>("[data-cloud-target]")].find((el) => el.getClientRects().length > 0);
         const field = box?.querySelector<HTMLTextAreaElement>("textarea");
-        setTyping(!!field && (document.activeElement === field || field.value.trim() !== ""));
+        // words in it always count; focus alone only on a touch screen (its keyboard is up), since a laptop focuses the
+        // skyling's message box on its own
+        const focused = document.activeElement === field && matchMedia("(pointer: coarse)").matches;
+        setTyping(!!field && (focused || field.value.trim() !== ""));
       });
     };
     // the skyling's own note asks through Today's bar too: its question going in counts as that cloud used

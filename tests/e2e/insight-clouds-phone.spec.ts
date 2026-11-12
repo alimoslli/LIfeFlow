@@ -77,10 +77,10 @@ test("a busy student sees real insights, as weather; a tap fills the bar or does
     // box has words the cloud dims and holds still
     await expect(row(page).getByRole("button", { name: /Quiz 2 due/ })).toHaveCount(0);
     await expect(shown).toHaveCount(1);
-    await expect(page.locator(".lf-idea-stack")).toHaveCSS("opacity", "0.5");
+    await expect(page.locator(".lf-idea-stack:visible")).toHaveCSS("opacity", "0.5");
     await box.fill("");
     await box.blur();
-    await expect(page.locator(".lf-idea-stack")).toHaveCSS("opacity", "1");
+    await expect(page.locator(".lf-idea-stack:visible")).toHaveCSS("opacity", "1");
     await dots.nth(0).click();
   }
 

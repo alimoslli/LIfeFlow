@@ -40,7 +40,10 @@ test("a busy student on a laptop: one big cloud, the next by dot or arrow key, a
 
   // sized for a wide screen: nearly the sky's width, never edge to edge, and never over the bar
   const cloud = (await shown(page).locator(".lf-idea-cloud").boundingBox())!;
-  expect(cloud.width).toBeGreaterThanOrEqual(420);
+  // beside the wheel on a laptop: it nearly fills that column (the stack's own width), never the whole screen
+  const column = (await row(page).boundingBox())!;
+  expect(cloud.width).toBeGreaterThanOrEqual(column.width * 0.8);
+  expect(cloud.width).toBeGreaterThanOrEqual(320);
   expect(cloud.width).toBeLessThanOrEqual(640);
   const bar = (await page.locator('form[data-tour="skyling"]:visible').first().boundingBox())!;
   const apart = cloud.y + cloud.height <= bar.y || bar.y + bar.height <= cloud.y || cloud.x + cloud.width <= bar.x || bar.x + bar.width <= cloud.x;
