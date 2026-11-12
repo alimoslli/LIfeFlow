@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import type { SkyInsight } from "@/lib/sky-insights";
-import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptics";
-import { SkylingIcon } from "@/components/skylings/sprite";
+import { CLOUD_TEXT, weatherCloudStyle, type CloudWeather } from "@/components/skylings/cloud-tile";
+import "@/components/skylings/skylings.css";
+import "./sky-note.css";
 import { cheerSkylings } from "@/components/skylings/night";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { useShell } from "@/components/shell/app-shell";
@@ -20,9 +21,9 @@ import { blockTimeAction, unblockTimeAction } from "./actions";
 const UNDO_MS = 8000;
 
 /**
- * Today's one note from the sky (lib/sky-insights; owner, 2026-11-12): what it noticed, why, and its one step done right
- * here (Block it, with Undo; a message's Do it; a question for the skyling). A storm (real trouble) wears the warning
- * ring. The Sunday review opens in a sheet with the whole look back and ahead.
+ * Today's one note from the sky (lib/sky-insights; owner, 2026-11-12): the skyling's own thought, as a big pixel cloud in
+ * the weather of what it noticed, with why and its one step done right there (Block it, with Undo; a message's Do it; a
+ * question for the skyling). The Sunday review opens in a sheet with the whole look back and ahead.
  */
 export function SkyNote({
   insight: current,
@@ -88,28 +89,26 @@ export function SkyNote({
     });
 
   const openSheet = review && insight.kind === "weekly_review" ? () => setSheet(true) : null;
-  const words = (
-    <>
-      <span className="font-medium text-text">{insight.headline}</span>
-      {insight.why && <span className="text-text-2"> · {insight.why}</span>}
-    </>
-  );
+  const weather = done ? "tip" : WEATHER[insight.weather];
+  const t = CLOUD_TEXT[weather];
   const step = done ? (
-    <p className="flex flex-wrap items-center justify-center gap-x-2 text-sm text-success" role="status">
-      <PixelIcon name="check" className="h-4 w-4 shrink-0" />
-      {done.text}
-      <button type="button" disabled={pending} onClick={undo} className="flex min-h-11 items-center gap-1 px-1 font-medium text-accent">
-        <PixelIcon name="undo" className="h-4 w-4" /> Undo
+    <>
+      <span className="lf-idea-why lf-thought-done" role="status">
+        <PixelIcon name="check" className="mr-1 inline h-4 w-4 align-[-3px]" />
+        {done.text}
+      </span>
+      <button type="button" disabled={pending} onClick={undo} className="lf-idea-go">
+        <span className="sr-only">{insight.headline}: </span>Undo
       </button>
-    </p>
-  ) : a && !openSheet ? (
-    <button type="button" disabled={pending} onClick={act} className="lf-sb lf-sb-sun lf-sb-sm">
-      {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-      {a.label}
-    </button>
+    </>
   ) : openSheet ? (
-    <button type="button" onClick={openSheet} className="lf-sb lf-sb-sun lf-sb-sm">
+    <button type="button" onClick={openSheet} className="lf-idea-go">
       See your week
+    </button>
+  ) : a ? (
+    <button type="button" disabled={pending} onClick={act} className="lf-idea-go">
+      <span className="sr-only">{insight.headline}: </span>
+      {pending ? <Loader2 className="inline h-4 w-4 animate-spin" /> : a.label}
     </button>
   ) : null;
 
@@ -118,41 +117,51 @@ export function SkyNote({
       <JarvisMessageCard m={review} name={name} />
     </Sheet>
   );
-  const label = storm ? "Heads up" : "From your skyling";
 
-  if (layout === "middle")
-    return (
-      <section aria-label={label} data-weather={insight.weather} className="flex w-full flex-col items-center gap-1.5">
-        <p
-          data-testid="assistant-line"
-          className={cn(
-            "line-clamp-3 max-w-[22rem] text-center text-[0.9375rem] leading-snug",
-            storm && "rounded-2xl bg-danger-soft px-3 py-1 ring-1 ring-danger/40",
-          )}
-        >
-          {words}
-        </p>
-        {step}
-        {sheetEl}
-      </section>
-    );
+  // the skyling's own thought (owner, 2026-11-12: "a bigger cloud showing it as skylings insight"): a big pixel cloud in the
+  // weather of what it noticed, with little puffs down to the skyling on the bar; real trouble is a storm cloud with rain
+  // falling from under it and a flicker of lightning (owner: "a darker cloud looking like a storm")
   return (
-    <section aria-label={label} data-weather={insight.weather}>
+    <section aria-label={storm ? "Heads up" : "From your skyling"} data-weather={insight.weather} data-layout={layout} className="lf-thought">
       <div
-        data-testid="assistant-line"
-        className={cn(
-          "flex w-full items-start gap-3 rounded-[24px] bg-surface px-4 py-3.5 text-left shadow-soft ring-1 ring-border/60",
-          storm && "bg-danger-soft ring-danger/40",
-        )}
+        className="lf-idea-cloud lf-idea-thick lf-thought-cloud"
+        data-weather={weather}
+        data-bolt={storm && !done ? "true" : undefined}
+        style={
+          {
+            "--t-text": t.text,
+            "--t-muted": t.muted,
+            "--t-btn": t.buttonBg,
+            "--t-btn-text": t.buttonText,
+            "--t-btn-line": t.buttonOutline,
+          } as CSSProperties
+        }
       >
-        <SkylingIcon className="mt-0.5 h-8 w-8 shrink-0" />
-        <div className="min-w-0 flex-1">
-          <span className="block text-xs font-medium text-muted">{name}</span>
-          <p className="mt-0.5 text-[0.9375rem] leading-snug">{words}</p>
-          {step && <div className="mt-2 flex [&>p]:justify-start">{step}</div>}
-        </div>
+        <span className="lf-idea-body" style={weatherCloudStyle(1, weather, 3) as CSSProperties}>
+          {storm && !done && (
+            <svg className="lf-idea-bolt lf-thought-bolt" viewBox="0 0 8 12" aria-hidden="true" shapeRendering="crispEdges">
+              <path d="M5 0h2v1H6v2h2v2H5v2h1v2H5v2H3V9h1V7H2V5h2V3h1z" fill="currentColor" />
+            </svg>
+          )}
+          <span className="lf-idea-in">
+            <span className="lf-thought-who">{name} thought about this</span>
+            <b className="lf-idea-head" data-testid="assistant-line">
+              {insight.headline}
+            </b>
+            {!done && insight.why && <span className="lf-idea-why">{insight.why}</span>}
+            {step}
+          </span>
+        </span>
+        {storm && !done && <span className="lf-thought-rain" aria-hidden="true" />}
       </div>
+      <span className="lf-thought-puffs" aria-hidden="true">
+        <i />
+        <i />
+      </span>
       {sheetEl}
     </section>
   );
 }
+
+/** Our weather words to the clouds' (lib/sky-insights to components/skylings/cloud-tile). */
+const WEATHER: Record<SkyInsight["weather"], CloudWeather> = { clear: "tip", grey: "heads-up", storm: "storm" };

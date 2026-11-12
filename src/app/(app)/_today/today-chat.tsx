@@ -401,8 +401,7 @@ export function TodayMiddle({
   if (reply) return <TodayReplyCard name={name} refresh={refresh} fill />;
   if (children) return <div className="h-full overflow-y-auto">{children}</div>;
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 overflow-hidden px-1">
-      {sky && <SkyNote insight={sky} name={name} review={review} layout="middle" onAsk={(p) => void askOnToday(p, refresh)} />}
+    <div className="flex h-full flex-col items-center justify-center gap-3 overflow-x-hidden overflow-y-auto px-1">
       {!sky && note && (
         <section aria-label={note.attention ? "Heads up" : "From your skyling"} className="contents">
           <button
@@ -415,8 +414,13 @@ export function TodayMiddle({
           </button>
         </section>
       )}
-{/* a note with its own step leaves room for one cloud */}
-      <IdeaClouds clouds={clouds} show={sky?.action ? 1 : sky || note ? 2 : 3} onPick={fillBar} />
+      {/* the skyling's own thought leads the row as a big cloud, and a couple of clouds float after it (owner, 2026-11-12) */}
+      <IdeaClouds
+        clouds={clouds}
+        show={sky ? 2 : note ? 2 : 3}
+        onPick={fillBar}
+        lead={sky ? <SkyNote insight={sky} name={name} review={review} layout="middle" onAsk={(p) => void askOnToday(p, refresh)} /> : undefined}
+      />
     </div>
   );
 }

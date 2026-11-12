@@ -500,21 +500,19 @@ export function purchaseMarks(rows: PurchaseRow[], o: { tz: string; today: strin
       .sort((a, b) => (a.authorizedAt?.getTime() ?? 0) - (b.authorizedAt?.getTime() ?? 0) || name(a, 30).localeCompare(name(b, 30)));
     if (total <= 0 || !bought.length) continue;
     const isToday = d === o.today;
-    const list = bought.slice(0, 6).map((t) => `${name(t, 30)} ${price(t.amountCents)}`);
-    if (bought.length > 6) list.push(`and ${bought.length - 6} more`);
     out.push({
       id: `spent:${d}`,
       kind: "due",
       cat: "other",
       icon: "💸",
-      title: `Spent ${price(total)}${isToday ? " so far" : ""} · ${bought.length} purchase${bought.length === 1 ? "" : "s"}`,
+      title: `Spent ${price(total)}${isToday ? " so far" : ""}`,
       // the end of a past day (just before its recap); today, just before now
       start: isToday ? Math.max(0, nowMin - 1) : daysBetween(o.today, d) * 1440 + 1437,
       end: null,
       allDay: false,
       href: "/finances/transactions",
       source: "From your bank",
-      subtitle: list.join(" · "),
+      subtitle: `${bought.length} purchase${bought.length === 1 ? "" : "s"}`,
       origin: "spent",
       when: isToday ? undefined : formatDateStr(d, "EEEE"),
     });

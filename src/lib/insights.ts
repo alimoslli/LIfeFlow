@@ -36,6 +36,11 @@ export type Insight = {
 /** What the skyling's note on Today already says, as topics (the note's id comes from the briefing). */
 export function noteTopics(noteId?: string | null): string[] {
   if (!noteId) return [];
+  // the sky's own note (lib/sky-insights): what it is about, and its own key for the kinds without a topic
+  const sky = [`sky:${noteId}`];
+  if (noteId.startsWith("tonight-")) return [...sky, "tonight"];
+  if (noteId.startsWith("gap-")) return [...sky, "free"];
+  if (noteId.startsWith("due-")) return [...sky, "due"];
   if (noteId.startsWith("conflict")) return ["conflict"];
   if (noteId.startsWith("exam-")) return ["due"];
   if (noteId === "busy-tomorrow") return ["load"];

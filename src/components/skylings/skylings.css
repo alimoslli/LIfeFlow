@@ -566,6 +566,10 @@
     flex: 0 0 min(19.5rem, 88%);
     scroll-snap-align: center;
   }
+  /* the skyling's own thought leads the row, wider than the clouds after it */
+  .lf-idea-row > li.lf-idea-lead {
+    flex-basis: min(21rem, 90%);
+  }
   .lf-idea-row > li:first-child {
     margin-left: auto;
   }

@@ -23,8 +23,11 @@ export function IdeaClouds({
   show = 3,
   onPick,
   className,
+  lead,
 }: {
   clouds: IdeaCloud[];
+  /** The skyling's own thought (Today's note), first in the row and bigger; the clouds float after it. */
+  lead?: React.ReactNode;
   /** The most to show. */
   show?: number;
   onPick: (ask: string) => void;
@@ -34,7 +37,7 @@ export function IdeaClouds({
   const [busy, setBusy] = useState<string | null>(null);
   const [done, setDone] = useState<Record<string, Done>>({});
   const [failed, setFailed] = useState<Record<string, string>>({});
-  if (!clouds.length) return null;
+  if (!clouds.length && !lead) return null;
   const visible = clouds.slice(0, show);
 
   async function go(c: IdeaCloud) {
@@ -69,6 +72,7 @@ export function IdeaClouds({
 
   return (
     <ul className={cn("lf-idea-row", className)} aria-label="Ideas to try">
+      {lead && <li className="lf-idea-lead">{lead}</li>}
       {visible.map((c, i) => {
         const d = done[c.key];
         // a finished fix settles into a white cloud: the trouble is handled

@@ -652,6 +652,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       b.innerHTML = `<span class="dc-n-ic" aria-hidden="true">${iconHtml(it.icon)}${more ? `<b class="dc-n-more">+${more}</b>` : ""}</span><span class="dc-n-dot"></span><span class="dc-n-t">${esc(time)}</span><span class="dc-n-n">${esc(name)}</span>`;
       const said = more ? `${name} and ${more} more` : name;
       if (pile) b.classList.add("dc-pile");
+      // the day's spending is a coin floating on the line (owner, 2026-11-12: "just the floating animated coin")
+      if (it.origin === "spent") b.classList.add("dc-coin");
       b.setAttribute(
         "aria-label",
         it.someday ? `${said}, no day yet` : time === dayLongOf(dayOf(n.t)) || it.when ? `${said}, ${time}` : `${said}, ${dayLong(dayOf(n.t))}, ${time}`,
@@ -896,7 +898,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
           : href.startsWith("/tasks")
             ? "Open to-dos"
             : href.startsWith("/finances/transactions")
-              ? "Open activity"
+              ? "See them"
               : href.startsWith("/finances")
                 ? "Open bills"
                 : href.startsWith("/jarvis")
@@ -941,6 +943,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const stack = S.sel?.startsWith("stack:") ? TM.nodes.find((n) => n.id === S.sel) : undefined;
     if (stack?.group) return showStack(stack, stack.group);
     const it = S.sel ? ITEMS.find((x) => x.id === S.sel) : undefined;
+    // purchases open light, with no card box (owner, 2026-11-12: "we dont want bug boxes cards with words like normal apps")
+    detail.dataset.kind = it && (it.origin === "spend" || it.origin === "spent") ? "coin" : "";
     if (!it) {
       detail.innerHTML = "";
       wrapHint(S.open ? 1 : S.p);
@@ -958,9 +962,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
         : it.origin === "spend"
           ? `${money(it.amountCents ?? 0)} at ${fmt(it.start)}`
           : it.origin === "spent"
-            ? dayOf(t) === dayOf(S.now)
-              ? "Every purchase today, so far"
-              : "Every purchase that day"
+            ? (it.subtitle ?? "")
             : it.origin === "promise"
               ? it.done
                 ? "You kept it"
@@ -984,7 +986,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
                             : it.end != null
                               ? `${fmt(it.start)} – ${fmt(it.end)}`
                               : `Due ${fmt(it.start)}`;
-    const sub = [it.subtitle, it.source].filter(Boolean).join(" · ");
+    // a purchase says only what and how much; the rest is one tap away on Activity
+    const sub = it.origin === "spend" || it.origin === "spent" ? "" : [it.subtitle, it.source].filter(Boolean).join(" · ");
     const canDo = (it.origin === "task" || it.origin === "reminder" || it.origin === "assignment") && !!it.ref && !it.done;
     const inPlace = it.origin === "event" || it.origin === "shift" || it.origin === "assignment";
     const onPage = it.origin === "task" || it.origin === "reminder" || it.origin === "goal" || it.origin === "milestone";

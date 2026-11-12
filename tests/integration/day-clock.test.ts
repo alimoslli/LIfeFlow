@@ -98,8 +98,8 @@ describe("day clock data", () => {
     // time gets a mark at that time; today's total sits just before now (1:40 PM) and lists every purchase
     expect(shown.items.filter((i) => i.origin === "spend")).toEqual([]);
     expect(shown.items.find((i) => i.id === "spent:2026-11-07")).toMatchObject({
-      title: "Spent $69.20 so far · 2 purchases",
-      subtitle: "Lunch at work $14.20 · Shell gas $55",
+      title: "Spent $69.20 so far",
+      subtitle: "2 purchases",
       start: 13 * 60 + 39,
     });
     // The Money lock is on (or money isn't asked for): nothing about money, not even a zero.
@@ -139,9 +139,9 @@ describe("day clock data", () => {
     );
     expect(marks).toHaveLength(2);
     // a transfer is never spending; a refund cancels its purchase, so that day has no total
-    expect(data.items.find((i) => i.id === "spent:2026-11-07")).toMatchObject({ title: "Spent $6.50 so far · 1 purchase" });
+    expect(data.items.find((i) => i.id === "spent:2026-11-07")).toMatchObject({ title: "Spent $6.50 so far", subtitle: "1 purchase" });
     expect(data.items.find((i) => i.id === "spent:2026-11-06")).toBeUndefined();
-    expect(data.items.find((i) => i.id === "spent:2026-11-05")).toMatchObject({ title: "Spent $12 · 1 purchase" });
+    expect(data.items.find((i) => i.id === "spent:2026-11-05")).toMatchObject({ title: "Spent $12", subtitle: "1 purchase" });
     expect(data.spentTodayCents).toBe(650);
   });
 
@@ -195,8 +195,8 @@ describe("day clock data", () => {
     // what went out that day has its own mark, just before the recap, listing every purchase (owner, 2026-11-12)
     expect(data.items.find((i) => i.id === "spent:2026-11-06")).toMatchObject({
       origin: "spent",
-      title: "Spent $42 · 1 purchase",
-      subtitle: "Groceries $42",
+      title: "Spent $42",
+      subtitle: "1 purchase",
       start: -1440 + 1437,
       when: "Friday",
     });

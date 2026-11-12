@@ -120,10 +120,13 @@ export type CloudStyle = {
 
 const made = new Map<string, CloudStyle>();
 
-/** The style for cloud number `i` (the three shapes take turns) in a kind of weather. Made once per shape and weather. */
-export function weatherCloudStyle(i: number, weather: CloudWeather): CloudStyle {
+/**
+ * The style for cloud number `i` (the three shapes take turns) in a kind of weather. Made once per shape, weather and size.
+ * `scale` is screen pixels per drawn pixel: 2 for the idea clouds, 3 for the skyling's own thought (bigger puffs).
+ */
+export function weatherCloudStyle(i: number, weather: CloudWeather, scale = CLOUD_SCALE): CloudStyle {
   const k = ((i % SHAPES.length) + SHAPES.length) % SHAPES.length;
-  const id = `${k}:${weather}`;
+  const id = `${k}:${weather}:${scale}`;
   let s = made.get(id);
   if (!s) {
     const shape = SHAPES[k];
@@ -131,9 +134,9 @@ export function weatherCloudStyle(i: number, weather: CloudWeather): CloudStyle 
       "--cloud-day": tile(shape, CLOUD_PALETTES[weather].day),
       "--cloud-night": tile(shape, CLOUD_PALETTES[weather].night),
       "--cloud-slice": `${TOP} ${shape.right} ${BOTTOM} ${shape.left} fill`,
-      "--cloud-l": `${shape.left * CLOUD_SCALE}px`,
-      "--cloud-r": `${shape.right * CLOUD_SCALE}px`,
-      borderWidth: `${TOP * CLOUD_SCALE}px ${shape.right * CLOUD_SCALE}px ${BOTTOM * CLOUD_SCALE}px ${shape.left * CLOUD_SCALE}px`,
+      "--cloud-l": `${shape.left * scale}px`,
+      "--cloud-r": `${shape.right * scale}px`,
+      borderWidth: `${TOP * scale}px ${shape.right * scale}px ${BOTTOM * scale}px ${shape.left * scale}px`,
     };
     made.set(id, s);
   }

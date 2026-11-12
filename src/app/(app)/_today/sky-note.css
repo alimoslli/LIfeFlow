@@ -1,0 +1,138 @@
+/* The skyling's thought (owner, 2026-11-12: "a bigger cloud showing it as skylings insight"): one big pixel cloud in the
+   weather of what it noticed (components/skylings/cloud-tile.ts draws it at 3 screen pixels a drawn pixel), little puffs
+   trailing down to the skyling standing on the chat bar, and for real trouble rain falling from under it. */
+.lf-thought {
+  position: relative;
+  width: 100%;
+  max-width: 22rem;
+  margin-inline: auto;
+  /* room under the cloud for its rain and the puffs */
+  padding-bottom: 1.25rem;
+}
+.lf-thought[data-layout="card"] {
+  max-width: none;
+}
+.lf-thought-cloud {
+  display: block;
+  width: 100%;
+}
+.lf-thought-cloud .lf-idea-head {
+  font-size: 1.0625rem;
+  line-height: 1.25;
+}
+.lf-thought-cloud .lf-idea-why {
+  font-size: 0.875rem;
+}
+.lf-thought-who {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--t-muted);
+}
+.lf-thought-done {
+  color: var(--t-text);
+}
+.lf-thought-bolt {
+  top: 2px;
+  right: 6px;
+  width: 1rem;
+  height: 1.5rem;
+}
+/* the puffs: two small pixel clouds stepping down to the skyling on the bar (bottom left), in the cloud's own colours */
+.lf-thought-puffs {
+  position: absolute;
+  left: 14%;
+  bottom: 0;
+  pointer-events: none;
+}
+.lf-thought-puffs i {
+  position: absolute;
+  display: block;
+  background: var(--puff, #ffffff);
+  box-shadow:
+    0 0 0 2px var(--puff-ink, #262320),
+    0 3px 0 2px rgb(19 33 61 / 0.12);
+  border-radius: 3px;
+  image-rendering: pixelated;
+}
+.lf-thought-puffs i:first-child {
+  width: 12px;
+  height: 9px;
+  left: 0;
+  bottom: 6px;
+}
+.lf-thought-puffs i:last-child {
+  width: 7px;
+  height: 6px;
+  left: -14px;
+  bottom: -6px;
+}
+.lf-thought:has([data-weather="heads-up"]) {
+  --puff: #d3d9e4;
+}
+.lf-thought:has([data-weather="storm"]) {
+  --puff: #3a4560;
+  --puff-ink: #141b2c;
+}
+:root[data-theme="dark"] .lf-thought {
+  --puff: #eef3ff;
+  --puff-ink: #0a1630;
+}
+:root[data-theme="dark"] .lf-thought:has([data-weather="heads-up"]) {
+  --puff: #b9c3d8;
+}
+:root[data-theme="dark"] .lf-thought:has([data-weather="storm"]) {
+  --puff: #3c496f;
+  --puff-ink: #b4c5f2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lf-thought {
+    --puff: #eef3ff;
+    --puff-ink: #0a1630;
+  }
+  :root:not([data-theme="light"]) .lf-thought:has([data-weather="heads-up"]) {
+    --puff: #b9c3d8;
+  }
+  :root:not([data-theme="light"]) .lf-thought:has([data-weather="storm"]) {
+    --puff: #3c496f;
+    --puff-ink: #b4c5f2;
+  }
+}
+/* rain falling from under the storm cloud: short pixel streaks in a few columns, each column on its own beat */
+.lf-thought-rain {
+  position: absolute;
+  left: 22%;
+  right: 18%;
+  top: calc(100% - 6px);
+  height: 22px;
+  overflow: hidden;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(90deg, #8aa4dc 0 2px, transparent 2px 14px), repeating-linear-gradient(90deg, #8aa4dc 0 2px, transparent 2px 14px);
+  background-size:
+    100% 6px,
+    100% 6px;
+  background-position:
+    0 0,
+    7px 11px;
+  background-repeat: repeat-x;
+  animation: lf-thought-rain 0.7s linear infinite;
+  opacity: 0.85;
+}
+@keyframes lf-thought-rain {
+  from {
+    background-position:
+      0 -6px,
+      7px 5px;
+  }
+  to {
+    background-position:
+      0 16px,
+      7px 27px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lf-thought-rain {
+    animation: none;
+  }
+}

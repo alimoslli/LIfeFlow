@@ -41,7 +41,6 @@ export type CloudFacts = {
 export type CloudKey =
   | "plan_week"
   | "promise"
-  | "afford"
   | "free_time"
   | "shift_moved"
   | "syllabus"
@@ -89,15 +88,8 @@ export const CLOUDS: Cloud[] = [
     tools: ["make_promise"],
     major: true,
   },
-  {
-    key: "afford",
-    say: (n) => `Ask ${n}: dinner out tonight?`,
-    ask: () => "Can I afford dinner out tonight?",
-    when: (f) => f.bank,
-    tools: ["tonight", "check_affordability"],
-    major: true,
-    money: true,
-  },
+  // "dinner out tonight?" is gone (owner, 2026-11-12: "what do u mean dinner out tonight? like its so dumb"): a cloud says
+  // something true about their week, not a made-up plan
   {
     key: "free_time",
     say: (n) => `Have ${n} find 2 free hours`,
@@ -210,7 +202,6 @@ export type IdeaCloud = {
 export const CLOUD_WHY: Record<CloudKey, string> = {
   plan_week: "It looks at what's due and your free time.",
   promise: "It checks back with you tonight.",
-  afford: "It checks your bills and your free time.",
   free_time: "It looks across your classes and shifts.",
   shift_moved: "It updates your week for you.",
   syllabus: "Every due date lands on your sky.",

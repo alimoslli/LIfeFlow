@@ -1062,3 +1062,48 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   font-size: 0.9rem;
   font-weight: 600;
 }
+
+/* ---- purchases (owner, 2026-11-12): the day's spending floats as a coin on the line, and a purchase opens light, with no
+   card box: the coin, what and how much, and one way to the rest ---- */
+.dc-node.dc-coin .dc-n-ic {
+  animation: dc-coin-float 2.8s ease-in-out infinite;
+}
+@keyframes dc-coin-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+.dc-detail[data-kind="coin"] {
+  background: transparent;
+  box-shadow: none;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  padding-top: 4px;
+}
+.dc-detail[data-kind="coin"] .dc-d-ic {
+  width: 64px;
+  height: 64px;
+  animation: dc-coin-float 2.8s ease-in-out infinite;
+}
+.dc-detail[data-kind="coin"] .dc-d-ic .dc-px {
+  width: 56px;
+  height: 56px;
+}
+.dc-detail[data-kind="coin"] .dc-d-t {
+  font-size: 1.6rem;
+}
+.dc-detail[data-kind="coin"] .dc-d-acts {
+  justify-content: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dc-node.dc-coin .dc-n-ic,
+  .dc-detail[data-kind="coin"] .dc-d-ic {
+    animation: none;
+  }
+}

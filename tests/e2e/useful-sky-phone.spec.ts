@@ -74,5 +74,13 @@ test("purchases on the line: a mark at the bank's own time, and the day's total 
   await expect(names.filter({ hasText: "Blue Bottle Coffee · $6.50" })).toHaveCount(1);
   await expect(names.filter({ hasText: "Trader Joe's · $42.10" })).toHaveCount(1);
   await expect(names.filter({ hasText: "Campus bookstore" })).toHaveCount(0);
-  await expect(names.filter({ hasText: "Spent $96.44 · 4 purchases" })).toHaveCount(1);
+  // the day's spending floats as a coin, and opens light: the amount and how many, no card box (owner, 2026-11-12)
+  const coin = clock.locator(".dc-node.dc-coin");
+  await expect(coin.locator(".dc-n-n")).toHaveText("Spent $96.44");
+  await coin.click();
+  const detail = clock.locator(".dc-detail");
+  await expect(detail).toHaveAttribute("data-kind", "coin");
+  await expect(detail).toContainText("Spent $96.44");
+  await expect(detail).toContainText("4 purchases");
+  await expect(detail).not.toContainText("Chipotle");
 });
