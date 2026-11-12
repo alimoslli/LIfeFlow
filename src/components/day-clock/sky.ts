@@ -293,8 +293,11 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   let swipeX: number | null = null;
   const showFact = (k: number) => {
     factAt = (k + factN) % factN;
-    words.querySelectorAll(".dc-fact").forEach((el, i) => el.toggleAttribute("data-on", i === factAt));
-    words.querySelectorAll("[data-fact]").forEach((el, i) => el.toggleAttribute("aria-current", i === factAt));
+    words.querySelectorAll(".dc-fact").forEach((el, i) => {
+      el.toggleAttribute("data-on", i === factAt);
+      el.toggleAttribute("aria-hidden", i !== factAt);
+    });
+    words.querySelectorAll("[data-fact]").forEach((el, i) => (i === factAt ? el.setAttribute("aria-current", "true") : el.removeAttribute("aria-current")));
     // the stored copy no longer matches what's shown, so the next redraw writes it again with this one on
     delete words.dataset.html;
   };
@@ -309,6 +312,13 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   words.addEventListener("click", (e) => {
     const dot = (e.target as Element).closest<HTMLElement>("[data-fact]");
     if (dot) showFact(Number(dot.dataset.fact));
+  });
+  // the keyboard (COO review, 2026-11-12): the dots are in the tab order, and the arrow keys move to the next or last fact
+  words.addEventListener("keydown", (e) => {
+    if ((e.key !== "ArrowRight" && e.key !== "ArrowLeft") || !(e.target as Element).closest("[data-fact]")) return;
+    e.preventDefault();
+    showFact(factAt + (e.key === "ArrowRight" ? 1 : -1));
+    words.querySelector<HTMLElement>(`[data-fact="${factAt}"]`)?.focus();
   });
   const stars = bg.querySelector<SVGSVGElement>("[data-dc=stars]");
   const clouds = [...bg.querySelectorAll<HTMLElement>("[data-dc=cloud]")];
@@ -569,12 +579,15 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       factN = facts.length;
       if (factAt >= factN) factAt = 0;
       const slide = (f: Fact, i: number) =>
-        `<div class="dc-fact" data-kind="${f.kind}"${i === factAt ? " data-on" : ""}><span class="dc-w-tag">${f.tag}</span><span class="dc-w-now">${f.now}</span>${f.then ? `<span class="dc-w-then">${f.then}</span>` : ""}</div>`;
+        `<div class="dc-fact" data-kind="${f.kind}"${i === factAt ? " data-on" : ' aria-hidden="true"'}><span class="dc-w-tag">${f.tag}</span><span class="dc-w-now">${f.now}</span>${f.then ? `<span class="dc-w-then">${f.then}</span>` : ""}</div>`;
       out =
         facts.length < 2
           ? slide(facts[0], 0)
           : `<div class="dc-facts">${facts.map(slide).join("")}</div><div class="dc-fact-dots">${facts
-              .map((_, i) => `<button type="button" tabindex="-1" data-fact="${i}"${i === factAt ? " aria-current" : ""}><i></i></button>`)
+              .map(
+                (_, i) =>
+                  `<button type="button" data-fact="${i}" aria-label="Fact ${i + 1} of ${facts.length}"${i === factAt ? ' aria-current="true"' : ""}><i></i></button>`,
+              )
               .join("")}</div>`;
     } else {
       const on = timed.find((it) => it.end != null && it.start <= view && it.end > view);
@@ -590,8 +603,11 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       ].join("");
     }
     if (words.dataset.html !== out) {
+      // writing the words again replaces the dots: a dot the keyboard was on keeps the keyboard
+      const kept = document.activeElement instanceof HTMLElement && words.contains(document.activeElement) && document.activeElement.matches("[data-fact]");
       words.dataset.html = out;
       words.innerHTML = pixelize(out);
+      if (kept) words.querySelector<HTMLElement>(`[data-fact="${factAt}"]`)?.focus();
     }
   }
 

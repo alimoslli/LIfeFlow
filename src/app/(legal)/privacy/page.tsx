@@ -74,9 +74,12 @@ export default function PrivacyPolicy() {
       <ul>
         <li>
           <strong>Google (Gmail and Google Calendar):</strong> if you connect your Google account, we access the email messages, drafts and calendar events
-          needed to answer your requests, for example to find an email, summarize your inbox, draft a reply you review, or show and add calendar events. We
-          store your Google access tokens encrypted. We fetch email content when you ask for it and do not keep a copy of your mailbox. Calendar events you sync
-          are stored so they appear in your plan.
+          needed to answer your requests, for example to find an email, summarize your inbox, draft a reply you review, or show and add calendar events. Once
+          Google is connected and you have allowed the skyling, it also reads your new email automatically each morning (the first time, up to 50 emails from
+          the last 30 days) for due dates, exam changes, bills, receipts, deliveries and bookings, and puts what it finds on your sky, with Undo. The same goes
+          for any other email account you connect later. You can turn this off anytime in Settings, under Integrations, without disconnecting. We store your
+          Google access tokens encrypted. We keep what was found in an email (for example a due date) and the email&apos;s sender and subject, not a copy of
+          your mailbox. Calendar events you sync are stored so they appear in your plan.
         </li>
         <li>
           <strong>Apple Health:</strong> if you set up the LifeFlow shortcut on your iPhone, it sends the health measurements you choose (for example steps,
@@ -117,14 +120,14 @@ export default function PrivacyPolicy() {
       <h2 id="ai">3. Your skyling (the AI)</h2>
       <p>
         Nothing is sent to our AI provider until you allow it. The first time you use the skyling, we ask; you can turn it off anytime in Settings, under your
-        companion, and the rest of LifeFlow keeps working.
+        skyling, and the rest of LifeFlow keeps working.
       </p>
       <p>
         When you use the skyling, the parts of your information needed to answer your request (your message, relevant records, relevant approved memories, and,
-        if you ask about them, your email, calendar or health data) are sent to our AI provider, OpenAI, to generate the response. OpenAI processes this under
-        its API terms. Under those terms, OpenAI does not use data sent through its API to train its models by default, and it may retain data for a limited
-        period to detect abuse. We send requests with OpenAI&apos;s response storage turned off, and your conversation history is stored in your LifeFlow
-        account, not with OpenAI.
+        if you ask about them, your email, calendar or health data; and each new email it reads for you automatically) are sent to our AI provider, OpenAI, to
+        generate the response. OpenAI processes this under its API terms. Under those terms, OpenAI does not use data sent through its API to train its models
+        by default, and it may retain data for a limited period to detect abuse. We send requests with OpenAI&apos;s response storage turned off, and your
+        conversation history is stored in your LifeFlow account, not with OpenAI.
       </p>
       <p>
         The skyling only changes your data through defined actions, shows you what it changed, and asks for your confirmation before deleting things or sending

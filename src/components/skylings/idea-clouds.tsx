@@ -95,13 +95,21 @@ export function IdeaClouds({
   const step = (by: number) => setAt((a) => (a + by + count) % count);
   // the next idea drifts in on its own, unless they're touching, reading with the keyboard, or just did one (its Undo stays)
   const busyOrDone = !!busy || Object.keys(done).length > 0;
+  // reduced motion is followed as it changes, not only when the page opened (COO review, 2026-11-12)
+  const [still, setStill] = useState(false);
   useEffect(() => {
-    if (!big || count < 2 || held || typing || busyOrDone) return;
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const q = matchMedia("(prefers-reduced-motion: reduce)");
+    const on = () => setStill(q.matches);
+    on();
+    q.addEventListener("change", on);
+    return () => q.removeEventListener("change", on);
+  }, []);
+  useEffect(() => {
+    if (!big || count < 2 || held || typing || busyOrDone || still) return;
     if (navigator.webdriver && !/[?&]clouds=1/.test(location.search)) return;
     const t = window.setTimeout(() => setAt((a) => (a + 1) % count), CHANGE_MS);
     return () => window.clearTimeout(t);
-  }, [big, count, held, typing, busyOrDone, at]);
+  }, [big, count, held, typing, busyOrDone, still, at]);
   if (!clouds.length && !lead) return null;
 
   async function go(c: IdeaCloud, el?: HTMLElement | null) {
@@ -162,7 +170,7 @@ export function IdeaClouds({
       })}
     >
       {showLead && (
-        <li className="lf-idea-lead" data-k={0} data-on={!stack || cur === 0 ? "" : undefined}>
+        <li className="lf-idea-lead" data-k={0} data-on={!stack || cur === 0 ? "" : undefined} inert={stack && cur !== 0}>
           {lead}
         </li>
       )}
@@ -250,6 +258,8 @@ export function IdeaClouds({
               className="lf-idea-lead"
               data-k={i + (showLead ? 1 : 0)}
               data-on={!stack || cur === i + (showLead ? 1 : 0) ? "" : undefined}
+              // the clouds waiting behind are out of the keyboard's way and not read out (COO review, 2026-11-12)
+              inert={stack && cur !== i + (showLead ? 1 : 0)}
               style={{ "--i": i } as CSSProperties}
             >
               <section
@@ -283,6 +293,7 @@ export function IdeaClouds({
     <div
       className={cn("lf-idea-stack w-full min-w-0", className)}
       data-typing={typing ? "" : undefined}
+      style={{ "--dots-w": `${count * 2.75}rem` } as CSSProperties}
       // a laptop's arrow keys move to the next or the last idea
       onKeyDown={(e) => {
         if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;

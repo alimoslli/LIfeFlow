@@ -13,6 +13,7 @@ import { runDueSlot, runProactive } from "@/server/services/proactive/engine";
 import { respondToMessage } from "@/server/services/proactive/respond";
 import { collectSnapshot } from "@/server/briefing/collect";
 import { skyInsights } from "@/server/services/sky-insights";
+import { listInsights } from "@/server/services/insights";
 import { makeUser, TZ } from "../helpers";
 
 // Owner, 2026-11-12 (docs/backlog/2026-11-12-useful-sky.md): study blocks before exams, a head start for people who usually
@@ -23,6 +24,7 @@ afterAll(closeDb);
 /** Tuesday Nov 17, 2026, 2 PM in New York. */
 const NOW = localToInstant("2026-11-17", "14:00", TZ);
 const at = (date: string, time: string) => localToInstant(date, time, TZ);
+const sunday = (time: string) => at("2026-11-15", time);
 
 /** Messages are saved with the database's clock; these tests run at fixed moments, so stamp them with that moment. */
 const stamp = (run: Awaited<ReturnType<typeof makeUser>>["run"], when: Date) =>
@@ -151,7 +153,6 @@ describe("a head start, only when it helps", () => {
 
 describe("the Sunday look", () => {
   /** Sunday Nov 15, 2026 in New York. */
-  const sunday = (time: string) => at("2026-11-15", time);
   const logged = (run: Awaited<ReturnType<typeof makeUser>>["run"]) =>
     run(async (s) => (await s.tx.select({ key: notificationLog.key }).from(notificationLog)).map((r) => r.key).filter((k) => k.endsWith(":sunday")));
 
@@ -217,5 +218,38 @@ describe("the one list", () => {
     const locked = await list(true);
     expect(locked.some((i) => i.money)).toBe(false);
     expect(locked.find((i) => i.kind === "tonight")?.why).not.toMatch(/\$/);
+  });
+
+  // COO review, 2026-11-12: the weekly review is "general" but says what was spent, the weekend pattern and a cap
+  it("keeps the Sunday review's spending behind the Money lock, in the sky's list and in the clouds", async () => {
+    const { user, run } = await makeUser("Locked Review");
+    await run(async (s) => {
+      const acct = await createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 90_000 });
+      for (const d of ["2026-11-14", "2026-11-15", "2026-11-12"])
+        await createTransaction(s, { accountId: acct.id, date: d, description: "Chipotle", merchantName: "Chipotle", amountCents: -2650 });
+      await createTask(s, TZ, { title: "Laundry", dueDate: "2026-11-14" });
+    });
+    await run((s) => runDueSlot(s, TZ, user.preferences, sunday("18:10")));
+    await stamp(run, sunday("18:10"));
+    const [stored] = await run((s) => s.tx.select().from(jarvisMessages).where(eq(jarvisMessages.kind, "weekly_review")));
+    // the review really says money, under a topic that isn't
+    expect(stored.topic).toBe("general");
+    expect(JSON.stringify([stored.body, stored.facts.sections])).toMatch(/\$\d/);
+
+    const when = sunday("18:20");
+    const sky = (locked: boolean) => run(async (s) => skyInsights(s, await collectSnapshot(s, user, when), { moneyLocked: locked }));
+    const open = (await sky(false)).find((i) => i.kind === "weekly_review")!;
+    expect(open.money).toBe(true);
+    const locked = await sky(true);
+    const review = locked.find((i) => i.kind === "weekly_review")!;
+    // still there, with what isn't money
+    expect(review.sections?.map((x) => x.heading)).toEqual(expect.arrayContaining(["Wins", "Still open"]));
+    expect(review.money).toBe(false);
+    expect(JSON.stringify(locked)).not.toMatch(/\$\s?\d|Spending/);
+
+    const lockedPrefs = { ...user.preferences, moneyLock: { enabled: true } } as never;
+    const clouds = await run((s) => listInsights(s, TZ, lockedPrefs, when));
+    expect(clouds.some((i) => i.kind === "weekly_review")).toBe(true);
+    expect(JSON.stringify(clouds)).not.toMatch(/\$\s?\d/);
   });
 });

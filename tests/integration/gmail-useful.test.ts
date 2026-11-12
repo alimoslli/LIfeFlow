@@ -33,15 +33,17 @@ const NOW = localToInstant("2026-11-17", "08:00", TZ);
 const base: Extraction = { type: "other", summary: "x", bill: null, receipt: null, school: null, travel: null, pay: null };
 
 /** A Gmail stand-in with one message per id; every URL asked for is kept. */
-function fakeGmail(ids: string[]) {
+function fakeGmail(ids: string[], fail: Record<string, number> = {}) {
   const asked: string[] = [];
   const f = (async (u: string | URL) => {
     const url = String(u);
     asked.push(url);
-    const json = (o: unknown) => new Response(JSON.stringify(o), { headers: { "content-type": "application/json" } });
+    const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json" } });
     if (url.includes("oauth2")) return json({ access_token: "at", expires_in: 3600 });
     if (url.includes("/messages?")) return json({ messages: ids.map((id) => ({ id })) });
     const id = url.match(/messages\/([^?]+)/)?.[1] ?? "x";
+    // the full read fails for these (the search's metadata look still works)
+    if (fail[id] && url.includes("format=full")) return json({ error: { status: "FAIL", message: "no" } }, fail[id]);
     return json({
       id,
       threadId: "t",
@@ -115,6 +117,47 @@ describe("Gmail is on with the connection", () => {
     const r = await run((s) => fileFromGmail(s, TZ, "2026-11-18", { fetch: fakeGmail([]).f, extract }));
     expect(r).toMatchObject({ checked: 1, filed: 1 });
     expect(await rows()).toEqual([{ status: "filed", reason: null }]);
+  });
+
+  // COO review, 2026-11-12: a Google error halfway through used to lose the waiting emails after it
+  it("a Google error halfway through keeps every waiting email; only one deleted from Gmail stops waiting, with why", async () => {
+    const { user, run } = await makeUser("Halfway Error");
+    await connect(run);
+    const [busy, gone, fine, fresh] = ["18c2a1b0f3d4e5c1", "18c2a1b0f3d4e5c2", "18c2a1b0f3d4e5c3", "18c2a1b0f3d4e5c4"];
+    const refused = (async () => {
+      throw new Error(`${NOT_READ_YET} yet: this month's skyling allowance is used up. It opens up again on December 1.`);
+    }) as never;
+    await run((s) => fileFromGmail(s, TZ, "2026-11-17", { fetch: fakeGmail([busy, gone, fine]).f, extract: refused }));
+    const rows = () =>
+      run(async (s) =>
+        Object.fromEntries(
+          (
+            await s.tx
+              .select({ id: inboxItems.externalId, status: inboxItems.status, reason: inboxItems.reason })
+              .from(inboxItems)
+              .where(eq(inboxItems.userId, user.id))
+          ).map((r) => [r.id!.slice(6), `${r.status}: ${r.reason ?? ""}`]),
+        ),
+      );
+    expect(Object.keys(await rows()).sort()).toEqual([busy, gone, fine].sort());
+    const extract = (async () => ({
+      ...base,
+      type: "delivery",
+      summary: "Desk lamp",
+      delivery: { item: "Desk lamp", carrier: "UPS", expected_date: "2026-11-19" },
+    })) as never;
+    // Google is busy for one, the next was deleted, a new one can't be read either; the rest still go through
+    const r = await run((s) => fileFromGmail(s, TZ, "2026-11-18", { fetch: fakeGmail([fresh], { [busy]: 429, [gone]: 404, [fresh]: 500 }).f, extract }));
+    expect(r).toMatchObject({ checked: 1, filed: 1 });
+    const after = await rows();
+    expect(after[busy]).toMatch(new RegExp(`^failed: ${NOT_READ_YET}`));
+    expect(after[gone]).toBe("failed: It isn't in Gmail anymore, so it wasn't read.");
+    expect(after[fine]).toBe("filed: ");
+    expect(after[fresh]).toMatch(new RegExp(`^failed: ${NOT_READ_YET}`));
+    // and the next look reads what waited
+    const last = await run((s) => fileFromGmail(s, TZ, "2026-11-19", { fetch: fakeGmail([]).f, extract }));
+    expect(last).toMatchObject({ checked: 2, filed: 2 });
+    expect((await rows())[gone]).toBe("failed: It isn't in Gmail anymore, so it wasn't read.");
   });
 });
 

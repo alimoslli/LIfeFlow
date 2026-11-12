@@ -1,7 +1,7 @@
-import { and, eq, inArray, like } from "drizzle-orm";
+import { and, eq, inArray, like, sql } from "drizzle-orm";
 import { inboxItems, type UserPreferences } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
-import { getGoogleConnection, readEmail, searchEmail } from "../../integrations/google";
+import { getGoogleConnection, GoogleError, readEmail, searchEmail } from "../../integrations/google";
 import { NOT_READ_YET, extractDocument, extractionClient } from "./extract";
 import { parseFromAddress, senderAuthenticated } from "./email-auth";
 import { processDocument, recordIgnored } from "./index";
@@ -25,10 +25,29 @@ const FILING_SWITCH = { gmail: "gmailFiling" } as const satisfies Record<string,
  */
 export const emailFilingOn = (prefs: UserPreferences | undefined, provider: keyof typeof FILING_SWITCH) => prefs?.[FILING_SWITCH[provider]] !== false;
 
+/** Why a waiting email is no longer read again: it isn't in Gmail anymore. */
+export const GONE = "It isn't in Gmail anymore, so it wasn't read.";
+
+/** An email Google didn't hand over this time: kept as waiting, so the next look reads it (never dropped silently). */
+async function keepForLater(scope: UserScope, m: { id: string; from: string; subject: string }) {
+  await scope.tx
+    .insert(inboxItems)
+    .values({
+      userId: scope.userId,
+      channel: "email",
+      externalId: `gmail:${m.id}`,
+      fromAddress: (parseFromAddress(m.from) || m.from).slice(0, 200) || null,
+      subject: m.subject.slice(0, 300) || null,
+      status: "failed",
+      reason: `${NOT_READ_YET}: Gmail didn't hand it over this time. It's read on the next look.`,
+    })
+    .onConflictDoNothing({ target: [inboxItems.userId, inboxItems.externalId], where: sql`external_id is not null` });
+}
+
 /**
  * Files new school, bill, work, receipt, delivery and booking emails from the user's Gmail (on with the connection, off
  * in Settings). Each Gmail message is filed once (inbox_items.external_id); content is untrusted and goes through the
- * same strict extraction, sender check and Undo as forwarded mail. The first look reaches back two weeks.
+ * same strict extraction, sender check and Undo as forwarded mail. The first look reaches back 30 days.
  */
 export async function fileFromGmail(scope: UserScope, tz: string, today: string, deps: { fetch?: typeof fetch; extract?: typeof extractDocument } = {}) {
   if (!(await getGoogleConnection(scope)) || !(deps.extract ?? extractionClient())) return { filed: 0, checked: 0 };
@@ -38,7 +57,8 @@ export async function fileFromGmail(scope: UserScope, tz: string, today: string,
     .where(and(eq(inboxItems.userId, scope.userId), like(inboxItems.externalId, "gmail:%")))
     .limit(1);
   const look = before ? DAILY_LOOK : FIRST_LOOK;
-  // what the limits refused earlier is read again first (owner via the COO: never dropped silently): its kept row makes way
+  // what the limits refused earlier is read again first (owner via the COO: never dropped silently). Its row stays until
+  // that email's own read works (COO review, 2026-11-12), so a Google error halfway through loses nothing.
   const waiting = await scope.tx
     .select({ id: inboxItems.id, externalId: inboxItems.externalId })
     .from(inboxItems)
@@ -51,16 +71,10 @@ export async function fileFromGmail(scope: UserScope, tz: string, today: string,
       ),
     )
     .limit(look.max);
-  if (waiting.length)
-    await scope.tx.delete(inboxItems).where(
-      inArray(
-        inboxItems.id,
-        waiting.map((w) => w.id),
-      ),
-    );
-  const again = waiting.map((w) => ({ id: w.externalId!.slice("gmail:".length) }));
+  const kept = new Map(waiting.map((w) => [w.externalId!.slice("gmail:".length), w.id]));
+  const again = [...kept.keys()].map((id) => ({ id, from: "", subject: "" }));
   const fresh = await searchEmail(scope, gmailFilingQuery(look.days), look.max, deps.fetch, FIRST_LOOK.max);
-  const found = [...again, ...fresh.filter((m) => !again.some((a) => a.id === m.id))];
+  const found = [...again, ...fresh.filter((m) => !kept.has(m.id))];
   if (!found.length) return { filed: 0, checked: 0 };
   const seen = new Set(
     (
@@ -80,12 +94,29 @@ export async function fileFromGmail(scope: UserScope, tz: string, today: string,
   );
   let filed = 0;
   let checked = 0;
+  // once Google stops letting us in (access removed), the rest wait for the next look without another call
+  let shut = false;
   for (const m of found) {
-    if (seen.has(`gmail:${m.id}`)) continue;
+    const old = kept.get(m.id);
+    if (!old && seen.has(`gmail:${m.id}`)) continue;
+    let mail: Awaited<ReturnType<typeof readEmail>>;
+    try {
+      if (shut) throw new GoogleError("Google access was removed.", true);
+      mail = await readEmail(scope, m.id, deps.fetch);
+    } catch (e) {
+      // anything else (a timeout, a dropped connection, Google busy) only waits for the next look
+      const g = e instanceof GoogleError ? e : null;
+      if (g?.reauth) shut = true;
+      if (g?.status === 404) {
+        // gone from Gmail (deleted): the one thing that ends a wait, and the row says why
+        if (old) await scope.tx.update(inboxItems).set({ reason: GONE }).where(eq(inboxItems.id, old));
+      } else if (!old) await keepForLater(scope, m);
+      continue;
+    }
     checked++;
-    const mail = await readEmail(scope, m.id, deps.fetch);
     const address = parseFromAddress(mail.from);
     if (!address || !senderAuthenticated(mail.authHeaders, address, { via: "gmail" })) {
+      if (old) await scope.tx.delete(inboxItems).where(eq(inboxItems.id, old));
       const [ig] = await recordIgnored(
         scope,
         address || mail.from,
@@ -98,6 +129,8 @@ export async function fileFromGmail(scope: UserScope, tz: string, today: string,
         .where(eq(inboxItems.id, ig.id));
       continue;
     }
+    // read now: the waiting row makes way for the real one (one row per Gmail message)
+    if (old) await scope.tx.delete(inboxItems).where(eq(inboxItems.id, old));
     // Past the sender check above, so this is the authenticated path: it may update what the user already has.
     const row = await processDocument(
       scope,

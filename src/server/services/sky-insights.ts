@@ -3,7 +3,10 @@ import { addDaysStr, dayOfWeek, localDateOf } from "@/lib/dates";
 import { rankInsights, type SkyAction, type SkyInsight, type Weather } from "@/lib/sky-insights";
 import type { UserScope } from "../db/with-user";
 import { inboxItems, jarvisMessages, type InboxFiled } from "../db/schema";
+import { hasAmount } from "@/lib/jarvis-voice";
 import { allInsights } from "../briefing/rules";
+import { lockSafeText } from "./proactive/present";
+import { isMoneyAction } from "./proactive/respond";
 import type { Insight, LifeSnapshot } from "../briefing/types";
 
 /**
@@ -31,6 +34,13 @@ const STORED: Record<string, (f: Record<string, unknown>) => Weather> = {
 /** On Today, never what an organized person already knows (owner, 2026-11-11): no money warnings, budget nags or late to-dos. */
 const LEFT_OUT = /^(overdraft|budget-|pace-|overdue)/;
 const MONEY_ICONS = new Set(["money", "trend", "goal"]);
+
+/** Does anything a person would see or hear of this insight name an amount (its words, its button, its sheet)? */
+function namesAmount(i: Pick<SkyInsight, "headline" | "why" | "action" | "sections">) {
+  const a = i.action;
+  const said = [i.headline, i.why, a?.label, a && "prompt" in a ? a.prompt : null, ...(i.sections ?? []).flatMap((s) => [s.heading, ...s.lines])];
+  return said.some(hasAmount);
+}
 
 function fromRule(i: Insight): SkyInsight {
   const a = i.action;
@@ -96,8 +106,14 @@ async function emailFinds(scope: UserScope, now: Date): Promise<SkyInsight[]> {
   });
 }
 
-function fromMessage(m: Row): SkyInsight {
+/**
+ * A stored message as a sky insight. Money is decided by what it says, never by its topic alone (COO review, 2026-11-12:
+ * the weekly review is "general" but carries what was spent): under the Money lock its words go through the same
+ * `lockSafeText` as its card, and anything still naming an amount counts as money, so the lock leaves it out.
+ */
+function fromMessage(m: Row, moneyLocked: boolean): SkyInsight {
   const a = m.action;
+  const { title, body, sections } = lockSafeText(m, { moneyLocked });
   const action: SkyAction | null =
     a && m.status !== "done"
       ? {
@@ -108,15 +124,14 @@ function fromMessage(m: Row): SkyInsight {
           prompt: a.type === "ask" ? a.prompt : undefined,
         }
       : null;
-  const sections = Array.isArray(m.facts.sections) ? (m.facts.sections as { heading: string; lines: string[] }[]) : undefined;
   return {
     id: m.id,
     kind: m.kind,
     weather: STORED[m.kind](m.facts),
-    headline: m.title,
-    why: m.body,
+    headline: title,
+    why: body,
     action,
-    money: m.topic === "money",
+    money: m.topic === "money" || isMoneyAction(a) || namesAmount({ headline: title, why: body, action, sections }),
     score: m.priority,
     ...(sections ? { sections } : {}),
   };
@@ -158,5 +173,7 @@ export async function skyInsights(scope: UserScope, snapshot: LifeSnapshot, opts
     .map(fromRule)
     .filter((i) => !(opts.moneyLocked && i.money));
   const email = (await emailFinds(scope, s.now)).filter((i) => !(opts.moneyLocked && i.money));
-  return rankInsights([...stored.map(fromMessage), ...live, ...email]);
+  const all = [...stored.map((m) => fromMessage(m, opts.moneyLocked)), ...live, ...email];
+  // the last word under the lock: nothing that still names an amount, whichever way it came (a new kind, a new rule)
+  return rankInsights(opts.moneyLocked ? all.filter((i) => !i.money && !namesAmount(i)) : all);
 }

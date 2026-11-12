@@ -55,6 +55,20 @@ test("a busy student sees real insights, as weather; a tap fills the bar or does
   await expect(shown).toContainText(said[1]);
   await dots.nth(0).click();
   await expect(shown).toContainText(said[0]);
+  // COO review, 2026-11-12: every dot is a whole 44 px target, and never on the label; the clouds waiting behind are out of
+  // the keyboard's way and not read out
+  const label = (await shown.locator(".lf-thought-who").boundingBox())!;
+  for (const box of await dots.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().toJSON() as DOMRect))) {
+    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+    expect(box.x, "the dots never sit on the label").toBeGreaterThanOrEqual(label.x + label.width);
+  }
+  expect(
+    await row(page)
+      .locator("li:not([data-on])")
+      .evaluateAll((els) => els.every((e) => (e as HTMLElement).inert)),
+  ).toBe(true);
+  expect(await shown.evaluate((e) => (e as HTMLElement).inert)).toBe(false);
   // the cloud's button is a real tap target, and the cloud sits above Today's bar, never on it
   expect((await shown.getByRole("button").first().boundingBox())!.height).toBeGreaterThanOrEqual(30);
   await shoot(page, "busy-student-day");
@@ -157,4 +171,25 @@ test("rain and lightning are CSS only: they move normally and stand still under 
   await page.emulateMedia({ reducedMotion: "reduce" });
   expect(await anim('[aria-label="Ideas to try"]:visible .lf-thought-rain')).toBe("none");
   expect(await anim('[aria-label="Ideas to try"]:visible .lf-idea-bolt')).toBe("none");
+});
+
+test("the facts under the sky: dots the keyboard reaches, the arrow keys move them, only the fact showing is read out", async ({ page }) => {
+  // COO review, 2026-11-12: the dots were pointer-only, and the whole strip was hidden from screen readers
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const email = await signUp(page, "Maya Torres");
+  await seedBusyStudent(email);
+  await page.goto("/");
+  const strip = page.getByRole("group", { name: "About today" });
+  const dots = strip.getByRole("button", { name: /^Fact \d of \d$/ });
+  expect(await dots.count()).toBeGreaterThanOrEqual(2);
+  expect(await dots.first().getAttribute("tabindex")).toBeNull();
+  await dots.first().focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(dots.nth(1)).toHaveAttribute("aria-current", "true");
+  expect(await page.evaluate(() => (document.activeElement as HTMLElement | null)?.dataset.fact)).toBe("1");
+  await page.keyboard.press("ArrowLeft");
+  await expect(dots.nth(0)).toHaveAttribute("aria-current", "true");
+  // the facts waiting behind are hidden from screen readers; the one showing isn't
+  await expect(strip.locator(".dc-fact[data-on]")).not.toHaveAttribute("aria-hidden", "true");
+  expect(await strip.locator(".dc-fact:not([data-on])").evaluateAll((els) => els.every((e) => e.getAttribute("aria-hidden") === "true"))).toBe(true);
 });

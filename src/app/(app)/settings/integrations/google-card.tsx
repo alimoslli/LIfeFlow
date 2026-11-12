@@ -33,8 +33,9 @@ export function GoogleCard({
         </Badge>
       </div>
       <p className="mt-3 text-sm text-text-2">
-        Each morning <AssistantName /> reads new mail for due dates, exam changes, bills, receipts, deliveries and bookings, and puts them on your sky, marked
-        &ldquo;From your email&rdquo;, with Undo. Only mail Gmail confirms came from its sender. It never sends anything without asking you.
+        Once Google is connected, <AssistantName /> reads your new email automatically each morning for due dates, exam changes, bills, receipts, deliveries and
+        bookings, and puts them on your sky, marked &ldquo;From your email&rdquo;, with Undo. Only mail Gmail confirms came from its sender. The switch below
+        turns the reading off. It never sends anything without asking you.
       </p>
 
       {!configured ? (
@@ -54,7 +55,11 @@ export function GoogleCard({
           >
             <span>
               <span className="block font-medium">Put what&apos;s in my email on my sky</span>
-              <span className="text-xs text-muted">The first look goes back two weeks, then each morning checks new mail.</span>
+              <span className="text-xs text-muted">
+                {filing
+                  ? "On: your email is read automatically. The first look goes back 30 days (up to 50 emails), then each morning checks new mail."
+                  : "Off: your email isn't read unless you ask."}
+              </span>
             </span>
             <span className={filing ? "font-medium text-accent" : "text-muted"}>{filing ? "On" : "Off"}</span>
           </ActionButton>

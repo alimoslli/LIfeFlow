@@ -148,8 +148,8 @@ export function DayClock({
           <PixelIcon name="undo" className="h-4 w-4" />
           Back to now
         </button>
-        {/* Under the horizon, in words (the hit area's label says the same for screen readers). */}
-        <div data-dc="words" className="dc-words" aria-hidden="true" />
+        {/* Under the horizon, in words: read out, the fact showing only, with its dots in the tab order (COO review, 2026-11-12). */}
+        <div data-dc="words" className="dc-words" role="group" aria-label="About today" />
         <div data-dc="sub" className="dc-sub">
           <button type="button" data-dc="today" className="dc-todaybtn" aria-label="Open today as a timeline">
             Today
