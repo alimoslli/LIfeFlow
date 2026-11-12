@@ -181,7 +181,35 @@ test("HQ: the office, work (missions, approvals, report) and keys work end to en
   expect(decision.status()).toBe(200);
   await op.goto("/admin");
   await expect(op.getByTestId("hq-brief-body")).toContainText("Good round: 2 fixes shipped, nothing blocked.");
-  await expect(op.getByTestId("hq-brief").getByRole("link", { name: /^Open the .*decision|^Nothing needs you/ })).toBeVisible();
+  // Nothing is pending (the earlier card got its yes): the brief says so, and the link is the quiet one.
+  await expect(op.getByTestId("hq-brief").getByRole("link", { name: "Nothing needs you" })).toBeVisible();
+  await expect(op.getByTestId("hq-brief").getByRole("link", { name: /^Open the .*decision/ })).toHaveCount(0);
+  // A real pending decision: the brief's link changes to "Open the decision" and opens the card on Work.
+  const pending = await request.post("/api/hq/report", {
+    headers: { Authorization: `Bearer ${token}` },
+    data: {
+      type: "approval",
+      role: "developer",
+      kind: "deploy",
+      title: "Ship the reminders fix",
+      why: "Tests pass. Ready to go live.",
+      changes: ["Reminders stop repeating"],
+      onYes: "Tonight Engineering goes live.",
+      onNo: "Nothing changes.",
+      effort: "small",
+      risk: "Low: one screen.",
+      recommendation: "Yes.",
+      previews: [{ fileId: picture.id, label: "Reminders" }],
+    },
+  });
+  expect(pending.status()).toBe(200);
+  await op.goto("/admin");
+  const decisionLink = op.getByTestId("hq-brief").getByRole("link", { name: /^Open the .*decision/ });
+  await expect(decisionLink).toBeVisible();
+  await expect(op.getByTestId("hq-brief").getByRole("link", { name: "Nothing needs you" })).toHaveCount(0);
+  await decisionLink.click();
+  await expect(op).toHaveURL(/\/admin\/work#approvals$/);
+  await expect(op.locator("article", { hasText: "Ship the reminders fix" })).toBeVisible();
   await op.goto("/admin/hq/assistant");
   await expect(op.getByRole("heading", { name: "Decided for you" })).toBeVisible();
   await expect(op.getByText("Put the calendar fix first, because it blocks sync.").first()).toBeVisible();
