@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { aiAllowed } from "@/lib/ai-consent";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { inAppSetup, SETUP_COOKIE } from "@/lib/setup-mode";
 import { isCompanionChoice } from "@/lib/companions";
 import { requireUserForWelcome, withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
@@ -25,6 +27,16 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
   // comes before "setup is done", or a locked finished account would bounce between / and here
   if (user.preferences?.ageBlockedAt) return <AgeBlocked withPassword={await accountHasPassword(getDb(), user.id)} />;
   if (user.preferences?.onboarding !== "pending") redirect("/");
+  // setup inside the app (owner, 2026-11-12): the providers still come back to this fixed address, which sends on to Today
+  if (inAppSetup((await cookies()).get(SETUP_COOKIE)?.value)) {
+    const q = await searchParams;
+    const keep = new URLSearchParams();
+    if ((q.connected === "google" || q.connected === "outlook") && RESULTS.includes(q.result as (typeof RESULTS)[number])) {
+      keep.set("connected", q.connected);
+      keep.set("result", q.result!);
+    }
+    redirect(keep.size ? `/?${keep}` : "/");
+  }
   // their own sky (no money on it), and what's connected already (coming back from Google or Microsoft)
   const { clock, list, canvas } = await withCurrentUser(async (s, u) => {
     const [clock, list, canvas] = await series(

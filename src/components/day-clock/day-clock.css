@@ -1062,3 +1062,18 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   font-size: 0.9rem;
   font-weight: 600;
 }
+
+/* Setup on Today (owner, 2026-11-12): the skyling's note stays in view while the day is open into the week (so the week that
+   just landed is on the wheel with its words under it), and with the tabs hidden the chat bar sits at the bottom edge. */
+.dc-today[data-setup]:has(.dc:is([data-state="moving"], [data-state="timeline"])) .dc-middle {
+  visibility: visible;
+}
+@media (max-width: 767px) {
+  .dc-today[data-setup] .dc-dock {
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}
+/* "Pin something" waits until setup is done: it would lie over the skyling's note */
+.dc-today[data-setup] .dc-pinbar {
+  display: none;
+}

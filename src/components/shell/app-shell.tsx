@@ -62,6 +62,7 @@ export const useShell = () => useContext(Ctx);
 export function AppShell({
   user,
   tour = false,
+  settingUp = false,
   assistantName = UNNAMED_ASSISTANT,
   assistantNamed = false,
   companion,
@@ -91,6 +92,8 @@ export function AppShell({
   user: { id: string; name: string; email: string; accountKind: "standard" | "demo"; timezone?: string };
   /** Show the guided tour (once, after onboarding or when replayed). */
   tour?: boolean;
+  /** Setup is running on Today (owner, 2026-11-12): the skyling guides it, so the rest of the app's chrome waits. */
+  settingUp?: boolean;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -187,7 +190,7 @@ export function AppShell({
           <SkyScene tz={user.timezone ?? "UTC"} />
           <div className="flex min-h-dvh">
             {/* Desktop rail */}
-            <aside className="sticky top-0 hidden h-dvh w-[88px] shrink-0 flex-col items-center py-6 md:flex">
+            <aside className={cn("sticky top-0 hidden h-dvh w-[88px] shrink-0 flex-col items-center py-6", settingUp ? "md:hidden" : "md:flex")}>
               {/* The sun on top is the Today tab itself (owner, 2026-11-11: a logo above Today looked clickable and people
                   went to it), so nothing in the corner is a second, unnamed way to the same place.
                   On the sky, no white pill (A-to-Z audit E4): where you are is the accent glyph and a thin accent line */}
@@ -245,8 +248,10 @@ export function AppShell({
                       : "lf-main-pad max-w-5xl px-5 sm:px-8 md:max-w-6xl md:px-6 md:pt-5 md:pb-28",
                 )}
               >
-                {!onJarvisPage && !assistantPage && <MobileAppBar demo={user.accountKind === "demo"} onSearch={() => setPalette(true)} />}
-                {!onJarvisPage && !assistantPage && <TopBar demo={user.accountKind === "demo"} settingsActive={settingsActive} onToday={pathname === "/"} />}
+                {!onJarvisPage && !assistantPage && !settingUp && <MobileAppBar demo={user.accountKind === "demo"} onSearch={() => setPalette(true)} />}
+                {!onJarvisPage && !assistantPage && !settingUp && (
+                  <TopBar demo={user.accountKind === "demo"} settingsActive={settingsActive} onToday={pathname === "/"} />
+                )}
                 {onJarvisPage ? (
                   <PageMotion>{children}</PageMotion>
                 ) : assistantPage ? (
@@ -261,7 +266,7 @@ export function AppShell({
                   // The page sits right on the sky, on a laptop too (owner, 2026-11-09: no more boxes); cards only where
                   // there's something to tap.
                   <div className="md:pt-2">
-                    <SectionNav />
+                    {!settingUp && <SectionNav />}
                     <PageMotion>{children}</PageMotion>
                   </div>
                 )}
@@ -272,7 +277,12 @@ export function AppShell({
           {/* Phone dock: Today, the skyling, Money, School and one door to everything else. The skyling has its own tab
               again on every page (owner, 2026-11-10: "a small icon of him on all other pages that smoothly connects and
               be able to continue a chat"); Today has its own chat bar. */}
-          <div className="lf-tabbar fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] lf-bar z-40 rounded-[28px] bg-surface shadow-lift md:hidden">
+          <div
+            className={cn(
+              "lf-tabbar fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] lf-bar z-40 rounded-[28px] bg-surface shadow-lift md:hidden",
+              settingUp && "hidden",
+            )}
+          >
             <nav aria-label="Main">
               <div ref={bar} className="relative mx-auto flex max-w-md items-stretch justify-around px-2">
                 <span data-indicator className="pointer-events-none absolute top-[6px] left-0 h-[52px] w-[62px] rounded-[22px] bg-accent-soft opacity-0" />
