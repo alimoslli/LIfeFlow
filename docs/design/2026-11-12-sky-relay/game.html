@@ -1,0 +1,212 @@
+<title>Sky Relay</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Geist:wght@400;600;800&display=swap">
+<style>
+/* Layout: the sky is the whole screen (a canvas); frosted night-glass panels float over it, like the app's glass. */
+:root {
+  --night: #152643;
+  --glass: rgba(21, 38, 67, 0.66);
+  --glass-strong: rgba(16, 29, 54, 0.86);
+  --edge: rgba(255, 255, 255, 0.16);
+  --text: #f6f8fb;
+  --muted: #b9c7dd;
+  --sun: #ffdc6e;
+  --sun-deep: #dcae35;
+  --coral: #f08a78;
+  --ink: #262320;
+  --good: #86d3a0;
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-body: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--night); color: var(--text); font-family: var(--font-body);
+  overflow: hidden; overscroll-behavior: none; -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+}
+#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
+
+/* the HUD */
+#hud {
+  position: fixed; left: 0; right: 0; top: 0; pointer-events: none; z-index: 2;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 8px;
+}
+.hud-row { display: flex; align-items: center; gap: 10px; }
+.score { flex: 1; min-width: 0; display: flex; flex-direction: column; text-shadow: 0 2px 0 rgba(20, 30, 50, 0.35); }
+#score { font: 800 2rem/1 var(--font-body); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+#delta { font: 600 0.8125rem/1.3 var(--font-body); font-variant-numeric: tabular-nums; min-height: 1.1em; }
+#delta.up { color: var(--good); } #delta.down { color: #ffc1b4; }
+.mult { position: relative; width: 58px; height: 58px; display: grid; place-items: center; }
+.mult svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.mult b { font: 800 1.25rem/1 var(--font-body); font-variant-numeric: tabular-nums; text-shadow: 0 2px 0 rgba(20, 30, 50, 0.35); }
+.mult.pop b { animation: pop 0.35s ease-out; }
+@keyframes pop { 40% { transform: scale(1.45); } }
+.iconbtn {
+  pointer-events: auto; width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--edge);
+  background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  display: grid; place-items: center; padding: 0;
+}
+.pausebars { width: 12px; height: 14px; border-left: 4px solid var(--text); border-right: 4px solid var(--text); box-sizing: border-box; }
+#track { position: relative; height: 34px; }
+#track .line { position: absolute; left: 14px; right: 14px; top: 16px; height: 3px; border-radius: 3px; background: rgba(255, 255, 255, 0.22); }
+#track .fill { position: absolute; left: 14px; top: 16px; height: 3px; border-radius: 3px; background: var(--sun); width: 0; }
+#track .stop { position: absolute; top: 0; width: 34px; height: 34px; margin-left: -17px; display: grid; place-items: center; transition: transform 0.25s, opacity 0.25s; opacity: 0.55; }
+#track .stop.on { transform: scale(1.25); opacity: 1; }
+#track .stop.done { opacity: 0.85; }
+#track canvas { width: 30px; height: 30px; image-rendering: pixelated; }
+
+/* the handoff banner */
+#banner {
+  position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 116px); transform: translate(-50%, -8px);
+  z-index: 3; pointer-events: none; opacity: 0; transition: opacity 0.2s, transform 0.2s;
+  display: flex; align-items: center; gap: 12px; padding: 10px 16px 10px 10px; border-radius: 18px;
+  background: var(--glass-strong); border: 1px solid var(--edge); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  width: max-content; max-width: calc(100vw - 32px); box-sizing: border-box;
+}
+#banner.show { opacity: 1; transform: translate(-50%, 0); }
+#banner canvas { width: 48px; height: 48px; image-rendering: pixelated; flex: none; }
+#banner b { display: block; font: 600 1.125rem/1.2 var(--font-display); }
+#banner span { display: block; font-size: 0.9375rem; line-height: 1.35; color: var(--muted); }
+
+/* overlays */
+.overlay {
+  position: fixed; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center;
+  padding-block: calc(env(safe-area-inset-top, 0px) + 16px) calc(env(safe-area-inset-bottom, 0px) + 16px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  box-sizing: border-box; overflow-y: auto;
+}
+.card {
+  width: 100%; max-width: 440px; box-sizing: border-box; padding: 22px 20px; border-radius: 26px;
+  background: var(--glass); border: 1px solid var(--edge); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 20px 60px rgba(5, 12, 28, 0.35); display: grid; gap: 16px; margin: auto;
+}
+h1 { margin: 0; font: 800 clamp(2.4rem, 11vw, 3.4rem)/0.95 var(--font-display); letter-spacing: -0.02em; text-wrap: balance; }
+h2 { margin: 0; font: 600 1.375rem/1.15 var(--font-display); text-wrap: balance; }
+p { margin: 0; line-height: 1.45; color: var(--muted); }
+.eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sun); }
+.cast { display: flex; justify-content: space-between; gap: 4px; }
+.cast figure { margin: 0; display: grid; justify-items: center; gap: 4px; flex: 1; min-width: 0; }
+.cast canvas { width: 100%; max-width: 64px; aspect-ratio: 1; image-rendering: pixelated; }
+.cast figcaption { font-size: 0.75rem; color: var(--muted); text-align: center; line-height: 1.2; }
+.cast figcaption b { display: block; color: var(--text); font-weight: 600; }
+.today { display: grid; gap: 4px; padding: 12px 14px; border-radius: 16px; background: rgba(255, 255, 255, 0.07); }
+.today .row { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.today b { font-weight: 600; }
+.today small { color: var(--muted); font-size: 0.8125rem; }
+.btns { display: grid; gap: 10px; }
+.btn {
+  min-height: 52px; border-radius: 16px; border: 0; font-weight: 800; font-size: 1.0625rem;
+  background: var(--sun); color: var(--ink); box-shadow: 0 4px 0 var(--sun-deep); transition: transform 0.08s, box-shadow 0.08s;
+}
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--sun-deep); }
+.btn.ghost { background: rgba(255, 255, 255, 0.1); color: var(--text); box-shadow: inset 0 0 0 1px var(--edge); font-weight: 600; }
+.btn.ghost:active { box-shadow: inset 0 0 0 1px var(--edge); }
+.links { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; }
+.link { background: none; border: 0; color: var(--muted); font-size: 0.875rem; text-decoration: underline; text-underline-offset: 3px; min-height: 44px; padding: 0 4px; }
+
+/* the end of a round */
+#end .card { gap: 14px; }
+.total { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.total strong { font: 800 2.75rem/1 var(--font-body); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.chip { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 0.8125rem; font-weight: 600; background: rgba(255, 255, 255, 0.12); color: var(--text); }
+.chip.gold { background: var(--sun); color: var(--ink); }
+.legs { display: grid; gap: 6px; }
+.leg { display: grid; grid-template-columns: 36px 1fr auto; gap: 10px; align-items: center; padding: 6px 10px 6px 6px; border-radius: 14px; background: rgba(255, 255, 255, 0.06); }
+.leg canvas { width: 36px; height: 36px; image-rendering: pixelated; }
+.leg .who { min-width: 0; font-size: 0.875rem; line-height: 1.25; }
+.leg .who b { font-weight: 600; }
+.leg .who small { display: block; color: var(--muted); font-size: 0.75rem; }
+.leg .pts { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; line-height: 1.2; }
+.leg .pts small { display: block; font-size: 0.75rem; font-weight: 600; }
+.up { color: var(--good); } .down { color: #ffc1b4; } .even { color: var(--muted); }
+.bar { height: 4px; border-radius: 4px; background: rgba(255, 255, 255, 0.14); margin-top: 4px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--sun); border-radius: 4px; }
+.stats { font-size: 0.875rem; line-height: 1.5; color: var(--muted); }
+.stats b { color: var(--text); font-weight: 600; }
+.found { display: flex; gap: 6px; flex-wrap: wrap; }
+.note { display: grid; gap: 10px; padding: 12px 14px; border-radius: 16px; background: rgba(255, 220, 110, 0.1); border: 1px solid rgba(255, 220, 110, 0.3); }
+.note .opts { display: flex; gap: 8px; flex-wrap: wrap; }
+.note .opts button { min-height: 40px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--edge); background: rgba(255, 255, 255, 0.08); font-weight: 600; font-size: 0.875rem; }
+.note .opts button[aria-pressed="true"] { background: var(--sun); color: var(--ink); border-color: var(--sun); }
+textarea, .log {
+  width: 100%; box-sizing: border-box; border-radius: 12px; border: 1px solid var(--edge); background: rgba(5, 12, 28, 0.35);
+  color: var(--text); font: 0.9375rem/1.4 var(--font-body); padding: 10px 12px; resize: vertical;
+}
+.log { font-size: 0.75rem; max-height: 40vh; overflow: auto; white-space: pre-wrap; -webkit-user-select: text; user-select: text; }
+.tiny { font-size: 0.75rem; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .mult.pop b { animation: none; } #banner { transition: none; } }
+</style>
+
+<canvas id="c" aria-label="Sky Relay game. Hold or press space to use the skyling's move."></canvas>
+
+<div id="hud" hidden>
+  <div class="hud-row">
+    <button class="iconbtn" id="pauseBtn" aria-label="Pause"><span class="pausebars"></span></button>
+    <div class="score"><span id="score">0</span><span id="delta"></span></div>
+    <div class="mult" id="mult" aria-label="Multiplier">
+      <svg viewBox="0 0 58 58" aria-hidden="true"><circle cx="29" cy="29" r="25" fill="rgba(16,29,54,.55)" stroke="rgba(255,255,255,.2)" stroke-width="5"/><circle id="ring" cx="29" cy="29" r="25" fill="none" stroke="#ffdc6e" stroke-width="5" stroke-linecap="round" stroke-dasharray="157" stroke-dashoffset="157"/></svg>
+      <b id="multN">×1</b>
+    </div>
+  </div>
+  <div id="track"><div class="line"></div><div class="fill" id="trackFill"></div></div>
+</div>
+
+<div id="banner" aria-live="polite"><canvas width="24" height="24"></canvas><div><b id="bannerT"></b><span id="bannerH"></span></div></div>
+
+<div class="overlay" id="start">
+  <div class="card">
+    <div class="eyebrow">A skylings game · prototype</div>
+    <h1>Sky Relay</h1>
+    <div class="cast" id="castRow"></div>
+    <p>One day, five skylings, each with its own move. Pass the sky along from dawn to night and keep your chain going.</p>
+    <div class="today" id="todayCard"></div>
+    <div class="btns">
+      <button class="btn" id="playToday">Play today's sky</button>
+      <button class="btn ghost" id="playAny">Any sky</button>
+    </div>
+    <div class="links">
+      <button class="link" id="soundBtn"></button>
+      <button class="link" id="notesBtn">Your rounds</button>
+    </div>
+    <p class="tiny">Hold the screen (or press space) to use the move. Your results stay in this browser.</p>
+  </div>
+</div>
+
+<div class="overlay" id="pause" hidden>
+  <div class="card">
+    <h2>Paused</h2>
+    <div class="btns">
+      <button class="btn" id="resumeBtn">Keep playing</button>
+      <button class="btn ghost" id="restartBtn">Start the day again</button>
+      <button class="btn ghost" id="homeBtn">Home</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="end" hidden>
+  <div class="card" id="endCard"></div>
+</div>
+
+<div class="overlay" id="notes" hidden>
+  <div class="card">
+    <h2>Your rounds</h2>
+    <p>Kept only in this browser, for tuning the game. Copy them into the chat if you want me to look.</p>
+    <div class="log" id="logBox"></div>
+    <div class="btns">
+      <button class="btn" id="copyBtn">Copy</button>
+      <button class="btn ghost" id="closeNotes">Close</button>
+    </div>
+    <p class="tiny" id="copyMsg" aria-live="polite"></p>
+  </div>
+</div>
+
+<script>/*ENGINE*/</script>
+<script>/*GAME*/</script>

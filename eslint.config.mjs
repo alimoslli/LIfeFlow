@@ -21,6 +21,7 @@ const eslintConfig = defineConfig([
     ".claude/**",
     "docs/situations/eval/**",
     "docs/design/2026-11-11-preview/**", // design picture scripts: plain Node, not app code
+    "docs/design/2026-11-12-sky-relay/**", // the Sky Relay game prototype: a browser page and its build and check scripts, not app code
   ]),
 ]);
 
