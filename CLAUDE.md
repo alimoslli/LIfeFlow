@@ -39,7 +39,7 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 
 ## Our own small models (docs/backlog/2026-11-12-local-models.md, the report beside it)
 - Open models from Hugging Face run on our own server (`src/server/local-models/`), pinned in `models.ts` by revision and SHA-256 and checked again when they load. Fetch with `scripts/fetch-local-models.mts` into `.models/` (never committed); the build fetches only when a switch is on.
-- Each job has its own switch, off unless exactly "on"; anything wrong (off, missing, a hash mismatch, still loading on a cold instance) falls back to today's way, never an error.
+- Each job has its own switch, off unless exactly "on" (everyone) or "accounts" (only the sign-in emails in `<switch>_ACCOUNTS`, `localModelOn`); anything wrong (off, missing, a hash mismatch, still loading on a cold instance) falls back to today's way, never an error.
 - Only memory picking is a local job (`LOCAL_MODEL_MEMORY`, `meaningScores` in agent.ts, `meaning` in `selectMemories`, which only ever adds). Tool choosing and purchase sorting lost the comparison and stay as they are. Memory vectors are never stored.
 - `next.config.ts` keeps the runtime and model out of every function unless the switch is on, then only in `/api/jarvis/chat` with the Linux x64 runtime; `modelDir`'s `turbopackIgnore` comment keeps the tracer from copying the project. `.npmrc` skips onnxruntime's CUDA download.
 - A new local job or model goes through `scripts/local-models/compare.mts` (tune on dev, report on test) and the owner's yes.

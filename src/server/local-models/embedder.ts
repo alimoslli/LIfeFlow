@@ -17,8 +17,21 @@ import { LOCAL_MODELS, type LocalModel } from "./models";
 export type LocalJob = "memory";
 const SWITCH: Record<LocalJob, string> = { memory: "LOCAL_MODEL_MEMORY" };
 
-/** Is this job switched to the local model? Only the exact word "on" counts. */
-export const localModelOn = (job: LocalJob, envs: Record<string, string | undefined> = process.env) => envs[SWITCH[job]] === "on";
+/**
+ * Is this job switched to the local model? Only two exact words count: "on" (everyone) and "accounts" (only the sign-in
+ * emails listed in `<switch>_ACCOUNTS`, comma-separated: the owner and the demo account first, COO 2026-11-12).
+ * Anything else is off.
+ */
+export function localModelOn(job: LocalJob, envs: Record<string, string | undefined> = process.env, email?: string | null): boolean {
+  const v = envs[SWITCH[job]];
+  if (v === "on") return true;
+  if (v !== "accounts" || !email) return false;
+  const list = (envs[`${SWITCH[job]}_ACCOUNTS`] ?? "").split(",").map((e) => e.trim().toLowerCase());
+  return list.includes(email.trim().toLowerCase());
+}
+
+/** Does the build carry the model at all ("on" or "accounts")? next.config.ts and the fetch script use the same rule. */
+export const localModelBuilt = (job: LocalJob, envs: Record<string, string | undefined> = process.env) => ["on", "accounts"].includes(envs[SWITCH[job]] ?? "");
 
 /** Which pinned model the jobs use (LOCAL_MODEL, default MiniLM). */
 export const localModelKey = (envs: Record<string, string | undefined> = process.env): LocalModel["key"] => (envs.LOCAL_MODEL === "bge" ? "bge" : "minilm");

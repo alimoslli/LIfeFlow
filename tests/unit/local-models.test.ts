@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { embed, localModelKey, localModelOn } from "@/server/local-models/embedder";
+import { embed, localModelBuilt, localModelKey, localModelOn } from "@/server/local-models/embedder";
 import { meaningScores } from "@/server/local-models/memory";
 import { LOCAL_MODELS } from "@/server/local-models/models";
 import { MEANING_MEMORIES } from "../fixtures/memory-meaning";
@@ -14,6 +14,15 @@ describe("local models", () => {
     expect(localModelOn("memory", {})).toBe(false);
     expect(localModelOn("memory", { LOCAL_MODEL_MEMORY: "true" })).toBe(false);
     expect(localModelOn("memory", { LOCAL_MODEL_MEMORY: "on" })).toBe(true);
+    // "accounts": only the listed sign-in emails (the owner and the demo account first), any case, nobody else
+    const listed = { LOCAL_MODEL_MEMORY: "accounts", LOCAL_MODEL_MEMORY_ACCOUNTS: " owner@example.com, demo@example.com " };
+    expect(localModelOn("memory", listed, "Owner@Example.com")).toBe(true);
+    expect(localModelOn("memory", listed, "demo@example.com")).toBe(true);
+    expect(localModelOn("memory", listed, "someone@example.com")).toBe(false);
+    expect(localModelOn("memory", listed)).toBe(false);
+    expect(localModelOn("memory", { LOCAL_MODEL_MEMORY: "accounts" }, "owner@example.com")).toBe(false);
+    expect(localModelBuilt("memory", listed)).toBe(true);
+    expect(localModelBuilt("memory", { LOCAL_MODEL_MEMORY: "true" })).toBe(false);
     expect(localModelKey({})).toBe("minilm");
     expect(localModelKey({ LOCAL_MODEL: "bge" })).toBe("bge");
   });

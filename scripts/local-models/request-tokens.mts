@@ -4,7 +4,7 @@
  *
  *   mkdir -p .models/tok && curl -sSL -o .models/tok/tokenizer.json https://huggingface.co/Xenova/gpt-4o/resolve/main/tokenizer.json
  *   curl -sSL -o .models/tok/tokenizer_config.json https://huggingface.co/Xenova/gpt-4o/resolve/main/tokenizer_config.json
- *   MEASURE_OUT=/tmp/request-size.json npx vitest run tests/integration/request-size.test.ts
+ *   MEASURE_OUT=/tmp/request-size.json npx vitest run tests/integration/request-size.test.ts   (on claude/long-chat-trim)
  *   npx tsx scripts/local-models/request-tokens.mts .models/tok /tmp/request-size.json
  */
 import { readFileSync } from "node:fs";

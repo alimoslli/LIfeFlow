@@ -100,3 +100,27 @@ The job: purchases our rules and keywords don't recognise (87 of the 300 made-up
 3. Then a yes or no to turn it on for everyone (Step 3). The old way stays behind the switch.
 
 No new company sees any data. Nothing trains on anyone, and nothing is stored.
+
+## Which Hugging Face model (owner, 2026-11-12: "make sure we are using the best option from huggingface")
+
+Both small open embedding models were run on the same labelled sets (tuned on the dev half, scored on the test half). Licences were read from the official model cards on Hugging Face (`sentence-transformers/all-MiniLM-L6-v2`: apache-2.0; `BAAI/bge-small-en-v1.5`: mit). Roundup rankings didn't decide it; the test did.
+
+| Test half | Today (words) | all-MiniLM-L6-v2 | bge-small-en-v1.5 |
+|---|---|---|---|
+| Memories: right ones found (meaning cases) | 69.7% | **81.8%** | 78.8% |
+| Memories: wrong ones sent | 0% | 0% | 0% |
+| The 11 existing memory cases | 100% right, 0 wrong | 100% right, 0 wrong | 100% right, 0 wrong |
+| Memories sent per message | 5.5 | 6.9 | 5.8 |
+| Memory picking time, 25 / 100 memories | none | **42 / 159 ms** | 83 / 333 ms |
+| Cold start | none | **0.29 s** | 0.40 s |
+| Tool choosing, extra groups (all needed found) | 0.44 | 0.44 | 2.94 |
+| Unknown purchases sorted right (of 48) | paid model 37 | 10 | 12 |
+| Size | | 23 MB | 34 MB |
+
+**MiniLM is the pick:** better on memories, twice as fast, smaller. bge-small sorts two more purchases, but both lose to the paid small model there by far, so purchase sorting stays as it is.
+
+**The memory gate passes** (COO, 2026-11-12: at least as good on every existing case, better on the meaning cases, the memory test green): existing cases 100% right and 0 wrong as today; meaning cases 69.7% → 81.8% found with 0% wrong, and on the dev half wrong ones went 2.5% → 1.2%.
+
+**Switching it on for the owner and the demo account first:** `LOCAL_MODEL_MEMORY=accounts` with `LOCAL_MODEL_MEMORY_ACCOUNTS=<their sign-in emails, comma-separated>` (the build then carries the model; everyone else stays on words). This is a production setting and needs this branch merged first, so it is the owner's (or the COO's) to set; nothing was set from here.
+
+Not tested yet, worth one more round before Step 3: other small embedders with business licences and ONNX copies (`intfloat/e5-small-v2`, `Snowflake/snowflake-arctic-embed-s`, `ibm-granite/granite-embedding-30m-english`). Licences to be read on their cards first.

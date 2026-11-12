@@ -13,7 +13,7 @@ const securityHeaders = [
  * and only when LOCAL_MODEL_MEMORY is on for the build (the build fetches the pinned files then). Off, no function carries
  * them. Only the Linux x64 runtime is kept: that is what Vercel runs.
  */
-const localModel = process.env.LOCAL_MODEL_MEMORY === "on";
+const localModel = ["on", "accounts"].includes(process.env.LOCAL_MODEL_MEMORY ?? "");
 const localModelKey = process.env.LOCAL_MODEL === "bge" ? "bge" : "minilm";
 const otherRuntimes = ["darwin", "win32", "linux/arm64"].map((p) => `node_modules/onnxruntime-node/bin/napi-v6/${p}/**`);
 

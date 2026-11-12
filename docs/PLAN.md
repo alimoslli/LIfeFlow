@@ -360,6 +360,7 @@ Last: done 2026-11-10 evening ([the walk and the numbers](audits/2026-11-10-prod
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-12, LF Main (owner, through the COO: "yes do all", "make sure we are using the best option from huggingface"; branch `claude/local-models`, held): all-MiniLM-L6-v2 against bge-small-en-v1.5 on the same sets. MiniLM wins on memories (81.8% found against 78.8%, both 0% wrong) and runs twice as fast. Licences are read from the official cards (Apache 2.0, MIT). The memory gate passes. The switch can now be on for listed accounts only (`LOCAL_MODEL_MEMORY=accounts`, `LOCAL_MODEL_MEMORY_ACCOUNTS`), and setting it in production is the owner's. The trim moved to its own branch.
 - 2026-11-12, LF Main (owner's eight questions on models and cost; branch `claude/local-models`, held): request sizes measured for free on the 12 eval questions with OpenAI's tokenizer (a new chat about 20,000 tokens per answer, a long chat up to 52,000); the history trim built and tested (781 tests pass; long chats −33%); `openai-mini` added to the try-out script; report `docs/backlog/2026-11-12-model-costs.md`. Nothing live changed.
 - 2026-11-12, LF Main (owner: "go the hugging face"; on its own branch `claude/local-models`, off main, held): Hugging Face Steps 0 and 1.
   - The models are downloaded from Hugging Face and pinned by revision and SHA-256. The LifeFlow environment allows Hugging Face's hosts, with the owner's yes.

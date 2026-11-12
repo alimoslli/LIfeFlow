@@ -38,7 +38,7 @@ async function fetchModel(m: LocalModel) {
 // --if-on: the build's step. Nothing to do unless a local-model switch is on; a failed download then only warns (the
 // job falls back to today's way), so a Hugging Face outage never stops a deploy.
 if (process.argv.includes("--if-on")) {
-  if (process.env.LOCAL_MODEL_MEMORY !== "on") {
+  if (!["on", "accounts"].includes(process.env.LOCAL_MODEL_MEMORY ?? "")) {
     console.log("local models: off, nothing fetched");
     process.exit(0);
   }

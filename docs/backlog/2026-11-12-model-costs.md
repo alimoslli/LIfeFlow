@@ -1,6 +1,6 @@
 # Model costs: what we test, what it costs, what to do (2026-11-12)
 
-The owner asked eight questions (2026-11-12). Each answer below is marked **measured** (we ran it), **estimate** (worked out from measured numbers and published prices) or **not tested**. Nothing live was changed. The one code change here (the history trim) sits on `claude/local-models` and waits for the owner's yes.
+The owner asked eight questions (2026-11-12). Each answer below is marked **measured** (we ran it), **estimate** (worked out from measured numbers and published prices) or **not tested**. Nothing live was changed. The one code change here (the history trim) moved to its own branch, `claude/long-chat-trim` (owner's yes through the COO, its own gate).
 
 Sources in this repo: `docs/research/2026-11-07-model-comparison.md` (the chat comparison, real calls), `docs/backlog/2026-11-12-local-models-report.md` (the Hugging Face report), `docs/audits/2026-11-10-product-baseline.md` (production token counts), and the new free measurement `tests/integration/request-size.test.ts` + `scripts/local-models/request-tokens.mts`. That measurement runs the real assistant loop and builds the real OpenAI request for the 12 eval questions (the made-up student Maya), with a fake model that answers using each question's own tool plan. Tokens were counted with OpenAI's public tokenizer (o200k), so they match OpenAI's own count to within a few percent. No model was called.
 
@@ -90,7 +90,7 @@ So in a fresh chat we're below the old range; in a long chat we're still in it, 
 **Why long chats grow:** every earlier tool call stays in the history and keeps its tool group on the list, so the 9th question carried 80 tools (17,640 tokens) instead of 35 (7,024).
 
 **What we can cut:**
-1. **Old tool steps out of long chats (built, waiting for a yes).** `keepRecentToolSteps` (src/server/jarvis/history-trim.ts) keeps every earlier message and answer, and keeps tool steps for the last two turns only, so "ok, book the second one" still works. Measured on the same 12-question chat: mean per answer 37,811 → 25,273 (−33%), worst 52,462 → 33,078, and the long chat never goes above 43 tools. New chats are unchanged. All 781 unit and assistant tests pass.
+1. **Old tool steps out of long chats (built on `claude/long-chat-trim`, owner's yes, its own gate).** `keepRecentToolSteps` (src/server/jarvis/history-trim.ts) keeps every earlier message and answer, and keeps tool steps for the last two turns only, so "ok, book the second one" still works. Measured on the same 12-question chat: mean per answer 37,811 → 25,273 (−33%), worst 52,462 → 33,078, and the long chat never goes above 43 tools. New chats are unchanged. All 781 unit and assistant tests pass.
 2. **Shorter tool definitions (not built).** Of the tool tokens, about 75% are the parameter schemas (12,233 of 16,248 in the 80-tool list). The biggest: `set_up_schedule` 1,018, `create_tasks` 566, `update_event` 501. Trimming the wording inside them could cut about a quarter of the tool tokens. This changes what the model reads, so it needs the eval run again.
 3. **Fewer groups per question (not built).** "Find 2 hours to study" and "what's due" get 30 tools (about 9,000 tokens). Tighter word rules could halve that.
 4. **INSTRUCTIONS (4,223) is already cached** after the first call (90% off on gpt-5.5), so cutting it saves little.
@@ -123,11 +123,11 @@ A student pays $5.99. At 10 answers a day, gpt-5.5 alone costs more than that, s
 ## Recommendation: use both
 
 1. **Keep OpenAI for the chat now.** No open chat model has finished a single answer for us, so there is nothing measured to switch to.
-2. **Owner's yes (free to run):** the history trim (−33% in long chats) and the local model for memory picking. Both are built on `claude/local-models`.
+2. **Owner's yes (free to run), given 2026-11-12:** the history trim (−33% in long chats, `claude/long-chat-trim`) and the local model for memory picking (`claude/local-models`).
 3. **Owner's yes (paid, about $3):** one try-out on the 18-question eval with gpt-5.5 (a fresh baseline), gpt-5.4-mini on every question, and gpt-oss-120b. About 44 calls a model; estimated cost $1.00 + $0.15 + $0.05, under $3 with reruns. `scripts/compare-models.ts` has all three ready (`--model openai`, `openai-mini`, `groq-oss`). The Groq run needs a paid Groq tier: the free tier's 8,000 tokens a minute is below even our smallest request (8,056).
 4. **After the try-out:** move the read-only lookups that pass to the cheaper model, then trim the tool definitions with the eval re-run.
 5. **Later (level 2, after the 10-student test):** fine-tuning or hosting our own chat model, as ADR 0023 says.
 
 ## What changed because of this report
 
-Nothing live. On `claude/local-models`: the history trim (held), the free request-size measurement, the token counter, and `openai-mini` as a try-out candidate.
+Nothing live. The history trim and the free request-size measurement are on `claude/long-chat-trim`; the token counter and `openai-mini` as a try-out candidate are on `claude/local-models`.
