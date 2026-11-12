@@ -15,8 +15,10 @@ export type StageBox = { wide: [number, number, number, number]; narrow: [number
 export type NightOptions = { box: StageBox; reduced: boolean; focus?: CompanionKey | null };
 export type NightScene = { destroy(): void; cheer(): void; focus(k: CompanionKey | null): void };
 
-/** Ask every mounted night to cheer (a CTA hover, a finished step). */
-export const cheerSkylings = () => window.dispatchEvent(new Event("lf-skylings-cheer"));
+/** The event every skyling on the page listens for to cheer: the nights, the sprites and the one on Today's sky. */
+export const SKYLINGS_CHEER = "lf-skylings-cheer";
+/** Ask every mounted skyling to cheer (a CTA hover, a finished step, a claimed star, a save from the bar). */
+export const cheerSkylings = () => window.dispatchEvent(new Event(SKYLINGS_CHEER));
 
 const SKY = ["#040a18", "#07132c", "#0b1d42", "#102c58", "#173f6e", "#245a86"];
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];

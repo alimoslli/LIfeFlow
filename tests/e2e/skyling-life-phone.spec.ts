@@ -20,3 +20,24 @@ test("with reduced motion the skyling doesn't wave", async ({ page }) => {
   await page.waitForTimeout(3_500);
   await expect(page.locator('[data-pose="wave"]')).toHaveCount(0);
 });
+
+// Owner, 2026-11-11 (number 3, "I trust your judgement"): the skyling on the sky jumps for joy when something good happens,
+// not only when a to-do is ticked on the line: a save from Today's bar (and a claimed star) cheers it too.
+test("the skyling on the sky cheers when Today's bar saves something", async ({ page }) => {
+  await signUp(page, "Joy Jump");
+  await page.goto("/");
+  await expect(page.locator('[data-testid="day-clock"] [data-pose]')).toHaveCount(1);
+  // a cheer is about a second long: note every pose the sky's skyling takes from before the message is sent
+  await page.evaluate(() => {
+    const who = document.querySelector('[data-testid="day-clock"] [data-pose]') as HTMLElement;
+    const seen = ((window as unknown as { lfPoses: string[] }).lfPoses = [] as string[]);
+    new MutationObserver(() => seen.push(who.dataset.pose ?? "")).observe(who, { attributes: true, attributeFilter: ["data-pose"] });
+  });
+  const box = page.locator(".dc-dock").getByRole("textbox", { name: "Message Ray" });
+  await box.fill(`/tool create_tasks {"tasks":[{"title":"Water the plants"}]}`);
+  await box.press("Enter");
+  await expect(page.locator('[data-testid="today-reply"]:visible').getByRole("list", { name: "Saved" })).toContainText("Water the plants", {
+    timeout: 15_000,
+  });
+  await expect.poll(() => page.evaluate(() => (window as unknown as { lfPoses: string[] }).lfPoses.includes("celebrate")), { timeout: 3_000 }).toBe(true);
+});
