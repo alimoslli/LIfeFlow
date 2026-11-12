@@ -75,7 +75,7 @@ export default async function TodayPage() {
       note,
       assistantName: assistantProfile(user.preferences, user.timezone).name,
       // idea clouds beside the chat bar, from their own data (lib/idea-clouds)
-      clouds: await ideaClouds(scope, tz, user.preferences, assistantProfile(user.preferences, user.timezone).name),
+      clouds: await ideaClouds(scope, tz, user.preferences, assistantProfile(user.preferences, user.timezone).name, new Date(), { noteId: note?.id }),
       userId: user.id,
       setup,
       hello: `${greetingIn(tz)}, ${user.name.split(" ")[0]}`,

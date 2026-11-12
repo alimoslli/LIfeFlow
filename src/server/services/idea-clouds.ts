@@ -1,102 +1,78 @@
-import { and, eq, gt, isNull, lte, ne, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { todayIn } from "@/lib/dates";
-import { CLOUDS, pickClouds, type CloudFacts, type CloudKey, type IdeaCloud } from "@/lib/idea-clouds";
+import { CLOUDS, pickClouds, type IdeaCloud } from "@/lib/idea-clouds";
+import { DOABLE } from "@/lib/insight-clouds";
+import { cloudsFrom } from "@/lib/insights";
 import type { UserScope } from "../db/with-user";
-import {
-  assignments,
-  courses,
-  employers,
-  financialAccounts,
-  healthSamples,
-  personalGoals,
-  promises,
-  users,
-  workShifts,
-  type UserPreferences,
-} from "../db/schema";
-import { series } from "../db/series";
-import { listEventsInRange } from "./calendar";
+import { jarvisMessages, users, type ProactiveAction, type UserPreferences } from "../db/schema";
+import { cloudFacts } from "./cloud-facts";
+import { ServiceError } from "./errors";
+import { listInsights } from "./insights";
+import type { Candidate } from "./proactive/detectors";
+import { saveMessage, toneOf } from "./proactive/engine";
+import { respondToMessage } from "./proactive/respond";
 
-const one = <T>(rows: T[]) => rows.length > 0;
-
-/** What the idea clouds may say for this person, from their own records only (lib/idea-clouds says why). */
-export async function cloudFacts(scope: UserScope, tz: string, prefs: UserPreferences | undefined, now = new Date()): Promise<CloudFacts> {
-  const today = todayIn(tz, now);
-  const week = new Date(now.getTime() + 7 * 86_400_000);
-  const open = and(eq(assignments.userId, scope.userId), isNull(assignments.completedAt), ne(assignments.status, "done"));
-  const [me, classes, jobs, due, next, project, shifts, banks, health, goals, promised, todayEvents] = await series(
-    () => scope.tx.select({ createdAt: users.createdAt }).from(users).where(eq(users.id, scope.userId)),
-    () =>
-      scope.tx
-        .select({ id: courses.id })
-        .from(courses)
-        .where(and(eq(courses.userId, scope.userId), isNull(courses.archivedAt)))
-        .limit(1),
-    () => scope.tx.select({ id: employers.id }).from(employers).where(eq(employers.userId, scope.userId)).limit(1),
-    () =>
-      scope.tx
-        .select({ id: assignments.id })
-        .from(assignments)
-        .where(and(open, gt(assignments.dueAt, now), lte(assignments.dueAt, week)))
-        .limit(1),
-    () =>
-      scope.tx
-        .select({ title: assignments.title })
-        .from(assignments)
-        .where(and(open, gt(assignments.dueAt, now)))
-        .orderBy(assignments.dueAt)
-        .limit(1),
-    () =>
-      scope.tx
-        .select({ id: assignments.id })
-        .from(assignments)
-        .where(and(open, eq(assignments.kind, "project")))
-        .limit(1),
-    () =>
-      scope.tx
-        .select({ id: workShifts.id })
-        .from(workShifts)
-        .where(and(eq(workShifts.userId, scope.userId), gt(workShifts.startsAt, now)))
-        .limit(1),
-    () =>
-      scope.tx
-        .select({ id: financialAccounts.id })
-        .from(financialAccounts)
-        .where(and(eq(financialAccounts.userId, scope.userId), isNull(financialAccounts.archivedAt)))
-        .limit(1),
-    () => scope.tx.select({ id: healthSamples.id }).from(healthSamples).where(eq(healthSamples.userId, scope.userId)).limit(1),
-    () => scope.tx.select({ id: personalGoals.id }).from(personalGoals).where(eq(personalGoals.userId, scope.userId)).limit(1),
-    () => scope.tx.select({ id: promises.id }).from(promises).where(eq(promises.userId, scope.userId)).limit(1),
-    () => listEventsInRange(scope, tz, today, today),
-  );
-  const taps = prefs?.ideaTaps ?? {};
-  const used: Partial<Record<CloudKey, boolean>> = Object.fromEntries(CLOUDS.map((c) => [c.key, (taps[c.key] ?? 0) > 0]));
-  // features used through real records, not only through a cloud
-  if (one(promised)) used.promise = true;
-  if (one(goals)) used.goal = true;
-  const stage = prefs?.lifeStage;
-  return {
-    student: one(classes) || stage === "student" || stage === "both",
-    worker: one(jobs) || stage === "working" || stage === "both",
-    dueSoon: one(due),
-    project: one(project),
-    shifts: one(shifts),
-    classToday: todayEvents.some((e) => e.kind === "class" && e.startsAt > now),
-    bank: one(banks),
-    moneyLocked: !!prefs?.moneyLock?.enabled,
-    health: one(health),
-    nextAssignment: next[0]?.title,
-    used,
-    ageDays: me[0] ? Math.floor((now.getTime() - me[0].createdAt.getTime()) / 86_400_000) : 0,
-  };
-}
+export { cloudFacts };
 
 /** The person's local day number, so the clouds change from day to day in their time zone. */
 export const localDay = (tz: string, now = new Date()) => Math.floor(Date.parse(`${todayIn(tz, now)}T00:00:00Z`) / 86_400_000);
 
-/** The clouds for this person now (a few more than shown, so one can be swapped in now and then). */
-export async function ideaClouds(scope: UserScope, tz: string, prefs: UserPreferences | undefined, name: string, now = new Date()): Promise<IdeaCloud[]> {
-  return pickClouds(await cloudFacts(scope, tz, prefs, now), name, localDay(tz, now), 5);
+/**
+ * The clouds for this person now (owner, 2026-11-12): up to three real insights from their own records, most useful first, none
+ * the skyling's note on Today already says (`noteId`). The sky is never empty: with fewer than two insights, calm feature
+ * clouds (white tips) fill it to two.
+ */
+export async function ideaClouds(
+  scope: UserScope,
+  tz: string,
+  prefs: UserPreferences | undefined,
+  name: string,
+  now = new Date(),
+  opts: { noteId?: string | null } = {},
+): Promise<IdeaCloud[]> {
+  const have = await cloudFacts(scope, tz, prefs, now);
+  const insights = cloudsFrom(await listInsights(scope, tz, prefs, now), { noteId: opts.noteId, count: 3 });
+  if (insights.length >= 2) return insights;
+  return [...insights, ...pickClouds(have, name, localDay(tz, now), 2 - insights.length)];
+}
+
+/**
+ * A tapped insight's one fix (owner, 2026-11-12: "what you can change or what you can do"). The browser sends only the
+ * insight's key; the fix is found again here from the person's own records (so nothing sent can choose what runs, and the
+ * Money lock, which keeps money insights from being read at all, still holds). It is filed as a message and run through the
+ * same path as every "Do it", so it has Undo (`respondToMessage`). Returns the message id and what changed.
+ */
+export async function doCloud(scope: UserScope, user: { id: string; timezone: string; preferences?: UserPreferences }, ref: string, now = new Date()) {
+  if (typeof ref !== "string" || ref.length > 200) throw new ServiceError("That one changed. Open Today again.");
+  const found = (await listInsights(scope, user.timezone, user.preferences, now)).find((i) => i.key === ref && i.action?.doIt);
+  const doIt = found?.action?.doIt;
+  const source = doIt?.payload.source as
+    { kind: string; topic: string; dedupeKey: string; facts: Record<string, unknown>; priority: number; urgent?: boolean } | undefined;
+  const action = doIt?.payload.action as ProactiveAction | undefined;
+  if (!found || !source || !action || !DOABLE.has(action.type)) throw new ServiceError("That one changed. Open Today again.");
+  const saved = await saveMessage(
+    scope,
+    {
+      kind: source.kind,
+      topic: source.topic as Candidate["topic"],
+      dedupeKey: source.dedupeKey,
+      facts: source.facts,
+      action,
+      priority: source.priority,
+      urgent: source.urgent,
+    },
+    toneOf(user.preferences),
+    false,
+    "cloud",
+  );
+  const [row] = saved
+    ? [saved]
+    : await scope.tx
+        .select()
+        .from(jarvisMessages)
+        .where(and(eq(jarvisMessages.userId, scope.userId), eq(jarvisMessages.dedupeKey, source.dedupeKey)));
+  const r = await respondToMessage(scope, user, row.id, "do", todayIn(user.timezone, now));
+  return { id: row.id, text: r.text };
 }
 
 /** A tapped cloud counts as used (a count only, never the message). Unknown keys are ignored. */
