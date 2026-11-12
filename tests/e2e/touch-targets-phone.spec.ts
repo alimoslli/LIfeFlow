@@ -97,7 +97,7 @@ test("393px: every control on onboarding and the main screens is at least 44x44"
 
   // The main screens, with real content (goals with "What if I added", a job, subscriptions).
   execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/seed-coach.ts", email], {
-    env: { ...process.env, DATABASE_URL: "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" },
+    env: { ...process.env, DATABASE_URL: process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" },
   });
   for (const path of SCREENS) {
     await page.goto(path);
