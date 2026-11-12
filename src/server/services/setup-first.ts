@@ -1,5 +1,5 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import { courses, integrations, workShifts } from "../db/schema";
+import { calendarEvents, courses, integrations, workShifts } from "../db/schema";
 import { series } from "../db/series";
 import type { UserScope } from "../db/with-user";
 import { ServiceError } from "./errors";
@@ -11,12 +11,12 @@ import { ServiceError } from "./errors";
  */
 export const FIRST_CONNECTION_NEEDED = "Connect one thing first, so your sky has your week on it.";
 
-export type FirstConnection = "canvas" | "google" | "outlook" | "bank" | "classes" | "shifts";
+export type FirstConnection = "canvas" | "google" | "outlook" | "bank" | "classes" | "shifts" | "plans";
 
 const LINKED: Record<string, FirstConnection> = { canvas: "canvas", google: "google", outlook: "outlook", plaid: "bank" };
 
 export async function firstConnection(scope: UserScope): Promise<FirstConnection | null> {
-  const [links, classes, shifts] = await series(
+  const [links, classes, shifts, plans] = await series(
     () =>
       scope.tx
         .select({ provider: integrations.provider })
@@ -31,10 +31,12 @@ export async function firstConnection(scope: UserScope): Promise<FirstConnection
         .where(and(eq(courses.userId, scope.userId), isNull(courses.archivedAt)))
         .limit(1),
     () => scope.tx.select({ id: workShifts.id }).from(workShifts).where(eq(workShifts.userId, scope.userId)).limit(1),
+    () => scope.tx.select({ id: calendarEvents.id }).from(calendarEvents).where(eq(calendarEvents.userId, scope.userId)).limit(1),
   );
   if (links.length) return LINKED[links[0].provider];
   if (classes.length) return "classes";
   if (shifts.length) return "shifts";
+  if (plans.length) return "plans";
   return null;
 }
 

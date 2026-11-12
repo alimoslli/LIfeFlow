@@ -3,7 +3,15 @@ import { expect, test, type Page } from "@playwright/test";
 import { pool, queryAsUser, signUp, fillBirthday } from "./helpers";
 
 // Setup in the app (owner, 2026-11-12): the new account lands on the real Today and the skyling walks them through it.
-test.use({ viewport: { width: 393, height: 852 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+test.use({
+  viewport: { width: 393, height: 852 },
+  deviceScaleFactor: 2,
+  isMobile: true,
+  hasTouch: true,
+  // a fake microphone only: no real voice or model call is made (the voice service address is blocked below)
+  permissions: ["microphone"],
+  launchOptions: { args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] },
+});
 
 const SHOTS = process.env.SETUP_SHOTS; // set to a folder to write the pictures for the owner
 const OLD = SHOTS ? `${SHOTS}/old` : null;
@@ -86,7 +94,7 @@ test("a new account sets up on Today, connects Canvas for real, sees the week la
   await sheet.getByText("Nothing here works for me").click();
   await expect(sheet.getByTestId("no-connection")).toBeVisible();
   await expect(sheet.getByRole("button", { name: /skip|continue|finish/i })).toHaveCount(0);
-  await shot(page, "07-nothing-works-state");
+  await shot(page, "07-nothing-works-message-or-voice");
   await sheet.getByRole("button", { name: "All the ways" }).click();
 
   await sheet.getByRole("button", { name: "Connect Canvas" }).click();
@@ -209,6 +217,53 @@ test("the old welcome is still there to compare", async ({ page }) => {
   await page.getByRole("button", { name: "I'll connect later" }).click();
   await expect(page.getByRole("heading", { name: "Read your sky" })).toBeVisible();
   await shot(page, "old-5-read-your-sky", OLD!);
+});
+
+test("nothing to connect: tell the skyling the week in a message; only what is really saved moves setup on", async ({ page }) => {
+  const email = await toConnect(page);
+  await note(page).getByRole("button", { name: "Pick the first one" }).click();
+  const sheet = page.getByRole("dialog", { name: "Your first connection" });
+  await sheet.getByText("Nothing here works for me").click();
+  await expect(sheet.getByRole("button", { name: "Talk to Nova" })).toBeVisible();
+  expect(Math.round((await sheet.getByRole("button", { name: "Talk to Nova" }).boundingBox())!.height)).toBeGreaterThanOrEqual(44);
+  await sheet.getByLabel("Tell Nova your week").fill("hello, nothing to see here");
+  await shot(page, "m1-message-or-voice");
+  await sheet.getByRole("button", { name: "Allow and send" }).click();
+  // nothing was saved, so setup waits and says so (honest: no skip, no pretending)
+  await expect(sheet.getByText("Nothing was added to your sky yet.", { exact: false })).toBeVisible({ timeout: 30_000 });
+  await shot(page, "m2-nothing-saved-setup-waits");
+  expect((await queryAsUser(email, "select 1 from courses")).length).toBe(0);
+  await expect(page.locator(".dc-today[data-setup=connect]")).toBeVisible();
+  // now a real week: the model saves it through set_up_schedule, and that is what lands on the wheel
+  await sheet
+    .getByLabel("Tell Nova your week")
+    .fill('/tool set_up_schedule {"classes":[{"name":"BIO 110","days":[1,3,5],"startTime":"10:00","endTime":"10:50"}]}');
+  await sheet.getByRole("button", { name: "Send" }).click();
+  await expect(page.locator(".dc-today[data-setup=landed]")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "timeline");
+  await expect(page.getByRole("button", { name: /^BIO 110, / }).first()).toBeAttached();
+  await shot(page, "m3-the-told-week-lands");
+  expect((await queryAsUser<{ name: string }>(email, "select name from courses")).map((c) => c.name)).toEqual(["BIO 110"]);
+});
+
+test("nothing to connect: the voice button starts the app's own voice bar, and a call that saves nothing leaves setup waiting", async ({ page }) => {
+  // the voice service is never reached: its address is blocked here (after a pause, so the voice bar can be pictured)
+  await page.route("https://api.openai.com/**", async (r) => {
+    await new Promise((done) => setTimeout(done, 5_000));
+    await r.abort().catch(() => undefined);
+  });
+  const email = await toConnect(page);
+  await note(page).getByRole("button", { name: "Pick the first one" }).click();
+  const sheet = page.getByRole("dialog", { name: "Your first connection" });
+  await sheet.getByText("Nothing here works for me").click();
+  await sheet.getByRole("button", { name: "Talk to Nova" }).click();
+  await expect(sheet.getByRole("group", { name: "Talking with Nova" })).toBeVisible();
+  await shot(page, "m4-voice-bar");
+  // no voice service is reachable in the tests: the bar closes with a plain line, and nothing is on the sky
+  await expect(sheet.getByRole("group", { name: "Talking with Nova" })).toHaveCount(0, { timeout: 30_000 });
+  await expect(sheet.getByRole("alert")).toBeVisible();
+  expect((await queryAsUser(email, "select 1 from courses")).length).toBe(0);
+  await expect(page.locator(".dc-today[data-setup=connect]")).toBeVisible();
 });
 
 test("on a laptop the same setup sits beside the wheel", async ({ browser }) => {

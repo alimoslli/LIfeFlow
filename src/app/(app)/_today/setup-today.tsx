@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { DayClock } from "@/components/day-clock/day-clock";
+import { LiveVoice, VoiceButton } from "@/components/jarvis/voice-call";
 import { AllFive } from "@/components/skylings/all-five";
 import { cheerSkylings } from "@/components/skylings/night";
 import { SkyButton } from "@/components/skylings/sky-button";
@@ -69,6 +70,7 @@ const FIRST_LINE: Record<string, string> = {
   outlook: "Outlook is connected. What's on your calendar is on the wheel.",
   bank: "Your bank is connected. Bills and spending live in Money.",
   classes: "Your classes are on the wheel.",
+  plans: "What you told me is on the wheel.",
   shifts: "Your shifts are on the wheel.",
 };
 
@@ -203,19 +205,20 @@ export function SetupToday({
     }
   })();
 
-  const cloud = reply ? (
-    <TodayReplyCard name={who} refresh={() => router.refresh()} fill />
-  ) : step === "learn" ? (
-    <Learn who={who} glyph={drawn} onFinish={finish} busy={busy} error={error} />
-  ) : (
-    note && (
-      <SkylingNote glyph={drawn} who={who} text={note.text} error={step === "meet" || step === "about" ? null : error}>
-        <SkyButton onClick={note.go} skyling={drawn ?? "dawn"} size="sm" className="self-start">
-          {note.button}
-        </SkyButton>
-      </SkylingNote>
-    )
-  );
+  const cloud =
+    reply && step !== "landed" ? (
+      <TodayReplyCard name={who} refresh={() => router.refresh()} fill />
+    ) : step === "learn" ? (
+      <Learn who={who} glyph={drawn} onFinish={finish} busy={busy} error={error} />
+    ) : (
+      note && (
+        <SkylingNote glyph={drawn} who={who} text={note.text} error={step === "meet" || step === "about" ? null : error}>
+          <SkyButton onClick={note.go} skyling={drawn ?? "dawn"} size="sm" className="self-start">
+            {note.button}
+          </SkyButton>
+        </SkylingNote>
+      )
+    );
 
   return (
     <div className="dc-today flex flex-col gap-5" data-setup={step}>
@@ -321,13 +324,14 @@ export function SetupToday({
           </SkyButton>
         </div>
       </Sheet>
-      <Sheet open={sheet === "connect"} onClose={() => setSheet(null)} title="Your first connection">
+      <Sheet open={sheet === "connect" && step !== "landed"} onClose={() => setSheet(null)} title="Your first connection">
         <ConnectSheet
           who={who}
           stage={stage}
           sources={sources}
           aiOn={aiOn}
           onAllowed={() => setAiOn(true)}
+          onTold={() => router.refresh()}
           onLanded={(msg, at) => {
             celebrate(at, "small", "Connected");
             landedBy(msg);
@@ -509,6 +513,7 @@ function ConnectSheet({
   aiOn,
   onAllowed,
   onLanded,
+  onTold,
 }: {
   who: string;
   stage: LifeStage | null;
@@ -516,6 +521,8 @@ function ConnectSheet({
   aiOn: boolean;
   onAllowed: () => void;
   onLanded: (message: string | null, at: DOMRect | undefined) => void;
+  /** A message or a spoken week was sent: the page is asked again, and only rows that really saved move setup on. */
+  onTold: () => void;
 }) {
   const [view, setView] = useState<"list" | Way | "none">("list");
   const school = stage === "student" || stage === "both";
@@ -547,29 +554,7 @@ function ConnectSheet({
     return (
       <div>
         {back}
-        <div data-testid="no-connection" className="flex flex-col gap-3 rounded-2xl bg-surface-2 px-4 py-4">
-          <p className="text-[0.9375rem] font-medium">Nothing here works for you yet.</p>
-          <p className="text-sm text-text-2">
-            Setup waits for one real thing on your sky, so there&apos;s no skip. {nameAtStart(who)} keeps your place: come back and pick up here when a picture,
-            Canvas, Google, Outlook or your bank is available to you.
-          </p>
-          <ul className="flex flex-col gap-1 text-sm text-muted">
-            {order.map((w) => (
-              <li key={w}>
-                {WAYS[w].title}:{" "}
-                {w === "photo"
-                  ? aiOn
-                    ? "available"
-                    : "needs your OK to read the picture"
-                  : w === "bank" || w === "canvas" || w === "google" || w === "outlook"
-                    ? sources[w].available
-                      ? "available"
-                      : "isn't available yet"
-                    : ""}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <TellWay who={who} aiOn={aiOn} onAllowed={onAllowed} onSent={onTold} />
       </div>
     );
   return (
@@ -944,4 +929,146 @@ function Learn({ who, glyph, onFinish, busy, error }: { who: string; glyph: Comp
       </SkyButton>
     </section>
   );
+}
+
+/**
+ * The path for anyone with nothing to connect (owner, 2026-11-12: "they can send a message too or send a voice"): tell the
+ * skyling the week in one message, typed or said. It goes through the same chat as everywhere (its limits, its permission,
+ * `set_up_schedule`), and only what it really saves counts: the server reads the account's own rows, so if nothing was saved,
+ * setup still waits and says so.
+ */
+function TellWay({ who, aiOn, onAllowed, onSent }: { who: string; aiOn: boolean; onAllowed: () => void; onSent: () => void }) {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [said, setSaid] = useState<string | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [talking, setTalking] = useState(false);
+  const fallback = `${nameAtStart(who)} couldn't save that just now. Try again.`;
+  /** Talking needs the same permission as sending: asked in the words above, allowed by choosing to talk. */
+  const talk = async () => {
+    setProblem(null);
+    if (!aiOn) {
+      const r = await setAiConsentAction(true);
+      if (!r?.ok) return setProblem(r?.error || fallback);
+      onAllowed();
+    }
+    setTalking(true);
+  };
+  const send = async () => {
+    const message = text.trim();
+    if (!message || busy) return;
+    setBusy(true);
+    setProblem(null);
+    setSaid(null);
+    try {
+      if (!aiOn) {
+        const r = await setAiConsentAction(true);
+        if (!r?.ok) throw new Error(r?.error || fallback);
+        onAllowed();
+      }
+      const { reply, saved } = await askSkyling(message, fallback);
+      setSaid(reply || (saved ? "Saved." : null));
+      if (saved) {
+        setText("");
+        onSent();
+      } else setProblem(`Nothing was added to your sky yet. Tell ${nameAtStart(who)} the days and times, like the example above.`);
+    } catch (e) {
+      setProblem(e instanceof Error && e.message ? e.message : fallback);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div data-testid="no-connection" className="flex flex-col gap-3">
+      <h3 className="font-display text-lg font-medium">Tell {nameAtStart(who)} your week</h3>
+      <p className="text-sm text-text-2">
+        Nothing to connect? Type it or say it, in your own words. For example: &quot;Bio 101 Mon and Wed at 10, I work at Target Tue and Thu 5 to 9.&quot; It
+        goes on your sky only when {nameAtStart(who)} saves it, and you can undo it. Setup waits until something is on your sky.
+      </p>
+      {!aiOn && (
+        <p className="text-xs text-muted">
+          To read it, {nameAtStart(who)} sends your message to OpenAI, our provider, who don&apos;t use it to train their models. Sending or talking allows
+          this. You can turn it off anytime in Settings.
+        </p>
+      )}
+      {talking ? (
+        <LiveVoice
+          module="calendar"
+          assistantName={who}
+          conversationId={null}
+          onConversation={() => undefined}
+          onLine={() => undefined}
+          onTool={() => undefined}
+          onConfirmation={() => undefined}
+          onEnd={(error) => {
+            setTalking(false);
+            if (error) setProblem(error);
+            onSent(); // the page is asked again: what the call saved shows, and nothing else moves setup on
+          }}
+        />
+      ) : (
+        <>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={4}
+            maxLength={2000}
+            aria-label={`Tell ${who} your week`}
+            placeholder="Bio 101 Mon and Wed at 10, work at Target Tue and Thu 5 to 9"
+            className="w-full resize-none rounded-2xl bg-surface-2 px-4 py-3 text-[1rem] outline-none placeholder:text-muted focus:ring-2 focus:ring-accent"
+          />
+          <div className="flex items-center gap-2">
+            <SkyButton onClick={send} loading={busy} disabled={!text.trim()} className="min-w-0 flex-1 justify-between pl-6">
+              {aiOn ? "Send" : "Allow and send"}
+            </SkyButton>
+            <VoiceButton assistantName={who} disabled={busy} onStart={talk} className="bg-surface-2" />
+          </div>
+        </>
+      )}
+      {said && (
+        <p role="status" className="line-clamp-6 text-sm [overflow-wrap:anywhere] text-text-2">
+          {said}
+        </p>
+      )}
+      {problem && <FormError message={problem} />}
+    </div>
+  );
+}
+
+/** One message to the skyling through the same chat as everywhere: its final words, and whether a tool saved something. */
+async function askSkyling(message: string, fallback: string): Promise<{ reply: string; saved: boolean }> {
+  const res = await fetch("/api/jarvis/chat", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ message, attachmentIds: [], clientMessageId: crypto.randomUUID(), module: "calendar" }),
+  });
+  if (!res.ok || !res.body) {
+    // only words the server wrote for people (limits, permission); anything else is the calm fallback
+    const words = [402, 403, 429, 503].includes(res.status) ? ((await res.json().catch(() => null)) as { error?: string } | null)?.error : null;
+    throw new Error(words || fallback);
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  let reply = "";
+  let saved = false;
+  let failed = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let nl: number;
+    while ((nl = buf.indexOf("\n")) >= 0) {
+      const line = buf.slice(0, nl).trim();
+      buf = buf.slice(nl + 1);
+      if (!line) continue;
+      const ev = JSON.parse(line) as { type: string; delta?: string; ok?: boolean; message?: string };
+      if (ev.type === "tool_start") reply = "";
+      if (ev.type === "text") reply += ev.delta ?? "";
+      if (ev.type === "tool_end" && ev.ok) saved = true;
+      if (ev.type === "error") failed = ev.message ?? "";
+    }
+  }
+  if (failed && !saved) throw new Error(failed);
+  return { reply: reply.trim(), saved };
 }

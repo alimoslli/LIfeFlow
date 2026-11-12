@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { closeDb } from "@/server/db/client";
 import { integrations } from "@/server/db/schema";
 import { finishOnboarding, saveWelcomeProgress } from "@/server/services/onboarding";
+import { createEvent } from "@/server/services/calendar";
 import { keptSchema, proposalFrom } from "@/server/services/schedule-photo";
 import { setUpSchedule } from "@/server/services/schedule-setup";
 import { FIRST_CONNECTION_NEEDED, firstConnection, requireFirstConnection } from "@/server/services/setup-first";
@@ -37,6 +38,13 @@ describe("the first connection", () => {
     const b = await makeUser();
     await b.run((s) => setUpSchedule(s, TZ, { jobs: [{ name: "Campus Coffee", shifts: [{ date: "2030-01-07", startTime: "16:00", endTime: "21:00" }] }] }));
     expect(await b.run((s) => firstConnection(s))).toBe("shifts");
+  });
+
+  it("counts a plan told in a message (a calendar event), and a message that saved nothing counts as nothing", async () => {
+    const { run } = await makeUser();
+    expect(await run((s) => firstConnection(s))).toBeNull();
+    await run((s) => createEvent(s, TZ, { title: "Dentist", date: "2030-01-08", startTime: "15:00", endTime: "16:00" }, "jarvis"));
+    expect(await run((s) => firstConnection(s))).toBe("plans");
   });
 
   it("keeps the birthday rule: a connection alone doesn't finish setup", async () => {
