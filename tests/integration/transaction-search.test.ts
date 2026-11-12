@@ -254,9 +254,9 @@ describe("second review fixes", () => {
     ]);
     const sum = await u.run((s) => spendingSummary(s, { from: daysAgo(30), to: daysAgo(0), search: "Omar Mousselli" }));
     expect(sum.netSpendingCents).toBe(4000);
-    expect(sum.unconfirmed).toEqual({ count: 2, cents: 8500 });
+    expect(sum.unconfirmed).toEqual({ count: 2, paidCents: 8500, receivedCents: 0 });
     const none = await u.run((s) => spendingSummary(s, { from: daysAgo(30), to: daysAgo(0) }));
-    expect(none.unconfirmed).toEqual({ count: 0, cents: 0 });
+    expect(none.unconfirmed).toEqual({ count: 0, paidCents: 0, receivedCents: 0 });
   });
 
   it("L2: a curly apostrophe or backtick in stored text is ignored like the straight one", async () => {
@@ -334,5 +334,34 @@ describe("totals and lookups agree (mission 0a62c1cb)", () => {
     };
     expect(out.result.ok).toBe(false);
     expect(out.result.error).toMatch(/Money is locked/);
+  });
+
+  it("names add up exactly to the totals across expense, income, refund and a transfer from the same person", async () => {
+    const u = await bank([{ daysAgo: 20, description: "ZELLE TO OMAR HADDAD", cents: 10000 }]);
+    await u.run(async (s) => {
+      const acct = (await s.tx.query.financialAccounts.findFirst())!;
+      const add = (days: number, description: string, amountCents: number, kind: "income" | "refund" | "transfer") =>
+        createTransaction(s, { accountId: acct.id, date: daysAgo(days), description, amountCents, kind });
+      await add(15, "ZELLE FROM OMAR HADDAD", 2500, "income");
+      await add(10, "ZELLE REFUND OMAR HADDAD", 1500, "refund");
+      await add(5, "ZELLE OMAR HADDAD OWN ACCOUNT", -7000, "transfer");
+    });
+    const sum = await u.run((s) => spendingSummary(s, { ...range(), search: "Omar Haddad" }));
+    expect(sum.netSpendingCents).toBe(8500);
+    expect(sum.incomeCents).toBe(2500);
+    expect(sum.countedNames.reduce((n, x) => n + x.paidCents, 0)).toBe(sum.netSpendingCents);
+    expect(sum.countedNames.reduce((n, x) => n + x.receivedCents, 0)).toBe(sum.incomeCents);
+    expect(sum.countedLeftOut).toEqual({ count: 1, cents: 7000 });
+  });
+
+  it("an unsure incoming line is reported as received, apart from paid", async () => {
+    const u = await bank([{ daysAgo: 20, description: "ZELLE TO OMAR HADDAD", cents: 1000 }]);
+    await u.run(async (s) => {
+      const acct = (await s.tx.query.financialAccounts.findFirst())!;
+      await createTransaction(s, { accountId: acct.id, date: daysAgo(3), description: "ZELLE FROM OMAR H", amountCents: 8500, kind: "income" });
+    });
+    const sum = await u.run((s) => spendingSummary(s, { ...range(), search: "Omar Haddad" }));
+    expect(sum.incomeCents).toBe(0);
+    expect(sum.unconfirmed).toEqual({ count: 1, paidCents: 0, receivedCents: 8500 });
   });
 });
