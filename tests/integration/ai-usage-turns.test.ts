@@ -90,8 +90,8 @@ describe("chat and texts leave a usage row", () => {
   it("a text writes an sms row with a cost when prices are passed in", async () => {
     const db = getDb();
     const u = await makeUser("Texter");
-    await db.update(users).set({ smsPhone: "+14045550166", plan: "pro" }).where(eq(users.id, u.user.id));
-    await answerText(db, "+14045550166", "hello", {
+    await db.update(users).set({ smsPhone: "+14045550155", plan: "pro" }).where(eq(users.id, u.user.id));
+    await answerText(db, "+14045550155", "hello", {
       provider: () => new ScriptedProvider(() => ({ text: "Hi.", usage })),
       send: async () => {},
       prices: { inputPerMTok: 2, outputPerMTok: 8, forModel: "scripted" },
