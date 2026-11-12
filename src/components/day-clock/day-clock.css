@@ -1107,3 +1107,130 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
     animation: none;
   }
 }
+
+/* ---- the facts under the window (owner, 2026-11-12: "each one can be swiped through with a small cute animation of the
+   other important info ... with its animation popping up"): one at a time, swiped or picked by a dot; each one's picture
+   pops up as it arrives and then lives a little (the coin floats, the star twinkles, the shoe hops, sleep sways). Above the
+   sky's tap layer, so a swipe here changes the fact instead of turning the day; a plain tap still opens the day. ---- */
+.dc-words:has(.dc-facts) {
+  z-index: 8;
+}
+.dc-facts {
+  display: grid;
+  width: 100%;
+  pointer-events: auto;
+  touch-action: pan-y;
+  cursor: pointer;
+}
+.dc-fact {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  transition:
+    opacity 0.35s ease,
+    transform 0.45s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.dc-facts:has(> [data-on]) > .dc-fact:not([data-on]) {
+  opacity: 0;
+  transform: translateX(-1.5rem);
+  pointer-events: none;
+}
+.dc-fact[data-on] {
+  animation: dc-fact-in 0.45s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+@keyframes dc-fact-in {
+  from {
+    opacity: 0;
+    transform: translateX(1.5rem);
+  }
+}
+/* its picture pops up, then keeps a small life of its own */
+.dc-fact[data-on] .dc-w-now .dc-px {
+  animation:
+    dc-fact-pop 0.55s cubic-bezier(0.2, 1.6, 0.4, 1) both,
+    var(--fact-life, none) 2.8s ease-in-out 0.6s infinite;
+}
+.dc-fact[data-kind="coin"],
+.dc-fact[data-kind="bill"] {
+  --fact-life: dc-coin-float;
+}
+.dc-fact[data-kind="star"] {
+  --fact-life: dc-fact-twinkle;
+}
+.dc-fact[data-kind="steps"] {
+  --fact-life: dc-fact-hop;
+}
+.dc-fact[data-kind="sleep"] {
+  --fact-life: dc-fact-sway;
+}
+@keyframes dc-fact-pop {
+  from {
+    transform: scale(0.2) translateY(6px);
+  }
+}
+@keyframes dc-fact-twinkle {
+  50% {
+    transform: rotate(14deg) scale(1.12);
+  }
+}
+@keyframes dc-fact-hop {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-5px);
+  }
+}
+@keyframes dc-fact-sway {
+  50% {
+    transform: rotate(-8deg);
+  }
+}
+/* the dots hang just under the words, outside their measured height, so they never push the words out of the window */
+.dc-fact-dots {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: auto;
+}
+.dc-fact-dots button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.375rem;
+  height: 1.375rem;
+}
+.dc-fact-dots i {
+  display: block;
+  width: 5px;
+  height: 5px;
+  background: currentColor;
+  opacity: 0.3;
+  transition:
+    width 0.3s,
+    opacity 0.3s;
+}
+.dc-fact-dots button[aria-current] i {
+  width: 12px;
+  opacity: 0.8;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dc-fact,
+  .dc-fact-dots i {
+    transition: none;
+  }
+  .dc-fact[data-on],
+  .dc-fact[data-on] .dc-w-now .dc-px {
+    animation: none;
+  }
+  .dc-facts:has(> [data-on]) > .dc-fact:not([data-on]) {
+    transform: none;
+  }
+}

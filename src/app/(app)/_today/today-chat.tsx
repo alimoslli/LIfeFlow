@@ -401,7 +401,7 @@ export function TodayMiddle({
   if (reply) return <TodayReplyCard name={name} refresh={refresh} fill />;
   if (children) return <div className="h-full overflow-y-auto">{children}</div>;
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 overflow-x-hidden overflow-y-auto px-1">
+    <div className="flex h-full flex-col items-center [justify-content:safe_center] gap-3 overflow-x-hidden overflow-y-auto px-1">
       {!sky && note && (
         <section aria-label={note.attention ? "Heads up" : "From your skyling"} className="contents">
           <button

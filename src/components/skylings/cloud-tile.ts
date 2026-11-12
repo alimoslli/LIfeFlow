@@ -41,7 +41,8 @@ const SHAPES: Shape[] = [
   },
 ];
 
-type Palette = { ink: string; body: string; shade: string };
+/** `hi` lights the tops of the puffs and `mid` softens the step down to the shaded underside, on the big clouds (depth). */
+type Palette = { ink: string; body: string; shade: string; hi: string; mid: string };
 export type CloudWeather = "tip" | "heads-up" | "storm";
 
 /**
@@ -51,15 +52,24 @@ export type CloudWeather = "tip" | "heads-up" | "storm";
  * At night the dark cloud gets a light edge for that reason.
  */
 export const CLOUD_PALETTES: Record<CloudWeather, { day: Palette; night: Palette }> = {
-  tip: { day: { ink: "#262320", body: "#ffffff", shade: "#d6e4f7" }, night: { ink: "#0a1630", body: "#eef3ff", shade: "#bac9ea" } },
-  "heads-up": { day: { ink: "#262320", body: "#c5cddb", shade: "#97a3b9" }, night: { ink: "#0a1630", body: "#b9c3d8", shade: "#8e9ab5" } },
-  storm: { day: { ink: "#141b2c", body: "#3a4560", shade: "#283148" }, night: { ink: "#b4c5f2", body: "#3c496f", shade: "#2e3a60" } },
+  tip: {
+    day: { ink: "#262320", body: "#ffffff", shade: "#d6e4f7", hi: "#ffffff", mid: "#ebf2fc" },
+    night: { ink: "#0a1630", body: "#eef3ff", shade: "#bac9ea", hi: "#ffffff", mid: "#dbe4f8" },
+  },
+  "heads-up": {
+    day: { ink: "#262320", body: "#c5cddb", shade: "#97a3b9", hi: "#dde2eb", mid: "#b2bbcb" },
+    night: { ink: "#0a1630", body: "#b9c3d8", shade: "#8e9ab5", hi: "#d0d7e6", mid: "#a5b0c8" },
+  },
+  storm: {
+    day: { ink: "#141b2c", body: "#3a4560", shade: "#283148", hi: "#4d5978", mid: "#313b54" },
+    night: { ink: "#b4c5f2", body: "#3c496f", shade: "#2e3a60", hi: "#4f5e8a", mid: "#344168" },
+  },
 };
 /** Text and button colours that sit on each cloud (day and night share them; only the body changes). */
 export const CLOUD_TEXT: Record<CloudWeather, { text: string; muted: string; buttonBg: string; buttonText: string; buttonOutline: string }> = {
   tip: { text: "#13213d", muted: "#33415e", buttonBg: "#1b3a73", buttonText: "#ffffff", buttonOutline: "#13213d" },
   "heads-up": { text: "#13213d", muted: "#2a3856", buttonBg: "#1b3a73", buttonText: "#ffffff", buttonOutline: "#13213d" },
-  storm: { text: "#ffffff", muted: "#e8edfd", buttonBg: "#ffd66b", buttonText: "#1a2236", buttonOutline: "#ffd66b" },
+  storm: { text: "#ffffff", muted: "#e8edfd", buttonBg: "#eef2fc", buttonText: "#1a2236", buttonOutline: "#eef2fc" },
 };
 /** The sky behind the clouds: the app's day background and the night one, and a mid sky blue for the day wheel. */
 export const SKY = { day: ["#f6f8fb", "#8fb6e8"], night: ["#152643", "#0a1630"] } as const;
@@ -131,7 +141,7 @@ const THOUGHTS: Shape[] = [
 /** How many rows of shade the underside has: a heavy cloud (a heads-up, a storm) hangs low and dark. */
 const BELLY: Record<CloudWeather, number> = { tip: 2, "heads-up": 4, storm: 4 };
 
-function tile(shape: Shape, c: Palette, grid: Grid = SMALL, belly = 2): string {
+function tile(shape: Shape, c: Palette, grid: Grid = SMALL, belly = 2, depth = false): string {
   const { w: W, h: H } = grid;
   const inBody = (x: number, y: number) => {
     const x0 = 1;
@@ -172,10 +182,17 @@ function tile(shape: Shape, c: Palette, grid: Grid = SMALL, belly = 2): string {
   // the underside: the body's lowest rows (two, or four on a heavy cloud)
   for (let x = 0; x < W; x++)
     for (let y = H - 2 - belly; y < H; y++) if (g[y][x] === "w" && Array.from({ length: belly }, (_, k) => at(x, y + k + 1)).includes(".")) g[y][x] = "s";
+  if (depth) {
+    // a soft band above the shade, and the light on top of every puff (two rows under its edge), for depth
+    for (let x = 0; x < W; x++)
+      for (let y = 2; y < H; y++) if (g[y][x] === "s" && g[y - 1][x] === "w") [1, 2].forEach((k) => g[y - k][x] === "w" && (g[y - k][x] = "m"));
+    for (let x = 0; x < W; x++)
+      for (let y = 1; y < grid.top; y++) if (g[y][x] === "w" && g[y - 1][x] === ".") [0, 1].forEach((k) => g[y + k][x] === "w" && (g[y + k][x] = "h"));
+  }
   const out = g.map((row) => [...row]);
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) if (g[y][x] === "." && [at(x - 1, y), at(x + 1, y), at(x, y - 1), at(x, y + 1)].some((ch) => ch !== ".")) out[y][x] = "k";
-  const fill: Record<string, string> = { k: c.ink, w: c.body, s: c.shade };
+  const fill: Record<string, string> = { k: c.ink, w: c.body, s: c.shade, h: c.hi, m: c.mid };
   let rects = "";
   for (let y = 0; y < H; y++) {
     let x = 0;
@@ -242,8 +259,8 @@ export function thoughtCloudStyle(weather: CloudWeather, i = 0): CloudStyle {
   if (!s) {
     const shape = THOUGHTS[k];
     s = {
-      "--cloud-day": tile(shape, CLOUD_PALETTES[weather].day, BIG, BELLY[weather]),
-      "--cloud-night": tile(shape, CLOUD_PALETTES[weather].night, BIG, BELLY[weather]),
+      "--cloud-day": tile(shape, CLOUD_PALETTES[weather].day, BIG, BELLY[weather], true),
+      "--cloud-night": tile(shape, CLOUD_PALETTES[weather].night, BIG, BELLY[weather], true),
       ...slices(shape, BIG, CLOUD_SCALE),
     };
     made.set(id, s);

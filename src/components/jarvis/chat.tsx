@@ -744,9 +744,14 @@ export function JarvisChat({
                 <AiConsentCard name={assistantName} />
               ) : ideas?.length ? (
                 // the skyling's speech bubble and these clouds are the whole surface: a tap fills the box, never sends
+                // one big cloud at a time, a different one than Today's first (owner, 2026-11-12: "one idea on the main
+                // page one on the skyling page and they change")
                 <IdeaClouds
                   clouds={ideas}
                   show={3}
+                  big
+                  start={1}
+                  thought={assistantName}
                   onPick={(ask) => {
                     setInput(ask);
                     inputRef.current?.focus();

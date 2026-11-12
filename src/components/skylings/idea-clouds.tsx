@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { doCloudAction, tapIdeaCloudAction } from "@/app/(app)/jarvis/actions";
 import { respondAction } from "@/app/(app)/jarvis/proactive-actions";
 import type { IdeaCloud } from "@/lib/idea-clouds";
@@ -27,14 +27,19 @@ export function IdeaClouds({
   lead,
   thought,
   big,
+  start = 0,
 }: {
   clouds: IdeaCloud[];
   /** The skyling's own thought (Today's note), first in the row and bigger; the clouds float after it. */
   lead?: React.ReactNode;
   /** The skyling's name: a cloud marked `thought` is its thought, first; the others say "<name> noticed". */
   thought?: string;
-  /** Today on a phone: every cloud a big cumulus nearly the screen's width, one at a time, swiped sideways with dots. */
+  /**
+   * One big cumulus at a time (owner, 2026-11-12: "one idea on the main page one on the skyling page and they change"): the
+   * next drifts in on its own every few seconds, or with a swipe or a dot. `start` picks which one shows first.
+   */
   big?: boolean;
+  start?: number;
   /** The most to show. */
   show?: number;
   onPick: (ask: string) => void;
@@ -44,18 +49,23 @@ export function IdeaClouds({
   const [busy, setBusy] = useState<string | null>(null);
   const [done, setDone] = useState<Record<string, Done>>({});
   const [failed, setFailed] = useState<Record<string, string>>({});
-  const [at, setAt] = useState(0);
-  const rowRef = useRef<HTMLUListElement>(null);
-  if (!clouds.length && !lead) return null;
   const visible = clouds.slice(0, show);
   const count = visible.length + (lead ? 1 : 0);
-  // which cloud is in view, for the dots (the row snaps one cloud at a time)
-  const onScroll = () => {
-    const el = rowRef.current;
-    const first = el?.firstElementChild as HTMLElement | null;
-    if (!el || !first) return;
-    setAt(Math.min(count - 1, Math.max(0, Math.round(el.scrollLeft / (first.offsetWidth + 8)))));
-  };
+  const [at, setAt] = useState(() => (count > 1 ? start % count : 0));
+  const [held, setHeld] = useState(false);
+  const cur = count ? at % count : 0;
+  const swipe = useRef<number | null>(null);
+  const step = (by: number) => setAt((a) => (a + by + count) % count);
+  // the next idea drifts in on its own, unless they're touching, reading with the keyboard, or just did one (its Undo stays)
+  const busyOrDone = !!busy || Object.keys(done).length > 0;
+  useEffect(() => {
+    if (!big || count < 2 || held || busyOrDone) return;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (navigator.webdriver && !/[?&]clouds=1/.test(location.search)) return;
+    const t = window.setTimeout(() => setAt((a) => (a + 1) % count), CHANGE_MS);
+    return () => window.clearTimeout(t);
+  }, [big, count, held, busyOrDone, at]);
+  if (!clouds.length && !lead) return null;
 
   async function go(c: IdeaCloud) {
     // counts the tap (which cloud, never the message), so a feature they've tried shows less
@@ -87,9 +97,34 @@ export function IdeaClouds({
     } else setFailed((f) => ({ ...f, [c.key]: r?.error ?? "That didn't work. Try again." }));
   }
 
+  const stack = big && count > 1;
   const row = (
-    <ul ref={rowRef} onScroll={big ? onScroll : undefined} className={cn("lf-idea-row", big && "lf-idea-big", className)} aria-label="Ideas to try">
-      {lead && <li className="lf-idea-lead">{lead}</li>}
+    <ul
+      className={cn("lf-idea-row", big && "lf-idea-big", !stack && className)}
+      aria-label="Ideas to try"
+      {...(stack && {
+        onPointerEnter: () => setHeld(true),
+        onPointerLeave: () => setHeld(false),
+        onPointerDown: (e: React.PointerEvent) => (swipe.current = e.clientX),
+        onPointerUp: (e: React.PointerEvent) => {
+          const dx = swipe.current == null ? 0 : e.clientX - swipe.current;
+          swipe.current = null;
+          if (Math.abs(dx) > 40) step(dx < 0 ? 1 : -1);
+        },
+        // a keyboard reaching a cloud brings it forward
+        onFocus: (e: React.FocusEvent) => {
+          setHeld(true);
+          const li = (e.target as HTMLElement).closest("li[data-k]");
+          if (li) setAt(Number(li.getAttribute("data-k")));
+        },
+        onBlur: () => setHeld(false),
+      })}
+    >
+      {lead && (
+        <li className="lf-idea-lead" data-k={0} data-on={!stack || cur === 0 ? "" : undefined}>
+          {lead}
+        </li>
+      )}
       {visible.map((c, i) => {
         const d = done[c.key];
         // a finished fix settles into a white cloud: the trouble is handled
@@ -161,7 +196,13 @@ export function IdeaClouds({
         );
         if (large)
           return (
-            <li key={c.key} className={cn("lf-idea-lead", big && "lf-idea")} style={{ "--i": i } as CSSProperties}>
+            <li
+              key={c.key}
+              className="lf-idea-lead"
+              data-k={i + (lead ? 1 : 0)}
+              data-on={!stack || cur === i + (lead ? 1 : 0) ? "" : undefined}
+              style={{ "--i": i } as CSSProperties}
+            >
               <section
                 aria-label={isThought ? (storm ? "Heads up" : "From your skyling") : undefined}
                 data-weather={storm ? "storm" : "clear"}
@@ -188,15 +229,20 @@ export function IdeaClouds({
       })}
     </ul>
   );
-  if (!big || count < 2) return row;
+  if (!stack) return row;
   return (
-    <div className="w-full min-w-0">
+    <div className={cn("lf-idea-stack w-full min-w-0", className)}>
       {row}
-      <div className="lf-idea-dots" aria-hidden="true">
+      <div className="lf-idea-dots">
         {Array.from({ length: count }, (_, k) => (
-          <i key={k} data-on={k === at ? "" : undefined} />
+          <button key={k} type="button" aria-label={`Idea ${k + 1} of ${count}`} aria-current={k === cur ? "true" : undefined} onClick={() => setAt(k)}>
+            <i />
+          </button>
         ))}
       </div>
     </div>
   );
 }
+
+/** How long one idea stays before the next drifts in. */
+const CHANGE_MS = 9000;

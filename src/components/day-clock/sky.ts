@@ -287,6 +287,29 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   const wordsQ = root.querySelector<HTMLElement>("[data-dc=words]");
   if (!svgQ || !whoQ || !bgQ || !wordsQ) return { draw: () => {}, visit: () => {}, cheer: () => {}, destroy: () => {} };
   const [svg, who, bg, words]: [SVGSVGElement, HTMLCanvasElement, HTMLElement, HTMLElement] = [svgQ, whoQ, bgQ, wordsQ];
+  // the facts under the window: which one is showing, changed by a swipe across them or a dot
+  let factAt = 0;
+  let factN = 1;
+  let swipeX: number | null = null;
+  const showFact = (k: number) => {
+    factAt = (k + factN) % factN;
+    words.querySelectorAll(".dc-fact").forEach((el, i) => el.toggleAttribute("data-on", i === factAt));
+    words.querySelectorAll("[data-fact]").forEach((el, i) => el.toggleAttribute("aria-current", i === factAt));
+    // the stored copy no longer matches what's shown, so the next redraw writes it again with this one on
+    delete words.dataset.html;
+  };
+  words.addEventListener("pointerdown", (e) => (swipeX = e.clientX));
+  words.addEventListener("pointerup", (e) => {
+    const dx = swipeX == null ? 0 : e.clientX - swipeX;
+    swipeX = null;
+    if (factN > 1 && Math.abs(dx) > 40) showFact(factAt + (dx < 0 ? 1 : -1));
+    // a plain tap on the words still opens the day, as a tap on the sky does
+    else if (Math.abs(dx) < 8 && !(e.target as Element).closest("[data-fact]")) root.querySelector<HTMLButtonElement>("[data-dc=today]")?.click();
+  });
+  words.addEventListener("click", (e) => {
+    const dot = (e.target as Element).closest<HTMLElement>("[data-fact]");
+    if (dot) showFact(Number(dot.dataset.fact));
+  });
   const stars = bg.querySelector<SVGSVGElement>("[data-dc=stars]");
   const clouds = [...bg.querySelectorAll<HTMLElement>("[data-dc=cloud]")];
   // the day's mood: up to six clouds (the skeleton has two), rain and snow layers, built once
@@ -481,6 +504,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     paintWho();
   };
 
+  type Fact = { kind: string; tag: string; now: string; then?: string };
   const dayWord = (t: number, data: ClockData) => {
     const d = dayOf(t);
     return d === 0 ? "Today" : d === 1 ? "Tomorrow" : d === -1 ? "Yesterday" : (data.days.find((x) => x.offset === d)?.short ?? "");
@@ -495,11 +519,6 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       const cur = timed.find((it) => it.end != null && it.start <= now && it.end > now);
       const nx = timed.filter((it) => it.start > now && it !== cur && it.origin !== "milestone").sort((a, b) => a.start - b.start)[0];
       const done = timed.filter((it) => dayOf(it.start) === dayOf(now) && isFinished(it, now)).length;
-      const pills: string[] = [];
-      if (data.steps != null) pills.push(`👟 ${data.steps.toLocaleString("en-US")}`);
-      if (data.sleepHours != null) pills.push(`😴 ${Math.floor(data.sleepHours)}h ${String(Math.round((data.sleepHours % 1) * 60)).padStart(2, "0")}m`);
-      if (data.spentTodayCents != null) pills.push(`💳 $${(data.spentTodayCents / 100).toFixed(2).replace(/\.00$/, "")}`);
-      if (done) pills.push(`⭐ ${done}`);
       // what comes after this half of the day: after sunset by day, after sunrise at night
       const m = mod(now);
       const edge = night ? now - m + (m < rise ? rise : DAY + rise) : now - m + set;
@@ -509,14 +528,46 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         if (after.length < 2 && !after.includes(say)) after.push(say);
       }
       const asleep = night && (m >= 23 * 60 || m < rise);
-      out = [
-        `<span class="dc-w-tag">${esc(asleep ? "Sleep" : face.tag)}</span>`,
-        `<span class="dc-w-now">${asleep ? "🌙 Rest well" : `${face.icon ? `${esc(face.icon)} ` : ""}${esc(face.text)}`}</span>`,
-        cur && nx ? `<span class="dc-w-then">Then ${nx.icon} ${named(nx)} · ${fmt(nx.start)}</span>` : "",
-        !pills.length && face.stats[0] ? `<span class="dc-w-then">${esc(face.stats[0])}</span>` : "",
-        pills.length ? `<span class="dc-w-pills">${pills.map((x) => `<span>${esc(x)}</span>`).join("")}</span>` : "",
-        after.length ? `<span class="dc-w-after">${night ? "After sunrise" : "After sunset"} · ${after.join(" · ")}</span>` : "",
-      ].join("");
+      // the important things, one at a time, swiped through (owner, 2026-11-12: "each one can be swiped through with a small
+      // cute animation"): what's next first, then today's numbers, each from real data only (money only when it's open)
+      const cents = (c: number) => `$${(c / 100).toFixed(2).replace(/\.00$/, "")}`;
+      const facts: Fact[] = [
+        {
+          kind: "next",
+          tag: esc(asleep ? "Sleep" : face.tag),
+          now: asleep ? "🌙 Rest well" : `${face.icon ? `${esc(face.icon)} ` : ""}${esc(face.text)}`,
+          then: cur && nx ? `Then ${nx.icon} ${named(nx)} · ${fmt(nx.start)}` : esc(face.stats.find((x) => x.startsWith("Then ")) ?? ""),
+        },
+      ];
+      if (data.spentTodayCents != null) facts.push({ kind: "coin", tag: "Spent today", now: `💸 ${cents(data.spentTodayCents)}` });
+      const bill = st.items
+        .filter((it) => it.origin === "bill" && !it.done && dayOf(it.start) >= dayOf(now) && dayOf(it.start) < dayOf(now) + 7)
+        .sort((a, b) => a.start - b.start)[0];
+      if (bill)
+        facts.push({
+          kind: "bill",
+          tag: `Next bill · ${esc(dayWord(bill.start, data))}`,
+          now: `💵 ${esc(bill.title)}${bill.amountCents != null ? ` ${cents(bill.amountCents)}` : ""}`,
+        });
+      if (data.steps != null) facts.push({ kind: "steps", tag: "Steps today", now: `👟 ${data.steps.toLocaleString("en-US")}` });
+      if (data.sleepHours != null)
+        facts.push({
+          kind: "sleep",
+          tag: "Last night's sleep",
+          now: `😴 ${Math.floor(data.sleepHours)}h ${String(Math.round((data.sleepHours % 1) * 60)).padStart(2, "0")}m`,
+        });
+      if (done) facts.push({ kind: "star", tag: "Done today", now: `⭐ ${done}` });
+      if (after.length) facts.push({ kind: "after", tag: night ? "After sunrise" : "After sunset", now: after[0], then: after[1] ?? "" });
+      factN = facts.length;
+      if (factAt >= factN) factAt = 0;
+      const slide = (f: Fact, i: number) =>
+        `<div class="dc-fact" data-kind="${f.kind}"${i === factAt ? " data-on" : ""}><span class="dc-w-tag">${f.tag}</span><span class="dc-w-now">${f.now}</span>${f.then ? `<span class="dc-w-then">${f.then}</span>` : ""}</div>`;
+      out =
+        facts.length < 2
+          ? slide(facts[0], 0)
+          : `<div class="dc-facts">${facts.map(slide).join("")}</div><div class="dc-fact-dots">${facts
+              .map((_, i) => `<button type="button" tabindex="-1" data-fact="${i}"${i === factAt ? " aria-current" : ""}><i></i></button>`)
+              .join("")}</div>`;
     } else {
       const on = timed.find((it) => it.end != null && it.start <= view && it.end > view);
       const nx = timed.filter((it) => it.start > view && it.start < view + 720).sort((a, b) => a.start - b.start)[0];
@@ -976,7 +1027,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     const room = wide ? hyC - 28 - wordsTop - below : H - footH - wordsTop;
     const fitKey = `${words.dataset.html}|${room}`;
     if (fit !== fitKey) {
-      const parts = [".dc-w-after", ".dc-w-then", ".dc-w-pills"].map((sel) => words.querySelector<HTMLElement>(sel)).filter((e) => e !== null);
+      const parts = [".dc-w-after", ".dc-w-then", ".dc-w-pills"].flatMap((sel) => [...words.querySelectorAll<HTMLElement>(sel)]);
       for (const e of parts) e.style.display = "";
       for (const e of parts) if (words.offsetHeight > room) e.style.display = "none";
       shownH = words.offsetHeight;

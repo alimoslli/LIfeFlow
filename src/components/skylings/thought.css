@@ -7,7 +7,7 @@
   max-width: 22rem;
   margin-inline: auto;
   /* room under the cloud for its rain and the puffs */
-  padding-bottom: 2rem;
+  padding-bottom: 1.5rem;
 }
 /* the row holding the thought never squeezes it: the middle scrolls instead, so the rain and the puffs are never cut off */
 .lf-idea-row:has(.lf-thought) {
@@ -26,11 +26,48 @@
 }
 .lf-thought-cloud .lf-idea-in {
   gap: 0.375rem;
+  /* room inside the cloud: the words never touch its edge (owner, 2026-11-12) */
+  margin: 0 calc(1.5rem - var(--cloud-r)) 0.25rem calc(1.5rem - var(--cloud-l));
+}
+/* depth: a pixel shadow under the cloud, and it floats a little */
+.lf-thought-cloud .lf-idea-body {
+  filter: drop-shadow(0 5px 0 rgb(19 33 61 / 0.1));
+}
+:root[data-theme="dark"] .lf-thought-cloud .lf-idea-body {
+  filter: drop-shadow(0 5px 0 rgb(0 0 0 / 0.28));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lf-thought-cloud .lf-idea-body {
+    filter: drop-shadow(0 5px 0 rgb(0 0 0 / 0.28));
+  }
+}
+.lf-thought-cloud {
+  animation: lf-thought-float 6s ease-in-out infinite;
+}
+@keyframes lf-thought-float {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+/* the one button: a soft pill that sits on the cloud and presses in */
+.lf-thought-cloud .lf-idea-go {
+  min-height: 2.25rem;
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  box-shadow: 0 3px 0 rgb(19 33 61 / 0.22);
+  transition:
+    transform 0.12s,
+    box-shadow 0.12s;
+}
+.lf-thought-cloud .lf-idea-go:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 rgb(19 33 61 / 0.22);
 }
 /* "<name> thought about this" sits over the cloud, on the sky, not inside it (owner, 2026-11-12) */
 .lf-thought-who {
   display: block;
-  margin: 0 0 0.125rem 0.875rem;
+  text-align: left;
+  margin: 0 0 0.125rem 1.5rem;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -116,7 +153,7 @@
   left: 22%;
   right: 18%;
   top: calc(100% - 4px);
-  height: 30px;
+  height: 22px;
   overflow: hidden;
   pointer-events: none;
   background-image:
@@ -152,58 +189,89 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .lf-thought-rain {
+  .lf-thought-rain,
+  .lf-thought-cloud {
     animation: none;
   }
 }
 
-/* ---- Today on a phone (owner, 2026-11-12: "make each cloud fit the screen almost and then he can just smoothly scroll
-   through them sideways"): one big cumulus at a time, nearly the screen's width, the next one peeking at the edge; a swipe
-   moves exactly one, and the dots under them say how many there are. White is an idea, heavy grey a heads-up, dark with
-   rain and lightning real trouble. ---- */
+/* ---- Today on a phone and the skyling's page (owner, 2026-11-12: "one idea on the main page one on the skyling page and
+   they change"): one big cumulus at a time, nearly the screen's width. The next one drifts in from the right on its own (or
+   with a swipe or a dot) while the last drifts off to the left, like weather passing. White is an idea, heavy grey a
+   heads-up, dark with rain and lightning real trouble. Under reduced motion they change only when asked, without moving. ---- */
 .lf-idea-row.lf-idea-big {
-  gap: 0.5rem;
-  padding: 0.5rem 1.25rem 0.125rem;
-  scroll-padding-inline: 1.25rem;
-  scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
-  overscroll-behavior-x: contain;
-  align-items: flex-end;
+  display: grid;
+  overflow: visible;
+  padding: 0.25rem 1.25rem 0;
+  touch-action: pan-y;
 }
 .lf-idea-row.lf-idea-big > li,
 .lf-idea-row.lf-idea-big > li.lf-idea-lead {
-  flex: 0 0 100%;
+  grid-area: 1 / 1;
+  align-self: start;
+  width: 100%;
   margin: 0;
-  scroll-snap-align: center;
-  scroll-snap-stop: always;
+  transition:
+    opacity 0.6s ease,
+    transform 0.8s cubic-bezier(0.3, 0.6, 0.3, 1);
+}
+.lf-idea-row.lf-idea-big:has(> li[data-on]) > li:not([data-on]) {
+  opacity: 0;
+  transform: translateX(-2.5rem);
+  pointer-events: none;
+}
+.lf-idea-row.lf-idea-big > li[data-on] {
+  animation: lf-cloud-in 0.9s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+@keyframes lf-cloud-in {
+  from {
+    opacity: 0;
+    transform: translateX(2.5rem);
+  }
 }
 .lf-idea-big .lf-thought {
   max-width: none;
 }
+/* the dots sit on the label's line, at the right ("Ray thought about this ........ - - -"), taking no room of their own */
+.lf-idea-stack {
+  position: relative;
+}
 .lf-idea-dots {
+  position: absolute;
+  top: 0.25rem;
+  right: 1.75rem;
   display: flex;
+}
+.lf-idea-dots button {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 0.25rem 0 0.375rem;
+  min-width: 1.25rem;
+  height: 1.125rem;
 }
 .lf-idea-dots i {
+  display: block;
   width: 6px;
   height: 6px;
   background: var(--color-muted, #5d6b86);
   opacity: 0.35;
   transition:
-    opacity 0.2s,
-    width 0.2s;
+    opacity 0.3s,
+    width 0.3s;
 }
-.lf-idea-dots i[data-on] {
+.lf-idea-dots button[aria-current] i {
   width: 14px;
   opacity: 0.9;
 }
 @media (prefers-reduced-motion: reduce) {
-  .lf-idea-row.lf-idea-big {
-    scroll-behavior: auto;
-  }
+  .lf-idea-row.lf-idea-big > li,
   .lf-idea-dots i {
     transition: none;
+  }
+  .lf-idea-row.lf-idea-big > li[data-on] {
+    animation: none;
+  }
+  .lf-idea-row.lf-idea-big:has(> li[data-on]) > li:not([data-on]) {
+    transform: none;
   }
 }
