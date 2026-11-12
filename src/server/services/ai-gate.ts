@@ -27,6 +27,14 @@ import {
  * refuses work that would pass a limit; afterwards the caller settles it with what really happened.
  */
 
+/** Thrown when the allowance check itself couldn't run (a database problem). Callers that can go on without AI do; nothing was set aside. */
+export class AiUnavailableError extends Error {
+  constructor() {
+    super("The allowance check isn't available right now.");
+    this.name = "AiUnavailableError";
+  }
+}
+
 /** Thrown when work is refused. `message` is the plain wording to show the person (never a setting, model or token count). */
 export class AiRefusedError extends Error {
   constructor(

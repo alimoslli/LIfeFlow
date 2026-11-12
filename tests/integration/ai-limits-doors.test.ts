@@ -203,3 +203,29 @@ it("a different person's allowance is not affected", async () => {
   log.mockRestore();
   expect(calls.n).toBe(1); // b is not
 });
+
+describe("tidying degrades on any allowance-check failure, not only a refusal", () => {
+  it("a check that can't run leaves the AI part out, the rows pending, and the provider untouched", async () => {
+    const u = await makeUser();
+    const acct = await u.run((s) => createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 100000 }));
+    await u.run((s) =>
+      createTransaction(s, { accountId: acct.id, date: "2026-11-03", description: "QWV HOLDINGS 5521 LLC", amountCents: -1200 }, "import", "t:qwv"),
+    );
+    await u.run((s) => s.tx.update(transactions).set({ merchantName: null, categoryId: null }).where(eq(transactions.userId, s.userId)));
+    const fetchSpy = vi.fn(async () => new Response("{}", { status: 500 }));
+    vi.stubGlobal("fetch", fetchSpy);
+    process.env.OPENAI_API_KEY ||= "sk-test";
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      // a user id that doesn't exist: looking the person up fails, as a database problem would
+      const llm = openAiTidy({ userId: "00000000-0000-4000-8000-000000000000", door: "plaid_sync" });
+      await u.run((s) => tidyTransactions(s, { llm }));
+    } finally {
+      log.mockRestore();
+      vi.unstubAllGlobals();
+    }
+    expect(fetchSpy).not.toHaveBeenCalled();
+    const [row] = await u.run((s) => s.tx.select({ pending: transactions.tidyAiPending }).from(transactions).where(eq(transactions.userId, s.userId)));
+    expect(row.pending).toBe(true);
+  });
+});

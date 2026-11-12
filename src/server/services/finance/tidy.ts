@@ -10,7 +10,7 @@ import { toUsage } from "../../jarvis/providers/openai";
 import { priceFromSettings } from "../ai-prices";
 import { recordAiQuiet, type AiContext, type AiDoor } from "../ai-usage";
 import { tidyEstimate } from "../ai-estimates";
-import { AiRefusedError, providerRefusedBeforeWork, reserveAi, subjectFor } from "../ai-gate";
+import { AiRefusedError, AiUnavailableError, providerRefusedBeforeWork, reserveAi, subjectFor } from "../ai-gate";
 import { keywordCategory, matchRule } from "./categorize";
 import { ensureDefaultCategories } from "./categories";
 import { merchantKey } from "./recurring-detect";
@@ -44,7 +44,15 @@ export function openAiTidy(ctx: AiContext): TidyLlm | null {
     const model = e.OPENAI_MODEL_SMALL || e.OPENAI_MODEL;
     const base = { userId: ctx.userId, door: ctx.door, parentId: ctx.parentId, feature: "tidy" as const, provider: "openai", model };
     // One tidy run is one set-aside: it counts against runs a day and the dollar limits. Refused: AiRefusedError, and the run goes on without the AI part.
-    const hold = await reserveAi(await subjectFor(ctx.userId), { feature: "tidy", estimateMicros: tidyEstimate(model) });
+    let hold;
+    try {
+      hold = await reserveAi(await subjectFor(ctx.userId), { feature: "tidy", estimateMicros: tidyEstimate(model) });
+    } catch (err) {
+      if (err instanceof AiRefusedError) throw err;
+      // the check itself failed: tidying goes on without the AI part, as it would with AI off
+      console.error("[tidy] allowance check failed", err instanceof Error ? err.name : typeof err);
+      throw new AiUnavailableError();
+    }
     let res;
     try {
       res = await client.responses.create({
@@ -241,7 +249,7 @@ export async function tidyTransactions(scope: UserScope, opts: { llm?: TidyLlm |
         cats.filter((c) => c.kind === "expense").map((c) => c.name),
       );
     } catch (e) {
-      if (!(e instanceof AiRefusedError)) throw e;
+      if (!(e instanceof AiRefusedError || e instanceof AiUnavailableError)) throw e;
       llm = null;
     }
     for (const g of guesses) {
