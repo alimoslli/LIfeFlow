@@ -155,6 +155,7 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
   - **Memory picking wins** (all-MiniLM-L6-v2 on our own server). On new meaning cases it finds 82% of the right memories instead of 70%, sends no wrong ones, and keeps every existing case. It adds up to about 160 ms and stores nothing. It's built behind `LOCAL_MODEL_MEMORY`, off.
   - **Tool choosing and purchase sorting lose** to the word lists and the paid batch (37 right against 10 on the unknown shops), and stay as they are.
   - **Waiting on the owner (through the COO):** Step 2, memory picking on for his account and the demo account for a week.
+  - **Model costs** (owner's eight questions, 2026-11-12; `docs/backlog/2026-11-12-model-costs.md`): a new chat sends about 20,000 input tokens per answer, a long chat up to 52,000, because old tool steps stay. Built and held: `keepRecentToolSteps` (−33% in long chats, measured free). No open chat model has finished an answer yet. **Waiting on the owner:** the trim, and a paid try-out of about $3 (gpt-5.5, gpt-5.4-mini, gpt-oss-120b on the 18-question eval; Groq needs a paid tier).
 - **The audit and waitlist backlog** (owner, 2026-11-11): `docs/backlog/2026-11-11-audit-and-waitlist.md`. The waitlist first (close public access before the January 2027 App Store launch, let people in in batches from HQ), then money totals and exports, authorization and retries, offline, AI costs, scale, tests and the UX proposals. One small step per session on its own branch (`claude/waitlist`), never merged, deployed or switched on without the owner. LF COO.
 - Run the full test suite on the combined branch and check its preview.
 - A "Tonight" card on Today or the clock, picture first.
@@ -359,6 +360,7 @@ Last: done 2026-11-10 evening ([the walk and the numbers](audits/2026-11-10-prod
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-12, LF Main (owner's eight questions on models and cost; branch `claude/local-models`, held): request sizes measured for free on the 12 eval questions with OpenAI's tokenizer (a new chat about 20,000 tokens per answer, a long chat up to 52,000); the history trim built and tested (781 tests pass; long chats −33%); `openai-mini` added to the try-out script; report `docs/backlog/2026-11-12-model-costs.md`. Nothing live changed.
 - 2026-11-12, LF Main (owner: "go the hugging face"; on its own branch `claude/local-models`, off main, held): Hugging Face Steps 0 and 1.
   - The models are downloaded from Hugging Face and pinned by revision and SHA-256. The LifeFlow environment allows Hugging Face's hosts, with the owner's yes.
   - Measured on 300 labelled purchases, 202 tool questions and 50 new memory cases, plus one 3-call small-model run (about $0.008).

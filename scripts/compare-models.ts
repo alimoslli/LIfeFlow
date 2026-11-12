@@ -45,6 +45,15 @@ const CANDIDATES: Record<string, Candidate> = {
     cacheRetention: "24h",
     sendReasoning: false,
   },
+  // the app's small model on every question (today it answers only low-effort turns), built like providers/index.ts
+  "openai-mini": {
+    id: "openai-mini",
+    label: "OpenAI small model",
+    baseURL: "https://api.openai.com/v1",
+    model: process.env.OPENAI_MODEL_SMALL || "gpt-5.4-mini",
+    cacheRetention: "24h",
+    sendReasoning: false,
+  },
   "groq-oss": { id: "groq-oss", label: "Groq gpt-oss-120b", baseURL: "https://api.groq.com/openai/v1", model: "openai/gpt-oss-120b", sendReasoning: true },
   "groq-qwen": { id: "groq-qwen", label: "Groq qwen3.8-27b", baseURL: "https://api.groq.com/openai/v1", model: "qwen/qwen3.8-27b", sendReasoning: true },
 };
@@ -553,7 +562,7 @@ async function makeSheet() {
     key[q.id] = {};
     sheet += `\n## ${q.id} (${q.kind})\n\nQuestion${q.turns.length > 1 ? "s" : ""}: ${q.turns.map((t) => `"${t}"`).join(" then ")}\n\nPerfect answer: ${q.perfect}\n`;
     order.forEach(({ cand, rec }, i) => {
-      const label = "XYZ"[i];
+      const label = "WXYZ"[i];
       key[q.id][label] = cand;
       const tools = rec!.turns.flatMap((t) => t.tools.map((x) => x.name));
       sheet += `\n### ${q.id} ${label}\n\nTool calls: ${tools.length ? tools.join(", ") : "none"}\n\n${rec!.turns.map((t, ti) => (q.turns.length > 1 ? `Turn ${ti + 1}: ` : "") + (t.answer || "(no answer)")).join("\n\n")}\n`;

@@ -8,6 +8,7 @@ import { withUser } from "../db/with-user";
 import type { SessionUser } from "../auth/sessions";
 import { listActiveMemories, touchMemories } from "../services/memory";
 import { createConversation, getConversation, loadHistory } from "./conversations";
+import { keepRecentToolSteps } from "./history-trim";
 import { stopRequested } from "./stop";
 import { claimContinuation, turnStateOf, TURN_DEADLINE_MS } from "./turn-state";
 import { executeToolCall, serializeResult } from "./executor";
@@ -189,7 +190,9 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
     if (again.conversationId) return alreadyHandled(again.state === "finished" ? "finished" : "running", again.conversationId);
     throw e;
   }
-  const { conversation, history, approved, curious } = opened;
+  const { conversation, history: fullHistory, approved, curious } = opened;
+  // only the last two turns keep their tool steps (cost; history-trim.ts)
+  const history = keepRecentToolSteps(fullHistory);
   emit({ type: "conversation", id: conversation.id, title: conversation.title });
   const openedFrom = input.module ?? conversation.contextModule;
   // Only memories relevant to this request (and earlier messages in this chat) reach the model.
