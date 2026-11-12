@@ -148,7 +148,8 @@ export type FrontRow = { place: number; label: string; companion: string; me: bo
 
 /**
  * One rule for "friends" everywhere (the waitlist page and Settings > Invite): `friends` have confirmed their email and
- * counted (a referral row with a credit), `pending` signed up with this link and haven't confirmed yet.
+ * counted (a referral row with a credit), `pending` signed up with this link and haven't confirmed yet. Friends who joined
+ * before referral boosts launched (`referral_counts` false) are never pending: confirming won't move anyone (owner, 2026-11-12).
  */
 export async function friendCounts(db: Database, userId: string): Promise<{ friends: number; pending: number }> {
   const [{ friends }] = await db
@@ -158,7 +159,7 @@ export async function friendCounts(db: Database, userId: string): Promise<{ frie
   const [{ pending }] = await db
     .select({ pending: count() })
     .from(users)
-    .where(and(eq(users.invitedBy, userId), isNull(users.emailVerifiedAt), eq(users.accountKind, "standard")));
+    .where(and(eq(users.invitedBy, userId), isNull(users.emailVerifiedAt), eq(users.referralCounts, true), eq(users.accountKind, "standard")));
   return { friends, pending };
 }
 
@@ -167,10 +168,14 @@ export async function waitlistPage(db: Database, userId: string) {
   const [settings, place, waiting] = [await accessSettings(db), await waitlistPlace(db, userId), await waitingCount(db)];
   const front = await db.select({ id: users.id }).from(users).where(inLine()).orderBy(asc(users.waitlistRank)).limit(10);
   const { friends, pending } = await friendCounts(db, userId);
-  const [me] = await db.select({ verifiedAt: users.emailVerifiedAt, invitedBy: users.invitedBy }).from(users).where(eq(users.id, userId));
+  const [me] = await db
+    .select({ verifiedAt: users.emailVerifiedAt, invitedBy: users.invitedBy, counts: users.referralCounts })
+    .from(users)
+    .where(eq(users.id, userId));
   return {
     emailVerified: !!me?.verifiedAt,
-    invited: !!me?.invitedBy,
+    // only when confirming really counts for the friend who invited them
+    invited: !!me?.invitedBy && !!me?.counts,
     pending,
     ...settings,
     place,

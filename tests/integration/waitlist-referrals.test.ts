@@ -13,7 +13,7 @@ import { inviteCodeFor, recordInvite, validInviteCode } from "@/server/services/
 import { creditReferral, emailHash, MAX_CREDITS_PER_DAY, referralEmailKey, verifyEmail } from "@/server/services/referrals";
 import { saveWelcomeProgress } from "@/server/services/onboarding";
 import { deleteAccount } from "@/server/services/accounts";
-import { acceptUsers, lockQueue, moveUpOne, nextInLine, waitingCount, waitlistPage, waitlistPlace } from "@/server/services/waitlist";
+import { acceptUsers, friendCounts, lockQueue, moveUpOne, nextInLine, waitingCount, waitlistPage, waitlistPlace } from "@/server/services/waitlist";
 import { inviterFor } from "@/server/services/invites";
 import { makeUser as makeAnyUser } from "../helpers";
 
@@ -231,6 +231,29 @@ describe("referral credit", () => {
     expect(r).toEqual({ verified: true, recorded: false, moved: false });
     expect([await place(first.id), await place(inviter.id)]).toEqual([1, 2]);
     expect(await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id))).toHaveLength(0);
+  });
+
+  it("a friend from before launch isn't shown as waiting, isn't told confirming helps, and can't earn it by deleting and coming back", async () => {
+    const { inviter, friend } = await inviterAndFriend();
+    expect((await friendCounts(db, inviter.id)).pending).toBe(1);
+    expect((await waitlistPage(db, friend.id)).invited).toBe(true);
+    await db.update(users).set({ referralCounts: false }).where(eq(users.id, friend.id));
+    expect((await friendCounts(db, inviter.id)).pending).toBe(0);
+    expect((await waitlistPage(db, friend.id)).invited).toBe(false);
+    // never confirmed, deletes, and signs up again through the same link: the fingerprint stops the credit
+    await leave(friend.id);
+    expect(
+      await db
+        .select()
+        .from(waitlistFingerprints)
+        .where(eq(waitlistFingerprints.hash, emailHash(friend.email))),
+    ).toHaveLength(1);
+    const [again] = await db
+      .insert(users)
+      .values({ name: "Friend again", email: friend.email, passwordHash: "x", invitedBy: inviter.id })
+      .returning({ id: users.id });
+    expect(await verifyEmail(db, again.id)).toEqual({ verified: true, recorded: false, moved: false });
+    expect(await place(inviter.id)).toBe(2);
   });
 
   it("credits once even when two confirmations arrive at the same moment", async () => {

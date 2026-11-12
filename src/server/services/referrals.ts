@@ -30,7 +30,7 @@ export function referralEmailKey(email: string): string {
 /** The unique, keyed (HMAC) hash stored for a friend's email: never guessable offline from the table. */
 export const emailHash = (email: string) => keyedHash("waitlist-referral-email", referralEmailKey(email));
 
-/** Real moves one inviter can earn in a day (a rolling 24 hours; friends who moved nobody don't count); more friends are still recorded, without a move or a count. */
+/** Real moves one inviter can earn in a day (a fixed UTC day, so up to twice that can land across midnight; friends who moved nobody don't count); more friends are still recorded, without a move or a count. */
 export const MAX_CREDITS_PER_DAY = 10;
 
 export type Credit = { recorded: boolean; moved: boolean };
@@ -117,12 +117,17 @@ export async function fingerprintAdminLogEmail(tx: Tx, userId: string, email: st
  * On an account's deletion (their own or the owner's): their referral row goes, and only a one-way fingerprint of their
  * email stays (owner, 2026-11-11), so the same address can't earn a second credit. It is written for any account whose email
  * was confirmed, because that is the moment a credit could have happened, even if the inviter is gone by now (their rows went
- * with them). No inviter link, no dates, nothing else. The inviter's count for this friend drops; the place they moved up
+ * with them). It is also written for a friend who joined through a link before referral boosts launched (`referral_counts`
+ * false), confirmed or not, so deleting and signing up again through the link can't earn the credit the owner ruled out
+ * (2026-11-12). No inviter link, no dates, nothing else. The inviter's count for this friend drops; the place they moved up
  * stays. An under-13 lock does not call this: it keeps nothing, not even this.
  */
 export async function forgetFriend(tx: Tx, userId: string) {
-  const [me] = await tx.select({ email: users.email, verifiedAt: users.emailVerifiedAt }).from(users).where(eq(users.id, userId));
-  if (me?.verifiedAt)
+  const [me] = await tx
+    .select({ email: users.email, verifiedAt: users.emailVerifiedAt, by: users.invitedBy, counts: users.referralCounts })
+    .from(users)
+    .where(eq(users.id, userId));
+  if (me && (me.verifiedAt || (me.by && !me.counts)))
     await tx
       .insert(waitlistFingerprints)
       .values({ hash: emailHash(me.email) })

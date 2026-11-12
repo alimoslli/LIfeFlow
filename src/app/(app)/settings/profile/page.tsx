@@ -27,6 +27,7 @@ export default async function ProfileSettings() {
       preferences: users.preferences,
       verifiedAt: users.emailVerifiedAt,
       invitedBy: users.invitedBy,
+      referralCounts: users.referralCounts,
     })
     .from(users)
     .where(eq(users.id, session.id));
@@ -46,7 +47,7 @@ export default async function ProfileSettings() {
         <TodayModePicker initial={parseTodayMode(jar.get(TODAY_COOKIE)?.value)} />
       </Card>
       {/* Someone let in before confirming can still confirm here (a friend's invite counts only then); gone once confirmed. */}
-      {!u.verifiedAt && <ConfirmEmail variant="app" invited={!!u.invitedBy} className="rounded-3xl bg-surface p-6 shadow-soft" />}
+      {!u.verifiedAt && <ConfirmEmail variant="app" invited={!!u.invitedBy && u.referralCounts} className="rounded-3xl bg-surface p-6 shadow-soft" />}
       <Card className="p-6">
         <h2 className="mb-4 text-[0.9375rem] font-semibold">Profile</h2>
         <ActionForm action={updateProfileAction} reset={false} showSuccess>
