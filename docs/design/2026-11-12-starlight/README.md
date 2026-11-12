@@ -51,3 +51,19 @@ shapes).
 
 Last check: 4 runs, no page errors, never stuck, 60 fps, bot runs of 105 to 165 seconds.
 Debug parameters: `?bot=1`, `?speed=N`, `?debug=1`. On a laptop the space bar picks a sensible next star.
+
+## Round 2, after the owner played (2026-11-12)
+
+The owner: "it's better but still feels too easy in the beginning so it's not understandable, but then I suddenly
+die and can't attach." What changed:
+- The danger is felt from the first tap: Twinkle starts just above the sea, which rises at once (45 a second) and
+  then speeds up gently (+0.95 a second, up to 440), instead of crawling for the first minute and then racing.
+  Early rows have one or two stars, so the way up is easy to read.
+- No sudden drops: a twinkling star stays lit while Twinkle stands on it; twinkling only decides when you can jump
+  to it. A tap on a dark star waits and jumps the moment it glows ("Wait for the glow").
+- A tap always does something: a star too far, or empty sky, sends Twinkle to the reachable star nearest to it, and
+  the reach ring flashes ("Too far" the first few times). Reach is 300.
+- A last chance: when the sea reaches Twinkle's star there are 0.75 seconds to jump ("Jump!", then "Close one!").
+- A clear warning: a warm glow rises from the bottom and the hum quickens as the sea gets close.
+- The check now has `?bot=human` (slower taps, a so-so choice one time in five): first-timer-like runs last about 2
+  to 3 minutes and end gradually; never stuck, no page errors, 60 fps. `BOT=human node .../check.mjs 5 12`.

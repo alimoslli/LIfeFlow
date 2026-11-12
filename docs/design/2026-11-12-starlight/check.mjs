@@ -15,7 +15,7 @@ const page = await browser.newPage({ viewport: { width: 390, height: 844 }, devi
 const errors = [];
 page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
-await page.goto(`${pathToFileURL(join(here, "starlight.html")).href}?bot=1&speed=${shots ? 1 : speed}`);
+await page.goto(`${pathToFileURL(join(here, "starlight.html")).href}?bot=${process.env.BOT || 1}&cap=300&speed=${shots ? 1 : speed}`);
 if (shots) await page.screenshot({ path: join(shots, "s0-start.png") });
 let stuck = 0;
 for (let r = 0; r < n; r++) {
@@ -36,8 +36,10 @@ for (let r = 0; r < n; r++) {
       m: rec.climbed,
       shapes: rec.shapes,
       broken: rec.broken,
-      drops: rec.falls,
-      catches: rec.catches,
+      close: rec.close,
+      waits: rec.dark,
+      far: rec.far,
+
       stuck: rec.stuck,
       fps: rec.fps,
       worst: rec.worstFrameMs,

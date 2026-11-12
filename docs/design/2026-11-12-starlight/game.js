@@ -18,17 +18,19 @@
 
   // ---------- tuning ----------
   const FIELD = 560; // the playfield's width (world units)
-  const REACH = 280; // how far Twinkle can zip, from the star it stands on
+  const REACH = 300; // how far Twinkle can zip, from the star it stands on
   const ZIP = 1900; // zip speed
   const STAND = 34; // Twinkle's middle above the star it stands on
   const GRAV = 950;
   const U = 3.4; // world units per skyling pixel
   const STAR = 46; // a star's size
   const TAP = 64; // how close (screen px) a tap must land to a star
-  const seaBase = (t) => Math.min(460, 16 + 1.6 * t); // the sea's rise per second: slow, then faster
-  const SEA_LEASH = 440; // the sea never trails further than this below you
-  const SEA_CALM = 170; // how far a finished shape pushes the sea back
-  const TWINKLE_FROM = 2200; // height where twinkling stars begin
+  // the sea is felt from the first tap (it starts close and rises at once), then speeds up gently: no sudden wall
+  const seaBase = (t) => Math.min(440, 45 + 0.95 * t);
+  const SEA_LEASH = 520; // the sea never trails further than this below you
+  const SEA_CALM = 200; // how far a finished shape pushes the sea back
+  const TWINKLE_FROM = 1800; // height where twinkling stars begin
+  const LAST_CHANCE = 0.75; // seconds to jump away once the sea reaches Twinkle's star
 
   // ---------- this browser only ----------
   const store = {
@@ -436,7 +438,10 @@
       shoot: null,
       cx: (FIELD - VW) / 2,
       cy: 80 - VH,
-      stats: { taps: 0, far: 0, dark: 0, relit: 0, lit: 0, shapes: 0, broken: 0, catches: 0, falls: 0, stuck: 0 },
+      stats: { taps: 0, far: 0, dark: 0, relit: 0, lit: 0, shapes: 0, broken: 0, catches: 0, falls: 0, close: 0, stuck: 0 },
+      told: {},
+      waitFor: null,
+      wet: null,
       perf: { frames: 0, sum: 0, worst: 0, slow: 0 },
       newFound: [],
       botT: 0.6,
@@ -478,7 +483,7 @@
     const R = G.R;
     const hard = clamp((h - 400) / 7000, 0, 1);
     G.genY -= lerp(100, 155, hard) * (0.85 + R() * 0.3);
-    const n = h < 1500 ? 2 + (R() < 0.35 ? 1 : 0) : 1 + (R() < 0.75 - hard * 0.35 ? 1 : 0);
+    const n = 1 + (R() < 0.7 - hard * 0.3 ? 1 : 0);
     const xs = [];
     for (let i = 0; i < n; i++) {
       let x = 0;
@@ -524,57 +529,87 @@
     G.nextShapeAt = -G.genY + 600 + R() * 450;
   }
 
-  const glowing = (s) => !s.twinkle || (((G.clock * 0.62 + s.ph) % 1) + 1) % 1 < 0.58;
-  const fading = (s) => s.twinkle && (((G.clock * 0.62 + s.ph) % 1) + 1) % 1 > 0.46 && glowing(s);
+  // a twinkling star you stand on stays lit (Twinkle's own light); twinkling only decides when you can jump to it
+  const phase = (s) => (((G.clock * 0.55 + s.ph) % 1) + 1) % 1;
+  const glowing = (s) => !s.twinkle || s === G.tw.on || phase(s) < 0.65;
+  const fading = (s) => s.twinkle && s !== G.tw.on && phase(s) > 0.53 && phase(s) < 0.65;
   const feet = () => ({ x: G.tw.x, y: G.tw.y + STAND });
 
   // ---------- the move ----------
+  // A tap always does something: the star under the finger if Twinkle can reach it; otherwise the reachable star
+  // nearest to what was pointed at (a star too far, or empty sky), and the reach ring flashes so the rule is learned.
   function tapAt(sx, sy) {
     if (state !== "play") return;
     Sound.unlock();
-    const wx = G.cx + sx / SC;
-    const wy = G.cy + sy / SC;
+    G.stats.taps++;
+    const s = resolveTap(G.cx + sx / SC, G.cy + sy / SC);
+    if (!s) return;
+    if (G.tw.zip) {
+      G.queued = s;
+      return;
+    }
+    go(s);
+  }
+  function resolveTap(wx, wy) {
     const f = feet();
-    // the star under the finger; a near miss picks the reachable one
-    let pick = null;
-    let pd = Infinity;
+    const can = (s) => !s.out && s !== G.tw.on;
+    let under = null;
+    let ud = TAP;
     for (const s of G.stars) {
-      if (s.out || s === G.tw.on) continue;
+      if (!can(s)) continue;
       const d = Math.hypot(s.x - wx, s.y - wy) * SC;
-      if (d > TAP) continue;
-      const ok = dist(s, f) <= REACH ? 0 : 1000;
-      if (d + ok < pd) {
-        pd = d + ok;
-        pick = s;
+      if (d < ud) {
+        ud = d;
+        under = s;
       }
     }
-    G.stats.taps++;
-    if (!pick) {
+    if (under && dist(under, f) <= REACH) return under;
+    const aim = under || { x: wx, y: wy };
+    let best = null;
+    let bd = Infinity;
+    for (const s of G.stars) {
+      if (!can(s) || dist(s, f) > REACH) continue;
+      const d = dist(s, aim);
+      if (d < bd) {
+        bd = d;
+        best = s;
+      }
+    }
+    if (under) {
+      G.stats.far++;
+      G.flashReach = 0.6;
+      under.shake = 0.3;
+      if (tell("far")) text(under.x, under.y - 40, "Too far", "#ffffff", 22);
+    }
+    if (!best) {
       G.ripples.push({ x: wx, y: wy, life: 0.35 });
-      return;
+      G.flashReach = 0.6;
+      Sound.no();
     }
-    if (G.tw.zip) {
-      G.queued = pick;
-      return;
-    }
-    go(pick);
+    return best;
+  }
+  // the first few times a rule bites, say it in two words
+  function tell(id) {
+    G.told[id] = (G.told[id] || 0) + 1;
+    return G.told[id] <= 3;
   }
   function go(s) {
     const f = feet();
-    if (dist(s, f) > REACH) {
-      s.shake = 0.35;
-      G.flashReach = 0.5;
-      G.stats.far++;
-      Sound.no();
-      return;
-    }
+    if (dist(s, f) > REACH) return;
     if (!glowing(s)) {
-      s.shake = 0.35;
+      // wait for it: Twinkle jumps the moment it glows
+      G.waitFor = { s, until: G.clock + 1.3 };
       G.stats.dark++;
-      Sound.no();
+      if (tell("dark")) text(s.x, s.y - 40, "Wait for the glow", "#d8e6ff", 22);
       return;
     }
+    G.waitFor = null;
     const tw = G.tw;
+    if (G.wet != null) {
+      G.wet = null;
+      G.stats.close++;
+      text(tw.x, tw.y - 60, "Close one!", "#86d3a0", 26);
+    }
     tw.fromX = tw.x;
     tw.fromY = tw.y;
     tw.zip = s;
@@ -673,11 +708,11 @@
         tw.y += ((ty - tw.y) / d) * stepLen;
       }
     } else if (tw.on) {
-      // a twinkling star that goes dark drops you
-      if (!glowing(tw.on) && tw.on.twinkle) {
-        tw.on = null;
-        tw.vy = 60;
-        G.stats.falls++;
+      // a tap that's waiting for a twinkling star to glow
+      const w = G.waitFor;
+      if (w) {
+        if (w.s.out || G.clock > w.until) G.waitFor = null;
+        else if (glowing(w.s)) go(w.s);
       }
     } else {
       tw.vy = Math.min(tw.vy + GRAV * dt, 900);
@@ -694,8 +729,18 @@
         if (s.y < G.cy + VH + 40) burst(s.x, G.S, "#9fb4d8", 4, 80, 4);
       }
     }
-    // caught
-    if (tw.y + STAND * 0.6 > G.S && !tw.zip) return over();
+    // the sea reaches Twinkle: a last moment to jump away, then caught
+    if (!tw.zip && G.wet == null && tw.y + STAND * 0.6 > G.S) {
+      G.wet = LAST_CHANCE;
+      text(tw.x, tw.y - 64, "Jump!", "#ffc1b4", 32);
+      Sound.warn();
+      buzz(20);
+    }
+    if (G.wet != null && !tw.zip) {
+      G.wet -= dt;
+      tw.y += 50 * dt;
+      if (G.wet <= 0) return over();
+    }
     // hints, once per device
     hint("tap", true);
     if (G.started) {
@@ -704,13 +749,14 @@
       if (sh) hint("shape", sh);
       const tws = G.stars.find((s) => s.twinkle && !s.out && vis(s));
       if (tws) hint("glow", tws);
-      if (G.S - feet().y < 230) hint("sea", true);
+      if (G.clock > 1.2) hint("sea", true);
     }
     // danger hum
     G.warnT -= dt;
-    if (G.started && G.S - feet().y < 170 && G.warnT <= 0) {
+    const gapNow = G.S - feet().y;
+    if (G.started && gapNow < 240 && G.warnT <= 0) {
       Sound.warn();
-      G.warnT = 0.9;
+      G.warnT = 0.3 + 0.7 * clamp(gapNow / 240, 0, 1);
     }
     // stuck check (for the bot's fairness report): standing with no way up
     if (BOT && tw.on && !tw.zip) {
@@ -806,13 +852,21 @@
     }
     return best;
   }
+  // ?bot=1 plays well; ?bot=human taps like a first-timer: slower, and now and then a so-so choice
+  const HUMAN = Q.get("bot") === "human";
   function bot() {
     if (G.tw.zip) return;
     G.botT -= 1 / 120;
     if (G.botT > 0 && G.tw.on) return;
-    G.botT = 0.2 + Math.random() * 0.25;
-    const s = botPick();
+    G.botT = HUMAN ? 0.55 + Math.random() * 0.45 : 0.2 + Math.random() * 0.25;
+    let s = botPick();
+    if (HUMAN && Math.random() < 0.2) {
+      const f = feet();
+      const any = G.stars.filter((x) => !x.out && x !== G.tw.on && dist(x, f) <= REACH);
+      if (any.length) s = any[(Math.random() * any.length) | 0];
+    }
     if (s) go(s);
+    if (BOT && G.clock > (Number(Q.get("cap")) || 1e9)) G.S = G.tw.y - 200;
   }
 
   // ---------- drawing ----------
@@ -928,6 +982,17 @@
     drawWorld(vt);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     drawSea((g.S - g.cy) * SC, (g.S - g.cy) * SC, vt, g.S - feet().y);
+    // the sea is close: a warm glow rises from the bottom and pulses faster the closer it gets
+    const gapNow = g.S - feet().y;
+    if (g.started && state === "play" && gapNow < 240) {
+      const k = 1 - clamp(gapNow / 240, 0, 1);
+      const pulse = RM ? 1 : 0.6 + 0.4 * Math.sin(vt * (5 + 9 * k));
+      const gr = ctx.createLinearGradient(0, H * 0.5, 0, H);
+      gr.addColorStop(0, "rgba(255,150,120,0)");
+      gr.addColorStop(1, `rgba(255,150,120,${(0.32 * k * pulse).toFixed(3)})`);
+      ctx.fillStyle = gr;
+      ctx.fillRect(0, H * 0.5, W, H * 0.5);
+    }
     drawCalls();
     if (DEBUG) {
       ctx.fillStyle = "#fff";
@@ -1055,7 +1120,7 @@
       if (tw.zip) {
         pose = "celebrate";
         fr = 2;
-      } else if (!tw.on || g.S - f.y < 170) {
+      } else if (!tw.on || g.wet != null || g.S - f.y < 200) {
         pose = "surprised";
         fr = 0;
       } else if (!g.started) {
@@ -1087,7 +1152,7 @@
         if (!s) continue;
         x = s.x;
         y = s.y;
-        label = "Tap a star";
+        label = "Tap a star to climb";
         const r = 30 + 6 * Math.sin(vt * 6);
         ctx.strokeStyle = "rgba(255,255,255,0.9)";
         ctx.lineWidth = 3;
