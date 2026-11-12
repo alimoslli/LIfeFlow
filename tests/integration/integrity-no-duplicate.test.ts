@@ -66,6 +66,9 @@ describe("the integrity case never saves a second copy of the essay (open since 
       "Quiz",
       "Quiz 2",
       "Peer review",
+      // a one-word title never merges, and a number spelled out is another title (COO review)
+      "Essay",
+      "Lab four",
     ]);
     expect(r.created.map((c) => c.title)).toEqual([
       "Essay draft",
@@ -78,6 +81,9 @@ describe("the integrity case never saves a second copy of the essay (open since 
       "Quiz",
       "Quiz 2",
       "Peer review",
+      // a one-word title never merges, and a number spelled out is another title (COO review)
+      "Essay",
+      "Lab four",
     ]);
     expect(r.duplicates).toEqual([]);
     // the same work said again, or with only "draft" added, is the one already there, and the result says which
