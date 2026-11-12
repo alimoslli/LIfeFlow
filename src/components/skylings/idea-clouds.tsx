@@ -123,11 +123,15 @@ export function IdeaClouds({
                 </svg>
               )}
               <span className="lf-idea-in">
-                {large && <span className="lf-thought-who">{kicker}</span>}
                 <b className="lf-idea-head">{c.say}</b>
-                <span className="lf-idea-why" role={failed[c.key] ? "alert" : undefined}>
-                  {failed[c.key] || d?.text || c.why}
-                </span>
+                {/* a big cloud keeps its front light: the headline and its one button; the why is read out, not shown */}
+                {large && !failed[c.key] && !d?.text ? (
+                  <span className="sr-only">{c.why}</span>
+                ) : (
+                  <span className="lf-idea-why" role={failed[c.key] ? "alert" : undefined}>
+                    {failed[c.key] || d?.text || c.why}
+                  </span>
+                )}
                 {d ? (
                   d.undone || !d.id ? null : (
                     <button type="button" className="lf-idea-go" disabled={busy === c.key} onClick={() => void undo(c)}>
@@ -164,6 +168,7 @@ export function IdeaClouds({
                 data-layout="middle"
                 className="lf-thought"
               >
+                <span className="lf-thought-who">{kicker}</span>
                 {cloud}
                 {/* the little puffs down to the skyling: only its own thought */}
                 {isThought && (
@@ -185,7 +190,7 @@ export function IdeaClouds({
   );
   if (!big || count < 2) return row;
   return (
-    <div className="min-w-0">
+    <div className="w-full min-w-0">
       {row}
       <div className="lf-idea-dots" aria-hidden="true">
         {Array.from({ length: count }, (_, k) => (

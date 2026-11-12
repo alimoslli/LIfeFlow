@@ -123,6 +123,7 @@ export function SkyNote({
   // falling from under it and a flicker of lightning (owner: "a darker cloud looking like a storm")
   return (
     <section aria-label={storm ? "Heads up" : "From your skyling"} data-weather={insight.weather} data-layout={layout} className="lf-thought">
+      <span className="lf-thought-who">{name} thought about this</span>
       <div
         className="lf-idea-cloud lf-idea-thick lf-thought-cloud"
         data-weather={weather}
@@ -139,11 +140,10 @@ export function SkyNote({
       >
         <span className="lf-idea-body" style={thoughtCloudStyle(weather) as CSSProperties}>
           <span className="lf-idea-in">
-            <span className="lf-thought-who">{name} thought about this</span>
             <b className="lf-idea-head" data-testid="assistant-line">
               {insight.headline}
             </b>
-            {!done && insight.why && <span className="lf-idea-why">{insight.why}</span>}
+            {!done && insight.why && <span className="sr-only">{insight.why}</span>}
             {step}
           </span>
         </span>

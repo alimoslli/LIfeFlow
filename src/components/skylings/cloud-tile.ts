@@ -3,9 +3,9 @@
  * body with puffs on top, an ink edge and a pale underside, made as a small tile whose corners hold the puffs and whose
  * middle stretches, so one drawing fits a sentence of any length (CSS border-image). Three shapes, by day and at night.
  */
-type Shape = { puffs: [cx: number, cy: number, r: number][]; left: number; right: number };
+type Shape = { puffs: [cx: number, cy: number, r: number][]; left: number; right: number; under?: boolean };
 /** The tile's size in drawn pixels: `top` and `bottom` are the slices that hold the puffs and the underside. */
-type Grid = { w: number; h: number; top: number; bottom: number; corner: number };
+type Grid = { w: number; h: number; top: number; bottom: number; corner: number; lift?: number };
 
 const SMALL: Grid = { w: 48, h: 21, top: 9, bottom: 5, corner: 3.2 };
 /** Screen pixels per drawn pixel. */
@@ -69,50 +69,62 @@ export const SKY = { day: ["#f6f8fb", "#8fb6e8"], night: ["#152643", "#0a1630"] 
  * puffs all along its top, so a big cloud still reads as a cloud, not a card. Its left and right slices meet in a small
  * valley in the middle, the only part that stretches, so the puffs keep their shape at any width.
  */
-const BIG: Grid = { w: 150, h: 34, top: 16, bottom: 6, corner: 6 };
-/** Three cumulus shapes, so a row of them never looks stamped out. */
+const BIG: Grid = { w: 150, h: 38, top: 16, bottom: 9, corner: 6, lift: 3 };
+/** The puffs under every big cloud (cy, r) along its underside, inside its left and right slices. */
+const UNDER: [number, number, number][] = [
+  [18, 32.5, 4],
+  [40, 33, 3.5],
+  [60, 32.5, 4],
+  [91, 32.5, 4],
+  [112, 33, 3.5],
+  [132, 32.5, 4],
+];
+/** Three cumulus shapes, so a row of them never looks stamped out. No puff reaches columns 71 to 79: the middle that stretches stays a clean valley. */
 const THOUGHTS: Shape[] = [
   {
     puffs: [
       [15, 17, 8],
       [33, 12, 11],
       [53, 15, 9],
-      [67, 16, 6],
-      [83, 16, 6],
+      [65, 16, 5],
+      [85, 16, 5],
       [97, 13, 10],
       [117, 10, 9.5],
       [135, 16, 8],
     ],
     left: 74,
     right: 74,
+    under: true,
   },
   {
     puffs: [
       [12, 18, 7],
       [28, 13, 10],
       [47, 11, 10.5],
-      [64, 16, 7],
-      [84, 16, 6],
+      [63, 16, 6],
+      [86, 16, 6],
       [101, 11.5, 11],
       [121, 14, 9],
       [138, 18, 6],
     ],
     left: 74,
     right: 74,
+    under: true,
   },
   {
     puffs: [
       [16, 15, 9],
       [36, 11, 10],
       [54, 16, 7],
-      [68, 16, 5],
-      [82, 15, 7],
+      [66, 16, 4.5],
+      [86, 15, 6],
       [96, 14, 9],
       [114, 10, 9.5],
       [133, 15, 9],
     ],
     left: 74,
     right: 74,
+    under: true,
   },
 ];
 
@@ -125,24 +137,41 @@ function tile(shape: Shape, c: Palette, grid: Grid = SMALL, belly = 2): string {
     const x0 = 1;
     const x1 = W - 2;
     const y0 = grid.top;
-    const y1 = H - 2;
+    // the body ends `lift` rows up, so the little puffs under it hang below like a real cloud's underside
+    const y1 = H - 2 - (grid.lift ?? 0);
     const r = grid.corner;
     if (x < x0 || x > x1 || y < y0 || y > y1) return false;
     const cx = x < x0 + r ? x0 + r : x > x1 - r ? x1 - r : x;
     const cy = y < y0 + r ? y0 + r : y > y1 - r ? y1 - r : y;
     return (x - cx) ** 2 + (y - cy) ** 2 <= r * r + 0.6;
   };
-  const filled = (x: number, y: number) => inBody(x, y) || shape.puffs.some(([cx, cy, r]) => (x - cx) ** 2 + (y - cy) ** 2 <= r * r);
+  const puffs = shape.under ? [...shape.puffs, ...UNDER] : shape.puffs;
+  const filled = (x: number, y: number) => inBody(x, y) || puffs.some(([cx, cy, r]) => (x - cx) ** 2 + (y - cy) ** 2 <= r * r);
   const g: string[][] = [];
   for (let y = 0; y < H; y++) {
     g.push([]);
     for (let x = 0; x < W; x++) g[y].push(filled(x, y) ? "w" : ".");
   }
   const at = (x: number, y: number) => (x < 0 || y < 0 || x >= W || y >= H ? "." : g[y][x]);
+  // fill the pockets enclosed where puffs overlap (empty pixels the outside can't reach), so no stray ink sits inside the cloud
+  const outside = new Set<number>();
+  const queue: number[] = [];
+  for (let x = 0; x < W; x++) queue.push(x, (H - 1) * W + x);
+  for (let y = 0; y < H; y++) queue.push(y * W, y * W + W - 1);
+  while (queue.length) {
+    const i = queue.pop()!;
+    const [x, y] = [i % W, Math.floor(i / W)];
+    if (outside.has(i) || g[y][x] !== ".") continue;
+    outside.add(i);
+    if (x > 0) queue.push(i - 1);
+    if (x < W - 1) queue.push(i + 1);
+    if (y > 0) queue.push(i - W);
+    if (y < H - 1) queue.push(i + W);
+  }
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (g[y][x] === "." && !outside.has(y * W + x)) g[y][x] = "w";
   // the underside: the body's lowest rows (two, or four on a heavy cloud)
   for (let x = 0; x < W; x++)
-    for (let y = H - 2 - belly; y < H; y++)
-      if (g[y][x] === "w" && Array.from({ length: belly }, (_, k) => at(x, y + k + 1)).includes(".")) g[y][x] = "s";
+    for (let y = H - 2 - belly; y < H; y++) if (g[y][x] === "w" && Array.from({ length: belly }, (_, k) => at(x, y + k + 1)).includes(".")) g[y][x] = "s";
   const out = g.map((row) => [...row]);
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) if (g[y][x] === "." && [at(x - 1, y), at(x + 1, y), at(x, y - 1), at(x, y + 1)].some((ch) => ch !== ".")) out[y][x] = "k";
