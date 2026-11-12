@@ -37,7 +37,7 @@ export default function IntegrityPage() {
       <p>
         The rules are part of the skyling&apos;s fixed instructions, which are the same for every student. When a request looks like graded work, the skyling
         switches to coach mode for that request: it says so in one sentence and offers real help instead. Every update to LifeFlow is checked against a test set
-        of honest requests and attempts to get work done, and it must pass before it ships. LifeFlow never trains AI models on student data.
+        of honest requests and attempts to get work done, and it must pass before it ships. LifeFlow never trains shared AI models on student data.
       </p>
 
       <p>

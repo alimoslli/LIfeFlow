@@ -825,6 +825,8 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         // nor across the thin line from a stop's words to its place on the wheel ("Tomorrow" was struck through)
         if (tiles.some((q) => q.lane && lineHitsBox(q.ax, q.ay, q.x, q.y, l - 3, y + 4 - fontPx - 2, l + w + 3, y + 8))) continue;
         txt(marks, x, y + 4, s, { class: "dc-rim-t", "text-anchor": a, opacity: up(t).toFixed(3) });
+        // and the marks after it keep clear of it ("Sunrise about…" and "Sunset about…" once printed on top of each other)
+        keepClear.push({ x: l + w / 2, y: y + 5 - fontPx / 2, w, h: fontPx + 2 });
         return;
       }
     };

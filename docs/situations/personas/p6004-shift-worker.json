@@ -1,0 +1,723 @@
+{
+  "id": "p6004-shift-worker",
+  "summary": "Works full-time shifts, no school",
+  "kinds": [
+    "shift worker",
+    "lives with family"
+  ],
+  "time_zone": "America/New_York",
+  "pay": {
+    "type": "hourly",
+    "period": "biweekly"
+  },
+  "places": {
+    "home": "home",
+    "campus": "campus",
+    "work": "work",
+    "gym": "the gym",
+    "out": "town"
+  },
+  "commute_minutes": {
+    "home-work": 20,
+    "home-gym": 10,
+    "home-out": 15,
+    "home-care": 20,
+    "work-care": 25,
+    "home-school": 8,
+    "home-airport": 40
+  },
+  "commute_mode": "car",
+  "ready_minutes": 40,
+  "wind_down_minutes": 30,
+  "accounts": [
+    {
+      "id": "acc-checking",
+      "name": "Checking",
+      "official_name": "Everyday Checking",
+      "type": "depository",
+      "subtype": "checking",
+      "institution_name": "Lakeside Credit Union",
+      "mask": "9909",
+      "opening_balance_cents": 453652
+    },
+    {
+      "id": "acc-savings",
+      "name": "Savings",
+      "official_name": "Share Savings",
+      "type": "depository",
+      "subtype": "savings",
+      "institution_name": "Lakeside Credit Union",
+      "mask": "7755",
+      "opening_balance_cents": 642810,
+      "apy_bps": 150,
+      "interest_description": "INTEREST PAID"
+    },
+    {
+      "id": "acc-card",
+      "name": "Visa",
+      "official_name": "Rewards Visa",
+      "type": "credit",
+      "subtype": "credit card",
+      "institution_name": "Lakeside Credit Union",
+      "mask": "4940",
+      "credit_limit_cents": 300000,
+      "opening_balance_cents": 35551,
+      "last_statement_cents": 35551,
+      "statement_day": 20,
+      "due_days": 25,
+      "apr_bps": 2399,
+      "autopay": "statement",
+      "autopay_from": "acc-checking",
+      "payment_description": "CARD PAYMENT AUTOPAY",
+      "payment_received": "PAYMENT RECEIVED THANK YOU"
+    }
+  ],
+  "income": [
+    {
+      "id": "inc-main",
+      "type": "hourly",
+      "job": "job-main",
+      "rate_cents": 2278,
+      "pay_period": "biweekly",
+      "period_anchor": "2026-08-02",
+      "days_after_period_end": 6,
+      "tax_share": 0.15,
+      "account": "acc-checking",
+      "description": "RIVERSIDE DISTRIBUTION PAYROLL PPD ID: 1439626676",
+      "merchant_name": null
+    }
+  ],
+  "bills": [
+    {
+      "id": "rent",
+      "name": "Rent",
+      "description": "PARKSIDE APTS RENT WEB",
+      "merchant_name": "Parkside Apartments",
+      "pfc": "RENT_AND_UTILITIES_RENT",
+      "amount_cents": 146477,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "bill",
+      "day": 1
+    },
+    {
+      "id": "electric",
+      "name": "Electric",
+      "description": "CITY POWER AND LIGHT",
+      "merchant_name": "City Power and Light",
+      "pfc": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY",
+      "amount_cents": 12484,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "bill",
+      "day": 13,
+      "varies_pct": 0.2
+    },
+    {
+      "id": "internet",
+      "name": "Internet",
+      "description": "FIBERLINE INTERNET",
+      "merchant_name": "Fiberline",
+      "pfc": "RENT_AND_UTILITIES_INTERNET_AND_CABLE",
+      "amount_cents": 6999,
+      "via": "card",
+      "account": "acc-card",
+      "kind": "bill",
+      "day": 25
+    },
+    {
+      "id": "phone",
+      "name": "Phone",
+      "description": "TMOBILE*AUTO PAY",
+      "merchant_name": null,
+      "pfc": "RENT_AND_UTILITIES_TELEPHONE",
+      "amount_cents": 4500,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "bill",
+      "day": 13,
+      "email": {
+        "name": "Phone company",
+        "address": "billing-phone@example.com",
+        "subject": "Your bill is ready",
+        "days_before": 5
+      }
+    },
+    {
+      "id": "netflix",
+      "name": "Netflix",
+      "description": "NETFLIX.COM",
+      "merchant_name": "Netflix",
+      "pfc": "ENTERTAINMENT_TV_AND_MOVIES",
+      "amount_cents": 799,
+      "via": "card",
+      "account": "acc-card",
+      "kind": "subscription",
+      "day": 2
+    },
+    {
+      "id": "ai",
+      "name": "AI assistant",
+      "description": "CLAUDE.AI SUBSCRIPTION",
+      "merchant_name": "Anthropic",
+      "pfc": "GENERAL_SERVICES_OTHER_GENERAL_SERVICES",
+      "amount_cents": 2000,
+      "via": "card",
+      "account": "acc-card",
+      "kind": "subscription",
+      "day": 6
+    }
+  ],
+  "savings_plan": {
+    "from": "acc-checking",
+    "to": "acc-savings",
+    "amount_cents": 4800,
+    "on": "monthly",
+    "day": 3,
+    "skip_if_below_cents": 60000
+  },
+  "bank": {
+    "overdraft_fee_cents": 2500,
+    "low_balance_alert_cents": 5000,
+    "switch_to_card_below_cents": 2000
+  },
+  "spending": [
+    {
+      "id": "groceries",
+      "label": "Groceries",
+      "pfc": "FOOD_AND_DRINK_GROCERIES",
+      "per_week": 0.0,
+      "amount_cents": [
+        2415,
+        8721
+      ],
+      "merchants": [
+        {
+          "description": "ALDI 74119",
+          "merchant_name": "Aldi",
+          "weight": 2
+        },
+        {
+          "description": "KROGER #0985",
+          "merchant_name": "Kroger",
+          "weight": 2
+        },
+        {
+          "description": "TRADER JOE'S #530",
+          "merchant_name": "Trader Joe's",
+          "weight": 1
+        }
+      ],
+      "routine": "groceries",
+      "extra_per_week": 0.4,
+      "card_share": 0.4
+    },
+    {
+      "id": "eating-out",
+      "label": "Fast food and takeout",
+      "pfc": "FOOD_AND_DRINK_FAST_FOOD",
+      "per_week": 2.47,
+      "amount_cents": [
+        738,
+        1911
+      ],
+      "merchants": [
+        {
+          "description": "CHIPOTLE 3268",
+          "merchant_name": "Chipotle",
+          "weight": 2
+        },
+        {
+          "description": "MCDONALD'S F23941",
+          "merchant_name": "McDonald's",
+          "weight": 2
+        },
+        {
+          "description": "TACO BELL 036189",
+          "merchant_name": "Taco Bell",
+          "weight": 1
+        },
+        {
+          "description": "SQ *NOODLE BAR",
+          "merchant_name": null,
+          "weight": 1
+        }
+      ],
+      "time": [
+        "17:00",
+        "22:00"
+      ],
+      "card_share": 0.3
+    },
+    {
+      "id": "coffee",
+      "label": "Coffee",
+      "pfc": "FOOD_AND_DRINK_COFFEE",
+      "per_week": 4.33,
+      "amount_cents": [
+        326,
+        630
+      ],
+      "merchants": [
+        {
+          "description": "STARBUCKS STORE 18577",
+          "merchant_name": "Starbucks",
+          "weight": 2
+        },
+        {
+          "description": "SQ *CORNER CAFE",
+          "merchant_name": "Corner Cafe",
+          "weight": 2
+        },
+        {
+          "description": "DUNKIN #330815",
+          "merchant_name": "Dunkin'",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "07:00",
+        "15:00"
+      ],
+      "card_share": 0.2
+    },
+    {
+      "id": "rideshare",
+      "label": "Rides",
+      "pfc": "TRANSPORTATION_TAXIS_AND_RIDE_SHARES",
+      "per_week": 0.4,
+      "amount_cents": [
+        1208,
+        3220
+      ],
+      "merchants": [
+        {
+          "description": "UBER *TRIP {A4}",
+          "merchant_name": "Uber",
+          "weight": 2
+        },
+        {
+          "description": "LYFT *RIDE {A6}",
+          "merchant_name": "Lyft",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "18:00",
+        "23:30"
+      ],
+      "card_share": 0.6
+    },
+    {
+      "id": "shopping",
+      "label": "Online orders",
+      "pfc": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES",
+      "per_week": 1.54,
+      "amount_cents": [
+        781,
+        4776
+      ],
+      "merchants": [
+        {
+          "description": "AMZN Mktp US*{A6}",
+          "merchant_name": "Amazon",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "09:00",
+        "23:30"
+      ],
+      "card_share": 0.6,
+      "refund_chance": 0.05,
+      "receipt_email": "orders-marketplace@example.com",
+      "month_scale": {
+        "11": 1.3,
+        "12": 1.6
+      }
+    },
+    {
+      "id": "target",
+      "label": "Target run",
+      "pfc": "GENERAL_MERCHANDISE_SUPERSTORES",
+      "per_week": 0.62,
+      "amount_cents": [
+        1303,
+        5211
+      ],
+      "merchants": [
+        {
+          "description": "TARGET 00000201",
+          "merchant_name": "Target",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "10:00",
+        "20:00"
+      ],
+      "card_share": 0.5
+    },
+    {
+      "id": "entertainment",
+      "label": "Movies and going out",
+      "pfc": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS",
+      "per_week": 0.3,
+      "amount_cents": [
+        1610,
+        4696
+      ],
+      "merchants": [
+        {
+          "description": "AMC 8523 ONLINE",
+          "merchant_name": "AMC Theatres",
+          "weight": 1
+        },
+        {
+          "description": "EVENTBRITE *TICKETS",
+          "merchant_name": "Eventbrite",
+          "weight": 1
+        }
+      ],
+      "days": [
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "time": [
+        "15:00",
+        "22:00"
+      ],
+      "card_share": 0.5
+    },
+    {
+      "id": "venmo",
+      "label": "Splitting with friends",
+      "pfc": "TRANSFER_OUT_ACCOUNT_TRANSFER",
+      "per_week": 0.62,
+      "amount_cents": [
+        521,
+        2605
+      ],
+      "merchants": [
+        {
+          "description": "VENMO PAYMENT {n10}",
+          "merchant_name": "Venmo",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "11:00",
+        "23:30"
+      ]
+    },
+    {
+      "id": "gifts",
+      "label": "Gifts",
+      "pfc": "GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES",
+      "per_week": 0.1,
+      "amount_cents": [
+        2013,
+        6038
+      ],
+      "merchants": [
+        {
+          "description": "SQ *GIFT SHOP",
+          "merchant_name": null,
+          "weight": 1
+        }
+      ],
+      "time": [
+        "11:00",
+        "20:00"
+      ],
+      "card_share": 0.5,
+      "month_scale": {
+        "12": 3
+      }
+    },
+    {
+      "id": "pharmacy",
+      "label": "Pharmacy",
+      "pfc": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS",
+      "per_week": 0.15,
+      "amount_cents": [
+        805,
+        3757
+      ],
+      "merchants": [
+        {
+          "description": "CVS/PHARMACY #04051",
+          "merchant_name": "CVS",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "10:00",
+        "20:00"
+      ],
+      "discretionary": false
+    },
+    {
+      "id": "personal-care",
+      "label": "Haircuts and care",
+      "pfc": "PERSONAL_CARE_HAIR_AND_BEAUTY",
+      "per_week": 0.1,
+      "amount_cents": [
+        2013,
+        6038
+      ],
+      "merchants": [
+        {
+          "description": "GREAT CLIPS #7538",
+          "merchant_name": "Great Clips",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "10:00",
+        "18:00"
+      ],
+      "card_share": 0.5
+    },
+    {
+      "id": "convenience",
+      "label": "Snacks and convenience store",
+      "pfc": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK",
+      "per_week": 1.85,
+      "amount_cents": [
+        217,
+        1042
+      ],
+      "merchants": [
+        {
+          "description": "7-ELEVEN 15218",
+          "merchant_name": "7-Eleven",
+          "weight": 2
+        },
+        {
+          "description": "CIRCLE K # 0441",
+          "merchant_name": null,
+          "weight": 2
+        }
+      ],
+      "time": [
+        "10:00",
+        "23:30"
+      ],
+      "card_share": 0.1
+    },
+    {
+      "id": "app-store",
+      "label": "Apps and in-app purchases",
+      "pfc": "GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE",
+      "per_week": 0.62,
+      "amount_cents": [
+        150,
+        1302
+      ],
+      "merchants": [
+        {
+          "description": "APPLE.COM/BILL",
+          "merchant_name": "Apple",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "12:00",
+        "23:59"
+      ],
+      "card_share": 0.5
+    }
+  ],
+  "work": {
+    "jobs": [
+      {
+        "id": "job-main",
+        "employer": "Riverside Distribution Center",
+        "position": "Warehouse associate",
+        "place": "work",
+        "timeline_label": "Shift, warehouse",
+        "source": "schedule",
+        "overtime_threshold_hours": 40,
+        "overtime_multiplier": 1.5,
+        "workweek_starts": "Sun",
+        "ready_minutes": 30,
+        "pattern": {
+          "type": "rotation",
+          "anchor": "2026-07-26",
+          "cycle_days": 8,
+          "on": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "start": "06:00",
+          "end": "16:30",
+          "break_minutes": 30,
+          "extra_chance": 0.03
+        },
+        "closed_on": [],
+        "posting": {
+          "block_days": 7,
+          "anchor": "2026-08-02",
+          "posted_days_ahead": 21,
+          "time": "15:00",
+          "jitter_days": [
+            0,
+            0,
+            1
+          ]
+        },
+        "cancel_rate": 0.02,
+        "sick_rate": 0.01,
+        "sent_home_rate": 0.03,
+        "stay_late_rate": 0.1
+      }
+    ]
+  },
+  "health": {
+    "goals": {
+      "workouts_per_week": 2,
+      "sleep_hours": 7
+    },
+    "steps": {
+      "work": [
+        7000,
+        13000
+      ],
+      "class": [
+        6000,
+        9000
+      ],
+      "free": [
+        3000,
+        8000
+      ]
+    },
+    "resting_heart_rate": 59,
+    "nutrition": {
+      "enabled": false,
+      "log_rate": 0.5,
+      "base_kcal": 2000,
+      "sd_kcal": 220,
+      "goal_kcal": 2100
+    }
+  },
+  "routines": [
+    {
+      "id": "sleep",
+      "activity": "sleep",
+      "label": "Sleep",
+      "records_as": "health_sleep",
+      "variance_minutes": 34,
+      "late_night_rate": 0.09,
+      "early_before": "10:00",
+      "windows": [
+        {
+          "id": "before-early-day",
+          "day_type": "early_next_day",
+          "start": "21:30",
+          "end": "05:00",
+          "firmness": "usual"
+        },
+        {
+          "id": "before-free-day",
+          "day_type": "free_next_day",
+          "start": "23:00",
+          "end": "07:30",
+          "firmness": "loose"
+        }
+      ]
+    },
+    {
+      "id": "gym",
+      "activity": "workout",
+      "label": "Workout",
+      "where": "gym",
+      "records_as": "health_workout",
+      "keep_rate": 0.74,
+      "duration_minutes": [
+        45,
+        60
+      ],
+      "ready_minutes": 15,
+      "windows": [
+        {
+          "id": "usual",
+          "days": [
+            "Tue",
+            "Thu",
+            "Sat"
+          ],
+          "start": "18:00",
+          "end": "19:15",
+          "firmness": "usual"
+        }
+      ],
+      "workout_types": {
+        "Traditional Strength Training": 2,
+        "Running": 1,
+        "Elliptical": 1
+      },
+      "source_memory": "m-01"
+    },
+    {
+      "id": "groceries",
+      "activity": "groceries",
+      "label": "Weekly grocery run",
+      "where": "out",
+      "records_as": "bank",
+      "keep_rate": 0.83,
+      "duration_minutes": [
+        35,
+        70
+      ],
+      "timeline": "none",
+      "windows": [
+        {
+          "id": "usual",
+          "days": [
+            "Wed"
+          ],
+          "start": "19:30",
+          "end": "21:00",
+          "firmness": "usual"
+        }
+      ]
+    }
+  ],
+  "real_life": {
+    "events": [],
+    "nights_out": null,
+    "trips": []
+  },
+  "email": {
+    "address": "noah.5004@example.com",
+    "per_day": {
+      "promotions": 3.3,
+      "newsletters": 0.5,
+      "social": 0.7,
+      "personal": 0.15,
+      "security": 0.05,
+      "work_other": 0.5
+    },
+    "weekend_scale": 0.8
+  },
+  "memories": [
+    {
+      "id": "m-01",
+      "content": "I work out Tue, Thu and Sat around 6 PM",
+      "category": "routine",
+      "via": "chat",
+      "told_at": "2026-07-31T20:07"
+    }
+  ],
+  "generated": {
+    "by": "personas.py",
+    "seed": 5004,
+    "term": "Fall 2026"
+  }
+}

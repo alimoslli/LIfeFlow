@@ -1,0 +1,105 @@
+{
+  "id": "s0045-shift-worker-concert-tuesday-between-6am-shifts",
+  "title": "Warehouse worker (four days on, four off, 6 AM shifts) buys concert tickets for Tuesday Nov 24, a work day with his usual 6 PM gym; the show ends 10:45 PM and the next shift starts at 6 AM Wednesday, so Dev says the night is short in one line and offers a time-to-go reminder, no scolding.",
+  "persona": "p6004-shift-worker",
+  "now": "2026-11-13T19:00",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 6105,
+  "changes": [
+    {
+      "id": "c-tix",
+      "type": "purchase",
+      "at": "2026-11-12T20:14",
+      "account": "acc-card",
+      "description": "LIVEACT TICKETS 8885550163",
+      "merchant_name": "LiveAct Tickets",
+      "amount_cents": -16400,
+      "pfc": "ENTERTAINMENT_MUSIC_AND_AUDIO"
+    },
+    {
+      "id": "c-booking",
+      "type": "email",
+      "at": "2026-11-12T20:15",
+      "sender_type": "receipt",
+      "sender_name": "LiveAct Tickets",
+      "from_address": "orders-liveact@example.com",
+      "subject": "Your tickets: Tue Nov 24, doors 7:00 PM, show 8:00 PM, 2 tickets"
+    },
+    {
+      "id": "c-show",
+      "type": "calendar_event",
+      "title": "Concert with Dre (LiveAct tickets, show 8 PM)",
+      "start": "2026-11-24T19:00",
+      "end": "2026-11-24T22:45",
+      "state": "with people",
+      "place": "out",
+      "source": "calendar",
+      "created_at": "2026-11-12T20:20"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-night",
+      "check": "rest",
+      "what": "The tickets he bought on Thursday Nov 12 (c-tix $164.00 on his card, confirmation c-booking, calendar c-show) put a concert on Tuesday Nov 24, 7:00 to 10:45 PM, after his shift (6:00 AM to 4:30 PM, shift-main-2026-11-24) and his usual 6 PM gym; he would be asleep about 11:30 PM and up at 5:00 AM for Wednesday's 6:00 AM shift (shift-main-2026-11-25), about 5.5 hours against his usual 7.5 (m-01 is his gym; his sleep window before an early day is 9:30 PM to 5:00 AM).",
+      "by_when": "2026-11-23T18:00",
+      "facts": [
+        "c-tix",
+        "c-booking",
+        "c-show",
+        "shift-main-2026-11-24",
+        "shift-main-2026-11-25",
+        "m-01"
+      ]
+    }
+  ],
+  "best_fix": {
+    "for": "n-night",
+    "action": "just so you know",
+    "needs_user": false,
+    "send_at": "2026-11-23T18:00",
+    "what": "One line the evening before, with an optional tap: 'Tomorrow: shift 6 AM to 4:30, gym at 6:05, the show 7 to 10:45, then Wednesday starts at 6 AM. [Remind me at 10:15 PM to head out] [No thanks].' Nothing else: no advice about the tickets or the gym. If he taps the reminder, one nudge at 10:15 PM; otherwise nothing is sent.",
+    "why": "The tickets are bought and the night is his to spend. A fact with one optional tap lets him choose when to leave, and the purchase is already on his timeline from Nov 12."
+  },
+  "must_not": [
+    "suggest he sell the tickets or skip the concert",
+    "use guilt words about a late night or 'not getting enough sleep'",
+    "move Tuesday's workout to Wednesday evening, which is not one of his gym days",
+    "count his Friday paycheck or comment on the $164.00",
+    "send more than the one line and the optional reminder"
+  ],
+  "stay_quiet": false,
+  "tags": [
+    "shift worker",
+    "rotation",
+    "warehouse",
+    "early shift",
+    "tickets",
+    "purchase on timeline",
+    "email find",
+    "booking",
+    "rest",
+    "just so you know",
+    "routine fit",
+    "insight cloud"
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "move Tuesday's workout to Wednesday evening, which is not one of his gym days",
+        "routine": "gym",
+        "why_wrong": "he works out Tue, Thu and Sat at 6 PM, and Wednesday is a 10.5 hour shift after a short night",
+        "facts": [
+          "m-01"
+        ]
+      }
+    ]
+  },
+  "assumptions": [
+    "Four days on, four off from a Jul 26 anchor puts Nov 23 to 26 on, including Thanksgiving, as the persona's rotation says.",
+    "The concert ends about 10:30 PM with a 15 minute drive home; the timeline puts him home at 11:00 PM and asleep at 11:30 PM.",
+    "He bought the tickets for a night he knew was a work day; Dev does not second-guess it."
+  ]
+}

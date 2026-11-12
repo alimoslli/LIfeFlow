@@ -57,7 +57,7 @@ export default async function JarvisProfilePage({ searchParams }: { searchParams
         ))}
       </ul>
       <p className="px-2 text-center text-xs text-muted">
-        {nameAtStart(name)} never trains AI models on your data, asks before it deletes or sends anything, and{" "}
+        {nameAtStart(name)} never trains shared models on your data, asks before it deletes or sends anything, and{" "}
         <Link href="/integrity" className="text-accent underline">
           never does graded work for you
         </Link>
