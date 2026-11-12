@@ -1,11 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { localToInstant } from "@/lib/dates";
 import { closeDb } from "@/server/db/client";
 import { calendarEvents, inboxItems, transactions } from "@/server/db/schema";
 import { saveGoogleConnection } from "@/server/integrations/google";
 import { processDocument } from "@/server/services/inbox";
-import { DAILY_LOOK, FIRST_LOOK, fileFromGmail, gmailFilingOn } from "@/server/services/inbox/gmail";
+import { DAILY_LOOK, FIRST_LOOK, emailFilingOn, fileFromGmail } from "@/server/services/inbox/gmail";
+import { NOT_READ_YET } from "@/server/services/inbox/extract";
 import type { Extraction } from "@/server/services/inbox/extract";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { createAssignment, createCourse } from "@/server/services/school";
@@ -63,12 +64,14 @@ const connect = (run: Awaited<ReturnType<typeof makeUser>>["run"]) =>
 
 describe("Gmail is on with the connection", () => {
   it("needs no second switch, and stays off once turned off", () => {
-    expect(gmailFilingOn(undefined)).toBe(true);
-    expect(gmailFilingOn({})).toBe(true);
-    expect(gmailFilingOn({ gmailFiling: false })).toBe(false);
+    expect(emailFilingOn(undefined, "gmail")).toBe(true);
+    expect(emailFilingOn({}, "gmail")).toBe(true);
+    expect(emailFilingOn({ gmailFiling: false }, "gmail")).toBe(false);
   });
 
-  it("looks back two weeks the first time, then only at new mail", async () => {
+  it("looks back 30 days for up to 50 emails the first time, then only at new mail", async () => {
+    // owner via the COO, 2026-11-12: "do more than 25", then 50, keeping the 30 days back
+    expect(FIRST_LOOK).toEqual({ days: 30, max: 50 });
     const { run } = await makeUser("First Look");
     await connect(run);
     const extract = (async () => base) as never;
@@ -83,6 +86,35 @@ describe("Gmail is on with the connection", () => {
     expect(list(later.asked).get("maxResults")).toBe(String(DAILY_LOOK.max));
     // receipts, deliveries and bookings are asked for too
     expect(list(later.asked).get("q")).toMatch(/receipt.*delivery.*reservation/);
+  });
+
+  it("an email the monthly limit refused is kept and read again on the next run, never dropped", async () => {
+    const { user, run } = await makeUser("Refused Read");
+    await connect(run);
+    const id = "18c2a1b0f3d4e5b7";
+    const refused = (async () => {
+      throw new Error(`${NOT_READ_YET} yet: this month's skyling allowance is used up. It opens up again on December 1.`);
+    }) as never;
+    await run((s) => fileFromGmail(s, TZ, "2026-11-17", { fetch: fakeGmail([id]).f, extract: refused }));
+    const rows = () =>
+      run((s) =>
+        s.tx
+          .select({ status: inboxItems.status, reason: inboxItems.reason })
+          .from(inboxItems)
+          .where(and(eq(inboxItems.userId, user.id), eq(inboxItems.externalId, `gmail:${id}`))),
+      );
+    // kept, with the plain reason, so it shows in the inbox and isn't lost
+    expect(await rows()).toEqual([{ status: "failed", reason: expect.stringContaining(NOT_READ_YET) }]);
+    // the next run's search no longer finds it (it's older than two days), and it is still read
+    const extract = (async () => ({
+      ...base,
+      type: "delivery",
+      summary: "Desk lamp",
+      delivery: { item: "Desk lamp", carrier: "UPS", expected_date: "2026-11-19" },
+    })) as never;
+    const r = await run((s) => fileFromGmail(s, TZ, "2026-11-18", { fetch: fakeGmail([]).f, extract }));
+    expect(r).toMatchObject({ checked: 1, filed: 1 });
+    expect(await rows()).toEqual([{ status: "filed", reason: null }]);
   });
 });
 

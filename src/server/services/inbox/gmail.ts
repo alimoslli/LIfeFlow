@@ -1,20 +1,29 @@
 import { and, eq, inArray, like } from "drizzle-orm";
-import { inboxItems } from "../../db/schema";
+import { inboxItems, type UserPreferences } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { getGoogleConnection, readEmail, searchEmail } from "../../integrations/google";
-import { extractDocument, extractionClient } from "./extract";
+import { NOT_READ_YET, extractDocument, extractionClient } from "./extract";
 import { parseFromAddress, senderAuthenticated } from "./email-auth";
 import { processDocument, recordIgnored } from "./index";
 
 /** Mail that's likely school, bills, work, receipts, deliveries or bookings, from the last `days` days. Promotions and social are skipped. */
 export const gmailFilingQuery = (days: number) =>
   `newer_than:${days}d -category:promotions -category:social (syllabus OR due OR exam OR deadline OR quiz OR "rescheduled" OR "moved to" OR bill OR invoice OR "payment due" OR statement OR shift OR schedule OR paystub OR "pay stub" OR receipt OR "your order" OR shipped OR "out for delivery" OR delivery OR reservation OR booking OR itinerary OR ticket OR flight)`;
-/** The first look reaches back two weeks (owner via the COO, 2026-11-12: Gmail must be visibly useful from the start); later runs stay small. */
-export const FIRST_LOOK = { days: 14, max: 25 };
+/**
+ * The first look reaches back 30 days for up to 50 emails (owner via the COO, 2026-11-12: "do more than 25", then 50); later
+ * runs stay small. Every read counts against the person's monthly document reads like any other (services/ai-gate.ts).
+ */
+export const FIRST_LOOK = { days: 30, max: 50 };
 export const DAILY_LOOK = { days: 2, max: 10 };
 
-/** Gmail filing is on once Google is connected, unless they turned it off (owner via the COO, 2026-11-12: no second switch). */
-export const gmailFilingOn = (prefs: { gmailFiling?: boolean } | undefined) => prefs?.gmailFiling !== false;
+/** Each email provider's off switch in Settings. A new provider (Outlook mail, say) adds its key here. */
+const FILING_SWITCH = { gmail: "gmailFiling" } as const satisfies Record<string, keyof UserPreferences>;
+
+/**
+ * Reading a connected mailbox starts with the connection, for every email provider (owner via the COO, 2026-11-12: "the same
+ * goes for any other email we connect in future ... with no second switch"); only its own switch in Settings turns it off.
+ */
+export const emailFilingOn = (prefs: UserPreferences | undefined, provider: keyof typeof FILING_SWITCH) => prefs?.[FILING_SWITCH[provider]] !== false;
 
 /**
  * Files new school, bill, work, receipt, delivery and booking emails from the user's Gmail (on with the connection, off
@@ -29,7 +38,29 @@ export async function fileFromGmail(scope: UserScope, tz: string, today: string,
     .where(and(eq(inboxItems.userId, scope.userId), like(inboxItems.externalId, "gmail:%")))
     .limit(1);
   const look = before ? DAILY_LOOK : FIRST_LOOK;
-  const found = await searchEmail(scope, gmailFilingQuery(look.days), look.max, deps.fetch);
+  // what the limits refused earlier is read again first (owner via the COO: never dropped silently): its kept row makes way
+  const waiting = await scope.tx
+    .select({ id: inboxItems.id, externalId: inboxItems.externalId })
+    .from(inboxItems)
+    .where(
+      and(
+        eq(inboxItems.userId, scope.userId),
+        like(inboxItems.externalId, "gmail:%"),
+        eq(inboxItems.status, "failed"),
+        like(inboxItems.reason, `${NOT_READ_YET}%`),
+      ),
+    )
+    .limit(look.max);
+  if (waiting.length)
+    await scope.tx.delete(inboxItems).where(
+      inArray(
+        inboxItems.id,
+        waiting.map((w) => w.id),
+      ),
+    );
+  const again = waiting.map((w) => ({ id: w.externalId!.slice("gmail:".length) }));
+  const fresh = await searchEmail(scope, gmailFilingQuery(look.days), look.max, deps.fetch, FIRST_LOOK.max);
+  const found = [...again, ...fresh.filter((m) => !again.some((a) => a.id === m.id))];
   if (!found.length) return { filed: 0, checked: 0 };
   const seen = new Set(
     (
