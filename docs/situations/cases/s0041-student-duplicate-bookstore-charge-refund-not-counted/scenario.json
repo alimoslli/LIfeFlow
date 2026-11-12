@@ -1,0 +1,96 @@
+{
+  "id": "s0041-student-duplicate-bookstore-charge-refund-not-counted",
+  "title": "Community college student (with family, nearly full-time grocery job, 4 classes, 12 credits, Blackboard, evening studier) is charged $89.99 twice by the campus bookstore three minutes apart; her checking shows $240.00 with car insurance of $141.37 due Thursday. Dev flags the double charge with a dispute draft and never counts the refund.",
+  "persona": "p6001-community-college-with-family-nearly-ful",
+  "now": "2026-11-13T19:00",
+  "history_days": 42,
+  "future_days": 45,
+  "seed": 6101,
+  "changes": [
+    {
+      "id": "c-dup",
+      "type": "duplicate_charge",
+      "at": "2026-11-12T14:20",
+      "account": "acc-checking",
+      "description": "CAMPUS BOOKSTORE ONLINE 8885550142",
+      "merchant_name": "Campus Bookstore",
+      "amount_cents": -8999,
+      "pfc": "GENERAL_MERCHANDISE_BOOKSTORES_AND_NEWSSTANDS",
+      "minutes_apart": 3
+    },
+    {
+      "id": "c-recpt",
+      "type": "email",
+      "at": "2026-11-12T14:21",
+      "sender_type": "receipt",
+      "sender_name": "Campus Bookstore",
+      "from_address": "orders-bookstore@example.com",
+      "subject": "Your order receipt: Psychology study guide, $89.99"
+    }
+  ],
+  "money": {
+    "available_now_cents": 24000,
+    "savings_cents": 90000
+  },
+  "persona_overrides": {
+    "bills": [
+      {
+        "id": "car-insurance",
+        "known": true
+      }
+    ]
+  },
+  "dev_must_notice": [
+    {
+      "id": "n-dup",
+      "check": "drift",
+      "what": "The campus bookstore charged $89.99 twice on Thursday Nov 12 at about 2:20 PM, three minutes apart (c-dup.first and c-dup), but the receipt email (c-recpt) shows one order of $89.99. Available now is $240.00 and the car insurance of $141.37 (rec-car-insurance) comes out Thursday Nov 19, so $98.63 is left either way; the second $89.99 is the one that would be missing.",
+      "by_when": "2026-11-13T19:30",
+      "facts": [
+        "c-dup.first",
+        "c-dup",
+        "c-recpt",
+        "rec-car-insurance"
+      ]
+    }
+  ],
+  "best_fix": {
+    "for": "n-dup",
+    "action": "draft for them",
+    "needs_user": true,
+    "send_at": "2026-11-13T19:05",
+    "what": "One card tonight, a fact and a draft: 'The bookstore charged you $89.99 twice on Thursday, three minutes apart, but your receipt is for one order. Here is a note you can send them: \"Hello, my order on Nov 12 at 2:20 PM was charged twice, $89.99 each (receipt attached). Please refund one charge. Thank you.\"' [Copy the note] [Not a double, it was two books]. Dev does not contact the bookstore or her bank. It says plainly that the refund is not counted until it lands, and that Thursday's $141.37 insurance is covered either way: $240.00 now leaves $98.63. When the refund shows in her bank, Dev notes it in one line.",
+    "why": "A duplicate charge is a fact on her statement, easy to fix when caught in the first days, and she should not have to find it among 170 other charges. The draft is the next step; the money is hers to move or chase."
+  },
+  "must_not": [
+    "contact the bookstore or the bank for her",
+    "count the $89.99 refund in Available now before it lands",
+    "tell her to move money from savings (she is covered for Thursday's insurance)",
+    "use guilt words about her spending on books",
+    "treat the second charge as a purchase and add it to her book budget"
+  ],
+  "stay_quiet": false,
+  "tags": [
+    "student",
+    "community college",
+    "lives with family",
+    "nearly full-time job",
+    "first-gen",
+    "blackboard",
+    "evening studier",
+    "steady",
+    "4 classes",
+    "12 credits",
+    "double charge",
+    "email find",
+    "receipt",
+    "drift",
+    "draft for them",
+    "insight cloud"
+  ],
+  "assumptions": [
+    "A receipt email arrives within a minute of an online bookstore order; the second charge has no matching receipt.",
+    "Banks usually refund a confirmed duplicate in 3 to 10 business days; the case does not predict when.",
+    "Pay of $438.68 landed today (tx-2026-11-13-pay-main) and is already in the $240.00."
+  ]
+}
