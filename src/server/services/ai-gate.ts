@@ -5,6 +5,7 @@ import { todayIn } from "@/lib/dates";
 import { adminFor } from "../auth/admin";
 import { getDb } from "../db/client";
 import { users } from "../db/schema";
+import { checkCeilings } from "./ai-ceiling";
 import { readBudgets, releaseBudget, reserveBudget, settleBudget, type BudgetLine } from "./ai-budget";
 import {
   budgetLines,
@@ -115,9 +116,17 @@ export async function reserveAi(
     throw new AiRefusedError(refusal, refusalMessage(refusal, subject, now));
   }
   const holdId = r.holdId;
+  const touchesCompany = lines.some((l) => l.key.startsWith("g:") && l.kind === "micros");
   return {
     holdId,
-    settle: (actual) => (holdId ? quiet("settle", () => settleBudget(holdId, actual)) : Promise.resolve()),
+    settle: (actual) =>
+      holdId
+        ? quiet("settle", async () => {
+            await settleBudget(holdId, actual);
+            // Money that counted against the company's ceilings may have crossed 50%, 80% or 100%: warn once each.
+            if (touchesCompany) await checkCeilings(now);
+          })
+        : Promise.resolve(),
     release: () => (holdId ? quiet("release", () => releaseBudget(holdId)) : Promise.resolve()),
   };
 }
