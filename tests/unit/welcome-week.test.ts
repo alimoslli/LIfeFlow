@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ClockData, ClockItem } from "@/lib/day-clock";
-import { weekCounts, weekItems } from "@/app/(onboarding)/welcome/week-step";
+import { dayLabel, weekCounts, weekItems } from "@/app/(onboarding)/welcome/week-step";
 
 const item = (o: Partial<ClockItem>): ClockItem => ({
   id: "x",
@@ -39,5 +39,14 @@ describe("week so far", () => {
   it("says nothing for an empty week", () => {
     expect(weekItems(clock([]))).toEqual([]);
     expect(weekCounts([])).toBe("");
+  });
+
+  it("names a day in the person's own zone, also past the few days the wheel lists", () => {
+    // Thu Nov 12 2026, local midnight in New York (UTC-5) and in UTC
+    expect(dayLabel({ base: Date.UTC(2026, 10, 12, 5), tz: "America/New_York" }, 0)).toBe("Today");
+    expect(dayLabel({ base: Date.UTC(2026, 10, 12, 5), tz: "America/New_York" }, 4)).toBe("Mon");
+    expect(dayLabel({ base: Date.UTC(2026, 10, 12), tz: "UTC" }, 1)).toBe("Fri");
+    // across the clocks going back (Nov 1 2026 in New York): still the right weekday
+    expect(dayLabel({ base: Date.UTC(2026, 9, 30, 4), tz: "America/New_York" }, 3)).toBe("Mon");
   });
 });

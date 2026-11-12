@@ -332,6 +332,9 @@ test("what landed: the week in words on the real wheel, one first fix with Yes a
   await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "timeline");
   await expect(page.getByTestId("week-counts")).toHaveText("1 due date in the next 7 days.");
   await expect(page.getByRole("list", { name: "Coming up" })).toContainText("Lab report");
+  // each row names its real day (four days out), not another one
+  const dueDay = new Date(Date.now() + 4 * 86_400_000).toLocaleDateString("en-US", { weekday: "short" });
+  await expect(page.getByRole("list", { name: "Coming up" }).getByRole("listitem").filter({ hasText: "Lab report" })).toContainText(dueDay);
   // landed, so no tiles
   await expect(page.getByRole("list", { name: "Add one real thing" })).toHaveCount(0);
 

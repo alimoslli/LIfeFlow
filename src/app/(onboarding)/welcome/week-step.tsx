@@ -26,6 +26,13 @@ export function weekItems(clock: ClockData): ClockItem[] {
   return clock.items.filter((i) => i.start >= 0 && i.start < WEEK && !i.someday && !i.done && i.origin !== "day");
 }
 
+/** "Today", "Fri": the weekday of a day offset from today, in the person's own time zone (the clock's `days` only reach a few days out). */
+export function dayLabel(clock: Pick<ClockData, "base" | "tz">, offset: number): string {
+  if (offset === 0) return "Today";
+  // noon of that day, so a daylight-saving change can't tip it into the next one
+  return new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: clock.tz }).format(new Date(clock.base + offset * DAY * 60_000 + 12 * 3_600_000));
+}
+
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** "3 classes, 2 shifts and 1 due date": only what's there. */
@@ -87,7 +94,7 @@ export function WeekStep({
       </h1>
       <p data-anim className="mt-2 text-[0.9375rem] text-muted">
         {landed
-          ? "This is what your connections brought in. It's on your sky above, the same one you'll see every day."
+          ? "This is what's on your sky now, drawn above. It's the same one you'll see every day."
           : "Nothing has landed on your sky yet. Add one real thing and watch it appear above."}
       </p>
       {landed ? (
@@ -121,7 +128,7 @@ function Landed({
   // "Not now": the card steps away (the suggestion comes back tomorrow like any other)
   const [hidden, setHidden] = useState(false);
   const shown = items.slice(0, 4);
-  const dayOf = (i: ClockItem) => clock.days[Math.floor(i.start / DAY)]?.short ?? "";
+  const dayOf = (i: ClockItem) => dayLabel(clock, Math.floor(i.start / DAY));
 
   /** One tap on the card: the existing suggestion buttons (Yes, Not now, Undo), then the sky with what changed. */
   const answer = (response: "do" | "snooze" | "undo") =>
@@ -144,7 +151,7 @@ function Landed({
       <ul data-anim className="mt-3 flex flex-col gap-2" aria-label="Coming up">
         {shown.map((i) => (
           <li key={i.id} className="flex items-center gap-3 rounded-2xl bg-surface px-4 py-3 shadow-soft">
-            <span className="w-10 shrink-0 text-xs font-medium text-muted">{dayOf(i)}</span>
+            <span className="w-12 shrink-0 text-xs font-medium text-muted">{dayOf(i)}</span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[0.9375rem] font-medium">{i.title}</span>
               <span className="block truncate text-xs text-muted">{i.source}</span>
