@@ -11,6 +11,7 @@ test("someone waiting opens the example sky, learns the moves and comes back to 
   await pool.query("update users set access = 'in' where access = 'waiting'");
   await signUp(page, "Maya Torres");
   await pool.query("update app_access set waitlist_on = true");
+  await page.clock.install({ time: new Date("2026-11-12T11:30:00Z") }); // a fixed hour, so the day and its names are the same every run
   await page.goto("/waitlist");
   await expect(page.getByRole("heading", { level: 1, name: "You're #1 in line." })).toBeVisible();
 
@@ -32,8 +33,22 @@ test("someone waiting opens the example sky, learns the moves and comes back to 
 
   // marked as an example, with the words for every part
   await expect(page.getByTestId("sky-example-tag")).toHaveText("Example");
-  for (const t of ["The wheel is your day", "Now", "The stops", "A clash", "The timeline", "The night", "Turning", "Opening", "Folding"])
-    await expect(dialog.getByText(t, { exact: true })).toBeVisible();
+  // the real Today screen with only the wheel in it: the clock's own parts, the clock's own words, no tabs or chat bar
+  await expect(dialog.locator(".dc-today .dc")).toBeVisible();
+  await expect(dialog.getByRole("textbox")).toHaveCount(0);
+  await expect(dialog.getByRole("navigation", { name: "Main" })).toHaveCount(0);
+  for (const t of ["The wheel is your day", "Now", "A stop", "A clash", "The timeline", "The night"])
+    await expect(dialog.getByRole("term").filter({ hasText: t })).toBeVisible();
+  for (const [k, t] of [
+    ["turn", "Turn it"],
+    ["open", "Open it"],
+    ["fold", "Fold it"],
+  ])
+    await expect(dialog.getByTestId(`try-${k}`)).toContainText(t);
+  // the names on the wheel itself (a name shows only while its part is on the picture)
+  await expect
+    .poll(() => page.locator('[data-testid="sky-labels"] span').evaluateAll((els) => els.filter((e) => getComputedStyle(e).opacity === "1").length))
+    .toBeGreaterThan(1);
   await expect(dialog.getByText("The rest opens when you're let in.")).toBeVisible();
   // the skyling's own name, never the old words
   await expect(dialog).toContainText("Ray");
@@ -62,10 +77,10 @@ test("someone waiting opens the example sky, learns the moves and comes back to 
   await expect(clock).toHaveAttribute("data-state", "timeline");
   await expect(page.getByTestId("try-open")).toHaveAttribute("data-done", "true");
   await page
-    .getByRole("button", { name: /Lab report due/ })
+    .getByRole("button", { name: /Lab report/ })
     .first()
     .click();
-  await expect(clock.locator(".dc-detail")).toContainText("Lab report due");
+  await expect(clock.locator(".dc-detail")).toContainText("Lab report");
   await expect(clock.locator(".dc-detail")).toContainText("Example");
   await expect(clock.locator(".dc-detail button")).toHaveCount(0);
   await page.keyboard.press("Escape");
