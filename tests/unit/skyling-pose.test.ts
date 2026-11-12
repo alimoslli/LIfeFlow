@@ -35,11 +35,12 @@ describe("what the skyling does now (day-clock/pose.ts)", () => {
     expect(choosePose({ ...plain, follow: false, doing: "wave" })).toBe("walk");
   });
 
-  it("with reduced motion it stands still, and the page's moments are left out", () => {
+  // owner, 2026-11-12: "i want the reactions ... that's not enough motion": the page's moments play for everyone
+  it("with reduced motion it stands still, but its reactions to the page still show", () => {
     expect(choosePose({ ...plain, reduce: true })).toBe("idle");
-    expect(choosePose({ ...plain, reduce: true, doing: "wave" })).toBe("idle");
-    expect(choosePose({ ...plain, reduce: true, doing: "think" })).toBe("idle");
-    expect(choosePose({ ...plain, reduce: true, doing: "surprised" })).toBe("idle");
+    expect(choosePose({ ...plain, reduce: true, doing: "wave" })).toBe("wave");
+    expect(choosePose({ ...plain, reduce: true, doing: "think" })).toBe("think");
+    expect(choosePose({ ...plain, reduce: true, doing: "surprised" })).toBe("surprised");
     expect(choosePose({ ...plain, reduce: true, sleep: true })).toBe("sleep");
     expect(choosePose({ ...plain, reduce: true, live: "class" })).toBe("read");
   });

@@ -46,9 +46,9 @@ export function DayClock({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const engine = useRef<DayClockHandle | null>(null);
-  // the skyling says hello when you come (after the opening screen), and looks surprised at a clash (owner, 2026-11-11)
+  // the skyling says hello when you come (after the opening screen), and looks surprised at a clash (owner, 2026-11-11), with
+  // reduced motion too (owner, 2026-11-12: "i want the reactions ... that's not enough motion")
   useEffect(() => {
-    if (prefersReducedMotion()) return;
     let later = 0;
     const hello = () => {
       skylingDoes("wave", 2400);
