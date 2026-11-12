@@ -1240,6 +1240,8 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   .dc-facts:has(> [data-on]) > .dc-fact:not([data-on]) {
     transform: none;
   }
+}
+
 /* Setup on Today (owner, 2026-11-12): the skyling's note stays in view while the day is open into the week (so the week that
    just landed is on the wheel with its words under it), and with the tabs hidden the chat bar sits at the bottom edge. */
 .dc-today[data-setup]:has(.dc:is([data-state="moving"], [data-state="timeline"])) .dc-middle {
