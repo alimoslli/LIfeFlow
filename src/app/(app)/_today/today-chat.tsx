@@ -415,8 +415,8 @@ export function TodayMiddle({
           </button>
         </section>
       )}
-      {/* a note with its own step leaves room for one cloud */}
-      <IdeaClouds clouds={clouds} show={sky?.action ? 1 : sky || note ? 2 : 3} onPick={fillBar} className="justify-center" />
+{/* a note with its own step leaves room for one cloud */}
+      <IdeaClouds clouds={clouds} show={sky?.action ? 1 : sky || note ? 2 : 3} onPick={fillBar} />
     </div>
   );
 }

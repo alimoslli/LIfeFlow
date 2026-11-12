@@ -42,10 +42,30 @@ const SHAPES: Shape[] = [
   },
 ];
 
-const DAY = { ink: "#262320", body: "#ffffff", shade: "#d6e4f7" };
-const NIGHT = { ink: "#0a1630", body: "#eef3ff", shade: "#bac9ea" };
+type Palette = { ink: string; body: string; shade: string };
+export type CloudWeather = "tip" | "heads-up" | "storm";
 
-function tile(shape: Shape, c: typeof DAY): string {
+/**
+ * The weather (owner, 2026-11-12): a white cloud is a tip, a grey one a heads-up, a dark one with rain real trouble. Every
+ * pair is measured, not eyed: tests/unit/cloud-contrast.test.ts checks text on body (4.5:1), the button's text and outline
+ * (4.5:1 and 3:1), and each cloud's edge against the day and night sky (3:1), so a dark cloud can't vanish at night.
+ * At night the dark cloud gets a light edge for that reason.
+ */
+export const CLOUD_PALETTES: Record<CloudWeather, { day: Palette; night: Palette }> = {
+  tip: { day: { ink: "#262320", body: "#ffffff", shade: "#d6e4f7" }, night: { ink: "#0a1630", body: "#eef3ff", shade: "#bac9ea" } },
+  "heads-up": { day: { ink: "#262320", body: "#d3d9e4", shade: "#a9b3c6" }, night: { ink: "#0a1630", body: "#b9c3d8", shade: "#8e9ab5" } },
+  storm: { day: { ink: "#141b2c", body: "#3a4560", shade: "#283148" }, night: { ink: "#b4c5f2", body: "#3c496f", shade: "#2e3a60" } },
+};
+/** Text and button colours that sit on each cloud (day and night share them; only the body changes). */
+export const CLOUD_TEXT: Record<CloudWeather, { text: string; muted: string; buttonBg: string; buttonText: string; buttonOutline: string }> = {
+  tip: { text: "#13213d", muted: "#33415e", buttonBg: "#1b3a73", buttonText: "#ffffff", buttonOutline: "#13213d" },
+  "heads-up": { text: "#13213d", muted: "#2a3856", buttonBg: "#1b3a73", buttonText: "#ffffff", buttonOutline: "#13213d" },
+  storm: { text: "#ffffff", muted: "#e8edfd", buttonBg: "#ffd66b", buttonText: "#1a2236", buttonOutline: "#ffd66b" },
+};
+/** The sky behind the clouds: the app's day background and the night one, and a mid sky blue for the day wheel. */
+export const SKY = { day: ["#f6f8fb", "#8fb6e8"], night: ["#152643", "#0a1630"] } as const;
+
+function tile(shape: Shape, c: Palette): string {
   const inBody = (x: number, y: number) => {
     const x0 = 1;
     const x1 = W - 2;
@@ -98,23 +118,27 @@ export type CloudStyle = {
   borderWidth: string;
 };
 
-const made = new Map<number, CloudStyle>();
+const made = new Map<string, CloudStyle>();
 
-/** The style for cloud number `i` (the three shapes take turns). Made once per shape. */
-export function cloudStyle(i: number): CloudStyle {
+/** The style for cloud number `i` (the three shapes take turns) in a kind of weather. Made once per shape and weather. */
+export function weatherCloudStyle(i: number, weather: CloudWeather): CloudStyle {
   const k = ((i % SHAPES.length) + SHAPES.length) % SHAPES.length;
-  let s = made.get(k);
+  const id = `${k}:${weather}`;
+  let s = made.get(id);
   if (!s) {
     const shape = SHAPES[k];
     s = {
-      "--cloud-day": tile(shape, DAY),
-      "--cloud-night": tile(shape, NIGHT),
+      "--cloud-day": tile(shape, CLOUD_PALETTES[weather].day),
+      "--cloud-night": tile(shape, CLOUD_PALETTES[weather].night),
       "--cloud-slice": `${TOP} ${shape.right} ${BOTTOM} ${shape.left} fill`,
       "--cloud-l": `${shape.left * CLOUD_SCALE}px`,
       "--cloud-r": `${shape.right * CLOUD_SCALE}px`,
       borderWidth: `${TOP * CLOUD_SCALE}px ${shape.right * CLOUD_SCALE}px ${BOTTOM * CLOUD_SCALE}px ${shape.left * CLOUD_SCALE}px`,
     };
-    made.set(k, s);
+    made.set(id, s);
   }
   return s;
 }
+
+/** The white cloud (the default) for cloud number `i`. */
+export const cloudStyle = (i: number): CloudStyle => weatherCloudStyle(i, "tip");

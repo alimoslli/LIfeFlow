@@ -92,7 +92,14 @@ describe("idea clouds (owner, 2026-11-10)", () => {
   it("'I finished …' only with a real, short assignment title", () => {
     expect(pickClouds(busy, "Ray", 1, 20).some((c) => c.key === "finished")).toBe(false);
     const withTitle = pickClouds({ ...busy, nextAssignment: "Lab 4" }, "Ray", 1, 20).find((c) => c.key === "finished");
-    expect(withTitle).toEqual({ key: "finished", say: "Tell Ray I finished Lab 4", ask: "I finished Lab 4." });
+    expect(withTitle).toEqual({
+      key: "finished",
+      say: "Tell Ray I finished Lab 4",
+      why: "It ticks it off for you.",
+      cta: "Try it",
+      weather: "tip",
+      ask: "I finished Lab 4.",
+    });
     expect(pickClouds({ ...busy, nextAssignment: "A very long assignment title that won't fit" }, "Ray", 1, 20).some((c) => c.key === "finished")).toBe(false);
   });
 });

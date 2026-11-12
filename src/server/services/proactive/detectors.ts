@@ -55,7 +55,11 @@ export type Candidate = {
   urgent?: boolean;
 };
 
-export type DetectContext = { scope: UserScope; tz: string; today: string; now: Date };
+/**
+ * `fresh`: a read for showing (Today's insight clouds), not for sending. What was already sent as a message isn't hidden, because
+ * the person may still want it in front of them; nothing is recorded.
+ */
+export type DetectContext = { scope: UserScope; tz: string; today: string; now: Date; fresh?: boolean };
 export type Detector = (c: DetectContext) => Promise<Candidate[]>;
 
 const spendOf = (t: { amountCents: number }) => Math.max(0, -t.amountCents);
@@ -185,7 +189,7 @@ function takesTheEvening(s: { startsAt: Date; endsAt: Date }, tz: string) {
 }
 
 /** An assignment due soon with a long or late shift right before it: offer a study block in free time. */
-const deadlineConflicts: Detector = async ({ scope, tz, today, now }) => {
+const deadlineConflicts: Detector = async ({ scope, tz, today, now, fresh }) => {
   const due = (await listAssignments(scope, tz, { view: "upcoming", now, limit: 20 })).filter(
     (a) => a.dueAt && localDateOf(a.dueAt, tz) <= addDaysStr(today, 7),
   );
@@ -239,6 +243,7 @@ const deadlineConflicts: Detector = async ({ scope, tz, today, now }) => {
     });
   }
   if (!out.length) return out;
+  if (fresh) return out.slice(0, 2);
   // Only two a run, chosen from the ones not sent yet: an earlier warning that's still ahead kept taking a place and held
   // back a new one until the day of the shift (the noticing grader counted 15 that came too late).
   const sent = new Set(
@@ -266,14 +271,14 @@ const addMinutes = (hhmm: string, mins: number) => {
 };
 
 /** Bills in the next 3 days, the same ones Today and Money show (tracked plus found in the bank); urgent when checking can't cover them. */
-const billsDue: Detector = async ({ scope, today }) => {
+const billsDue: Detector = async ({ scope, today, fresh }) => {
   const bills = await upcomingBills(scope, today, today, addDaysStr(today, 3));
   if (!bills.length) return [];
   const accounts = await listAccounts(scope);
   if (!accounts.length) return [];
   const cash = balancesOf(accounts);
   // A found bill's alert sent under the key it had before the vendor tidy ("found:zelle:…") isn't sent again.
-  const formerly = bills.flatMap((b) => (b.sentAs ?? []).flatMap((k) => [`bill_short:${k}`, `bill_due:${k}`]));
+  const formerly = fresh ? [] : bills.flatMap((b) => (b.sentAs ?? []).flatMap((k) => [`bill_short:${k}`, `bill_due:${k}`]));
   const sent = new Set(
     formerly.length
       ? (
@@ -304,7 +309,15 @@ const billsDue: Detector = async ({ scope, today }) => {
         topic: "money" as const,
         // The bill's cycle, not the day it's shown on: a late bill shown as due today again tomorrow is the same alert.
         dedupeKey: `bill_short:${b.key}`,
-        facts: { bill: b.name, billCents: -b.amountCents, dueIn: when, shortCents: short, options: `Two ways to cover it: ${options.join(", or ")}.` },
+        facts: {
+          bill: b.name,
+          billCents: -b.amountCents,
+          dueIn: when,
+          dueDate: b.date,
+          cashCents: cash.cashCents,
+          shortCents: short,
+          options: `Two ways to cover it: ${options.join(", or ")}.`,
+        },
         action: {
           type: "create_task" as const,
           label: "Remind me",
@@ -320,7 +333,7 @@ const billsDue: Detector = async ({ scope, today }) => {
       kind: "bill_due",
       topic: "money" as const,
       dedupeKey: `bill_due:${b.key}`,
-      facts: { bill: b.name, billCents: -b.amountCents, dueIn: when, cashCents: cash.cashCents },
+      facts: { bill: b.name, billCents: -b.amountCents, dueIn: when, dueDate: b.date, cashCents: cash.cashCents },
       action: { type: "create_task" as const, label: "Remind me", title: `Pay ${b.name} (${usd(b.amountCents)})`, dueDate: b.date },
       priority: daysBetween(today, b.date) <= 1 ? 80 : 55,
       urgent: daysBetween(today, b.date) <= 1,
@@ -446,7 +459,8 @@ const overdueTasks: Detector = async ({ scope, tz, today }) => {
     .select({ id: tasks.id, title: tasks.title, dueAt: tasks.dueAt })
     .from(tasks)
     .where(and(eq(tasks.userId, scope.userId), ne(tasks.status, "done"), isNotNull(tasks.dueAt), lt(tasks.dueAt, new Date())));
-  const late = rows.filter((t) => localDateOf(t.dueAt!, tz) < today || t.dueAt!.getTime() < Date.now() - 3600_000).slice(0, 5);
+  const allLate = rows.filter((t) => localDateOf(t.dueAt!, tz) < today || t.dueAt!.getTime() < Date.now() - 3600_000);
+  const late = allLate.slice(0, 5);
   if (!late.length) return [];
   const titles =
     late
@@ -458,7 +472,8 @@ const overdueTasks: Detector = async ({ scope, tz, today }) => {
       kind: "overdue_tasks",
       topic: "general",
       dedupeKey: `overdue_tasks:${today}`,
-      facts: { count: late.length, titles },
+      // `count` is how many the message names and moves (at most 5); `total` is every one that's late
+      facts: { count: late.length, total: allLate.length, titles, firstTitle: late[0].title },
       action: { type: "move_tasks", label: "Move to tomorrow", taskIds: late.map((t) => t.id), to: addDaysStr(today, 1) },
       priority: 55,
     },
