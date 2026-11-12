@@ -98,10 +98,10 @@ export function AskBar({
   const hint = useFirstHint();
   return (
     <div className="flex flex-col gap-3">
-      <div className="@container relative pt-12">
-        <div className="absolute inset-x-0 top-12 z-10 flex -translate-y-full items-end justify-between gap-2 pr-1 pl-4">
+      <div className="@container relative">
+        <div className="flex items-end justify-between gap-2 pr-1 pl-4">
           {/* the skyling stands on the bar's top edge with its name beside it; tap it and it hops. The row's bottom is the
-              bar's top edge whatever is in it, so a taller cloud grows upward, never onto the bar */}
+              bar's top edge whatever is in it; it is in the flow (not over the page), so a taller cloud pushes the bar down and never lies over the skyling's note */}
           <div className="flex shrink-0 items-end gap-1.5" data-testid="ask-skyling">
             <SkylingSprite companion={skyling} className="-mb-1.5 h-9 w-9 cursor-pointer" />
             <span className="lf-chip-night mb-1 rounded-full px-2.5 py-0.5 text-[0.75rem] font-semibold">{name}</span>
@@ -109,14 +109,14 @@ export function AskBar({
           {/* idea clouds: things to tell or ask it, from their own data; a tap puts it in the chat bar, never sends it */}
           <IdeaClouds
             clouds={clouds}
-            show={2}
+            show={3}
             onPick={(ask) => {
               setText(ask);
               box.current?.focus();
             }}
-            // a second cloud only when the bar is wide enough for both on one line (a laptop's bar is beside the wheel, so
-            // the screen's width says nothing; owner, 2026-11-10: nothing lies over anything)
-            className="mb-1 min-w-0 flex-nowrap justify-end [&>li:nth-child(n+2)]:hidden @2xl:[&>li:nth-child(n+2)]:block"
+            // one swipeable row beside the skyling's name: the bar's width decides how much of the next one shows (owner,
+            // 2026-11-10: nothing lies over anything; 2026-11-12: thicker clouds)
+            className="mb-1 min-w-0 flex-1"
           />
         </div>
         <form
