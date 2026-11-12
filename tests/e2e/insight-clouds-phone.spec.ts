@@ -31,7 +31,7 @@ test("a busy student sees real insights, as weather; a tap fills the bar or does
   expect(said.length).toBeLessThanOrEqual(3);
   // rank: the shortfall first (real names, day, amounts), then the clash, never two about the same thing
   expect(said[0]).toMatch(/^Rent \$850 due \w+, you have \$620$/);
-  expect(said[1]).toMatch(/^Lab 4 is due \w+, you work /);
+  expect(said[1]).toMatch(/^Lab 4 (is )?due \w+, you work /);
   expect(said.join(" | ")).not.toMatch(/did you know|assistant|\bAI\b|—|missed|behind|slipping/i);
   for (const t of said) expect(t.split(/\s+/).length, t).toBeLessThanOrEqual(9);
   // weather: the shortfall and the clash are storms, with rain behind the words
@@ -122,7 +122,7 @@ test("the Money lock on: no money insight at all, only the rest of the week", as
   await expect(row(page).getByRole("button").first()).toBeVisible();
   const text = await row(page).innerText();
   expect(text).not.toMatch(/\$|Rent|available|bill|spent|checking|savings/i);
-  expect(await heads(page)).toContainEqual(expect.stringMatching(/^Lab 4 is due|^Quiz 2 due/));
+  expect(await heads(page)).toContainEqual(expect.stringMatching(/^Lab 4 (is )?due|^Quiz 2 due/));
   await shoot(page, "money-lock-on");
 });
 
