@@ -2,7 +2,7 @@
 
 2026-11-12, LF Main, for the owner through the COO. Asked for by the owner: "write up the huggingface #1 proposal, let's make sure if we're finna replace the open ai api we do it right and ask the way through".
 
-Status: **proposal, nothing built.** Every step below ends with a yes or no from the owner. Nothing moves to the next step, and nothing changes for users, without that yes.
+Status: **Steps 0 and 1 approved** (owner via the COO, 2026-11-12: "yes to both"), with the ~12-call measuring run on the small model. Everything is behind switches that are off by default. Step 2 (on for the owner and the demo account) needs his next yes, with the comparison report. Every later step ends with a yes or no from the owner; nothing moves on, and nothing changes for users, without it.
 
 ## In one line
 
@@ -51,6 +51,66 @@ What Step 1 does **not** do: it doesn't replace Ray's chat, document reading or 
 - **Usage is still counted.** A local model isn't a paid call, so it doesn't use up anyone's monthly limit. We still record that it ran and how long it took (numbers only, no content), so the owner can see it working on Admin › App.
 - **We can always switch back.** Each job keeps its current way behind one switch. Turning the switch off brings back today's behaviour at once.
 
+## Two rules before anything is built (COO, 2026-11-12)
+
+1. **Memory vectors are treated like the memory itself.** An embedding is made from a memory's words, so it is as private as they are.
+   - Best: work them out in memory for each request and store nothing.
+   - If any are stored (for example the save-time fallback below), they are:
+     - sealed the way `memories.content` is (ADR 0014);
+     - never used to search or sort by content in SQL;
+     - deleted with the memory and with the account;
+     - wiped by the under-13 lock (and listed in its sweep, `KEEP_ON_LOCK`/`HANDLED_ON_LOCK` and the foreign-key guard test).
+2. **Size and cold start first.** Before any of the three jobs is built, measure our Vercel function's size and its cold start with `transformers.js` on the WebAssembly runtime (`onnxruntime-web`) and on the native one (`onnxruntime-node`). If neither fits, report back with the numbers before picking a fallback.
+
+The measuring run uses the development key, once, and the report records each call and its cost.
+
+## Rule 2, measured: size and cold start (2026-11-12)
+
+How it was measured:
+- `bge-small-en-v1.5`, int8 (34 MB, 384 numbers per text), with Hugging Face's tokenizer, on `onnxruntime-node` 1.30 and on `onnxruntime-web` 1.31 (WebAssembly, one thread).
+- Each runtime ran in a fresh Node 22 process, twice, on this cloud container (4 cores).
+- What each runtime adds to a function was traced with Vercel's own file tracer (`@vercel/nft`).
+- The app's current functions were sized from our production build's trace files.
+- Scripts are in the chat's scratchpad. Nothing was added to the app.
+
+| | native (`onnxruntime-node`) | WebAssembly (`onnxruntime-web`) |
+|---|---|---|
+| Adds to a function | 46 MB runtime (Linux x64 only), plus the 34 MB model | 14 MB runtime (one `.wasm` file), plus the 34 MB model |
+| Cold start: load the runtime and model, plus the first text | about 0.26 s | about 0.7 s |
+| Each text after that | 4.5 ms (95% under 6 ms) | 13 ms (95% under 16 ms) |
+| Memory | about 170 MB | about 390 MB |
+
+**Does it fit on Vercel?** The limit is 250 MB uncompressed per function. Today:
+- our biggest page traces about 8 MB;
+- Next's own server about 62 MB.
+
+| | Total | Room left under 250 MB |
+|---|---|---|
+| Native | about 150 MB | about 100 MB |
+| WebAssembly | about 120 MB | about 130 MB |
+
+Both fit, under two conditions:
+- **Native:** the tracer also pulls in the Linux ARM copy of the runtime (25 MB). It must be left out with `outputFileTracingExcludes`. The full `@huggingface/transformers` package would also bring the image library `sharp` (19 MB a copy, two copies). For text alone we use the runtime and the tokenizer directly (about 80 MB with the model), or exclude `sharp`.
+- **The model goes only into the functions that use it:** chat, the tidy step and the sync crons. It does not go into every page.
+
+**Speed against the rule:** the target is under 300 ms added to a chat turn, both warm and on a cold start.
+- **Native meets it on both.** Picking memories and tools takes two or three texts per turn, about 15 ms warm.
+- **WebAssembly misses it on a cold start** (about 0.7 s). Warm, it is fine.
+
+**Pick: native**, with these caveats:
+- These timings are from this container. A real cold Vercel instance reads files from colder storage, so its first load will be slower. The first preview deploy with the switch on (still off for users) measures that, and the comparison report will show it.
+- With Fluid compute an instance serves many requests, so the load is paid once per instance, not per turn.
+
+**Two things this measurement turned up:**
+1. **Getting the model files.** This cloud environment cannot reach `huggingface.co` (the network refuses it).
+   - For this measurement, a copy of the same model was taken from an npm package. It was not checked against Hugging Face's own file hash, so it was used for timing only.
+   - For the real build we take the official files from Hugging Face. We pin the exact version and check its hash in the build, the way we pin Prettier.
+   - So this environment needs `huggingface.co` added to its network list. That's a settings change only the owner can approve, so it goes to him through the COO. Vercel's own builds can already reach it.
+2. **Meaning-matching isn't a sure win on its own.** On a first try, "what should I cook tonight" scored closer to "Remind me to call mom" (0.65) than to "I'm vegetarian" (0.62). It was no better with the model's search prefix.
+   - So Step 1 measures the model on the labelled cases rather than assuming it wins.
+   - It also tries mixing it with today's word matching, or a second small model (MiniLM) for comparison.
+   - Memory picking moves only if it beats today on those cases, as the gate says.
+
 ## How we do it right: steps, each with a yes or no
 
 ### Step 0. Measure where we are now (no change for anyone)
@@ -60,7 +120,7 @@ What Step 1 does **not** do: it doesn't replace Ray's chat, document reading or 
 - **Purchases:** 300 made-up transactions from the simulator, each labelled with its right category, scored for how many land in the right one.
   - Measuring today's paid AI batch on the same set means a small real-model run: about 12 calls to the small model, a few cents in total. Per the AI spend rule, that run needs the owner's yes first. Everything else uses made-up data and no paid calls.
 
-**Owner's yes or no:** start Steps 0 and 1 (measure, then build side by side). No user sees a change, no new company gets data, and the only paid calls are the ~12 above, if you also say yes to those.
+**Owner's answer (2026-11-12, via the COO): yes**, to Steps 0 and 1 and to the ~12-call run.
 
 ### Step 1. Build it beside what we have, and compare
 
@@ -115,9 +175,7 @@ Until a job passes its own tests and gets its own yes, OpenAI keeps doing it.
 - **Step 1:** no AI bill. A few days of building. The only paid calls are the ~12 calls to the small model in Step 0, and only with a yes.
 - **Savings:** the paid purchase-sorting batch goes away for most purchases, and Ray's chat requests get a little smaller. We'll show the real numbers from the usage records after Step 2, not guesses.
 
-## What we need from the owner now
+## What the owner has said
 
-1. **Yes or no:** start Steps 0 and 1 (measure, then build side by side, with no change for users).
-2. **Yes or no:** the one small real-model run in Step 0 (about 12 calls to the small model, a few cents) to measure today's purchase sorting.
-
-Everything after that comes back as its own yes or no, with the numbers.
+- 2026-11-12: yes to Steps 0 and 1, and yes to the ~12-call run on the small model ("yes to both").
+- Next: Step 2 comes back as its own yes or no, with the comparison report and its numbers.
