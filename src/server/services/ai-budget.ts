@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { inArray, like, sql } from "drizzle-orm";
 import type { Pool } from "pg";
 import { getDb, type Database } from "../db/client";
-import { aiBudgets } from "../db/schema";
+import { aiBudgets, aiHolds } from "../db/schema";
 
 /**
  * Setting AI cost and use aside before the work starts (ADR 0035). The check and the set-aside are one SQL function
@@ -77,8 +77,9 @@ export async function readBudgets(keys: string[], db: Database = getDb()): Promi
   return out;
 }
 
-/** Removes a deleted account's counters. */
-export async function deleteUserBudgets(userId: string, db: Database = getDb()) {
+/** Removes one person's counters and anything still set aside for them (account deletion, an admin delete, the under-13 lock). Runs on a transaction or the database. */
+export async function deleteUserBudgets(userId: string, db: { delete: Database["delete"] } = getDb()) {
+  await db.delete(aiHolds).where(like(aiHolds.key, `u:${userId}:%`));
   await db.delete(aiBudgets).where(like(aiBudgets.key, `u:${userId}:%`));
 }
 

@@ -1,3 +1,4 @@
+import { deleteUserBudgets } from "./ai-budget";
 import { and, count, desc, eq, ilike, inArray, like, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
 import { microsoftConfig } from "../integrations/microsoft";
 import type { Database } from "../db/client";
@@ -322,7 +323,7 @@ export async function deleteUser(db: Database, actor: Admin, userId: string, con
     await forgetFriend(tx, u.id);
     await fingerprintAdminLogEmail(tx, u.id, u.email);
     await tx.delete(users).where(eq(users.id, u.id));
-    await tx.delete(aiBudgets).where(like(aiBudgets.key, `u:${u.id}:%`));
+    await deleteUserBudgets(u.id, tx);
   });
 }
 

@@ -326,6 +326,36 @@ describe("onboarding", () => {
     expect(p.onboarding).not.toBe("done");
   });
 
+  it("under 13 also removes their AI allowance counters, anything set aside for them and their usage rows, and no one else's", async () => {
+    const { reserveBudget, readBudgets } = await import("@/server/services/ai-budget");
+    const { recordAi } = await import("@/server/services/ai-usage");
+    const { aiHolds, aiUsage } = await import("@/server/db/schema");
+    const { like } = await import("drizzle-orm");
+    const { user, run } = await makeUser("Kai Young");
+    const other = await makeUser("Someone Else");
+    await getDb()
+      .update(users)
+      .set({ preferences: { onboarding: "pending" } })
+      .where(eq(users.id, user.id));
+    const mine = `u:${user.id}:2026-11:msgs`;
+    const theirs = `u:${other.user.id}:2026-11:msgs`;
+    // one counter with something still set aside (a hold nobody settled), and one used
+    await reserveBudget([{ key: mine, kind: "count", amount: 2, limit: null }], 300);
+    await reserveBudget([{ key: theirs, kind: "count", amount: 1, limit: null }], 300);
+    await recordAi({ userId: user.id, feature: "chat", door: "chat_route", provider: "p", model: "m" });
+    const year = new Date().getFullYear();
+    expect(await run((s) => saveWelcomeProgress(s, "UTC", { birthDate: `${year - 9}-03-03` }))).toEqual({ blocked: true });
+    expect((await readBudgets([mine])).get(mine)).toEqual({ used: 0, held: 0 });
+    expect(
+      await getDb()
+        .select()
+        .from(aiHolds)
+        .where(like(aiHolds.key, `u:${user.id}:%`)),
+    ).toHaveLength(0);
+    expect(await withUser(user.id, (s) => s.tx.select().from(aiUsage))).toHaveLength(0);
+    expect((await readBudgets([theirs])).get(theirs)).toEqual({ used: 0, held: 1 });
+  });
+
   it("under 13 during setup keeps nothing: not the name, the connections, the classes, the job or the to-dos", async () => {
     const { user, run } = await makeUser("Real Name");
     await getDb()

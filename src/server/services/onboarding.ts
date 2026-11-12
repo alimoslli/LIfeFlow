@@ -12,6 +12,7 @@ import { withUser, type UserScope } from "../db/with-user";
 import { assistantSchema } from "./accounts";
 import { lockQueue } from "./waitlist";
 import { createManualAccount } from "./finance/accounts";
+import { deleteUserBudgets } from "./ai-budget";
 import { createMemory } from "./memory";
 import { createCourse } from "./school";
 import { createEmployer, fillRegularShifts, workScheduleSchema } from "./work";
@@ -204,6 +205,8 @@ async function blockUnderAge(scope: UserScope, prefs: Prefs) {
       await scope.tx.delete(integrations).where(and(eq(integrations.userId, scope.userId), sql`not (${inArray(integrations.provider, OUTSIDE_PROVIDERS)})`));
     else await scope.tx.execute(sql`delete from ${sql.identifier(table_name)} where user_id = ${scope.userId}`);
   }
+  // their AI allowance counters and anything set aside for them (numbers keyed by their id, not a table with a user column)
+  await deleteUserBudgets(scope.userId, scope.tx);
   // people they invited no longer point at them (they keep their own accounts)
   await scope.tx.update(users).set({ invitedBy: null }).where(eq(users.invitedBy, scope.userId));
   await scope.tx

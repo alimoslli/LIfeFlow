@@ -120,9 +120,10 @@ describe("setting AI use aside in one database step", () => {
   it("deleting an account removes its counters", async () => {
     const id = randomUUID();
     const k = `u:${id}:2026-11:msgs`;
-    await reserveBudget([line(k, 1, 5)], 300);
+    const r = await reserveBudget([line(k, 1, 5)], 300);
     await deleteUserBudgets(id);
     expect(await read(k)).toEqual({ used: 0, held: 0 });
+    if (r.ok && r.holdId) expect(await holdsOf(r.holdId)).toHaveLength(0);
   });
 });
 
