@@ -48,7 +48,11 @@ test("a busy student on a laptop: one big cloud, the next by dot or arrow key, a
 
   // the keyboard: a dot takes focus with a visible ring, and the arrow keys move to the next and back
   await dots(page).nth(0).focus();
-  expect(await dots(page).nth(0).evaluate((el) => getComputedStyle(el).outlineStyle)).toBe("solid");
+  expect(
+    await dots(page)
+      .nth(0)
+      .evaluate((el) => getComputedStyle(el).outlineStyle),
+  ).toBe("solid");
   await page.keyboard.press("ArrowRight");
   await expect(dots(page).nth(1)).toHaveAttribute("aria-current", "true");
   await expect(shown(page)).toContainText(said[1]);
@@ -62,7 +66,9 @@ test("a busy student on a laptop: one big cloud, the next by dot or arrow key, a
 
   // an asking cloud fills the bar, and nothing is sent
   await bring(page, /Quiz 2 due/);
-  await shown(page).getByRole("button", { name: /Quiz 2 due/ }).click();
+  await shown(page)
+    .getByRole("button", { name: /Quiz 2 due/ })
+    .click();
   const box = page.locator('textarea[aria-label="Message Ray"]:visible').first();
   await expect(box).toHaveValue(/^Help me finish Quiz 2/);
   await expect(page.locator(".lf-bubble-me")).toHaveCount(0);
@@ -71,7 +77,9 @@ test("a busy student on a laptop: one big cloud, the next by dot or arrow key, a
 
   // the fix: one tap, what changed, Undo
   await bring(page, /Remind me to cover it/);
-  await shown(page).getByRole("button", { name: /Remind me to cover it/ }).click();
+  await shown(page)
+    .getByRole("button", { name: /Remind me to cover it/ })
+    .click();
   await expect(row(page).getByText(/Added the to-do "Cover Rent/)).toBeVisible();
   expect(await queryAsUser(email, "select title from tasks where title like 'Cover Rent%'")).toHaveLength(1);
   await row(page).getByRole("button", { name: /Undo/ }).click();
