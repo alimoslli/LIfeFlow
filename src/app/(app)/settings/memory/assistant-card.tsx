@@ -154,7 +154,7 @@ export function AssistantCard({
           <legend className="mb-1 text-sm font-medium text-text-2">Allowed without asking</legend>
           <Switch name="auto_tasks" label="Add to-dos and reminders, move late to-dos" defaultChecked={settings.autonomy.tasks} />
           <Switch name="auto_calendar" label="Block time on my calendar" defaultChecked={settings.autonomy.calendar} />
-          <p className="text-xs text-muted">Money and messages always ask first. Anything else can be undone.</p>
+          <p className="text-xs text-muted">It never moves money. Deleting and sending always ask first. Everything else it does shows Undo.</p>
         </fieldset>
 
         <Switch

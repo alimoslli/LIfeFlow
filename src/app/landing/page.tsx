@@ -50,7 +50,7 @@ const TRUST = [
   ["Read-only bank connections.", "It can see, never move, your money."],
   ["Locked to your account.", "Nobody else can see your data."],
   ["Never sold,", "and never used to train AI without your clear permission."],
-  ["It asks first", "before sending, spending or deleting anything."],
+  ["It asks first", "before it deletes or sends anything. It never moves your money."],
 ];
 
 const WHY = [
@@ -84,7 +84,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "What is a skyling, exactly?",
-    a: "A little character that lives on top of your day. It reads what your connections show, notices what's about to clash and helps you fix it. It runs on AI, and it always asks before it changes anything.",
+    a: "A little character that lives on top of your day. It reads what your connections show, notices what's about to clash and helps you fix it. It runs on AI. It shows you what it changed, with Undo, and it always asks before it deletes or sends anything.",
   },
   {
     q: "Is there an iPhone app?",
@@ -173,8 +173,8 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               className="animate-rise mt-5 max-w-[44ch] text-[1.0625rem] leading-relaxed text-white/80 max-lg:order-5 sm:text-[1.125rem]"
               style={{ animationDelay: "120ms" }}
             >
-              Your classes, shifts, money and calendar, connected at last. And a little skyling who lives on your sky, spots what&apos;s about to clash and
-              fixes it before you feel it.
+              Your classes, shifts, money and calendar, connected at last. And a little skyling who lives on your sky, spots what&apos;s about to clash and has
+              the fix ready before you feel it.
             </p>
             <div className="animate-rise mt-6 flex flex-wrap items-center gap-3 max-lg:order-3 lg:mt-7" style={{ animationDelay: "180ms" }}>
               <SkyLink href={signupHref} cheer>
@@ -188,7 +188,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
             <div className="relative -mx-5 mt-6 h-[max(22rem,50svh)] max-lg:order-4 sm:-mx-8 lg:hidden">
               <NightSky stage="full" className="[mask-image:linear-gradient(to_bottom,transparent,black_18%,black_88%,transparent)]" />
               <p
-                className="pointer-events-none absolute inset-x-0 bottom-3 text-center font-mono text-[0.6875rem] tracking-[0.2em] text-white/45 uppercase"
+                className="pointer-events-none absolute inset-x-0 bottom-3 text-center font-mono text-[0.6875rem] tracking-[0.2em] text-white/60 uppercase"
                 aria-hidden
               >
                 ✦ Tap the sky ✦
@@ -201,7 +201,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               className="animate-rise mt-6 flex flex-wrap gap-x-4 gap-y-1.5 pb-10 text-sm text-white/65 max-lg:order-7 lg:pb-0"
               style={{ animationDelay: "240ms" }}
             >
-              {["Set up in two minutes", "Never moves your money", "Made by a student"].map((t) => (
+              {["Set up in minutes", "Never moves your money", "Made by a student"].map((t) => (
                 <li key={t} className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 bg-star-gold" aria-hidden />
                   {t}
@@ -211,7 +211,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
           </div>
         </div>
         <p
-          className="pointer-events-none relative z-10 hidden pb-5 text-center font-mono text-[0.6875rem] tracking-[0.2em] text-white/45 uppercase lg:block"
+          className="pointer-events-none relative z-10 hidden pb-5 text-center font-mono text-[0.6875rem] tracking-[0.2em] text-white/60 uppercase lg:block"
           aria-hidden
         >
           ✦ Tap the sky ✦
@@ -264,7 +264,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
                     </span>
                   ))}
                 </div>
-                <small className="mt-auto pt-4 text-xs text-white/45">Example</small>
+                <small className="mt-auto pt-4 text-xs text-white/65">Example</small>
               </li>
             ))}
           </ul>
@@ -290,7 +290,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
             </li>
             <li className="flex items-center gap-2.5">
               <MicrosoftLogo className="h-[22px] w-[22px]" />
-              Outlook and Teams
+              Outlook calendar (with Teams meetings)
             </li>
             <li>
               <span className="font-semibold tracking-tight">Plaid</span> for your bank
@@ -365,7 +365,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
                 <details key={f.q} className="group">
                   <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-6 py-4 text-[1.0625rem] font-medium [&::-webkit-details-marker]:hidden">
                     {f.q}
-                    <ChevronDown className="h-5 w-5 shrink-0 text-ink-night/45 transition-transform group-open:rotate-180" aria-hidden />
+                    <ChevronDown className="h-5 w-5 shrink-0 text-ink-night/70 transition-transform group-open:rotate-180" aria-hidden />
                   </summary>
                   <p className="pb-5 text-[1rem] leading-relaxed text-ink-night/75">{f.a}</p>
                 </details>
@@ -382,7 +382,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               <h2 className="max-w-[14ch] font-display text-[2.5rem] leading-none font-medium tracking-[-0.04em] text-balance sm:text-[3.75rem]">
                 They&apos;re ready when you are.
               </h2>
-              <p className="mt-4 max-w-[40ch] text-white/80">Two minutes to set up. Add everything yourself, or connect it later.</p>
+              <p className="mt-4 max-w-[40ch] text-white/80">Set up in minutes. Add everything yourself, or connect it later.</p>
               <div className="pointer-events-auto mt-7">
                 <SkyLink href={signupHref} skyling="goldie" cheer>
                   Get started
@@ -390,7 +390,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               </div>
             </div>
           </div>
-          <p className="mx-auto mt-5 max-w-6xl text-xs leading-relaxed text-ink-night/55">
+          <p className="mx-auto mt-5 max-w-6xl text-xs leading-relaxed text-ink-night/75">
             Canvas is a trademark of Instructure, Inc. Google, Google Calendar and Gmail are trademarks of Google LLC. Microsoft, Outlook and Teams are
             trademarks of the Microsoft group of companies. Apple and Apple Health are trademarks of Apple Inc. Plaid is a trademark of Plaid Inc. LifeFlow
             works with these services and is not endorsed by them.
@@ -398,7 +398,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
         </section>
 
         <footer className="border-t border-ink-night/10">
-          <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-8 text-sm text-ink-night/60 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+          <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-8 text-sm text-ink-night/75 sm:flex-row sm:items-center sm:justify-between sm:px-8">
             <BrandLockup markClassName="h-6 w-6" />
             <nav className="flex flex-wrap gap-x-6" aria-label="Footer">
               <a href="#faq" className="inline-flex min-h-11 items-center hover:text-ink-night">

@@ -46,7 +46,7 @@ const STEPS: StepId[] = ["skyling", "about", "connect", "learn"];
 const CHANGES: Record<StepId, string> = {
   skyling: "Changes who sits on top of your sky, and how it talks to you.",
   about: "Helps your skyling plan around you. Private to your account.",
-  connect: "What you connect lands on your sky and stays up to date. You approve what it changes.",
+  connect: "What you connect lands on your sky and stays up to date. Your skyling asks before it deletes or sends anything.",
   learn: "Nothing to save here. Just try it.",
 };
 
