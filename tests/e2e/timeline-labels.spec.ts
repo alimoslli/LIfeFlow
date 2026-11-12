@@ -140,6 +140,45 @@ for (const size of [
   }
 }
 
+// The wheel's own words (sunrise, sunset, the day's name, "Now") never print on top of each other: "Sunrise about…" and
+// "Sunset about…" once did on a busy morning (found by the waitlist-explainer builder, 2026-11-12). Checked every hour of a
+// busy day on a phone.
+test("the wheel's sunrise, sunset and day words never sit on each other, at any hour of a busy day", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const page = await context.newPage();
+  const email = await signUp(page, "Rim Words");
+  execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/dev/seed-clock-look.ts", email, "--busy"], {
+    env: { ...process.env, DATABASE_URL: E2E_DB },
+  });
+  const { rows } = await pool.query<{ timezone: string }>("select timezone from users where email = $1", [email.toLowerCase()]);
+  const found: string[] = [];
+  for (let h = 5; h <= 22; h++) {
+    for (const m of [0, 30]) {
+      await page.clock.setFixedTime(localInstant(rows[0].timezone, h, m));
+      await page.goto("/");
+      await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
+      await page.waitForTimeout(300);
+      found.push(
+        ...(await page.evaluate((when) => {
+          const words = [...document.querySelectorAll<SVGTextElement>("[data-dc=dome] text.dc-rim-t")]
+            .filter((e) => (e.textContent ?? "").trim() && Number(e.getAttribute("opacity") ?? 1) > 0.05)
+            .map((e) => ({ text: (e.textContent ?? "").trim(), b: e.getBoundingClientRect() }));
+          const out: string[] = [];
+          for (let i = 0; i < words.length; i++)
+            for (let j = i + 1; j < words.length; j++) {
+              const [a, b] = [words[i].b, words[j].b];
+              if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1)
+                out.push(`${when}: "${words[i].text}" sits on "${words[j].text}"`);
+            }
+          return out;
+        }, `${h}:${m || "00"}`)),
+      );
+    }
+  }
+  expect(found).toEqual([]);
+  await context.close();
+});
+
 // The owner's rule (2026-11-10): nothing lies over anything. At night the things you finished today shine as gold stars on
 // the wheel; a star must never sit on a stop's words or on the "N stars today" line.
 for (const size of [
