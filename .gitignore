@@ -55,6 +55,3 @@ docs/situations/cases/*/truth.json
 
 # Agent worktrees (builders work in these; their commits are merged, the folders are not)
 .claude/worktrees/
-
-# open models fetched by scripts/fetch-local-models.ts (pinned by hash, never committed)
-.models/
