@@ -286,6 +286,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       tally.steps++;
       let sawEvent = false;
       let stepUsage: TokenUsage | undefined;
+      let cutOff = false;
       try {
         for await (const ev of turn.step(toolResults, nextTools)) {
           sawEvent = true;
@@ -294,6 +295,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
             text = ev.text;
             calls = ev.toolCalls;
             stepUsage = ev.usage;
+            cutOff = !!ev.incomplete;
             tally.usage = addUsage(tally.usage, ev.usage);
           }
         }
@@ -307,6 +309,26 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       await hold.settle({ micros: priceTokens(turn.model ?? provider.model, stepUsage ?? null, input.prices, input.smallPrices, provider.model).costMicros });
       hold = null;
       extraChars += text.length;
+      if (cutOff) {
+        // The model ran out of room mid-answer (or mid tool call). Keep what it wrote, say so plainly, and record the turn honestly (not "ok").
+        if (text.trim()) {
+          const [m] = await run((s) =>
+            s.tx
+              .insert(messages)
+              .values({ userId: s.userId, conversationId: conversation.id, role: "assistant", content: text })
+              .returning({ id: messages.id }),
+          );
+          finalMessageId = m.id;
+        }
+        const note = `${text.trim() ? "\n\n" : ""}${TOO_BIG.replace("{name}", assistantProfile(user.preferences, user.timezone).name)}`;
+        emit({ type: "text", delta: note });
+        await run((s) =>
+          s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "assistant", content: note.trim(), status: "error" }),
+        );
+        outcome = "error";
+        errorKind = "output_cap";
+        break;
+      }
       if (text.trim()) {
         const [m] = await run((s) =>
           s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "assistant", content: text }).returning({ id: messages.id }),
@@ -456,6 +478,9 @@ export function friendlyProviderError(e: unknown, name: string = UNNAMED_ASSISTA
     return `${who} couldn't get through just now. Try again in a minute. Nothing else was changed.`;
   return `Something went wrong while ${name} was answering. Try again. Anything already shown as done was saved.`;
 }
+
+/** Said when a step ran out of room before it could finish (the person is asked for less, in the skyling's voice). */
+export const TOO_BIG = "That was more than {name} could fit in one answer, so it stopped part way. Try asking for a smaller piece, or one thing at a time.";
 
 /** Saved and shown when a turn runs out of time (its deadline is a little before the platform's own limit). */
 export const TOOK_TOO_LONG = "That took too long, so I stopped. Try again.";

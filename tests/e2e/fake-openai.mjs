@@ -56,6 +56,17 @@ function respond(body) {
           .filter((c) => c.type === "input_text")
           .map((c) => c.text)
           .join("\n");
+  // "/incomplete": the model runs out of room part way (reasoning counts inside the output cap), like the real API's response.incomplete.
+  if (text.includes("/incomplete")) {
+    const partial = "Here is the start of your plan: ";
+    return [
+      { type: "response.output_text.delta", delta: partial, item_id: `msg_${n}`, output_index: 0, content_index: 0, logprobs: [] },
+      {
+        type: "response.incomplete",
+        response: { id, object: "response", status: "incomplete", incomplete_details: { reason: "max_output_tokens" }, output: [message(partial)] },
+      },
+    ];
+  }
   const calls = text
     .split("\n")
     .map((l) => l.match(/^\/tool\s+([a-z_]+)\s*(.*)$/))

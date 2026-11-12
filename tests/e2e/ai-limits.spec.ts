@@ -65,3 +65,12 @@ test("under the limits, a message is answered and counted", async ({ page }) => 
   const rows = await queryAsUser(email, "select feature, door, state from ai_usage");
   expect(rows).toEqual([{ feature: "chat", door: "chat_route", state: "settled" }]);
 });
+
+test("an answer that runs out of room says so in plain words, not as a finished answer", async ({ page }) => {
+  await signUp(page, "Cut Off");
+  await page.goto("/jarvis");
+  await ask(page, "/incomplete plan my semester");
+  await expect(page.getByText(/Here is the start of your plan:/)).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText(/could fit in one answer.*smaller piece/)).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(/max_output|token/i);
+});

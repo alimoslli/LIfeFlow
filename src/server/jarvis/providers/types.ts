@@ -12,7 +12,9 @@ export type ToolCall = { callId: string; name: string; arguments: string };
 /** Token counts for one model call, as reported by the provider. */
 export type TokenUsage = { inputTokens: number; cachedInputTokens: number; outputTokens: number; reasoningTokens: number };
 
-export type StepEvent = { type: "text_delta"; delta: string } | { type: "step_done"; text: string; toolCalls: ToolCall[]; usage?: TokenUsage };
+export type StepEvent =
+  | { type: "text_delta"; delta: string }
+  | { type: "step_done"; text: string; toolCalls: ToolCall[]; usage?: TokenUsage; incomplete?: "max_output_tokens" | "other" };
 
 /** One user turn: the agent calls step() until no tool calls remain. */
 export interface ModelTurn {

@@ -9,8 +9,11 @@ import { priceFromSettings, webSearchFeeMicros } from "./ai-prices";
  * unpriced feature is held to its counted limits only and cost is never invented.
  */
 
-/** The most one model step may write (also sent to the model as its own output cap, so the estimate is a real bound). */
-export const STEP_OUTPUT_TOKEN_CAP = 8_000;
+/**
+ * The most one model step may write, thinking included (reasoning tokens count inside it, and "high" effort on files or long plans can
+ * use most of a small cap). Also sent to the model as its own cap, so the cost estimate is a real bound.
+ */
+export const STEP_OUTPUT_TOKEN_CAP = 25_000;
 /** An image or file in a message counts as this many input tokens for the estimate; the real usage settles it afterwards. */
 const TOKENS_PER_ATTACHMENT = 8_000;
 const CHARS_PER_TOKEN = 3;

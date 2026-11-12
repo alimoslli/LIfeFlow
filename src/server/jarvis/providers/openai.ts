@@ -179,6 +179,7 @@ export class OpenAIProvider implements ModelProvider {
         let text = "";
         let output: ResponseOutputItem[] | null = null;
         let usage: TokenUsage | undefined;
+        let incomplete: "max_output_tokens" | "other" | undefined;
         for await (const event of stream) {
           if (event.type === "response.output_text.delta") {
             text += event.delta;
@@ -186,6 +187,9 @@ export class OpenAIProvider implements ModelProvider {
           } else if (event.type === "response.completed" || event.type === "response.incomplete") {
             output = event.response.output;
             usage = toUsage(event.response.usage);
+            // The model ran out of room (reasoning counts inside the output cap) or was cut off: say so, never pass it off as finished.
+            if (event.type === "response.incomplete")
+              incomplete = event.response.incomplete_details?.reason === "max_output_tokens" ? "max_output_tokens" : "other";
           } else if (event.type === "response.failed") {
             throw new Error(event.response.error?.message ?? "The model request failed.");
           } else if (event.type === "error") {
@@ -200,7 +204,8 @@ export class OpenAIProvider implements ModelProvider {
           if (item.type === "reasoning" && !item.encrypted_content) continue;
           input.push(item as ResponseInputItem);
         }
-        yield { type: "step_done", text, toolCalls, usage };
+        // Tool calls of a cut-off step may be half written: they are never run.
+        yield { type: "step_done", text, toolCalls: incomplete ? [] : toolCalls, usage, incomplete };
       },
     };
   }
