@@ -159,19 +159,22 @@ test("the wheel's sunrise, sunset and day words never sit on each other, at any 
       await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
       await page.waitForTimeout(300);
       found.push(
-        ...(await page.evaluate((when) => {
-          const words = [...document.querySelectorAll<SVGTextElement>("[data-dc=dome] text.dc-rim-t")]
-            .filter((e) => (e.textContent ?? "").trim() && Number(e.getAttribute("opacity") ?? 1) > 0.05)
-            .map((e) => ({ text: (e.textContent ?? "").trim(), b: e.getBoundingClientRect() }));
-          const out: string[] = [];
-          for (let i = 0; i < words.length; i++)
-            for (let j = i + 1; j < words.length; j++) {
-              const [a, b] = [words[i].b, words[j].b];
-              if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1)
-                out.push(`${when}: "${words[i].text}" sits on "${words[j].text}"`);
-            }
-          return out;
-        }, `${h}:${m || "00"}`)),
+        ...(await page.evaluate(
+          (when) => {
+            const words = [...document.querySelectorAll<SVGTextElement>("[data-dc=dome] text.dc-rim-t")]
+              .filter((e) => (e.textContent ?? "").trim() && Number(e.getAttribute("opacity") ?? 1) > 0.05)
+              .map((e) => ({ text: (e.textContent ?? "").trim(), b: e.getBoundingClientRect() }));
+            const out: string[] = [];
+            for (let i = 0; i < words.length; i++)
+              for (let j = i + 1; j < words.length; j++) {
+                const [a, b] = [words[i].b, words[j].b];
+                if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1)
+                  out.push(`${when}: "${words[i].text}" sits on "${words[j].text}"`);
+              }
+            return out;
+          },
+          `${h}:${m || "00"}`,
+        )),
       );
     }
   }

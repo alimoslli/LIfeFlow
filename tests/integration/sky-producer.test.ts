@@ -33,7 +33,12 @@ describe("the sky producer", () => {
     expect(gap).toMatchObject({ tone: "tip", headline: "2 hours free at 11 AM, after BIO 101", about: ["free"] });
     expect(gap.action?.doIt).toEqual({ kind: "block", payload: { block: { date: "2026-11-17", start: "11:00", end: "12:30", title: "Work on Lab report" } } });
     await run((s) => doCloud(s, user, gap.key, NOW));
-    const booked = await run((s) => s.tx.select().from(calendarEvents).where(and(eq(calendarEvents.userId, user.id), eq(calendarEvents.kind, "study"))));
+    const booked = await run((s) =>
+      s.tx
+        .select()
+        .from(calendarEvents)
+        .where(and(eq(calendarEvents.userId, user.id), eq(calendarEvents.kind, "study"))),
+    );
     expect(booked.map((e) => e.title)).toEqual(["Work on Lab report"]);
   });
 
