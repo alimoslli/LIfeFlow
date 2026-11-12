@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     await enforceRateLimit(`jarvis:min:${user.id}`, 20, 60);
     await enforceRateLimit(`jarvis:day:${user.id}`, 400, 86_400);
     if (!isPro(user) && !(await rateLimit(getDb(), `jarvis:free:${user.id}`, FREE_JARVIS_PER_DAY, 86_400)).allowed)
-      throw new HttpError(402, `You've used today's ${FREE_JARVIS_PER_DAY} free messages. LifeFlow Pro has no daily limit (Settings → Plan).`);
+      throw new HttpError(402, `You've used today's ${FREE_JARVIS_PER_DAY} free messages. LifeFlow Pro has a much bigger daily allowance (Settings → Plan).`);
     // Allowances (messages, the monthly amount, the company's ceiling): a friendly "no" before anything is saved. The real check,
     // which sets the cost aside in one step, is inside the turn. A retry of a send that was already received skips this look.
     const resend = parsed.data.clientMessageId ? await withUser(user.id, (s) => turnStateOf(s, parsed.data.clientMessageId!)) : null;

@@ -236,7 +236,7 @@ Every item opens a bottom sheet or goes to Jarvis. Nothing needs another page.
 **Paid** ($9.99/month, with a student discount):
 - connections: bank sync, Canvas, Gmail;
 - texting Jarvis;
-- unlimited Jarvis and voice.
+- a much bigger Jarvis and voice allowance (the number is picked before launch; see ADR 0035).
 
 **Payments:**
 - Apple's in-app purchase in the iPhone app (Apple requires it for digital subscriptions).

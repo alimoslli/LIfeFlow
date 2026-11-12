@@ -99,16 +99,18 @@ No "unlimited" on the landing page, the waitlist page or marketing.
 
 ## 8. Owner decisions (yes or no, with a recommendation)
 
-1. Keep the $4-a-month testing allowance and count texting, web search, document reading and tidying inside it. **Yes.**
-2. Keep 30 messages a day and 300 a month, texts counting as messages. **Yes.**
-3. Voice stays at 2 calls a day, 10 a month, 3 minutes each, now ended by our server. **Yes.**
-4. Limits when prices aren't set: 60 web searches and 100 documents a month, 10 tidy runs a day per person. **Yes**, adjusted from real use.
-5. Company ceiling for the 10-student test: $50 a month and $10 a day; warnings at 50% and 80%; at 100% the assistant pauses for everyone except admins. **Yes** (your numbers).
-6. Allowances reset on the 1st of the month. **Yes.**
-7. After launch, Pro keeps a monthly allowance (number picked before launch) instead of no limit. **Yes.**
-8. Replace "Unlimited messages" and "no daily limit" with honest words. **Yes.**
-9. Bill check by uploading OpenAI's usage file once a month: **yes**; an automatic daily pull with an admin key: **not yet**.
-10. A separate OpenAI project for production. **Yes.**
-11. Copy the missing prices into production settings (small model, search, voice, web search fee, SMS). **Yes.**
+**Owner's answers, 2026-11-12:** yes to 1, 2, 3, 4, 5, 6, 7, 8 and 10. **No for now** to 9 (the monthly bill check) and 11 (copying the missing prices into production settings). So the bill check is not built, no price values are added or assumed, and with prices unset the counted limits in decision 4 apply; money ceilings count only where a price is configured (`JARVIS_PRICE_*`; unknown is empty, never 0). Recorded in `docs/adr/0035-ai-usage-and-limits.md`.
+
+1. Keep the $4-a-month testing allowance and count texting, web search, document reading and tidying inside it. **Yes.** (Answer: yes.)
+2. Keep 30 messages a day and 300 a month, texts counting as messages. **Yes.** (Answer: yes.)
+3. Voice stays at 2 calls a day, 10 a month, 3 minutes each, now ended by our server. **Yes.** (Answer: yes. Built: the limits and the minutes are counted on the server; the hang-up on our side is not built yet, see step 11.)
+4. Limits when prices aren't set: 60 web searches and 100 documents a month, 10 tidy runs a day per person. **Yes**, adjusted from real use. (Answer: yes.)
+5. Company ceiling for the 10-student test: $50 a month and $10 a day; warnings at 50% and 80%; at 100% the assistant pauses for everyone except admins. **Yes** (your numbers). (Answer: yes.)
+6. Allowances reset on the 1st of the month. **Yes.** (Answer: yes.)
+7. After launch, Pro keeps a monthly allowance (number picked before launch) instead of no limit. **Yes.** (Answer: yes. Built as a switch that is off until a number is set; no number was invented.)
+8. Replace "Unlimited messages" and "no daily limit" with honest words. **Yes.** (Answer: yes.)
+9. Bill check by uploading OpenAI's usage file once a month: **yes**; an automatic daily pull with an admin key: **not yet**. (Answer: **no for now**. Not built.)
+10. A separate OpenAI project for production. **Yes.** (Answer: yes. An account step for the owner, listed in `docs/PLAN.md` section 10, not code.)
+11. Copy the missing prices into production settings (small model, search, voice, web search fee, SMS). **Yes.** (Answer: **no for now**. Until then, only work whose model has a configured price is counted in dollars; everything else is held to the counted limits.)
 
 Sources (verify when building): OpenAI's Realtime conversations guide (60-minute session limit), server-side controls (`?call_id=`), the Realtime calls reference (hang-up; call id from the `Location` header), client secrets create (`expires_after` only limits starting), the client-secrets typings (`max_output_tokens`), and the telephony/SIP guide (newer `/v1/live/sessions/...` paths).
