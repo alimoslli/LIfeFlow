@@ -1,3 +1,5 @@
+import { countedNames } from "@/lib/counted-names";
+import { parseSearch } from "@/lib/txn-search";
 import { series } from "@/server/db/series";
 import { addDaysStr, dayOfWeek, daysBetween, monthEnd } from "@/lib/dates";
 import type { UserScope } from "../../db/with-user";
@@ -34,6 +36,13 @@ export async function spendingSummary(scope: UserScope, q: TransactionQuery & { 
     filters: { category: q.categoryName ?? null, search: q.search ?? null, accountId: q.accountId ?? null },
     ...summary,
     unconfirmed,
+    /** With a search: the exact names the totals counted (never a fuzzy match), so the answer can name them. */
+    countedNames: q.search?.trim()
+      ? countedNames(
+          txns.filter((t) => !t.excluded),
+          parseSearch(q.search).terms,
+        )
+      : [],
     topCategories: byCategory,
     topMerchants: [...merchants.values()].sort((a, b) => b.cents - a.cents).slice(0, 8),
     dataSources: sources,

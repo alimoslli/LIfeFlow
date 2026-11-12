@@ -195,7 +195,7 @@ export const financeTools = [
   defineTool({
     name: "spending_summary",
     description:
-      "Income, spending, refunds, transfers and top categories/merchants for a date range, optionally filtered by category (includes subcategories, e.g. 'Food & Dining') or a merchant/description search. Use for 'how much did I spend on X' and 'how much did I earn'. With a name in search, totals count only rows that match the full name; unconfirmed {count, amount} is extra money in lines that matched only a shortened name or an initial: always mention it (\"plus $85 that may be him\") and never add it into the total.",
+      "Income, spending, refunds, transfers and top categories/merchants for a date range, optionally filtered by category (includes subcategories, e.g. 'Food & Dining') or a merchant/description search. Use for 'how much did I spend on X' and 'how much did I earn'. With a name in search, totals count only rows that match the full name and use the same matching as query_transactions; countedNames lists the exact names or merchants counted ({name, count, paid, received}): name them in the answer (\"$240 to Omar Haddad and OMAR H ZELLE, 6 payments\"), and if two different people are listed say so; unconfirmed {count, amount} is extra money in lines that matched only a shortened name or an initial: always mention it (\"plus $85 that may be him\") and never add it into the total.",
     schema: z.object({
       ...range,
       category: z.string().max(80).optional().describe("Category name; call list_categories if unsure"),
