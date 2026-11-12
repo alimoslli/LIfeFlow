@@ -142,3 +142,18 @@ describe("account deletion", () => {
     expect(await getDb().select().from(aiUsage).where(eq(aiUsage.userId, u.user.id))).toHaveLength(0);
   });
 });
+
+describe("first use of several keys", () => {
+  it("creates new counter rows in sorted order, so two first uses can't deadlock", async () => {
+    const { rows } = await getDb().execute(sql`select pg_get_functiondef('ai_reserve(uuid,text[],text[],bigint[],bigint[],integer)'::regprocedure) as def`);
+    expect(String((rows[0] as { def: string }).def)).toMatch(/SELECT k FROM unnest\(p_keys\) AS k ORDER BY k ON CONFLICT/);
+    // fresh keys, opposite orders, all at once: none hangs, none fails
+    const [a, b, c] = [key(), key(), key()];
+    const results = await Promise.all(
+      Array.from({ length: 20 }, (_, i) =>
+        reserveBudget(i % 2 ? [line(a, 1, 100), line(b, 1, 100), line(c, 1, 100)] : [line(c, 1, 100), line(b, 1, 100), line(a, 1, 100)], 300),
+      ),
+    );
+    expect(results.every((r) => r.ok)).toBe(true);
+  });
+});

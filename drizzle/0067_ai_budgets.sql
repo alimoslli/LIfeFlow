@@ -30,7 +30,7 @@ DECLARE
 	have bigint;
 BEGIN
 	IF n = 0 THEN RETURN NULL; END IF;
-	INSERT INTO ai_budgets (key) SELECT unnest(p_keys) ON CONFLICT (key) DO NOTHING;
+	INSERT INTO ai_budgets (key) SELECT k FROM unnest(p_keys) AS k ORDER BY k ON CONFLICT (key) DO NOTHING;
 	PERFORM 1 FROM ai_budgets WHERE key = ANY (p_keys) ORDER BY key FOR UPDATE;
 	WITH gone AS (DELETE FROM ai_holds WHERE key = ANY (p_keys) AND expires_at < now() RETURNING key, amount),
 	     per AS (SELECT key, sum(amount) AS amt FROM gone GROUP BY key)
