@@ -37,10 +37,15 @@ export function errorResponse(e: unknown) {
 
 /** Reads a request body as bytes with a hard limit; refuses early on content-length. Returns the text. */
 export async function readLimitedBody(req: Request, max = 64_000): Promise<string> {
+  return (await readLimitedBytes(req, max)).toString("utf8");
+}
+
+/** The body as bytes, counted as it streams in: a missing, small or false content-length can't get more than `max` read. */
+export async function readLimitedBytes(req: Request, max: number, message = "Too much data in one request"): Promise<Buffer> {
   const declared = Number(req.headers.get("content-length"));
-  if (Number.isFinite(declared) && declared > max) throw new HttpError(413, "Too much data in one request");
+  if (Number.isFinite(declared) && declared > max) throw new HttpError(413, message);
   const reader = req.body?.getReader();
-  if (!reader) return "";
+  if (!reader) return Buffer.alloc(0);
   const chunks: Uint8Array[] = [];
   let size = 0;
   for (;;) {
@@ -49,9 +54,9 @@ export async function readLimitedBody(req: Request, max = 64_000): Promise<strin
     size += value.byteLength;
     if (size > max) {
       await reader.cancel().catch(() => {});
-      throw new HttpError(413, "Too much data in one request");
+      throw new HttpError(413, message);
     }
     chunks.push(value);
   }
-  return Buffer.concat(chunks).toString("utf8");
+  return Buffer.concat(chunks);
 }

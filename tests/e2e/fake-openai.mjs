@@ -212,6 +212,34 @@ http
         return res.end(JSON.stringify({ value: "ek_e2e_test", expires_at: Math.floor(Date.now() / 1000) + 120, session: JSON.parse(raw).session }));
       }
       const body = JSON.parse(raw);
+      // setup in the app: a made-up class schedule "read" from any picture (nothing real is read)
+      if (!body.stream && body.text?.format?.name === "schedule_read") {
+        const id = `resp_${n++}`;
+        const out = {
+          classes: [
+            { name: "BIO 110", days: [1, 3, 5], start_time: "10:00", end_time: "10:50", location: "Room 210" },
+            { name: "ENG 101", days: [2, 4], start_time: "13:00", end_time: "14:15", location: null },
+          ],
+          jobs: [],
+        };
+        res.writeHead(200, { "content-type": "application/json" });
+        return res.end(
+          JSON.stringify({
+            id,
+            object: "response",
+            status: "completed",
+            output: [
+              {
+                type: "message",
+                id: `msg_${id}`,
+                role: "assistant",
+                status: "completed",
+                content: [{ type: "output_text", text: JSON.stringify(out), annotations: [] }],
+              },
+            ],
+          }),
+        );
+      }
       if (!body.stream && body.text?.format?.name === "inbox_extract") {
         res.writeHead(200, { "content-type": "application/json" });
         return res.end(JSON.stringify(inboxExtract(body)));

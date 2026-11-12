@@ -14,6 +14,8 @@ const ALLOWED: Record<string, string> = {
   "src/server/jarvis/providers/openai.ts": "the chat and text model; runJarvisTurn writes the row (agent.ts)",
   "src/server/integrations/web-search.ts": "web search; searchWeb writes the row",
   "src/server/services/inbox/extract.ts": "document reading; extractDocument writes the row",
+  "src/server/services/schedule-photo.ts":
+    "reading a picture of a schedule in setup; readSchedulePhoto holds the allowance and writes the row (feature document, door upload)",
   "src/server/services/finance/tidy.ts": "transaction tidying; openAiTidy writes the row",
   "src/server/jarvis/voice.ts": "the voice client secret; startVoiceSession holds the row, the call's end settles it",
   "src/components/jarvis/voice-call.tsx": "the browser's side of the voice call (audio goes to the voice service with the client secret)",

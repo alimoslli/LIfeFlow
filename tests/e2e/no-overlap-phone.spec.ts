@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { expect, test, type Page } from "@playwright/test";
-import { signUp, fillBirthday } from "./helpers";
+import { signUp, fillBirthday, giveSomething } from "./helpers";
 
 /**
  * No two visible controls overlap, and no field sticks out of its container, on the phone sizes we support.
@@ -251,6 +251,7 @@ for (const size of SIZES)
       await check("welcome/connect");
       await page.getByRole("button", { name: "I'll connect later" }).click();
       await check("welcome/learn");
+      await giveSomething(email);
       await page.getByRole("button", { name: "Skip setup" }).click();
       await page.waitForURL((u) => u.pathname === "/");
       // no tour after the welcome (item 7); the replayed one is checked the same way

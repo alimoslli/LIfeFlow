@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
-import { signUp, fillBirthday } from "./helpers";
+import { signUp, fillBirthday, giveSomething } from "./helpers";
 
 test("core pages fit a phone screen without horizontal scrolling", async ({ page }) => {
-  await signUp(page, "Phone User", { onboarding: "stay" });
+  const email = await signUp(page, "Phone User", { onboarding: "stay" });
   // The helper saves the name after /welcome loaded (sign-up asks only email and password); reload so the first screen has it.
   await page.reload();
   // Every onboarding step fits: the skylings, about you (with long names), connect your sky, read your sky.
@@ -20,6 +20,7 @@ test("core pages fit a phone screen without horizontal scrolling", async ({ page
   await fits("connect");
   await page.getByRole("button", { name: "I'll connect later" }).click();
   await fits("learn");
+  await giveSomething(email);
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL((u) => u.pathname === "/");
   for (const path of ["/", "/plan", "/money", "/tasks", "/school", "/calendar", "/finances", "/work", "/notes", "/jarvis", "/settings"]) {

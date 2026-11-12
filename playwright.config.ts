@@ -36,6 +36,8 @@ export default defineConfig({
       timeout: 120_000,
       env: {
         DATABASE_URL: E2E_DB,
+        // one made-up Canvas feed address answers locally (setup-in-app.spec.ts); nothing else is touched
+        NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ""} --require ${process.cwd()}/tests/e2e/fake-feeds.cjs`.trim(),
         ENCRYPTION_KEY: Buffer.alloc(32, 9).toString("base64"),
         OPENAI_API_KEY: "sk-e2e-test",
         OPENAI_MODEL: "gpt-5.5",

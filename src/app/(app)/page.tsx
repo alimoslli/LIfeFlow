@@ -3,6 +3,13 @@ import Link from "next/link";
 import { ClaimStars } from "./_today/claim-stars";
 import { cookies } from "next/headers";
 import { TODAY_COOKIE, parseTodayMode } from "@/lib/theme";
+import { aiAllowed } from "@/lib/ai-consent";
+import { isCompanionChoice } from "@/lib/companions";
+import { inAppSetup, SETUP_COOKIE } from "@/lib/setup-mode";
+import { canvasConnection } from "@/server/integrations/canvas";
+import { microsoftConfig } from "@/server/integrations/microsoft";
+import { firstConnection } from "@/server/services/setup-first";
+import { SetupToday } from "./_today/setup-today";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { DayClock } from "@/components/day-clock/day-clock";
 import { assistantProfile } from "@/lib/assistant";
@@ -30,8 +37,50 @@ import { toCard } from "@/server/services/proactive/present";
  * Today (v3): your time as a clock that opens into the timeline of your week (docs/design/clock/spec.md),
  * and under it the one thing your skyling noticed, plus a way to ask. Everything else lives one tab away.
  */
-export default async function TodayPage() {
+const BACK_RESULTS = ["connected", "denied", "failed", "missing_scopes", "admin_consent", "not_configured", "use_main_site"];
+
+export default async function TodayPage({ searchParams }: { searchParams: Promise<{ connected?: string; result?: string }> }) {
   const me = await requireUser();
+  // A new account sets up right here (owner, 2026-11-12): the same sky, wheel and chat bar, with the skyling guiding it. No money
+  // on the sky yet, and none of the day's looks run until setup is done.
+  if (me.preferences?.onboarding === "pending" && inAppSetup((await cookies()).get(SETUP_COOKIE)?.value)) {
+    const { connected, result } = await searchParams;
+    const p = me.preferences ?? {};
+    const data = await withCurrentUser(async (scope, user) => {
+      const [clock, list, canvas, first] = await series(
+        () => dayClockData(scope, user.timezone || "UTC", new Date(), { money: false }),
+        () => integrationStatus(scope),
+        () => canvasConnection(scope),
+        () => firstConnection(scope),
+      );
+      return { clock, list, canvas, first };
+    });
+    const on = (provider: string) => (data.list.find((i) => i.provider === provider)?.status ?? "not_connected") !== "not_connected";
+    return (
+      <SetupToday
+        clock={data.clock}
+        mode={parseTodayMode((await cookies()).get(TODAY_COOKIE)?.value)}
+        userId={me.id}
+        aiOk={aiAllowed(me.preferences)}
+        saved={{
+          companion: isCompanionChoice(p.companion) ? p.companion : null,
+          name: p.assistantName ?? "",
+          style: p.assistantStyle === "coach" || p.assistantStyle === "direct" ? p.assistantStyle : "friend",
+          lifeStage: p.lifeStage ?? null,
+          birthDate: p.birthDate ?? "",
+          yourName: me.name.split(" ")[0] === "there" ? "" : me.name.split(" ")[0],
+        }}
+        sources={{
+          google: { available: !!googleConfig(), connected: on("google") },
+          outlook: { available: !!microsoftConfig(), connected: on("outlook") },
+          canvas: { available: true, connected: !!data.canvas },
+          bank: { available: !!plaidConfig(), connected: on("plaid") },
+          first: data.first,
+        }}
+        back={(connected === "google" || connected === "outlook") && BACK_RESULTS.includes(result ?? "") ? { provider: connected, result: result! } : null}
+      />
+    );
+  }
   // With the Face ID lock on, nothing about money is said here until Money is unlocked.
   const locked = await moneyLocked(me);
   // The skyling takes its scheduled look (morning, midday, evening) the first time Today opens in each. It runs right

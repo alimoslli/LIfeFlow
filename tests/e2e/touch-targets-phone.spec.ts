@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { expect, test, type Page } from "@playwright/test";
-import { signUp, fillBirthday } from "./helpers";
+import { signUp, fillBirthday, giveSomething } from "./helpers";
 
 test.use({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true });
 
@@ -91,12 +91,13 @@ test("393px: every control on onboarding and the main screens is at least 44x44"
   await check("welcome/connect");
   await page.getByRole("button", { name: "I'll connect later" }).click();
   await check("welcome/learn");
+  await giveSomething(email);
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL((u) => u.pathname === "/");
 
   // The main screens, with real content (goals with "What if I added", a job, subscriptions).
   execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/seed-coach.ts", email], {
-    env: { ...process.env, DATABASE_URL: "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" },
+    env: { ...process.env, DATABASE_URL: process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" },
   });
   for (const path of SCREENS) {
     await page.goto(path);

@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { pool, signUp } from "./helpers";
+import { pool, signUp, afterSignUp, skipSetup } from "./helpers";
 
 const ADMIN_EMAIL = "admin-owner@example.com"; // matches ADMIN_EMAILS in playwright.config.ts
 const PHONE = { viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true };
@@ -13,9 +13,9 @@ async function ownerPage(browser: Browser): Promise<Page> {
   await op.getByLabel("Email").fill(ADMIN_EMAIL);
   await op.getByLabel("Password").fill("correct horse battery");
   await op.getByRole("button", { name: "Create account" }).click();
-  await op.waitForURL("**/welcome");
+  await op.waitForURL(afterSignUp);
   await pool.query(`update users set name = $1, preferences = preferences || '{"birthDate":"1990-06-15"}'::jsonb where email = $2`, ["Owner Olu", ADMIN_EMAIL]);
-  await op.getByRole("button", { name: "Skip setup" }).click();
+  await skipSetup(op);
   await op.waitForURL((u) => u.pathname === "/");
   await pool.query("update users set totp_enabled_at = now() where email = $1", [ADMIN_EMAIL]);
   return op;
@@ -94,7 +94,7 @@ test("after setup, someone waiting lands on their place in line; the app stays c
   // Setup still runs first (the birthday is checked there); skipping it lands on the waitlist, not the app.
   await pool.query(`update users set preferences = preferences || '{"birthDate":"2000-01-15"}'::jsonb where email = $1`, [email]);
   await page.goto("/welcome");
-  await page.getByRole("button", { name: "Skip setup" }).click();
+  await skipSetup(page);
   await page.waitForURL((u) => u.pathname === "/waitlist");
   await expect(page.getByTestId("wl-place")).toHaveText("#1");
   // The invite card sits at the bottom, after the line and the rules.
