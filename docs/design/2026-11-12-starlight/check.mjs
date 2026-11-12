@@ -37,7 +37,9 @@ for (let r = 0; r < n; r++) {
       shapes: rec.shapes,
       broken: rec.broken,
       close: rec.close,
-      waits: rec.dark,
+      zaps: rec.zaps,
+      shooting: rec.shooting,
+      misses: rec.misses,
       far: rec.far,
 
       stuck: rec.stuck,

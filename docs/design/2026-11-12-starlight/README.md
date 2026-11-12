@@ -67,3 +67,20 @@ die and can't attach." What changed:
 - A clear warning: a warm glow rises from the bottom and the hum quickens as the sea gets close.
 - The check now has `?bot=human` (slower taps, a so-so choice one time in five): first-timer-like runs last about 2
   to 3 minutes and end gradually; never stuck, no page errors, 60 fps. `BOT=human node .../check.mjs 5 12`.
+
+## Round 3, after the owner played (2026-11-12)
+
+The owner: "now it's way too easy. It became uninteresting. There's nothing changing. I just had my mouse in one spot
+and just clicked it all the time." Round 2's "every tap does something" let one spot play the game, and nothing in
+the sky ever changed. What changed:
+- You tap the star you mean (within 46 px). Empty sky does nothing; a star out of reach shakes and the ring flashes.
+  The space bar no longer picks a star. Waiting for a dark twinkling star to glow stays.
+- The sky changes as you climb, one new thing at a time, each named once when it comes into view:
+  150 m the sky sways (rows of stars move side to side together; aim at moving targets);
+  350 m storm clouds (they sit in a row and stop a zip that crosses them; Twinkle drops and a quick tap can still
+  catch a star; they never close the way up and never drift onto a star);
+  600 m twinkling stars; 850 m shooting stars (catch one: +10 stars and the sea calms by 260);
+  1,150 m "higher still" (more sway and storms, fewer stars).
+- The sea is a little quicker (50 a second, +1.05 a second).
+- Checks: first-timer-like bot runs last about 1.5 to 2.5 minutes and meet a new thing every 15 to 20 seconds; a
+  strong bot is capped at 5 minutes; never stuck, no page errors, 60 fps.

@@ -164,12 +164,23 @@ textarea, .log {
   const GRAV = 950;
   const U = 3.4; // world units per skyling pixel
   const STAR = 46; // a star's size
-  const TAP = 64; // how close (screen px) a tap must land to a star
+  const TAP = 46; // how close (screen px) a tap must land to a star: you tap the star you mean
   // the sea is felt from the first tap (it starts close and rises at once), then speeds up gently: no sudden wall
-  const seaBase = (t) => Math.min(440, 45 + 0.95 * t);
-  const SEA_LEASH = 520; // the sea never trails further than this below you
+  const seaBase = (t) => Math.min(440, 50 + 1.05 * t);
+  const SEA_LEASH = 480; // the sea never trails further than this below you
   const SEA_CALM = 200; // how far a finished shape pushes the sea back
-  const TWINKLE_FROM = 1800; // height where twinkling stars begin
+  // the sky changes as you climb: one new thing at a time, each told once when it comes into view
+  const SWAY_FROM = 1500;
+  const STORM_FROM = 3500;
+  const TWINKLE_FROM = 6000;
+  const SHOOT_FROM = 8500;
+  const ZONES = [
+    { h: SWAY_FROM, title: "The sky sways", sub: "Stars move now. Time your taps" },
+    { h: STORM_FROM, title: "Storm clouds", sub: "They stop a zip. Go around them" },
+    { h: TWINKLE_FROM, title: "Twinkling stars", sub: "Catch them while they glow" },
+    { h: SHOOT_FROM, title: "Shooting stars", sub: "Catch one for a big bonus" },
+    { h: 11500, title: "Higher still", sub: "Everything a little faster" },
+  ];
   const LAST_CHANCE = 0.75; // seconds to jump away once the sea reaches Twinkle's star
 
   // ---------- this browser only ----------
@@ -259,6 +270,7 @@ textarea, .log {
   };
   const starArt = (st) => art("star" + st, SK.STAR_ICON, STAR_PAL[st]);
   const cloudArt = (w) => art("cloud" + w, SK.cloud(w), { X: "#3a5486", S: "#2c4372" });
+  const stormArt = (w) => art("storm" + w, SK.cloud(w), { X: "#2f3446", S: "#1d2130" });
   function glowArt(col) {
     const id = "glow" + col;
     let cv = cache.get(id);
@@ -578,10 +590,13 @@ textarea, .log {
       shoot: null,
       cx: (FIELD - VW) / 2,
       cy: 80 - VH,
-      stats: { taps: 0, far: 0, dark: 0, relit: 0, lit: 0, shapes: 0, broken: 0, catches: 0, falls: 0, close: 0, stuck: 0 },
+      stats: { taps: 0, far: 0, dark: 0, relit: 0, lit: 0, shapes: 0, broken: 0, catches: 0, falls: 0, close: 0, zaps: 0, shooting: 0, misses: 0, stuck: 0 },
       told: {},
       waitFor: null,
       wet: null,
+      storms: [],
+      zone: 0,
+      shootNext: 0,
       perf: { frames: 0, sum: 0, worst: 0, slow: 0 },
       newFound: [],
       botT: 0.6,
@@ -604,7 +619,7 @@ textarea, .log {
   function cover(prev, fresh) {
     const R = G.R;
     for (const p of prev) {
-      if (fresh.some((s) => dist(s, p) < REACH * 0.84)) continue;
+      if (fresh.some((s) => dist(s, p) < REACH * 0.84 && !blocked(p, s))) continue;
       const top = Math.min(...fresh.map((s) => s.y));
       const dy = Math.max(60, p.y - top);
       const span = Math.sqrt(Math.max(0, (REACH * 0.8) ** 2 - dy * dy));
@@ -621,24 +636,69 @@ textarea, .log {
   }
   function addRow(h) {
     const R = G.R;
-    const hard = clamp((h - 400) / 7000, 0, 1);
-    G.genY -= lerp(100, 155, hard) * (0.85 + R() * 0.3);
+    const hard = clamp((h - 400) / 9000, 0, 1);
+    G.genY -= lerp(100, 150, hard) * (0.85 + R() * 0.3);
     const n = 1 + (R() < 0.7 - hard * 0.3 ? 1 : 0);
+    // a swaying row: every star in it moves together, side to side
+    const sh = clamp((h - SWAY_FROM) / 9000, 0, 1);
+    const sway =
+      h > SWAY_FROM && R() < lerp(0.5, 0.85, sh)
+        ? { amp: lerp(55, 125, sh) * (0.6 + R() * 0.4), w: (TAU / lerp(4.6, 2.6, sh)) * (R() < 0.5 ? 1 : -1), phi: R() * TAU }
+        : null;
+    const margin = 50 + (sway ? sway.amp : 0);
     const xs = [];
     for (let i = 0; i < n; i++) {
       let x = 0;
       for (let k = 0; k < 12; k++) {
-        x = 50 + R() * (FIELD - 100);
+        x = margin + R() * (FIELD - 2 * margin);
         if (xs.every((o) => Math.abs(o - x) > 130)) break;
       }
       xs.push(x);
     }
-    const tw = h > TWINKLE_FROM ? lerp(0.25, 0.5, hard) : 0;
-    const row = xs.map((x) => addStar(x, G.genY + (R() - 0.5) * 30, { twinkle: R() < tw }));
+    const tw = h > TWINKLE_FROM ? lerp(0.25, 0.5, clamp((h - TWINKLE_FROM) / 6000, 0, 1)) : 0;
+    const row = xs.map((x) => {
+      const o = { twinkle: R() < tw, bx: x };
+      if (sway) Object.assign(o, { amp: sway.amp, w: sway.w, phi: sway.phi });
+      const st = addStar(x, G.genY + (R() - 0.5) * 30, o);
+      moveStar(st);
+      return st;
+    });
     cover(G.prevRow, row);
-    if (h < 4500 && row.every((s) => s.twinkle)) row[0].twinkle = false;
+    if (h < TWINKLE_FROM + 3000 && row.every((s) => s.twinkle)) row[0].twinkle = false;
+    // a storm cloud sits in the row, level with where Twinkle stands, and blocks the zips that cross it; it never
+    // closes the way up, and never drifts onto a star
+    if (h > STORM_FROM && R() < lerp(0.45, 0.7, clamp((h - STORM_FROM) / 8000, 0, 1))) {
+      const cw = 30 + ((R() * 10) | 0);
+      const storm = { x: 0, bx: 0, y: G.genY - STAND, cw, rx: cw * 2 * 0.92, ry: 24, amp: 20 + R() * 25, w: TAU / (5 + R() * 3), phi: R() * TAU };
+      for (let k = 0; k < 12; k++) {
+        storm.bx = 70 + R() * (FIELD - 140);
+        storm.x = storm.bx;
+        const clear = row.every((st) => Math.abs((st.bx ?? st.x) - storm.bx) > storm.rx + storm.amp + (st.amp || 0) + 40);
+        const open = G.prevRow.every((p) => row.some((st) => dist(st, p) <= REACH * 0.84 && !blockedBy(storm, p, st)));
+        if (clear && open) {
+          G.storms.push(storm);
+          break;
+        }
+      }
+    }
     G.prevRow = row;
   }
+  function moveStar(st) {
+    if (st.amp) st.x = st.bx + st.amp * Math.sin(G.clock * st.w + st.phi);
+  }
+  // does the straight zip from a to b pass through this storm?
+  function blockedBy(storm, a, b) {
+    for (let i = 1; i < 12; i++) {
+      const t = i / 12;
+      const x = lerp(a.x, b.x, t);
+      const y = lerp(a.y - STAND, b.y - STAND, t);
+      const nx = (x - storm.x) / (storm.rx + 8);
+      const ny = (y - storm.y) / (storm.ry + 14);
+      if (nx * nx + ny * ny < 1) return true;
+    }
+    return false;
+  }
+  const blocked = (a, b) => G.storms.some((st) => blockedBy(st, a, b));
   function placeShape() {
     const R = G.R;
     let si = (R() * SHAPES.length) | 0;
@@ -676,8 +736,7 @@ textarea, .log {
   const feet = () => ({ x: G.tw.x, y: G.tw.y + STAND });
 
   // ---------- the move ----------
-  // A tap always does something: the star under the finger if Twinkle can reach it; otherwise the reachable star
-  // nearest to what was pointed at (a star too far, or empty sky), and the reach ring flashes so the rule is learned.
+  // You tap the star you mean. A star out of reach shakes and the reach ring flashes; a tap on empty sky does nothing.
   function tapAt(sx, sy) {
     if (state !== "play") return;
     Sound.unlock();
@@ -704,29 +763,17 @@ textarea, .log {
       }
     }
     if (under && dist(under, f) <= REACH) return under;
-    const aim = under || { x: wx, y: wy };
-    let best = null;
-    let bd = Infinity;
-    for (const s of G.stars) {
-      if (!can(s) || dist(s, f) > REACH) continue;
-      const d = dist(s, aim);
-      if (d < bd) {
-        bd = d;
-        best = s;
-      }
-    }
     if (under) {
       G.stats.far++;
       G.flashReach = 0.6;
       under.shake = 0.3;
-      if (tell("far")) text(under.x, under.y - 40, "Too far", "#ffffff", 22);
-    }
-    if (!best) {
-      G.ripples.push({ x: wx, y: wy, life: 0.35 });
-      G.flashReach = 0.6;
       Sound.no();
+      if (tell("far")) text(under.x, under.y - 40, "Too far", "#ffffff", 22);
+    } else {
+      G.stats.misses++;
+      G.ripples.push({ x: wx, y: wy, life: 0.35 });
     }
-    return best;
+    return null;
   }
   // the first few times a rule bites, say it in two words
   function tell(id) {
@@ -753,6 +800,8 @@ textarea, .log {
     tw.fromX = tw.x;
     tw.fromY = tw.y;
     tw.zip = s;
+    // a zip that starts touching a storm isn't stopped by that one
+    tw.zipFrom = G.storms.find((sm) => ((tw.x - sm.x) / (sm.rx + 8)) ** 2 + ((tw.y - sm.y) / (sm.ry + 14)) ** 2 < 1) || null;
     tw.falling = !tw.on;
     tw.on = null;
     Sound.zip();
@@ -771,6 +820,15 @@ textarea, .log {
       G.stats.catches++;
       text(s.x, s.y - 70, "Caught it!", "#cfe0ff", 26);
       Sound.catch();
+    }
+    if (s.shooting) {
+      s.shooting = false;
+      s.vx = 0;
+      G.stats.shooting++;
+      G.score += 10;
+      G.seaDrop += 260;
+      call("Shooting star!", "+10 stars · the sea calms", "#ffdc6e");
+      Sound.best();
     }
     if (!s.lit) light(s);
     else {
@@ -824,6 +882,28 @@ textarea, .log {
   function step(dt) {
     const tw = G.tw;
     if (G.started) G.clock += dt;
+    // the sky moves: swaying rows, drifting storms, shooting stars
+    for (const st of G.stars) {
+      moveStar(st);
+      if (st.vx) st.x += st.vx * dt;
+    }
+    for (const sm of G.storms) sm.x = sm.bx + sm.amp * Math.sin(G.clock * sm.w + sm.phi);
+    if (G.stars.some((st) => st.vx && (st.x < -90 || st.x > FIELD + 90))) G.stars = G.stars.filter((st) => !st.vx || (st.x > -90 && st.x < FIELD + 90));
+    if (G.top > SHOOT_FROM && G.started && G.clock > G.shootNext) {
+      const dir = G.R() < 0.5 ? 1 : -1;
+      addStar(dir > 0 ? -60 : FIELD + 60, tw.y - 140 - G.R() * 170, { vx: dir * (260 + G.R() * 120), shooting: true });
+      G.shootNext = G.clock + 9 + G.R() * 7;
+    }
+    if (tw.on && !tw.zip) {
+      tw.x = tw.on.x;
+      tw.y = tw.on.y - STAND;
+    }
+    // a new part of the sky comes into view: say what's new, once
+    if (G.zone < ZONES.length && -G.cy > ZONES[G.zone].h + 150) {
+      const z = ZONES[G.zone++];
+      call(z.title, z.sub, "#d8e6ff");
+      Sound.catch();
+    }
     // the sea rises; it never trails too far behind you
     if (G.started) {
       const gap = G.S - feet().y;
@@ -842,7 +922,20 @@ textarea, .log {
       const d = Math.hypot(tx - tw.x, ty - tw.y);
       const stepLen = ZIP * dt;
       G.trail.push({ x: tw.x, y: tw.y, life: 0.25 });
-      if (d <= stepLen) arrive(s);
+      const inside = (sm) => ((tw.x - sm.x) / (sm.rx + 8)) ** 2 + ((tw.y - sm.y) / (sm.ry + 14)) ** 2 < 1;
+      const hit = G.storms.find((sm) => sm !== tw.zipFrom && inside(sm));
+      if (hit) {
+        // a storm stops the zip: Twinkle drops, and a quick tap can still catch a star
+        tw.zip = null;
+        tw.vy = 140;
+        G.queued = null;
+        G.stats.zaps++;
+        G.flashReach = 0.3;
+        text(tw.x, tw.y - 50, "Zap!", "#ffc1b4", 28);
+        burst(tw.x, tw.y, "#d8e6ff", 10, 260, 5);
+        Sound.no();
+        buzz(25);
+      } else if (d <= stepLen) arrive(s);
       else {
         tw.x += ((tx - tw.x) / d) * stepLen;
         tw.y += ((ty - tw.y) / d) * stepLen;
@@ -887,8 +980,6 @@ textarea, .log {
       const vis = (s) => s.y > G.cy + 120 / SC && s.y < G.cy + VH - 60;
       const sh = G.shapes.find((c) => !c.done && !c.broken && c.stars.every(vis));
       if (sh) hint("shape", sh);
-      const tws = G.stars.find((s) => s.twinkle && !s.out && vis(s));
-      if (tws) hint("glow", tws);
       if (G.clock > 1.2) hint("sea", true);
     }
     // danger hum
@@ -956,11 +1047,7 @@ textarea, .log {
   cv.addEventListener("contextmenu", (e) => e.preventDefault());
   window.addEventListener("keydown", (e) => {
     if (e.code === "Space" || e.code === "Enter") {
-      if (state === "play") {
-        e.preventDefault();
-        const s = botPick();
-        if (s) go(s);
-      } else if (state === "end" && e.code === "Space") {
+      if (state === "end" && e.code === "Space") {
         e.preventDefault();
         play();
       }
@@ -971,7 +1058,7 @@ textarea, .log {
     if (document.hidden && state === "play") pause();
   });
 
-  // the star a sensible player would pick next (the bot, and the space bar on a laptop)
+  // the star a sensible player would pick next (the bot)
   function botPick() {
     const tw = G.tw;
     const f = feet();
@@ -979,8 +1066,9 @@ textarea, .log {
     let bs = -1e9;
     const gap = G.S - f.y;
     for (const s of G.stars) {
-      if (s.out || s === tw.on || dist(s, f) > REACH || !glowing(s)) continue;
+      if (s.out || s === tw.on || dist(s, f) > REACH || !glowing(s) || blocked(f, s)) continue;
       let sc = f.y - s.y;
+      if (s.shooting) sc += 600;
       if (!s.lit) sc += 80;
       if (s.shape && !s.shape.done && !s.shape.broken) sc += !s.lit && gap > 280 ? 380 : 150;
       if (s.twinkle) sc -= fading(s) ? 400 : 60;
@@ -1089,7 +1177,7 @@ textarea, .log {
       const x = ((((c.x * (W + w * 2) + vt * c.sp) % (W + w * 2)) + (W + w * 2)) % (W + w * 2)) - w;
       const y = (((c.y * H * 1.6 - cyPx * 0.45) % (H * 1.6)) + H * 1.6) % (H * 1.6);
       if (y > H) continue;
-      ctx.globalAlpha = 0.55;
+      ctx.globalAlpha = 0.32;
       ctx.drawImage(cloudArt(c.w), x, y, w, 28 * SC);
     }
     ctx.globalAlpha = 1;
@@ -1218,18 +1306,64 @@ textarea, .log {
     }
     g.trail = g.trail.filter((t) => t.life > 0);
     ctx.globalAlpha = 1;
+    // storm clouds: rain behind, a slow flash, a grumpy face
+    for (const sm of g.storms) {
+      if (sm.y < L || sm.y > B) continue;
+      const w = sm.cw * 4;
+      // a faint lightning glow behind, so a storm never reads as one of the sky's quiet clouds
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = 0.35 + (RM ? 0 : 0.1 * Math.sin(vt * 3 + sm.phi));
+      ctx.drawImage(glowArt("rgba(255,214,140,0.8)"), sm.x - w * 0.75, sm.y - w * 0.45, w * 1.5, w * 0.9);
+      ctx.globalCompositeOperation = "source-over";
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "rgba(190,210,245,0.75)";
+      for (let i = 0; i < 8; i++) {
+        const rx = sm.x - w / 2 + 14 + i * ((w - 28) / 7);
+        ctx.fillRect(rx, sm.y + 14 + ((vt * 240 + i * 41) % 46), 3, 12);
+      }
+      ctx.drawImage(stormArt(sm.cw), sm.x - w / 2, sm.y - 16, w, 32);
+      if (!RM && (vt + sm.phi) % 3.1 < 0.07) {
+        ctx.strokeStyle = "#fff6c8";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(sm.x + 6, sm.y + 12);
+        ctx.lineTo(sm.x - 6, sm.y + 30);
+        ctx.lineTo(sm.x + 4, sm.y + 33);
+        ctx.lineTo(sm.x - 8, sm.y + 52);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#e7ecf8";
+      ctx.fillRect(sm.x - 13, sm.y - 2, 4, 4);
+      ctx.fillRect(sm.x + 9, sm.y - 2, 4, 4);
+      ctx.fillRect(sm.x - 17, sm.y - 7, 8, 3);
+      ctx.fillRect(sm.x + 9, sm.y - 7, 8, 3);
+    }
     // stars
     for (const s of g.stars) {
+      if (s.shooting && inView(s)) {
+        // a shooting star's tail
+        const dir = Math.sign(s.vx);
+        const gr = ctx.createLinearGradient(s.x, s.y, s.x - dir * 170, s.y);
+        gr.addColorStop(0, "rgba(255,240,190,0.9)");
+        gr.addColorStop(1, "rgba(255,240,190,0)");
+        ctx.strokeStyle = gr;
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(s.x, s.y);
+        ctx.lineTo(s.x - dir * 170, s.y);
+        ctx.stroke();
+      }
       if (!inView(s)) continue;
       const reach = !s.out && dist(s, f) <= REACH && s !== tw.on;
       const lightOn = glowing(s);
       let look;
-      if (s.out) look = "out";
+      if (s.shooting) look = "lit";
+      else if (s.out) look = "out";
       else if (s.twinkle && !lightOn) look = "dark";
       else if (s.lit) look = "lit";
       else if (s.twinkle) look = "glow";
       else look = reach ? "near" : "dim";
-      let size = STAR;
+      let size = s.shooting ? STAR * 1.25 : STAR;
       if (look === "dark") size *= 0.75;
       if (look === "dim") size *= 0.86;
       if (s.lit) size *= 1 + 0.06 * Math.sin(vt * 4 + s.x);
@@ -1356,7 +1490,7 @@ textarea, .log {
     const c = G.calls[G.calls.length - 1];
     if (!c) return;
     const a = clamp(c.life * 2, 0, 1);
-    const y = H * 0.28;
+    const y = Math.max(140, H * 0.19);
     const big = Math.round(clamp(W * 0.095, 30, 50));
     ctx.globalAlpha = a;
     ctx.textAlign = "center";
