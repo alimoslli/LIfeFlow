@@ -154,7 +154,8 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 **Next:**
 - **The audit and waitlist backlog** (owner, 2026-11-11): `docs/backlog/2026-11-11-audit-and-waitlist.md`. The waitlist first (close public access before the January 2027 App Store launch, let people in in batches from HQ), then money totals and exports, authorization and retries, offline, AI costs, scale, tests and the UX proposals. One small step per session on its own branch (`claude/waitlist`), never merged, deployed or switched on without the owner. LF COO.
 - Run the full test suite on the combined branch and check its preview.
-- The owner's look at the "useful sky" pictures, then merge `claude/pensive-mendel-r1yy4a`. The insight-clouds builder reads `skyInsights()` for the clouds.
+- The owner's look at the "useful sky" pictures, then merge `claude/pensive-mendel-r1yy4a`.
+- **Our own small models (Hugging Face), proposal `docs/backlog/2026-11-12-local-models.md`:** waiting on the owner's yes or no to Steps 0 and 1 (measure, then build side by side: memory picking, tool choosing and purchase sorting on free open models on our own servers; no user change, no new company gets data) and to one small real-model run (about 12 calls) to measure today's purchase sorting. Replacing the OpenAI chat stays ADR 0023 level 2, each step with its own yes. The insight-clouds builder reads `skyInsights()` for the clouds.
 - Coordinate migration numbers with HQ before merging phone sign-in (CLAUDE.md lists the order).
 
 **Open fixes** (the COO's night rounds pick these up):
