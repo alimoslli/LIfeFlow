@@ -456,6 +456,13 @@
       "when": 1799000000000,
       "tag": "0071_ai_holds_integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1799100000000,
+      "tag": "0072_purchase_time",
+      "breakpoints": true
     }
   ]
 }

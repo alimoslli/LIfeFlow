@@ -141,6 +141,7 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 | `still-building` | "Still in the testing phase" note on unbuilt screens | 2 commits |
 | `north-star` | The assistant's read-only "tonight" tool: the next 24 hours of due items, shifts, free hours, and cash minus bills | 1 commit |
 | `v3-day-clock-north-star` | north-star on top of V3, so both can be seen together. The Vercel preview hadn't been checked. | 29 commits |
+| `claude/pensive-mendel-r1yy4a` | The sky does more with what it knows (owner, 2026-11-12, "build those 4"): study blocks before exams, a head start on big work, Tonight from 4 PM, free gaps, due-date maths, the Sunday look at 6 PM, purchases on the timeline with each day's total. Spec `docs/backlog/2026-11-12-useful-sky.md`. Held for the owner's look at the pictures. | 2 commits |
 
 **Done:**
 - 11-07: name asked on /welcome; new landing page.
@@ -155,7 +156,7 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 **Next:**
 - **The audit and waitlist backlog** (owner, 2026-11-11): `docs/backlog/2026-11-11-audit-and-waitlist.md`. The waitlist first (close public access before the January 2027 App Store launch, let people in in batches from HQ), then money totals and exports, authorization and retries, offline, AI costs, scale, tests and the UX proposals. One small step per session on its own branch (`claude/waitlist`), never merged, deployed or switched on without the owner. LF COO.
 - Run the full test suite on the combined branch and check its preview.
-- A "Tonight" card on Today or the clock, picture first.
+- The owner's look at the "useful sky" pictures, then merge `claude/pensive-mendel-r1yy4a`. The insight-clouds builder reads `skyInsights()` for the clouds.
 - Coordinate migration numbers with HQ before merging phone sign-in (CLAUDE.md lists the order).
 
 **Open fixes** (the COO's night rounds pick these up):
