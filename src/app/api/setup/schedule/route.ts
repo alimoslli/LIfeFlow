@@ -4,7 +4,7 @@ import { AI_CONSENT_NEEDED, aiAllowed } from "@/lib/ai-consent";
 import { getSessionUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
 import { recordError } from "@/server/services/error-reports";
-import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
+import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError, readLimitedBytes } from "@/server/http";
 import { sniffMime } from "@/server/uploads";
 import { readSchedulePhoto, ScheduleReadError } from "@/server/services/schedule-photo";
 
@@ -23,10 +23,12 @@ export async function POST(req: Request) {
     if (!user) throw new HttpError(401, "Not signed in");
     if (!aiAllowed(user.preferences)) throw new HttpError(403, AI_CONSENT_NEEDED);
     await enforceRateLimit(`setup-schedule:${user.id}`, 20, 3600);
-    // refused before the body is read: a picture's limit plus a little for the form around it
-    const declared = Number(req.headers.get("content-length"));
-    if (Number.isFinite(declared) && declared > MAX_FILE + 64 * 1024) throw new HttpError(413, "That picture is over 8 MB.");
-    const file = (await req.formData()).get("file");
+    // counted as it streams in (a picture's limit plus a little for the form around it), so a missing or false
+    // content-length or a chunked body can't make the server hold more
+    const body = await readLimitedBytes(req, MAX_FILE + 64 * 1024, "That picture is over 8 MB.");
+    const form = await new Response(new Uint8Array(body), { headers: { "content-type": req.headers.get("content-type") ?? "" } }).formData().catch(() => null);
+    if (!form) throw new HttpError(400, "Add a photo or a screenshot of your schedule.");
+    const file = form.get("file");
     if (!(file instanceof File)) throw new HttpError(400, "Add a photo or a screenshot of your schedule.");
     const data = Buffer.from(await file.arrayBuffer());
     if (data.length > MAX_FILE) throw new HttpError(413, "That picture is over 8 MB.");
