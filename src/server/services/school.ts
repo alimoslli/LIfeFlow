@@ -336,7 +336,8 @@ const titleWords = (t: string) =>
  * "Reading 1" and "Reading 2"), by any other word ("Reading 1 response", "Lab 4 retake", "Essay final"), or whose
  * shorter one is a single word.
  */
-const SAME_WORK_WORDS = new Set(["draft", "the", "my", "a", "an", "for", "due", "assignment", "submission"]);
+// closed list (COO review): not "a" or "an", a letter label names other work ("Midterm Form A", "Lab 4 A")
+const SAME_WORK_WORDS = new Set(["draft", "the", "my", "for", "due", "assignment", "submission"]);
 async function resemblingAssignment(scope: UserScope, tz: string, courseId: string, title: string, dueDate: string) {
   const mine = titleWords(title);
   if (!mine.size) return null;

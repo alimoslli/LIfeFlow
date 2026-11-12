@@ -69,6 +69,12 @@ describe("the integrity case never saves a second copy of the essay (open since 
       // a one-word title never merges, and a number spelled out is another title (COO review)
       "Essay",
       "Lab four",
+      // a letter label is other work, never filler (COO review)
+      "Midterm Form",
+      "Midterm Form A",
+      "Homework Part",
+      "Homework Part A",
+      "Lab 4 A",
     ]);
     expect(r.created.map((c) => c.title)).toEqual([
       "Essay draft",
@@ -84,14 +90,23 @@ describe("the integrity case never saves a second copy of the essay (open since 
       // a one-word title never merges, and a number spelled out is another title (COO review)
       "Essay",
       "Lab four",
+      "Midterm Form",
+      "Midterm Form A",
+      "Homework Part",
+      "Homework Part A",
+      "Lab 4 A",
     ]);
     expect(r.duplicates).toEqual([]);
     // the same work said again, or with only "draft" added, is the one already there, and the result says which
-    const again = await add(["peer review", "Peer review draft"]);
+    const essay = await add(["Argument essay"]);
+    expect(essay.created.map((c) => c.title)).toEqual(["Argument essay"]);
+    expect((await add(["Argument essay assignment"])).duplicates.map((d) => [d.asked, d.title])).toEqual([["Argument essay assignment", "Argument essay"]]);
+    const again = await add(["peer review", "Peer review draft", "Peer review assignment"]);
     expect(again.created).toEqual([]);
     expect(again.duplicates.map((d) => [d.asked, d.title])).toEqual([
       ["peer review", "Peer review"],
       ["Peer review draft", "Peer review"],
+      ["Peer review assignment", "Peer review"],
     ]);
   });
 });
