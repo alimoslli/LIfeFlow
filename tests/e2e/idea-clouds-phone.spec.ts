@@ -3,8 +3,8 @@ import { COMPOSER, queryAsUser, signUp } from "./helpers";
 
 /**
  * Idea clouds (owner, 2026-11-10): beside Today's chat bar and under the skyling in the empty chat, a few short clouds,
- * each one thing to tell or ask the skyling. A new account has no classes, shifts or bank, so only the ones that fit
- * anyone show. A tap puts the sentence in the chat box, never sends it, and counts the tap (never the text).
+ * each one thing to tell or ask the skyling. A new account has no classes, shifts or bank, so nothing is worth noticing yet: a couple
+ * of calm white tips that fit anyone show (insight clouds with real data are in insight-clouds-phone.spec.ts). A tap puts the sentence in the chat box, never sends it, and counts the tap (never the text).
  */
 const FOR_ANYONE = ["What should I do first today?", "Find me 2 free hours this week.", "My goal: read 12 books this year."];
 const ANY = new RegExp(`^(${FOR_ANYONE.map((s) => s.replace(/[?.]/g, "\\$&")).join("|")})$`);
@@ -17,7 +17,7 @@ test("idea clouds: short, from real data, a tap fills the box and sends nothing"
   const today = page.locator('[aria-label="Ideas to try"]:visible').first();
   await expect(today.getByRole("button").first()).toBeVisible();
   expect(await today.getByRole("button").count()).toBeLessThanOrEqual(3);
-  const say = await today.getByRole("button").first().innerText();
+  const say = await today.locator(".lf-idea-head").first().innerText();
   expect(say.split(/\s+/).length).toBeLessThanOrEqual(8);
   expect(say).not.toMatch(/did you know|assistant/i);
   // the cloud and the name tag sit above Today's bar, never on it (nothing lies over anything)

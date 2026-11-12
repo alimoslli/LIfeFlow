@@ -20,7 +20,7 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
   test.setTimeout(240_000);
   const email = await signUp(page, "Vera Verify");
   execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/seed-coach.ts", email], {
-    env: { ...process.env, DATABASE_URL: "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" },
+    env: { ...process.env, DATABASE_URL: process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" },
   });
   const problems: string[] = [];
 

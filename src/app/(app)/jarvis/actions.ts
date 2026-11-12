@@ -8,7 +8,7 @@ import { rateRun } from "@/server/jarvis/metrics";
 import { importMemories } from "@/server/services/memory";
 import { saveLifeImport } from "@/server/services/life-import";
 import { withCurrentUser } from "@/server/auth/current-user";
-import { recordCloudTap } from "@/server/services/idea-clouds";
+import { doCloud, recordCloudTap } from "@/server/services/idea-clouds";
 import { undoChatTools } from "@/server/jarvis/undo";
 
 export async function deleteConversationAction(id: string): Promise<ActionState> {
@@ -72,6 +72,17 @@ export async function saveLifeImportAction(_p: ActionState, fd: FormData): Promi
 export async function tapIdeaCloudAction(key: string): Promise<void> {
   if (typeof key !== "string" || key.length > 40) return;
   await withCurrentUser((s) => recordCloudTap(s, key));
+}
+
+/**
+ * An insight cloud's one fix (owner, 2026-11-12). Only the detector's key is sent; the server finds the fix again itself.
+ * `message` is what changed and `undo` is the message id to give to `respondAction(id, "undo")` (the same Undo as Updates).
+ */
+export async function doCloudAction(ref: string): Promise<ActionState> {
+  return mutate("jarvis.cloud.do", async (s, u) => {
+    const r = await doCloud(s, u, ref);
+    return { message: r.text, undo: r.id };
+  });
 }
 
 /** Undo under the last answer: takes back exactly what that answer created (program item 8). */
