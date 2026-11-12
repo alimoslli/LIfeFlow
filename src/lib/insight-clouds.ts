@@ -82,7 +82,7 @@ export function describe(f: RawInsight, skyling = "Ray"): Described {
       const soon = f.dueIn === "today" || f.dueIn === "tomorrow";
       const day = when(f.dueIn, f.dueDate, shortDay);
       return {
-        say: fit(`${name(f.bill, 14)} ${usd(f.billCents)} ${day}, you have ${usd(f.cashCents)}`, `${name(f.bill, 14)} ${usd(f.billCents)} ${day}`),
+        say: fit(`${name(f.bill, 14)} ${usd(f.billCents)} due ${day}, you have ${usd(f.cashCents)}`, `${name(f.bill, 14)} ${usd(f.billCents)} due ${day}`),
         why: `That's ${usd(f.shortCents)} short, so there's time to plan it.`,
         cta: f.action ? "Remind me to cover it" : "Show me my options",
         weather: "storm",
@@ -98,7 +98,7 @@ export function describe(f: RawInsight, skyling = "Ray"): Described {
       const soon = f.dueIn === "today" || f.dueIn === "tomorrow";
       const day = when(f.dueIn, f.dueDate, shortDay);
       return {
-        say: fit(`${name(f.bill, 14)} ${usd(f.billCents)} ${day}, you have ${usd(f.cashCents)}`, `${name(f.bill, 14)} ${usd(f.billCents)} ${day}`),
+        say: fit(`${name(f.bill, 14)} ${usd(f.billCents)} due ${day}, you have ${usd(f.cashCents)}`, `${name(f.bill, 14)} ${usd(f.billCents)} due ${day}`),
         why: f.cashCents >= f.billCents ? `That leaves ${usd(f.cashCents - f.billCents)} after it.` : "Checking plus cash, right now.",
         cta: "See what's left",
         weather: soon ? "heads-up" : "tip",
@@ -109,20 +109,17 @@ export function describe(f: RawInsight, skyling = "Ray"): Described {
     }
     case "conflict": {
       const day = abbr(f.dueDay);
+      const shift = f.shiftWhen.replace(/^(\w{3})\w*/, "$1");
+      // the headline says the whole problem on its own (the why line isn't on the cloud's front): what's due, and the work
+      // in the way; the button is the fix
       return {
-        say: f.blockWhen
-          ? fit(
-              `${name(f.assignment)} due ${day}: 2 free hours ${blockShort(f.blockWhen)}`,
-              `${name(f.assignment)} due ${day}, ${f.shiftWhen.replace(/^(\w{3})\w*/, "$1")}`,
-              `${name(f.assignment)} due ${day}`,
-            )
-          : fit(
-              `${name(f.assignment)} due ${day}, ${f.shiftWhen.replace(/^(\w{3})\w*/, "$1")}`,
-              `${name(f.assignment)} due ${day} after a shift`,
-              `${name(f.assignment)} due ${day}`,
-            ),
+        say: fit(
+          `${name(f.assignment)} is due ${day}, you work ${shift}`,
+          `${name(f.assignment, 14)} due ${day}, you work ${shift}`,
+          `${name(f.assignment)} due ${day}, after a shift`,
+        ),
         why: f.blockWhen ? `You work ${f.shiftWhen}. ${blockShort(f.blockWhen)} is free.` : `You work ${f.shiftWhen}, with no 2 free hours before it.`,
-        cta: f.blockWhen && f.action ? `Block ${blockShort(f.blockWhen)}` : "Find me time",
+        cta: f.blockWhen && f.action ? `Work on it ${blockShort(f.blockWhen)}` : "Find me time",
         weather: "storm",
         bolt: !f.blockWhen,
         ask: f.blockWhen

@@ -58,7 +58,7 @@ test("from 4 PM, Tonight: the free hours and what's due by tomorrow noon", async
   await page.goto("/");
   // the clash before the essay leads as the skyling's thought (real trouble first); Tonight is the next cloud
   const row = page.locator(".dc-middle").getByRole("list", { name: "Ideas to try" });
-  await expect(row.getByRole("region", { name: "Heads up" })).toContainText("Essay draft due");
+  await expect(row.getByRole("region", { name: "Heads up" })).toContainText(/Essay draft is due \w+, you work /);
   const tonight = row.locator("li").filter({ hasText: /Tonight: [\d.]+ hours? free/ });
   await expect(tonight).toContainText("Essay draft is due tomorrow 9 AM.");
   await page

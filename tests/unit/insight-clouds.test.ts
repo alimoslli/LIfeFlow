@@ -40,8 +40,8 @@ const all: RawInsight[] = [
 describe("insight clouds (owner, 2026-11-12)", () => {
   it("word every insight with its real names, days and amounts, in about eight words", () => {
     const said = all.map((f) => say(f).say);
-    expect(said).toContain("Rent $850 Fri, you have $620");
-    expect(said).toContain("Rent $850 Fri, you have $1,020");
+    expect(said).toContain("Rent $850 due Fri, you have $620");
+    expect(said).toContain("Rent $850 due Fri, you have $1,020");
     expect(said).toContain("Thu: 2 due, 5 to 10 PM shift");
     expect(said).toContain("Netflix and Hulu: about $306 a year");
     expect(said).toContain("2 free hours before your 2 PM class");
@@ -132,7 +132,7 @@ describe("insight clouds (owner, 2026-11-12)", () => {
     expect(by("conflict", 1).bolt).toBe(false);
     expect(by("overdue_todos").weather).toBe("heads-up");
     expect(by("free_before_class").weather).toBe("tip");
-    expect(by("conflict", 1).cta).toBe("Block Wed 9 AM");
+    expect(by("conflict", 1).cta).toBe("Work on it Wed 9 AM");
     expect(by("spending_pace").cta).toBe("Move $40 from Fun");
     for (const f of all) {
       const d = say(f);

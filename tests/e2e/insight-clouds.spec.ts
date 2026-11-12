@@ -19,7 +19,7 @@ test("a busy student on a laptop: real insights, a tap fills the bar, a fix has 
 
   const said = (await row(page).locator(".lf-idea-head").allInnerTexts()).map((t) => t.trim());
   expect(said.length).toBeLessThanOrEqual(3);
-  expect(said[0]).toMatch(/^Rent \$850 \w+, you have \$620$/);
+  expect(said[0]).toMatch(/^Rent \$850 due \w+, you have \$620$/);
   expect(said.join(" | ")).not.toMatch(/did you know|assistant|\bAI\b|—|missed|behind|slipping/i);
   await expect(row(page).locator(".lf-idea-cloud").first()).toHaveAttribute("data-weather", "storm");
 
