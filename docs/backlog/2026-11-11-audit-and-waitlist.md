@@ -53,7 +53,7 @@ Keep it intact and say what's deferred; one small step per session; concise expl
 | Waitlist 4. The page | main | live: the night page with the line of skylings, the front of the line (anonymous), the rules, the invite card at the bottom; admin preview `?preview=1` |
 | Waitlist 5. Email code and referral boosts | main (2026-11-12) | live. Owner: yes, keep a deleted account's email fingerprint (one privacy line); no, friends who joined through a link before launch don't count (`users.referral_counts`). Security review: no blockers, its two fixes in. Check 1,559/1,559, desktop e2e 72/72, phone specs 9/9. |
 | Waitlist 6. Nicknames | `claude/waitlist-nicknames` | in progress: an optional nickname on the page; anonymous labels stay the default; reviewed before any merge |
-| Waitlist 7. Read-only preview | `docs/design/2026-11-11-preview/` | picture ready (four pictures and three questions for the owner's yes); nothing built |
+| Waitlist 7. Read-only preview | main (2026-11-12) | live as "See how your sky works" (owner: only the wheel and timeline, so people stay curious): the real wheel on a made-up day, tagged Example |
 | Waitlist 8. Notification previews and the full check | | next |
 | Engineering 1. Money totals and exports | `claude/money-totals` | reviewed twice, fixes in; screen tests running |
 | Engineering 2. Voice and texting | `claude/voice-sms-guard` | reviewed, fixes in; full suite rerunning |

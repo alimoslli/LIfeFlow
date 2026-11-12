@@ -262,7 +262,7 @@ for (const size of SIZES)
       await page.getByRole("button", { name: "Skip tour" }).click();
 
       execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/seed-coach.ts", email], {
-        env: { ...process.env, DATABASE_URL: "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" },
+        env: { ...process.env, DATABASE_URL: process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" },
       });
 
       // Detail pages are found from their lists.

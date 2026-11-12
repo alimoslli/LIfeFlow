@@ -11,7 +11,9 @@ import { getAccountUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
 import { inviteCodeFor } from "@/server/services/invites";
 import { canUseApp, waitlistPage } from "@/server/services/waitlist";
+import { assistantProfile } from "@/lib/assistant";
 import { ConfirmEmail } from "./confirm-email";
+import { SkyExplainer } from "./sky-explainer";
 import { InviteShare } from "../../(app)/settings/invite/invite-share";
 import "./waitlist.css";
 
@@ -191,6 +193,8 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
             </li>
           </ul>
         </section>
+
+        <SkyExplainer name={assistantProfile(user.preferences, user.timezone).name} />
 
         <p className={`${kicker} mt-2 text-center leading-relaxed text-star-gold/90`}>{w.launchNote ?? DEFAULT_LAUNCH}</p>
 

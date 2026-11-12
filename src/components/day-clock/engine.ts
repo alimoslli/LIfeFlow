@@ -30,6 +30,8 @@ export type DayClockOptions = {
   /** A tap on an empty spot of the open line: pin something at that time (minutes from the start of today). */
   onPin: (at: { start: number }) => void;
   reducedMotion: boolean;
+  /** A made-up example (the waitlist's explainer): "now" stays at this many minutes from midnight and cards have no Open, Edit or Done. */
+  example?: { now: number };
 };
 
 export type DayClockHandle = {
@@ -105,6 +107,7 @@ const TILE_ICONS = { work: iconHtml("💼"), class: iconHtml("🎓"), due: iconH
 
 export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayClockOptions): DayClockHandle {
   const reduce = opts.reducedMotion;
+  const nowOf = (tz: string, today: string) => opts.example?.now ?? nowMinutes(tz, today);
   let FACE: SkyFace = { tag: "", text: "", stats: [] };
   // The wheel: the time on top is now while it follows, or wherever it was turned to.
   const drawSky = () => opts.sky({ p: S.p, now: S.now, view: S.follow ? S.now : S.view, data, items: DATED, face: FACE, geo: skyGeo() });
@@ -126,7 +129,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   // The sky and the tiles see only dated things; the undated wait on the line under "Someday".
   let DATED = ITEMS.filter((it) => !it.someday);
   const S = {
-    now: nowMinutes(data.tz, data.today),
+    now: nowOf(data.tz, data.today),
     p: 0,
     open: false,
     anim: null as { id: number } | null,
@@ -969,7 +972,9 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const canDo = (it.origin === "task" || it.origin === "reminder" || it.origin === "assignment") && !!it.ref && !it.done;
     const inPlace = it.origin === "event" || it.origin === "shift" || it.origin === "assignment";
     const onPage = it.origin === "task" || it.origin === "reminder" || it.origin === "goal" || it.origin === "milestone";
-    const acts = `${canDo ? '<button type="button" class="dc-d-done">Done</button>' : ""}${inPlace ? '<button type="button" class="dc-d-edit">Edit</button>' : ""}<button type="button" class="dc-d-open">${esc(onPage ? "Edit" : openLabel(it.href))}</button>`;
+    const acts = opts.example
+      ? ""
+      : `${canDo ? '<button type="button" class="dc-d-done">Done</button>' : ""}${inPlace ? '<button type="button" class="dc-d-edit">Edit</button>' : ""}<button type="button" class="dc-d-open">${esc(onPage ? "Edit" : openLabel(it.href))}</button>`;
     detail.innerHTML = `<div class="dc-d-ic" aria-hidden="true">${iconHtml(it.icon)}</div><div class="dc-d-body"><div class="dc-d-k">${esc(kick)}</div><div class="dc-d-t">${esc(
       it.title,
     )}</div><div class="dc-d-w">${esc(when)}</div><div class="dc-d-s">${esc(sub)}</div><div class="dc-d-acts">${acts}</div></div>`;
@@ -1522,7 +1527,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   // Today follows the real time: a quiet check every 20 seconds, redrawn when the minute changes.
   // While the timeline is open (or moving) the redraw waits, so the line never jumps under a finger.
   const tick = window.setInterval(() => {
-    const n = nowMinutes(data.tz, data.today);
+    const n = nowOf(data.tz, data.today);
     if (n === S.now) return;
     if (n >= 1440) {
       opts.onNewDay();
@@ -1572,7 +1577,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       data = next;
       ITEMS = next.items;
       DATED = ITEMS.filter((it) => !it.someday);
-      S.now = nowMinutes(next.tz, next.today);
+      S.now = nowOf(next.tz, next.today);
       if (S.anim || drag || wrap) S.dirty = true;
       else if (S.open) refreshOpen();
       else rebuild();

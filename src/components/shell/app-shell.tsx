@@ -355,7 +355,7 @@ function TopBar({ demo, settingsActive, onToday }: { demo: boolean; settingsActi
         >
           <CompanionGlyph companion={skyling} night={ownsNight(skyling)} className="lf-pixel h-6 w-6" />
           Ask {assistantName} anything…
-          <kbd className="ml-auto rounded-md bg-surface-3 px-1.5 py-0.5 font-sans text-[0.6875rem] text-muted">⌘J</kbd>
+          <kbd className="ml-auto rounded-md bg-surface-3 px-1.5 py-0.5 font-sans text-[0.6875rem] text-text-2">⌘J</kbd>
         </button>
       )}
       {demo && <span className="shrink-0 rounded-full bg-warning-soft px-3 py-1.5 text-xs text-warning">Sample data</span>}
