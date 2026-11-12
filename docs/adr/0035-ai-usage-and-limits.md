@@ -20,13 +20,20 @@ Only typed chat had a measured cost. Texting, voice, web search, document readin
 6. **After launch** (decision 7): a Pro person's monthly dollar allowance is a switch, `AI_PRO_MONTH_DOLLARS`. It is off until the owner sets a number. No number was invented.
 7. **Company ceilings**: $50 a month and $10 a day (the owner's numbers; `AI_GLOBAL_MONTH_DOLLARS` / `AI_GLOBAL_DAY_DOLLARS` change them), counted only where a price is configured; optional count ceilings (`AI_GLOBAL_MONTH_CALLS` / `AI_GLOBAL_DAY_CALLS`, off by default) cover unpriced work. Warnings by email at 50%, 80% and 100%, once each per period, to the same address as error alerts. At 100% the skyling pauses for everyone except admins (all paid features, voice included); the rest of the app keeps working.
 8. **Wording**: "More messages with your skyling" and "a much bigger daily allowance". Limit messages say the date an allowance opens. Nothing names a model, a setting or tokens.
-9. **Per-step output cap**: every model step is sent with `max_output_tokens` (8,000), so the estimate is a real upper bound.
+9. **Per-step output cap**: every model step is sent with `max_output_tokens` (25,000: thinking counts inside it), and the estimate uses the same number, so it is a real upper bound. A step that comes back incomplete is kept, said plainly in the skyling's voice ("ask for a smaller piece"), recorded as an error (`output_cap`), and its half-written tool calls never run. There is no automatic retry with a larger cap (it would double the cost of the biggest requests).
+10. **Voice minutes**: the browser's "end" is only a request (the session secret keeps working), so an early end frees nothing: a call counts as long as it could have run (`TESTING_LIMITS.voiceCallMinutes`). The server never sees the call close; that waits for the server-side connection (step 11).
+11. **Daily guard after launch**: one person may use at most 20% of the company's daily dollar ceiling in a day (`PERSON_DAY_SHARE`, my choice, not a price and not the monthly allowance number), counted only where priced, so one account can't use up the day for everyone. Not applied in testing (decision 1 stays as answered). The admin AI panel says when dollar limits aren't counting and lists the kinds of work with no price (voice always).
+12. **Removal**: the under-13 lock, account deletion and an admin delete all clear a person's counters and holds (`deleteUserBudgets`); an admin reset of limits clears the holds of the counters it resets.
 
 ## Not built (by the owner's answers, or later steps)
 
 - The monthly bill check and any automatic pull from OpenAI (decision 9). Prices stay unset in production (decision 11): until then dollars are counted only for work whose model has a configured price, and the counted limits hold the rest.
 - Voice through our server (a call id on our side and a one-minute hang-up cron), proposal step 11. It needs the exact OpenAI paths checked and a real call, which the owner ruled out testing. The server already reserves and counts the call's minutes and refuses new calls past the limits; the call's length on the phone is still ended by the browser timer.
 - Twilio sending cost, per-reply voice usage, retention folding into a daily summary (the cron removes counters after 13 months), and an admin panel of per-person and company totals.
+
+## Known risk, for later
+
+- **Connection pool.** Document reading and tidying take a second database connection (for the hold) while the caller's transaction holds one, and the pool is 10. Under heavy concurrency this could contend. Worth a load check before many people use it; not changed here.
 
 ## Consequences
 
