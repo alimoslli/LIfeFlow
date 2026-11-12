@@ -283,11 +283,11 @@ export default async function MoneyPage() {
 function Stat({ label, cents, sub }: { label: React.ReactNode; cents: number; sub: string }) {
   return (
     <div className="p-4">
-      <p className="flex items-center gap-1 text-xs opacity-75">{label}</p>
+      <p className="flex items-center gap-1 text-xs opacity-90">{label}</p>
       <p className="tabular mt-1 text-lg font-medium">
         <CountUp cents={cents} />
       </p>
-      <p className="tabular mt-0.5 text-xs opacity-70">{sub}</p>
+      <p className="tabular mt-0.5 text-xs opacity-90">{sub}</p>
     </div>
   );
 }

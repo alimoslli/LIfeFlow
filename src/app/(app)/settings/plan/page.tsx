@@ -13,7 +13,7 @@ import { PixelIcon } from "@/components/pixel/pixel-icon";
 export const metadata: Metadata = { title: "Plan" };
 
 const PRO = [
-  "Unlimited messages with your skyling",
+  "Far more messages a day than the free plan",
   "Bank and card sync",
   "Gmail and Google Calendar",
   "Text your skyling from your phone",
