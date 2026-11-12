@@ -1,9 +1,6 @@
-import { ALL_TOOLS } from "../../src/server/jarvis/registry";
-import { GROUP_TOOLS, TOOL_GROUPS, type ToolGroup } from "../../src/server/jarvis/tool-groups";
-import { cosine, embed, embedFixed } from "../../src/server/local-models/embedder";
-
-// An experiment for the comparison only (docs/backlog/2026-11-12-local-models-report.md): meaning did not beat the word
-// lists, so it is not in the app.
+import { ALL_TOOLS } from "../jarvis/registry";
+import { GROUP_TOOLS, TOOL_GROUPS, type ToolGroup } from "../jarvis/tool-groups";
+import { cosine, embed, embedFixed, localModelOn } from "./embedder";
 
 /** How close a message must be to one of a group's tools (cosine) for that group to come along. */
 export const TOOL_MEANING_MIN = 0.35;
@@ -21,16 +18,10 @@ function toolTexts() {
  * The tool groups a message is about by meaning, added to the ones the word lists pick (tool-select.ts). Null when the
  * switch is off or the model isn't there.
  */
-export async function meaningGroups(text: string, min = TOOL_MEANING_MIN, on = true): Promise<ToolGroup[] | null> {
+export async function meaningGroups(text: string, min = TOOL_MEANING_MIN, on = localModelOn("tools")): Promise<ToolGroup[] | null> {
   if (!on || !text.trim()) return null;
   const tools = toolTexts();
-  const [fixed, msg] = await Promise.all([
-    embedFixed(
-      "tools",
-      tools.map((t) => t.text),
-    ),
-    embed([text]),
-  ]);
+  const [fixed, msg] = await Promise.all([embedFixed("tools", tools.map((t) => t.text)), embed([text])]);
   if (!fixed || !msg) return null;
   const best = new Map<ToolGroup, number>();
   tools.forEach((t, i) => best.set(t.group, Math.max(best.get(t.group) ?? -1, cosine(msg[0], fixed[i]))));

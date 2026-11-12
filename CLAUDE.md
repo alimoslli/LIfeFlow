@@ -37,13 +37,6 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - Cost and speed (ADR 0021): tools go in fixed groups chosen per request (`tool-select.ts`, plus `load_tools` as the escape hatch), each request carries a hashed per-user `prompt_cache_key` with 24h retention, and the thinking level is picked per turn (`effort.ts`, env `OPENAI_REASONING_EFFORT=auto`). Keep tool order and the level stable within a turn so the cache hits.
 - Every turn records a `jarvis_runs` row. A new provider must set `model` and report `usage` in `step_done`. Never store message content or raw error text in metrics, and never hard-code model prices (env `JARVIS_PRICE_*`; unknown ⇒ null).
 
-## Our own small models (docs/backlog/2026-11-12-local-models.md, the report beside it)
-- Open models from Hugging Face run on our own server (`src/server/local-models/`), pinned in `models.ts` by revision and SHA-256 and checked again when they load. Fetch with `scripts/fetch-local-models.mts` into `.models/` (never committed); the build fetches only when a switch is on.
-- Each job has its own switch, off unless exactly "on"; anything wrong (off, missing, a hash mismatch, still loading on a cold instance) falls back to today's way, never an error.
-- Only memory picking is a local job (`LOCAL_MODEL_MEMORY`, `meaningScores` in agent.ts, `meaning` in `selectMemories`, which only ever adds). Tool choosing and purchase sorting lost the comparison and stay as they are. Memory vectors are never stored.
-- `next.config.ts` keeps the runtime and model out of every function unless the switch is on, then only in `/api/jarvis/chat` with the Linux x64 runtime; `modelDir`'s `turbopackIgnore` comment keeps the tracer from copying the project. `.npmrc` skips onnxruntime's CUDA download.
-- A new local job or model goes through `scripts/local-models/compare.mts` (tune on dev, report on test) and the owner's yes.
-
 ## AI usage and limits (see ADR 0035)
 - Every paid AI call (chat and text turns, voice, web search, document reading, transaction tidying) goes through `services/ai-gate.ts` (`reserveAi`) before it starts, writes one `ai_usage` row through `services/ai-usage.ts` (numbers only, cost empty when unknown, never 0), and settles what really happened. A new paid call takes a required `{ userId, door }` context; `tests/unit/ai-paid-clients.test.ts` fails if a new file creates a paid client.
 - Prices come only from settings (`JARVIS_PRICE_*`, `JARVIS_PRICE_MODEL`, `JARVIS_PRICE_SMALL_MODEL`, `JARVIS_PRICE_WEB_SEARCH_PER_1K_CALLS`). Never hard-code one; a price copied for another model counts as no price. Dollar limits count only where a price exists; the counted limits (messages, voice calls and minutes, searches, documents, tidy runs) always hold.

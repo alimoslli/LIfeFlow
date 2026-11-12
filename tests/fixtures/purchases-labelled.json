@@ -1,2402 +1,3255 @@
 [
-  {
-    "id": "p0001-groceries-0",
-    "description": "ALDI 72031 CHICAGO IL",
-    "merchant": "Aldi",
-    "amountCents": -1400,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "p0001-groceries-1",
-    "description": "FRESHWAY MKT #114",
-    "merchant": "Freshway Markets",
-    "amountCents": -1400,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "p0001-cafeteria-0",
-    "description": "ARAMARK UNIV DINING 2231",
-    "merchant": "Aramark",
-    "amountCents": -725,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0001-cafeteria-1",
-    "description": "SQ *CAMPUS GRILL 0412",
-    "merchant": "Campus Grill",
-    "amountCents": -725,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0001-cafeteria-2",
-    "description": "CAMPUS C-STORE 0412",
-    "merchant": null,
-    "amountCents": -725,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0001-eating-out-0",
-    "description": "MCDONALD'S F29174",
-    "merchant": "McDonald's",
-    "amountCents": -850,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0001-eating-out-1",
-    "description": "CHIPOTLE 1873",
-    "merchant": "Chipotle",
-    "amountCents": -850,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0001-eating-out-2",
-    "description": "TACO BELL 031188",
-    "merchant": "Taco Bell",
-    "amountCents": -850,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0001-eating-out-3",
-    "description": "RAISING CANES 0451",
-    "merchant": "Raising Cane's",
-    "amountCents": -850,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0001-eating-out-4",
-    "description": "SQ *SHAWARMA CORNER",
-    "merchant": "Shawarma Corner",
-    "amountCents": -850,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0001-coffee-0",
-    "description": "STARBUCKS STORE 08837",
-    "merchant": "Starbucks",
-    "amountCents": -395,
-    "label": "Coffee",
-    "accept": ["Coffee", "Food & Dining"]
-  },
-  {
-    "id": "p0001-coffee-1",
-    "description": "SQ *DAILY GRIND CAFE",
-    "merchant": "Daily Grind",
-    "amountCents": -395,
-    "label": "Coffee",
-    "accept": ["Coffee", "Food & Dining"]
-  },
-  {
-    "id": "p0001-gas-0",
-    "description": "SHELL OIL 57444211002",
-    "merchant": "Shell",
-    "amountCents": -2600,
-    "label": "Gas",
-    "accept": ["Gas", "Transportation"]
-  },
-  {
-    "id": "p0001-gas-1",
-    "description": "SPEEDWAY 04512",
-    "merchant": "Speedway",
-    "amountCents": -2600,
-    "label": "Gas",
-    "accept": ["Gas", "Transportation"]
-  },
-  {
-    "id": "p0001-rideshare-0",
-    "description": "UBER *TRIP {A4}",
-    "merchant": "Uber",
-    "amountCents": -1100,
-    "label": "Rideshare",
-    "accept": ["Rideshare", "Transportation"]
-  },
-  {
-    "id": "p0001-rideshare-1",
-    "description": "LYFT *RIDE {A6}",
-    "merchant": "Lyft",
-    "amountCents": -1100,
-    "label": "Rideshare",
-    "accept": ["Rideshare", "Transportation"]
-  },
-  {
-    "id": "p0001-shopping-0",
-    "description": "AMZN Mktp US*{A6}",
-    "merchant": "Amazon",
-    "amountCents": -899,
-    "label": "Online Shopping",
-    "accept": ["Online Shopping", "Shopping"]
-  },
-  {
-    "id": "p0001-shopping-1",
-    "description": "TARGET 00018762",
-    "merchant": "Target",
-    "amountCents": -899,
-    "label": "Online Shopping",
-    "accept": ["Online Shopping", "Shopping"]
-  },
-  {
-    "id": "p0001-clothing-0",
-    "description": "H&M 0912",
-    "merchant": "H&M",
-    "amountCents": -1999,
-    "label": "Clothing",
-    "accept": ["Clothing", "Shopping"]
-  },
-  {
-    "id": "p0001-clothing-1",
-    "description": "OLD NAVY ON-LINE",
-    "merchant": "Old Navy",
-    "amountCents": -1999,
-    "label": "Clothing",
-    "accept": ["Clothing", "Shopping"]
-  },
-  {
-    "id": "p0001-entertainment-0",
-    "description": "AMC 6512 ONLINE",
-    "merchant": "AMC Theatres",
-    "amountCents": -1200,
-    "label": "Activities",
-    "accept": ["Activities"]
-  },
-  {
-    "id": "p0001-entertainment-1",
-    "description": "ROUND1 BOWLING 0221",
-    "merchant": null,
-    "amountCents": -1200,
-    "label": "Activities",
-    "accept": ["Activities"]
-  },
-  {
-    "id": "p0001-gifts-0",
-    "description": "HALLMARK 0221",
-    "merchant": "Hallmark",
-    "amountCents": -1500,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "p0001-gifts-1",
-    "description": "SQ *PAPER AND PETAL",
-    "merchant": "Paper and Petal",
-    "amountCents": -1500,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "p0001-personal-care-0",
-    "description": "GREAT CLIPS #8812",
-    "merchant": "Great Clips",
-    "amountCents": -1800,
-    "label": "Personal Care",
-    "accept": ["Personal Care"]
-  },
-  {
-    "id": "p0001-personal-care-1",
-    "description": "ULTA #0331",
-    "merchant": "Ulta Beauty",
-    "amountCents": -1800,
-    "label": "Personal Care",
-    "accept": ["Personal Care"]
-  },
-  {
-    "id": "p0001-pharmacy-0",
-    "description": "CVS/PHARMACY #04432",
-    "merchant": "CVS",
-    "amountCents": -600,
-    "label": "Pharmacy",
-    "accept": ["Pharmacy", "Health"]
-  },
-  {
-    "id": "p0002-groceries-0",
-    "description": "KROGER #0632",
-    "merchant": "Kroger",
-    "amountCents": -4500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "p0002-groceries-2",
-    "description": "COSTCO WHSE #0388",
-    "merchant": "Costco",
-    "amountCents": -4500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "p0002-hospital-food-0",
-    "description": "ST BRIGID CAFETERIA 01",
-    "merchant": null,
-    "amountCents": -650,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0002-hospital-food-1",
-    "description": "SQ *NIGHT OWL VENDING",
-    "merchant": null,
-    "amountCents": -650,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0002-coffee-0",
-    "description": "DUNKIN #348821",
-    "merchant": "Dunkin'",
-    "amountCents": -345,
-    "label": "Coffee",
-    "accept": ["Coffee", "Food & Dining"]
-  },
-  {
-    "id": "p0002-takeout-0",
-    "description": "DOMINO'S 7112",
-    "merchant": "Domino's",
-    "amountCents": -2200,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0002-takeout-2",
-    "description": "PANERA BREAD #601441",
-    "merchant": "Panera Bread",
-    "amountCents": -2200,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0002-sit-down-0",
-    "description": "OLIVE GARDEN 1840",
-    "merchant": "Olive Garden",
-    "amountCents": -4800,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0002-sit-down-1",
-    "description": "TST* HARBOR GRILL",
-    "merchant": "Harbor Grill",
-    "amountCents": -4800,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0002-delivery-0",
-    "description": "DOORDASH*THAI SPICE",
-    "merchant": "DoorDash",
-    "amountCents": -1800,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0002-delivery-1",
-    "description": "UBER EATS PENDING",
-    "merchant": "Uber Eats",
-    "amountCents": -1800,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0002-gas-0",
-    "description": "SUNOCO 0412883301",
-    "merchant": "Sunoco",
-    "amountCents": -3800,
-    "label": "Gas",
-    "accept": ["Gas", "Transportation"]
-  },
-  {
-    "id": "p0002-gas-1",
-    "description": "WAWA 8812",
-    "merchant": "Wawa",
-    "amountCents": -3800,
-    "label": "Gas",
-    "accept": ["Gas", "Transportation"]
-  },
-  {
-    "id": "p0002-kid-clothes-1",
-    "description": "CARTERS 0331",
-    "merchant": "Carter's",
-    "amountCents": -1800,
-    "label": "Clothing",
-    "accept": ["Clothing", "Shopping"]
-  },
-  {
-    "id": "p0002-school-lunch-0",
-    "description": "SCHOOLCAFE K12 TOPUP",
-    "merchant": null,
-    "amountCents": -2000,
-    "label": "Tuition",
-    "accept": ["Tuition", "Education"]
-  },
-  {
-    "id": "p0002-family-fun-0",
-    "description": "REGAL CINEMAS 0442",
-    "merchant": "Regal",
-    "amountCents": -1500,
-    "label": "Activities",
-    "accept": ["Activities"]
-  },
-  {
-    "id": "p0002-family-fun-1",
-    "description": "SQ *KIDS DISCOVERY MUSEUM",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Activities",
-    "accept": ["Activities"]
-  },
-  {
-    "id": "p0002-gifts-0",
-    "description": "PARTY CITY 0712",
-    "merchant": "Party City",
-    "amountCents": -1500,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "p0002-gifts-1",
-    "description": "BARNES & NOBLE #2217",
-    "merchant": "Barnes & Noble",
-    "amountCents": -1500,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "p0003-groceries-2",
-    "description": "TRADER JOE'S #722",
-    "merchant": "Trader Joe's",
-    "amountCents": -2322,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "p0003-eating-out-3",
-    "description": "SQ *NOODLE BAR",
-    "merchant": null,
-    "amountCents": -740,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0003-coffee-1",
-    "description": "SQ *CORNER CAFE",
-    "merchant": "Corner Cafe",
-    "amountCents": -327,
-    "label": "Coffee",
-    "accept": ["Coffee", "Food & Dining"]
-  },
-  {
-    "id": "p0003-gifts-0",
-    "description": "SQ *GIFT SHOP",
-    "merchant": null,
-    "amountCents": -1935,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "p0004-entertainment-1",
-    "description": "EVENTBRITE *TICKETS",
-    "merchant": "Eventbrite",
-    "amountCents": -1680,
-    "label": "Activities",
-    "accept": ["Activities"]
-  },
-  {
-    "id": "p0004-convenience-0",
-    "description": "7-ELEVEN 20496",
-    "merchant": "7-Eleven",
-    "amountCents": -252,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "p0004-app-store-0",
-    "description": "APPLE.COM/BILL",
-    "merchant": "Apple",
-    "amountCents": -150,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "p0006-shipping-0",
-    "description": "USPS PO 5120",
-    "merchant": "USPS",
-    "amountCents": -600,
-    "label": "Other",
-    "accept": ["Other"]
-  },
-  {
-    "id": "p0006-shipping-1",
-    "description": "PIRATE SHIP LABEL",
-    "merchant": null,
-    "amountCents": -600,
-    "label": "Other",
-    "accept": ["Other"]
-  },
-  {
-    "id": "p0006-thrift-0",
-    "description": "GOODWILL 2209",
-    "merchant": "Goodwill",
-    "amountCents": -1500,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "p0006-thrift-1",
-    "description": "SQ *PLATOS CLOSET",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "p0007-gas-1",
-    "description": "CHEVRON 0098",
-    "merchant": "Chevron",
-    "amountCents": -2800,
-    "label": "Gas",
-    "accept": ["Gas", "Transportation"]
-  },
-  {
-    "id": "p1027-groceries-0",
-    "description": "STATER BROS #142",
-    "merchant": "Stater Bros",
-    "amountCents": -1800,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "p6004-convenience-1",
-    "description": "CIRCLE K # 0441",
-    "merchant": null,
-    "amountCents": -217,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-tx-2026-08-16-hulu",
-    "description": "HULU 877-555-0142",
-    "merchant": "Hulu",
-    "amountCents": -999,
-    "label": "Streaming",
-    "accept": ["Streaming", "Entertainment"]
-  },
-  {
-    "id": "bank-tx-2026-08-21-car-insurance",
-    "description": "SAFEROUTE AUTO INS PREM",
-    "merchant": "SafeRoute Insurance",
-    "amountCents": -12400,
-    "label": "Insurance",
-    "accept": ["Insurance", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-tx-2026-08-27-textbooks",
-    "description": "CAMPUS BOOKSTORE 3276",
-    "merchant": null,
-    "amountCents": -31840,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "bank-tx-2026-09-02-phone",
-    "description": "MINT MOBILE",
-    "merchant": "Mint Mobile",
-    "amountCents": -3000,
-    "label": "Phone",
-    "accept": ["Phone", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-tx-2026-09-03-course-fee",
-    "description": "PEARSON *ACCESS CODE",
-    "merchant": null,
-    "amountCents": -7499,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "bank-tx-2026-09-01-rent",
-    "description": "MAPLE COURT APTS RENT WEB",
-    "merchant": "Maple Court Apartments",
-    "amountCents": -64000,
-    "label": "Rent",
-    "accept": ["Rent", "Housing"]
-  },
-  {
-    "id": "bank-tx-2026-09-21-phone",
-    "description": "VISIBLE SERVICE",
-    "merchant": null,
-    "amountCents": -2500,
-    "label": "Phone",
-    "accept": ["Phone", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-tx-2026-09-19-ai",
-    "description": "CLAUDE.AI SUBSCRIPTION",
-    "merchant": "Anthropic",
-    "amountCents": -2000,
-    "label": "Other",
-    "accept": ["Other"]
-  },
-  {
-    "id": "bank-tx-2026-08-21-phone",
-    "description": "TMOBILE*AUTO PAY",
-    "merchant": null,
-    "amountCents": -4500,
-    "label": "Phone",
-    "accept": ["Phone", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-tx-2026-09-05-tuition-plan",
-    "description": "CAMPUS PAY PLAN TUITION",
-    "merchant": null,
-    "amountCents": -90900,
-    "label": "Tuition",
-    "accept": ["Tuition", "Education"]
-  },
-  {
-    "id": "bank-tx-2026-09-09-phone",
-    "description": "VERIZON WIRELESS PAYMENTS",
-    "merchant": "Verizon",
-    "amountCents": -4500,
-    "label": "Phone",
-    "accept": ["Phone", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-tx-2026-09-23-netflix",
-    "description": "NETFLIX.COM",
-    "merchant": "Netflix",
-    "amountCents": -799,
-    "label": "Streaming",
-    "accept": ["Streaming", "Entertainment"]
-  },
-  {
-    "id": "bank-tx-2026-09-11-spotify",
-    "description": "Spotify USA",
-    "merchant": "Spotify",
-    "amountCents": -599,
-    "label": "Streaming",
-    "accept": ["Streaming", "Entertainment"]
-  },
-  {
-    "id": "bank-tx-2026-10-01-rent",
-    "description": "ZELLE TO LANDLORD CONF# 89EJKMKU",
-    "merchant": null,
-    "amountCents": -72500,
-    "label": "Rent",
-    "accept": ["Rent", "Housing"]
-  },
-  {
-    "id": "bank-tx-2026-10-01-transit",
-    "description": "METRO TRANSIT PASS AUTOLOAD",
-    "merchant": null,
-    "amountCents": -5000,
-    "label": "Public Transit",
-    "accept": ["Public Transit", "Transportation"]
-  },
-  {
-    "id": "g0305-tx-2026-09-01-rent-share",
-    "description": "ZELLE TO ROOMMATE CONF# C2ZUMR87",
-    "merchant": null,
-    "amountCents": -88411,
-    "label": "Rent",
-    "accept": ["Rent", "Housing"]
-  },
-  {
-    "id": "g0502-tx-2026-07-08-internet",
-    "description": "FIBERLINE INTERNET",
-    "merchant": "Fiberline",
-    "amountCents": -5500,
-    "label": "Internet",
-    "accept": ["Internet", "Housing"]
-  },
-  {
-    "id": "g0502-tx-2026-07-13-electric",
-    "description": "CITY POWER AND LIGHT",
-    "merchant": "City Power and Light",
-    "amountCents": -6556,
-    "label": "Utilities",
-    "accept": ["Utilities", "Housing"]
-  },
-  {
-    "id": "g0502-tx-2026-07-12-kids",
-    "description": "WALMART #1874",
-    "merchant": "Walmart",
-    "amountCents": -1196,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "g0502-tx-2026-08-01-childcare",
-    "description": "KIDS CLUB AFTERCARE",
-    "merchant": null,
-    "amountCents": -34625,
-    "label": "Other",
-    "accept": ["Other"]
-  },
-  {
-    "id": "g0502-tx-2026-08-01-rent",
-    "description": "PARKSIDE APTS RENT WEB",
-    "merchant": "Parkside Apartments",
-    "amountCents": -172935,
-    "label": "Rent",
-    "accept": ["Rent", "Housing"]
-  },
-  {
-    "id": "g0502-tx-2026-10-10-kid-activities",
-    "description": "SQ *LITTLE GYM CLASS",
-    "merchant": null,
-    "amountCents": -678,
-    "label": "Other",
-    "accept": ["Other"]
-  },
-  {
-    "id": "g0516-tx-2026-08-03-overdraft-fee",
-    "description": "OVERDRAFT FEE",
-    "merchant": null,
-    "amountCents": -2500,
-    "label": "Fees & Interest",
-    "accept": ["Fees & Interest"]
-  },
-  {
-    "id": "bank-0",
-    "description": "SQ *MAMA LUPES TAQUERIA",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-1",
-    "description": "TST* THE GREEN FORK 0231",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-2",
-    "description": "TST* PHO SAIGON KITCHEN",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-3",
-    "description": "SQ *SUNRISE BAGELS",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-4",
-    "description": "TOAST*BROOKLYN PIZZA CO",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-5",
-    "description": "SQ *KIMCHI HOUSE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-8",
-    "description": "GRUBHUB*THAIORCHID",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Food Delivery",
-    "accept": ["Food Delivery", "Food & Dining"]
-  },
-  {
-    "id": "bank-10",
-    "description": "POSTMATES ORDER 88213",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Food Delivery",
-    "accept": ["Food Delivery", "Food & Dining"]
-  },
-  {
-    "id": "bank-11",
-    "description": "SQ *BLUE BOTTLE COFFEE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Coffee",
-    "accept": ["Coffee", "Food & Dining"]
-  },
-  {
-    "id": "bank-12",
-    "description": "TST* RISE AND GRIND CAFE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Coffee",
-    "accept": ["Coffee", "Food & Dining"]
-  },
-  {
-    "id": "bank-13",
-    "description": "SQ *BEAN THERE ESPRESSO",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Coffee",
-    "accept": ["Coffee", "Food & Dining"]
-  },
-  {
-    "id": "bank-15",
-    "description": "PEETS COFFEE 00412",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Coffee",
-    "accept": ["Coffee", "Food & Dining"]
-  },
-  {
-    "id": "bank-16",
-    "description": "SQ *THE DAILY GRIND",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Coffee",
-    "accept": ["Coffee", "Food & Dining"]
-  },
-  {
-    "id": "bank-18",
-    "description": "SAFEWAY #1844",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "bank-19",
-    "description": "H-E-B #622",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "bank-20",
-    "description": "PUBLIX SUPER MAR 1291",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "bank-21",
-    "description": "WHOLEFDS MKT 10322",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "bank-22",
-    "description": "SPROUTS FARMERS MKT 412",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "bank-23",
-    "description": "LIDL US 2233",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "bank-24",
-    "description": "FOOD LION #0874",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "bank-25",
-    "description": "SQ *FARMERS MARKET STAND",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "bank-26",
-    "description": "INSTACART*SUBSCRIPTION",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "bank-27",
-    "description": "MEIJER # 211",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "bank-28",
-    "description": "SQ *THE TIPSY OWL BAR",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Bars & Alcohol",
-    "accept": ["Bars & Alcohol", "Food & Dining"]
-  },
-  {
-    "id": "bank-29",
-    "description": "TOTAL WINE AND MORE 1104",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Bars & Alcohol",
-    "accept": ["Bars & Alcohol", "Food & Dining"]
-  },
-  {
-    "id": "bank-30",
-    "description": "TST* HOPS AND BARLEY TAPROOM",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Bars & Alcohol",
-    "accept": ["Bars & Alcohol", "Food & Dining"]
-  },
-  {
-    "id": "bank-31",
-    "description": "BINNYS BEVERAGE DEPOT",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Bars & Alcohol",
-    "accept": ["Bars & Alcohol", "Food & Dining"]
-  },
-  {
-    "id": "bank-34",
-    "description": "EXXONMOBIL 4421",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Gas",
-    "accept": ["Gas", "Transportation"]
-  },
-  {
-    "id": "bank-38",
-    "description": "TESLA SUPERCHARGER US",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "EV Charging",
-    "accept": ["EV Charging", "Transportation"]
-  },
-  {
-    "id": "bank-39",
-    "description": "CHARGEPOINT INC",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "EV Charging",
-    "accept": ["EV Charging", "Transportation"]
-  },
-  {
-    "id": "bank-40",
-    "description": "ELECTRIFY AMERICA 2203",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "EV Charging",
-    "accept": ["EV Charging", "Transportation"]
-  },
-  {
-    "id": "bank-43",
-    "description": "PARKMOBILE 8841",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Parking",
-    "accept": ["Parking", "Transportation"]
-  },
-  {
-    "id": "bank-44",
-    "description": "SPOTHERO 2281101",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Parking",
-    "accept": ["Parking", "Transportation"]
-  },
-  {
-    "id": "bank-45",
-    "description": "CITY OF CHICAGO PARKING METER",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Parking",
-    "accept": ["Parking", "Transportation"]
-  },
-  {
-    "id": "bank-46",
-    "description": "UNIVERSITY PARKING SVCS",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Parking",
-    "accept": ["Parking", "Transportation"]
-  },
-  {
-    "id": "bank-47",
-    "description": "CTA VENTRA 6621",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Public Transit",
-    "accept": ["Public Transit", "Transportation"]
-  },
-  {
-    "id": "bank-48",
-    "description": "MTA*NYCT PAYGO",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Public Transit",
-    "accept": ["Public Transit", "Transportation"]
-  },
-  {
-    "id": "bank-49",
-    "description": "BART CLIPPER RELOAD",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Public Transit",
-    "accept": ["Public Transit", "Transportation"]
-  },
-  {
-    "id": "bank-50",
-    "description": "AMTRAK .COM 2311",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Travel",
-    "accept": ["Travel"]
-  },
-  {
-    "id": "bank-51",
-    "description": "JIFFY LUBE #1882",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Car Maintenance",
-    "accept": ["Car Maintenance", "Transportation"]
-  },
-  {
-    "id": "bank-52",
-    "description": "MIDAS #4410",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Car Maintenance",
-    "accept": ["Car Maintenance", "Transportation"]
-  },
-  {
-    "id": "bank-53",
-    "description": "DISCOUNT TIRE 0443",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Car Maintenance",
-    "accept": ["Car Maintenance", "Transportation"]
-  },
-  {
-    "id": "bank-54",
-    "description": "AUTOZONE #3302",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Car Maintenance",
-    "accept": ["Car Maintenance", "Transportation"]
-  },
-  {
-    "id": "bank-55",
-    "description": "SQ *MIKES AUTO REPAIR",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Car Maintenance",
-    "accept": ["Car Maintenance", "Transportation"]
-  },
-  {
-    "id": "bank-56",
-    "description": "OLD NAVY ON-LINE 2210",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Clothing",
-    "accept": ["Clothing", "Shopping"]
-  },
-  {
-    "id": "bank-58",
-    "description": "UNIQLO USA 1192",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Clothing",
-    "accept": ["Clothing", "Shopping"]
-  },
-  {
-    "id": "bank-59",
-    "description": "SHEIN.COM",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Clothing",
-    "accept": ["Clothing", "Shopping"]
-  },
-  {
-    "id": "bank-60",
-    "description": "SQ *THRIFT ON MAIN",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Clothing",
-    "accept": ["Clothing", "Shopping"]
-  },
-  {
-    "id": "bank-61",
-    "description": "NIKE.COM 8821",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Clothing",
-    "accept": ["Clothing", "Shopping"]
-  },
-  {
-    "id": "bank-62",
-    "description": "FOOT LOCKER #1022",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Clothing",
-    "accept": ["Clothing", "Shopping"]
-  },
-  {
-    "id": "bank-63",
-    "description": "BEST BUY 00011232",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Electronics",
-    "accept": ["Electronics", "Shopping"]
-  },
-  {
-    "id": "bank-64",
-    "description": "MICRO CENTER #071",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Electronics",
-    "accept": ["Electronics", "Shopping"]
-  },
-  {
-    "id": "bank-65",
-    "description": "B&H PHOTO 800-606-6969",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Electronics",
-    "accept": ["Electronics", "Shopping"]
-  },
-  {
-    "id": "bank-67",
-    "description": "IKEA SCHAUMBURG",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "bank-68",
-    "description": "BED BATH BEYOND 0221",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "bank-69",
-    "description": "HOME DEPOT #1912",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "bank-70",
-    "description": "LOWES #00907",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "bank-71",
-    "description": "DOLLAR TREE 4412",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "bank-72",
-    "description": "SQ *THE HARDWARE CORNER",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "bank-73",
-    "description": "CONTAINER STORE 41",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Household",
-    "accept": ["Household", "Shopping"]
-  },
-  {
-    "id": "bank-74",
-    "description": "ETSY.COM*SMALLSHOPCO",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Online Shopping",
-    "accept": ["Online Shopping", "Shopping"]
-  },
-  {
-    "id": "bank-75",
-    "description": "EBAY O*12-08812-11231",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Online Shopping",
-    "accept": ["Online Shopping", "Shopping"]
-  },
-  {
-    "id": "bank-76",
-    "description": "TEMU.COM",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Online Shopping",
-    "accept": ["Online Shopping", "Shopping"]
-  },
-  {
-    "id": "bank-77",
-    "description": "WAYFAIR*1234567",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Online Shopping",
-    "accept": ["Online Shopping", "Shopping"]
-  },
-  {
-    "id": "bank-78",
-    "description": "PAYPAL *ALIEXPRESS",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Online Shopping",
-    "accept": ["Online Shopping", "Shopping"]
-  },
-  {
-    "id": "bank-80",
-    "description": "DISNEY PLUS 888-905-7888",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Streaming",
-    "accept": ["Streaming", "Entertainment"]
-  },
-  {
-    "id": "bank-81",
-    "description": "MAX.COM",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Streaming",
-    "accept": ["Streaming", "Entertainment"]
-  },
-  {
-    "id": "bank-82",
-    "description": "YOUTUBE PREMIUM",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Streaming",
-    "accept": ["Streaming", "Entertainment"]
-  },
-  {
-    "id": "bank-83",
-    "description": "PARAMOUNT+",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Streaming",
-    "accept": ["Streaming", "Entertainment"]
-  },
-  {
-    "id": "bank-84",
-    "description": "PEACOCK 9C3B1 PREMIUM",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Streaming",
-    "accept": ["Streaming", "Entertainment"]
-  },
-  {
-    "id": "bank-85",
-    "description": "STEAMGAMES.COM 4259522985",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Games",
-    "accept": ["Games", "Entertainment"]
-  },
-  {
-    "id": "bank-86",
-    "description": "PLAYSTATION NETWORK",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Games",
-    "accept": ["Games", "Entertainment"]
-  },
-  {
-    "id": "bank-87",
-    "description": "NINTENDO CB141137080",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Games",
-    "accept": ["Games", "Entertainment"]
-  },
-  {
-    "id": "bank-88",
-    "description": "XBOX GAME PASS",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Games",
-    "accept": ["Games", "Entertainment"]
-  },
-  {
-    "id": "bank-89",
-    "description": "TICKETMASTER*KENDRICK",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Events",
-    "accept": ["Events", "Entertainment"]
-  },
-  {
-    "id": "bank-90",
-    "description": "EVENTBRITE*SPRING FORMAL",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Events",
-    "accept": ["Events", "Entertainment"]
-  },
-  {
-    "id": "bank-91",
-    "description": "SEATGEEK* GAME 1123",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Events",
-    "accept": ["Events", "Entertainment"]
-  },
-  {
-    "id": "bank-92",
-    "description": "SQ *OPEN MIC NIGHT",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Events",
-    "accept": ["Events", "Entertainment"]
-  },
-  {
-    "id": "bank-94",
-    "description": "REGAL CINEMAS 1144",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Activities",
-    "accept": ["Activities"]
-  },
-  {
-    "id": "bank-95",
-    "description": "ROUND1 BOWLING ARCADE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Activities",
-    "accept": ["Activities"]
-  },
-  {
-    "id": "bank-96",
-    "description": "SQ *CLIMB NATION GYM DAY",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Activities",
-    "accept": ["Activities"]
-  },
-  {
-    "id": "bank-97",
-    "description": "DAVE & BUSTERS #42",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Activities",
-    "accept": ["Activities"]
-  },
-  {
-    "id": "bank-98",
-    "description": "TOPGOLF CHICAGO",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Activities",
-    "accept": ["Activities"]
-  },
-  {
-    "id": "bank-99",
-    "description": "MICHAELS STORES 4412",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Hobbies & Sports",
-    "accept": ["Hobbies & Sports", "Entertainment"]
-  },
-  {
-    "id": "bank-100",
-    "description": "JOANN STORES #2232",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Hobbies & Sports",
-    "accept": ["Hobbies & Sports", "Entertainment"]
-  },
-  {
-    "id": "bank-101",
-    "description": "GUITAR CENTER #331",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Hobbies & Sports",
-    "accept": ["Hobbies & Sports", "Entertainment"]
-  },
-  {
-    "id": "bank-102",
-    "description": "DICKS SPORTING GOODS 1204",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Hobbies & Sports",
-    "accept": ["Hobbies & Sports", "Entertainment"]
-  },
-  {
-    "id": "bank-103",
-    "description": "REI #145 SEATTLE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Hobbies & Sports",
-    "accept": ["Hobbies & Sports", "Entertainment"]
-  },
-  {
-    "id": "bank-104",
-    "description": "WALGREENS #1188",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Pharmacy",
-    "accept": ["Pharmacy", "Health"]
-  },
-  {
-    "id": "bank-105",
-    "description": "RITE AID STORE 05521",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Pharmacy",
-    "accept": ["Pharmacy", "Health"]
-  },
-  {
-    "id": "bank-107",
-    "description": "PLANET FITNESS 33021",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Fitness",
-    "accept": ["Fitness", "Health"]
-  },
-  {
-    "id": "bank-108",
-    "description": "ANYTIME FITNESS 2211",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Fitness",
-    "accept": ["Fitness", "Health"]
-  },
-  {
-    "id": "bank-109",
-    "description": "SQ *CORE POWER YOGA",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Fitness",
-    "accept": ["Fitness", "Health"]
-  },
-  {
-    "id": "bank-110",
-    "description": "CLASSPASS* MONTHLY",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Fitness",
-    "accept": ["Fitness", "Health"]
-  },
-  {
-    "id": "bank-111",
-    "description": "ORANGETHEORY FITNESS 0442",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Fitness",
-    "accept": ["Fitness", "Health"]
-  },
-  {
-    "id": "bank-112",
-    "description": "STUDENT HEALTH CENTER COPAY",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Medical",
-    "accept": ["Medical", "Health"]
-  },
-  {
-    "id": "bank-113",
-    "description": "QUEST DIAGNOSTICS",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Medical",
-    "accept": ["Medical", "Health"]
-  },
-  {
-    "id": "bank-114",
-    "description": "MINUTECLINIC #1243",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Medical",
-    "accept": ["Medical", "Health"]
-  },
-  {
-    "id": "bank-115",
-    "description": "URGENT CARE OF EVANSTON",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Medical",
-    "accept": ["Medical", "Health"]
-  },
-  {
-    "id": "bank-116",
-    "description": "LABCORP 800-845-6167",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Medical",
-    "accept": ["Medical", "Health"]
-  },
-  {
-    "id": "bank-117",
-    "description": "SMILE BRANDS DENTAL",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Dental & Vision",
-    "accept": ["Dental & Vision", "Health"]
-  },
-  {
-    "id": "bank-118",
-    "description": "WARBY PARKER 3302",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Dental & Vision",
-    "accept": ["Dental & Vision", "Health"]
-  },
-  {
-    "id": "bank-119",
-    "description": "ASPEN DENTAL 1182",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Dental & Vision",
-    "accept": ["Dental & Vision", "Health"]
-  },
-  {
-    "id": "bank-120",
-    "description": "LENSCRAFTERS #0432",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Dental & Vision",
-    "accept": ["Dental & Vision", "Health"]
-  },
-  {
-    "id": "bank-121",
-    "description": "BETTERHELP 6501",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Mental Health",
-    "accept": ["Mental Health", "Health"]
-  },
-  {
-    "id": "bank-122",
-    "description": "TALKSPACE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Mental Health",
-    "accept": ["Mental Health", "Health"]
-  },
-  {
-    "id": "bank-123",
-    "description": "SQ *MINDFUL COUNSELING LLC",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Mental Health",
-    "accept": ["Mental Health", "Health"]
-  },
-  {
-    "id": "bank-124",
-    "description": "UNIV BURSAR TUITION PMT",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Tuition",
-    "accept": ["Tuition", "Education"]
-  },
-  {
-    "id": "bank-125",
-    "description": "FLYWIRE*TUITION",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Tuition",
-    "accept": ["Tuition", "Education"]
-  },
-  {
-    "id": "bank-126",
-    "description": "COLLEGE REGISTRATION FEE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Tuition",
-    "accept": ["Tuition", "Education"]
-  },
-  {
-    "id": "bank-127",
-    "description": "CHEGG ORDER 8821",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Books & Supplies",
-    "accept": ["Books & Supplies", "Education"]
-  },
-  {
-    "id": "bank-128",
-    "description": "BARNES & NOBLE COLLEGE 2211",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Books & Supplies",
-    "accept": ["Books & Supplies", "Education"]
-  },
-  {
-    "id": "bank-129",
-    "description": "PEARSON EDUCATION",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Books & Supplies",
-    "accept": ["Books & Supplies", "Education"]
-  },
-  {
-    "id": "bank-130",
-    "description": "STAPLES 00122",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Books & Supplies",
-    "accept": ["Books & Supplies", "Education"]
-  },
-  {
-    "id": "bank-131",
-    "description": "OFFICE DEPOT #2201",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Books & Supplies",
-    "accept": ["Books & Supplies", "Education"]
-  },
-  {
-    "id": "bank-133",
-    "description": "AT&T*BILL PAYMENT",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Phone",
-    "accept": ["Phone", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-136",
-    "description": "GEICO *AUTO",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Insurance",
-    "accept": ["Insurance", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-137",
-    "description": "STATE FARM INSURANCE 1232",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Insurance",
-    "accept": ["Insurance", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-138",
-    "description": "LEMONADE INSURANCE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Insurance",
-    "accept": ["Insurance", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-139",
-    "description": "PROGRESSIVE *INSURANCE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Insurance",
-    "accept": ["Insurance", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-140",
-    "description": "ADOBE *CREATIVE CLOUD",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Software",
-    "accept": ["Software", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-141",
-    "description": "MICROSOFT*365 PERSONAL",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Software",
-    "accept": ["Software", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-142",
-    "description": "NOTION LABS INC",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Software",
-    "accept": ["Software", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-143",
-    "description": "GOOGLE *GOOGLE ONE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Software",
-    "accept": ["Software", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-144",
-    "description": "DROPBOX*7H2K2",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Software",
-    "accept": ["Software", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-145",
-    "description": "GRAMMARLY",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Software",
-    "accept": ["Software", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-146",
-    "description": "OPENAI *CHATGPT SUBSCR",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Software",
-    "accept": ["Software", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-147",
-    "description": "AMAZON PRIME*2K4L1",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Subscriptions",
-    "accept": ["Subscriptions", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-149",
-    "description": "AUDIBLE*2L3K9",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Subscriptions",
-    "accept": ["Subscriptions", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-150",
-    "description": "PATREON* MEMBERSHIP",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Subscriptions",
-    "accept": ["Subscriptions", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-151",
-    "description": "NYTIMES DIGITAL",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Subscriptions",
-    "accept": ["Subscriptions", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-152",
-    "description": "DUOLINGO PLUS",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Subscriptions",
-    "accept": ["Subscriptions", "Bills & Subscriptions"]
-  },
-  {
-    "id": "bank-153",
-    "description": "COMED 0123456789",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Utilities",
-    "accept": ["Utilities", "Housing"]
-  },
-  {
-    "id": "bank-154",
-    "description": "PG&E WEB ONLINE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Utilities",
-    "accept": ["Utilities", "Housing"]
-  },
-  {
-    "id": "bank-155",
-    "description": "CITY WATER DEPT",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Utilities",
-    "accept": ["Utilities", "Housing"]
-  },
-  {
-    "id": "bank-156",
-    "description": "CONED ENERGY BILL",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Utilities",
-    "accept": ["Utilities", "Housing"]
-  },
-  {
-    "id": "bank-157",
-    "description": "XFINITY INTERNET 8772",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Internet",
-    "accept": ["Internet", "Housing"]
-  },
-  {
-    "id": "bank-158",
-    "description": "SPECTRUM 855-707-7328",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Internet",
-    "accept": ["Internet", "Housing"]
-  },
-  {
-    "id": "bank-159",
-    "description": "GOOGLE FIBER",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Internet",
-    "accept": ["Internet", "Housing"]
-  },
-  {
-    "id": "bank-160",
-    "description": "STARLINK INTERNET",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Internet",
-    "accept": ["Internet", "Housing"]
-  },
-  {
-    "id": "bank-161",
-    "description": "APARTMENTS RENT PORTAL",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Rent",
-    "accept": ["Rent", "Housing"]
-  },
-  {
-    "id": "bank-162",
-    "description": "CAMPUS EDGE APTS RENT",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Rent",
-    "accept": ["Rent", "Housing"]
-  },
-  {
-    "id": "bank-163",
-    "description": "ZILLOW RENT PAYMENT",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Rent",
-    "accept": ["Rent", "Housing"]
-  },
-  {
-    "id": "bank-165",
-    "description": "SUPERCUTS 4432",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Personal Care",
-    "accept": ["Personal Care"]
-  },
-  {
-    "id": "bank-167",
-    "description": "SEPHORA 0912",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Personal Care",
-    "accept": ["Personal Care"]
-  },
-  {
-    "id": "bank-168",
-    "description": "SQ *NAIL SPA LOUNGE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Personal Care",
-    "accept": ["Personal Care"]
-  },
-  {
-    "id": "bank-169",
-    "description": "SQ *FADED BARBERSHOP",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Personal Care",
-    "accept": ["Personal Care"]
-  },
-  {
-    "id": "bank-170",
-    "description": "PETCO 1442",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Pets",
-    "accept": ["Pets"]
-  },
-  {
-    "id": "bank-171",
-    "description": "PETSMART # 0441",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Pets",
-    "accept": ["Pets"]
-  },
-  {
-    "id": "bank-172",
-    "description": "CHEWY.COM",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Pets",
-    "accept": ["Pets"]
-  },
-  {
-    "id": "bank-173",
-    "description": "BANFIELD PET HOSPITAL",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Pets",
-    "accept": ["Pets"]
-  },
-  {
-    "id": "bank-174",
-    "description": "SQ *DOG GROOMING STUDIO",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Pets",
-    "accept": ["Pets"]
-  },
-  {
-    "id": "bank-175",
-    "description": "ATM WITHDRAWAL 1123 MAIN ST",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Cash & ATM",
-    "accept": ["Cash & ATM"]
-  },
-  {
-    "id": "bank-176",
-    "description": "CASH WITHDRAWAL CHASE ATM",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Cash & ATM",
-    "accept": ["Cash & ATM"]
-  },
-  {
-    "id": "bank-177",
-    "description": "ALLPOINT ATM 4421",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Cash & ATM",
-    "accept": ["Cash & ATM"]
-  },
-  {
-    "id": "bank-178",
-    "description": "DELTA AIR 0062341123",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Flights",
-    "accept": ["Flights", "Travel"]
-  },
-  {
-    "id": "bank-179",
-    "description": "UNITED 0162211231",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Flights",
-    "accept": ["Flights", "Travel"]
-  },
-  {
-    "id": "bank-180",
-    "description": "SOUTHWEST AIR 5262211",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Flights",
-    "accept": ["Flights", "Travel"]
-  },
-  {
-    "id": "bank-181",
-    "description": "SPIRIT AIRLINES 4871",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Flights",
-    "accept": ["Flights", "Travel"]
-  },
-  {
-    "id": "bank-182",
-    "description": "AIRBNB HMQ3K2",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Hotels & Lodging",
-    "accept": ["Hotels & Lodging", "Travel"]
-  },
-  {
-    "id": "bank-183",
-    "description": "MARRIOTT CHICAGO DT",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Hotels & Lodging",
-    "accept": ["Hotels & Lodging", "Travel"]
-  },
-  {
-    "id": "bank-184",
-    "description": "HOLIDAY INN EXPRESS 221",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Hotels & Lodging",
-    "accept": ["Hotels & Lodging", "Travel"]
-  },
-  {
-    "id": "bank-185",
-    "description": "HOSTELWORLD.COM",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Hotels & Lodging",
-    "accept": ["Hotels & Lodging", "Travel"]
-  },
-  {
-    "id": "bank-186",
-    "description": "EXPEDIA 7212341",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Travel",
-    "accept": ["Travel"]
-  },
-  {
-    "id": "bank-187",
-    "description": "GREYHOUND LINES 2211",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Travel",
-    "accept": ["Travel"]
-  },
-  {
-    "id": "bank-188",
-    "description": "FLIXBUS 12093",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Travel",
-    "accept": ["Travel"]
-  },
-  {
-    "id": "bank-189",
-    "description": "GOFUNDME *HELP SARAH",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Gifts & Donations",
-    "accept": ["Gifts & Donations"]
-  },
-  {
-    "id": "bank-190",
-    "description": "REDCROSS DONATION",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Gifts & Donations",
-    "accept": ["Gifts & Donations"]
-  },
-  {
-    "id": "bank-191",
-    "description": "SQ *CHURCH GIVING",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Gifts & Donations",
-    "accept": ["Gifts & Donations"]
-  },
-  {
-    "id": "bank-192",
-    "description": "1-800-FLOWERS.COM",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Gifts & Donations",
-    "accept": ["Gifts & Donations"]
-  },
-  {
-    "id": "bank-193",
-    "description": "EDIBLE ARRANGEMENTS 431",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Gifts & Donations",
-    "accept": ["Gifts & Donations"]
-  },
-  {
-    "id": "bank-194",
-    "description": "MONTHLY MAINTENANCE FEE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Fees & Interest",
-    "accept": ["Fees & Interest"]
-  },
-  {
-    "id": "bank-195",
-    "description": "LATE FEE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Fees & Interest",
-    "accept": ["Fees & Interest"]
-  },
-  {
-    "id": "bank-196",
-    "description": "FOREIGN TRANSACTION FEE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Fees & Interest",
-    "accept": ["Fees & Interest"]
-  },
-  {
-    "id": "bank-197",
-    "description": "INTEREST CHARGE ON PURCHASES",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Fees & Interest",
-    "accept": ["Fees & Interest"]
-  },
-  {
-    "id": "bank-198",
-    "description": "OUT OF NETWORK ATM FEE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Fees & Interest",
-    "accept": ["Fees & Interest"]
-  },
-  {
-    "id": "bank-199",
-    "description": "SQ *ROSIES DONUTS",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-200",
-    "description": "TST* SMOKE AND BONES BBQ",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-201",
-    "description": "SQ *HALAL GUYS CART",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-202",
-    "description": "TST* SUSHI ZEN",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-203",
-    "description": "SQ *WAFFLE WAGON",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-204",
-    "description": "CAVA 0221",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-205",
-    "description": "SWEETGREEN 1142",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-206",
-    "description": "WINGSTOP 1182",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-207",
-    "description": "PANDA EXPRESS #2231",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-208",
-    "description": "SQ *BOBA BLISS",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Coffee",
-    "accept": ["Coffee", "Food & Dining"]
-  },
-  {
-    "id": "bank-209",
-    "description": "KUNG FU TEA 221",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Coffee",
-    "accept": ["Coffee", "Food & Dining"]
-  },
-  {
-    "id": "bank-210",
-    "description": "SQ *SECOND CUP CAFE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Coffee",
-    "accept": ["Coffee", "Food & Dining"]
-  },
-  {
-    "id": "bank-212",
-    "description": "SAMS CLUB #6432",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "bank-214",
-    "description": "SQ *CORNER BODEGA",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "bank-215",
-    "description": "GOPUFF 8821",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Food Delivery",
-    "accept": ["Food Delivery", "Food & Dining"]
-  },
-  {
-    "id": "bank-216",
-    "description": "SQ *LA PALOMA BAKERY",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-217",
-    "description": "TST* OLIVE AND THYME",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-219",
-    "description": "FIVE GUYS 1142",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-220",
-    "description": "JERSEY MIKES 22311",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-221",
-    "description": "PORTILLOS #22",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Restaurants",
-    "accept": ["Restaurants", "Food & Dining"]
-  },
-  {
-    "id": "bank-222",
-    "description": "SQ *CAFE MOCHA LOFT",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Coffee",
-    "accept": ["Coffee", "Food & Dining"]
-  },
-  {
-    "id": "bank-223",
-    "description": "INTELLIGENTSIA COFFEE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Coffee",
-    "accept": ["Coffee", "Food & Dining"]
-  },
-  {
-    "id": "bank-224",
-    "description": "JEWEL OSCO 3341",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "bank-225",
-    "description": "MARIANOS #8834",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "bank-226",
-    "description": "WINCO FOODS #112",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "bank-227",
-    "description": "SQ *ASIAN MART",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Groceries",
-    "accept": ["Groceries", "Food & Dining"]
-  },
-  {
-    "id": "bank-228",
-    "description": "VALERO 4412",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Gas",
-    "accept": ["Gas", "Transportation"]
-  },
-  {
-    "id": "bank-229",
-    "description": "MARATHON PETRO 1123",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Gas",
-    "accept": ["Gas", "Transportation"]
-  },
-  {
-    "id": "bank-230",
-    "description": "BP#9933224",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Gas",
-    "accept": ["Gas", "Transportation"]
-  },
-  {
-    "id": "bank-231",
-    "description": "CASEY'S #3021",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Gas",
-    "accept": ["Gas", "Transportation"]
-  },
-  {
-    "id": "bank-232",
-    "description": "ZARA USA 3391",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Clothing",
-    "accept": ["Clothing", "Shopping"]
-  },
-  {
-    "id": "bank-233",
-    "description": "FOREVER 21 #221",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Clothing",
-    "accept": ["Clothing", "Shopping"]
-  },
-  {
-    "id": "bank-234",
-    "description": "TJ MAXX #0771",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Clothing",
-    "accept": ["Clothing", "Shopping"]
-  },
-  {
-    "id": "bank-235",
-    "description": "ROSS STORES #1122",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Clothing",
-    "accept": ["Clothing", "Shopping"]
-  },
-  {
-    "id": "bank-236",
-    "description": "GAMESTOP #4412",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Games",
-    "accept": ["Games", "Entertainment"]
-  },
-  {
-    "id": "bank-237",
-    "description": "SQ *BOARD GAME CAFE",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Activities",
-    "accept": ["Activities"]
-  },
-  {
-    "id": "bank-238",
-    "description": "SIX FLAGS GREAT AMERICA",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Activities",
-    "accept": ["Activities"]
-  },
-  {
-    "id": "bank-239",
-    "description": "SQ *ESCAPE ROOM LOOP",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Activities",
-    "accept": ["Activities"]
-  },
-  {
-    "id": "bank-240",
-    "description": "HOBBY LOBBY #431",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Hobbies & Sports",
-    "accept": ["Hobbies & Sports", "Entertainment"]
-  },
-  {
-    "id": "bank-241",
-    "description": "BLICK ART MATERIALS",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Books & Supplies",
-    "accept": ["Books & Supplies", "Education"]
-  },
-  {
-    "id": "bank-242",
-    "description": "BOOKSHOP.ORG",
-    "merchant": null,
-    "amountCents": -1500,
-    "label": "Books & Supplies",
-    "accept": ["Books & Supplies", "Education"]
-  }
+ {
+  "id": "p0001-groceries-0",
+  "description": "ALDI 72031 CHICAGO IL",
+  "merchant": "Aldi",
+  "amountCents": -1400,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0001-groceries-1",
+  "description": "FRESHWAY MKT #114",
+  "merchant": "Freshway Markets",
+  "amountCents": -1400,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0001-cafeteria-0",
+  "description": "ARAMARK UNIV DINING 2231",
+  "merchant": "Aramark",
+  "amountCents": -725,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0001-cafeteria-1",
+  "description": "SQ *CAMPUS GRILL 0412",
+  "merchant": "Campus Grill",
+  "amountCents": -725,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0001-cafeteria-2",
+  "description": "CAMPUS C-STORE 0412",
+  "merchant": null,
+  "amountCents": -725,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0001-eating-out-0",
+  "description": "MCDONALD'S F29174",
+  "merchant": "McDonald's",
+  "amountCents": -850,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0001-eating-out-1",
+  "description": "CHIPOTLE 1873",
+  "merchant": "Chipotle",
+  "amountCents": -850,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0001-eating-out-2",
+  "description": "TACO BELL 031188",
+  "merchant": "Taco Bell",
+  "amountCents": -850,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0001-eating-out-3",
+  "description": "RAISING CANES 0451",
+  "merchant": "Raising Cane's",
+  "amountCents": -850,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0001-eating-out-4",
+  "description": "SQ *SHAWARMA CORNER",
+  "merchant": "Shawarma Corner",
+  "amountCents": -850,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0001-coffee-0",
+  "description": "STARBUCKS STORE 08837",
+  "merchant": "Starbucks",
+  "amountCents": -395,
+  "label": "Coffee",
+  "accept": [
+   "Coffee",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0001-coffee-1",
+  "description": "SQ *DAILY GRIND CAFE",
+  "merchant": "Daily Grind",
+  "amountCents": -395,
+  "label": "Coffee",
+  "accept": [
+   "Coffee",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0001-gas-0",
+  "description": "SHELL OIL 57444211002",
+  "merchant": "Shell",
+  "amountCents": -2600,
+  "label": "Gas",
+  "accept": [
+   "Gas",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "p0001-gas-1",
+  "description": "SPEEDWAY 04512",
+  "merchant": "Speedway",
+  "amountCents": -2600,
+  "label": "Gas",
+  "accept": [
+   "Gas",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "p0001-rideshare-0",
+  "description": "UBER *TRIP {A4}",
+  "merchant": "Uber",
+  "amountCents": -1100,
+  "label": "Rideshare",
+  "accept": [
+   "Rideshare",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "p0001-rideshare-1",
+  "description": "LYFT *RIDE {A6}",
+  "merchant": "Lyft",
+  "amountCents": -1100,
+  "label": "Rideshare",
+  "accept": [
+   "Rideshare",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "p0001-shopping-0",
+  "description": "AMZN Mktp US*{A6}",
+  "merchant": "Amazon",
+  "amountCents": -899,
+  "label": "Online Shopping",
+  "accept": [
+   "Online Shopping",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "p0001-shopping-1",
+  "description": "TARGET 00018762",
+  "merchant": "Target",
+  "amountCents": -899,
+  "label": "Online Shopping",
+  "accept": [
+   "Online Shopping",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "p0001-clothing-0",
+  "description": "H&M 0912",
+  "merchant": "H&M",
+  "amountCents": -1999,
+  "label": "Clothing",
+  "accept": [
+   "Clothing",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "p0001-clothing-1",
+  "description": "OLD NAVY ON-LINE",
+  "merchant": "Old Navy",
+  "amountCents": -1999,
+  "label": "Clothing",
+  "accept": [
+   "Clothing",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "p0001-entertainment-0",
+  "description": "AMC 6512 ONLINE",
+  "merchant": "AMC Theatres",
+  "amountCents": -1200,
+  "label": "Activities",
+  "accept": [
+   "Activities"
+  ]
+ },
+ {
+  "id": "p0001-entertainment-1",
+  "description": "ROUND1 BOWLING 0221",
+  "merchant": null,
+  "amountCents": -1200,
+  "label": "Activities",
+  "accept": [
+   "Activities"
+  ]
+ },
+ {
+  "id": "p0001-gifts-0",
+  "description": "HALLMARK 0221",
+  "merchant": "Hallmark",
+  "amountCents": -1500,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "p0001-gifts-1",
+  "description": "SQ *PAPER AND PETAL",
+  "merchant": "Paper and Petal",
+  "amountCents": -1500,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "p0001-personal-care-0",
+  "description": "GREAT CLIPS #8812",
+  "merchant": "Great Clips",
+  "amountCents": -1800,
+  "label": "Personal Care",
+  "accept": [
+   "Personal Care"
+  ]
+ },
+ {
+  "id": "p0001-personal-care-1",
+  "description": "ULTA #0331",
+  "merchant": "Ulta Beauty",
+  "amountCents": -1800,
+  "label": "Personal Care",
+  "accept": [
+   "Personal Care"
+  ]
+ },
+ {
+  "id": "p0001-pharmacy-0",
+  "description": "CVS/PHARMACY #04432",
+  "merchant": "CVS",
+  "amountCents": -600,
+  "label": "Pharmacy",
+  "accept": [
+   "Pharmacy",
+   "Health"
+  ]
+ },
+ {
+  "id": "p0002-groceries-0",
+  "description": "KROGER #0632",
+  "merchant": "Kroger",
+  "amountCents": -4500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0002-groceries-2",
+  "description": "COSTCO WHSE #0388",
+  "merchant": "Costco",
+  "amountCents": -4500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0002-hospital-food-0",
+  "description": "ST BRIGID CAFETERIA 01",
+  "merchant": null,
+  "amountCents": -650,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0002-hospital-food-1",
+  "description": "SQ *NIGHT OWL VENDING",
+  "merchant": null,
+  "amountCents": -650,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0002-coffee-0",
+  "description": "DUNKIN #348821",
+  "merchant": "Dunkin'",
+  "amountCents": -345,
+  "label": "Coffee",
+  "accept": [
+   "Coffee",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0002-takeout-0",
+  "description": "DOMINO'S 7112",
+  "merchant": "Domino's",
+  "amountCents": -2200,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0002-takeout-2",
+  "description": "PANERA BREAD #601441",
+  "merchant": "Panera Bread",
+  "amountCents": -2200,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0002-sit-down-0",
+  "description": "OLIVE GARDEN 1840",
+  "merchant": "Olive Garden",
+  "amountCents": -4800,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0002-sit-down-1",
+  "description": "TST* HARBOR GRILL",
+  "merchant": "Harbor Grill",
+  "amountCents": -4800,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0002-delivery-0",
+  "description": "DOORDASH*THAI SPICE",
+  "merchant": "DoorDash",
+  "amountCents": -1800,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0002-delivery-1",
+  "description": "UBER EATS PENDING",
+  "merchant": "Uber Eats",
+  "amountCents": -1800,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0002-gas-0",
+  "description": "SUNOCO 0412883301",
+  "merchant": "Sunoco",
+  "amountCents": -3800,
+  "label": "Gas",
+  "accept": [
+   "Gas",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "p0002-gas-1",
+  "description": "WAWA 8812",
+  "merchant": "Wawa",
+  "amountCents": -3800,
+  "label": "Gas",
+  "accept": [
+   "Gas",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "p0002-kid-clothes-1",
+  "description": "CARTERS 0331",
+  "merchant": "Carter's",
+  "amountCents": -1800,
+  "label": "Clothing",
+  "accept": [
+   "Clothing",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "p0002-school-lunch-0",
+  "description": "SCHOOLCAFE K12 TOPUP",
+  "merchant": null,
+  "amountCents": -2000,
+  "label": "Tuition",
+  "accept": [
+   "Tuition",
+   "Education"
+  ]
+ },
+ {
+  "id": "p0002-family-fun-0",
+  "description": "REGAL CINEMAS 0442",
+  "merchant": "Regal",
+  "amountCents": -1500,
+  "label": "Activities",
+  "accept": [
+   "Activities"
+  ]
+ },
+ {
+  "id": "p0002-family-fun-1",
+  "description": "SQ *KIDS DISCOVERY MUSEUM",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Activities",
+  "accept": [
+   "Activities"
+  ]
+ },
+ {
+  "id": "p0002-gifts-0",
+  "description": "PARTY CITY 0712",
+  "merchant": "Party City",
+  "amountCents": -1500,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "p0002-gifts-1",
+  "description": "BARNES & NOBLE #2217",
+  "merchant": "Barnes & Noble",
+  "amountCents": -1500,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "p0003-groceries-2",
+  "description": "TRADER JOE'S #722",
+  "merchant": "Trader Joe's",
+  "amountCents": -2322,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0003-eating-out-3",
+  "description": "SQ *NOODLE BAR",
+  "merchant": null,
+  "amountCents": -740,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0003-coffee-1",
+  "description": "SQ *CORNER CAFE",
+  "merchant": "Corner Cafe",
+  "amountCents": -327,
+  "label": "Coffee",
+  "accept": [
+   "Coffee",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0003-gifts-0",
+  "description": "SQ *GIFT SHOP",
+  "merchant": null,
+  "amountCents": -1935,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "p0004-entertainment-1",
+  "description": "EVENTBRITE *TICKETS",
+  "merchant": "Eventbrite",
+  "amountCents": -1680,
+  "label": "Activities",
+  "accept": [
+   "Activities"
+  ]
+ },
+ {
+  "id": "p0004-convenience-0",
+  "description": "7-ELEVEN 20496",
+  "merchant": "7-Eleven",
+  "amountCents": -252,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p0004-app-store-0",
+  "description": "APPLE.COM/BILL",
+  "merchant": "Apple",
+  "amountCents": -150,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "p0006-shipping-0",
+  "description": "USPS PO 5120",
+  "merchant": "USPS",
+  "amountCents": -600,
+  "label": "Other",
+  "accept": [
+   "Other"
+  ]
+ },
+ {
+  "id": "p0006-shipping-1",
+  "description": "PIRATE SHIP LABEL",
+  "merchant": null,
+  "amountCents": -600,
+  "label": "Other",
+  "accept": [
+   "Other"
+  ]
+ },
+ {
+  "id": "p0006-thrift-0",
+  "description": "GOODWILL 2209",
+  "merchant": "Goodwill",
+  "amountCents": -1500,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "p0006-thrift-1",
+  "description": "SQ *PLATOS CLOSET",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "p0007-gas-1",
+  "description": "CHEVRON 0098",
+  "merchant": "Chevron",
+  "amountCents": -2800,
+  "label": "Gas",
+  "accept": [
+   "Gas",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "p1027-groceries-0",
+  "description": "STATER BROS #142",
+  "merchant": "Stater Bros",
+  "amountCents": -1800,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "p6004-convenience-1",
+  "description": "CIRCLE K # 0441",
+  "merchant": null,
+  "amountCents": -217,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-tx-2026-08-16-hulu",
+  "description": "HULU 877-555-0142",
+  "merchant": "Hulu",
+  "amountCents": -999,
+  "label": "Streaming",
+  "accept": [
+   "Streaming",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-tx-2026-08-21-car-insurance",
+  "description": "SAFEROUTE AUTO INS PREM",
+  "merchant": "SafeRoute Insurance",
+  "amountCents": -12400,
+  "label": "Insurance",
+  "accept": [
+   "Insurance",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-tx-2026-08-27-textbooks",
+  "description": "CAMPUS BOOKSTORE 3276",
+  "merchant": null,
+  "amountCents": -31840,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-tx-2026-09-02-phone",
+  "description": "MINT MOBILE",
+  "merchant": "Mint Mobile",
+  "amountCents": -3000,
+  "label": "Phone",
+  "accept": [
+   "Phone",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-tx-2026-09-03-course-fee",
+  "description": "PEARSON *ACCESS CODE",
+  "merchant": null,
+  "amountCents": -7499,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-tx-2026-09-01-rent",
+  "description": "MAPLE COURT APTS RENT WEB",
+  "merchant": "Maple Court Apartments",
+  "amountCents": -64000,
+  "label": "Rent",
+  "accept": [
+   "Rent",
+   "Housing"
+  ]
+ },
+ {
+  "id": "bank-tx-2026-09-21-phone",
+  "description": "VISIBLE SERVICE",
+  "merchant": null,
+  "amountCents": -2500,
+  "label": "Phone",
+  "accept": [
+   "Phone",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-tx-2026-09-19-ai",
+  "description": "CLAUDE.AI SUBSCRIPTION",
+  "merchant": "Anthropic",
+  "amountCents": -2000,
+  "label": "Other",
+  "accept": [
+   "Other"
+  ]
+ },
+ {
+  "id": "bank-tx-2026-08-21-phone",
+  "description": "TMOBILE*AUTO PAY",
+  "merchant": null,
+  "amountCents": -4500,
+  "label": "Phone",
+  "accept": [
+   "Phone",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-tx-2026-09-05-tuition-plan",
+  "description": "CAMPUS PAY PLAN TUITION",
+  "merchant": null,
+  "amountCents": -90900,
+  "label": "Tuition",
+  "accept": [
+   "Tuition",
+   "Education"
+  ]
+ },
+ {
+  "id": "bank-tx-2026-09-09-phone",
+  "description": "VERIZON WIRELESS PAYMENTS",
+  "merchant": "Verizon",
+  "amountCents": -4500,
+  "label": "Phone",
+  "accept": [
+   "Phone",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-tx-2026-09-23-netflix",
+  "description": "NETFLIX.COM",
+  "merchant": "Netflix",
+  "amountCents": -799,
+  "label": "Streaming",
+  "accept": [
+   "Streaming",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-tx-2026-09-11-spotify",
+  "description": "Spotify USA",
+  "merchant": "Spotify",
+  "amountCents": -599,
+  "label": "Streaming",
+  "accept": [
+   "Streaming",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-tx-2026-10-01-rent",
+  "description": "ZELLE TO LANDLORD CONF# 89EJKMKU",
+  "merchant": null,
+  "amountCents": -72500,
+  "label": "Rent",
+  "accept": [
+   "Rent",
+   "Housing"
+  ]
+ },
+ {
+  "id": "bank-tx-2026-10-01-transit",
+  "description": "METRO TRANSIT PASS AUTOLOAD",
+  "merchant": null,
+  "amountCents": -5000,
+  "label": "Public Transit",
+  "accept": [
+   "Public Transit",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "g0305-tx-2026-09-01-rent-share",
+  "description": "ZELLE TO ROOMMATE CONF# C2ZUMR87",
+  "merchant": null,
+  "amountCents": -88411,
+  "label": "Rent",
+  "accept": [
+   "Rent",
+   "Housing"
+  ]
+ },
+ {
+  "id": "g0502-tx-2026-07-08-internet",
+  "description": "FIBERLINE INTERNET",
+  "merchant": "Fiberline",
+  "amountCents": -5500,
+  "label": "Internet",
+  "accept": [
+   "Internet",
+   "Housing"
+  ]
+ },
+ {
+  "id": "g0502-tx-2026-07-13-electric",
+  "description": "CITY POWER AND LIGHT",
+  "merchant": "City Power and Light",
+  "amountCents": -6556,
+  "label": "Utilities",
+  "accept": [
+   "Utilities",
+   "Housing"
+  ]
+ },
+ {
+  "id": "g0502-tx-2026-07-12-kids",
+  "description": "WALMART #1874",
+  "merchant": "Walmart",
+  "amountCents": -1196,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "g0502-tx-2026-08-01-childcare",
+  "description": "KIDS CLUB AFTERCARE",
+  "merchant": null,
+  "amountCents": -34625,
+  "label": "Other",
+  "accept": [
+   "Other"
+  ]
+ },
+ {
+  "id": "g0502-tx-2026-08-01-rent",
+  "description": "PARKSIDE APTS RENT WEB",
+  "merchant": "Parkside Apartments",
+  "amountCents": -172935,
+  "label": "Rent",
+  "accept": [
+   "Rent",
+   "Housing"
+  ]
+ },
+ {
+  "id": "g0502-tx-2026-10-10-kid-activities",
+  "description": "SQ *LITTLE GYM CLASS",
+  "merchant": null,
+  "amountCents": -678,
+  "label": "Other",
+  "accept": [
+   "Other"
+  ]
+ },
+ {
+  "id": "g0516-tx-2026-08-03-overdraft-fee",
+  "description": "OVERDRAFT FEE",
+  "merchant": null,
+  "amountCents": -2500,
+  "label": "Fees & Interest",
+  "accept": [
+   "Fees & Interest"
+  ]
+ },
+ {
+  "id": "bank-0",
+  "description": "SQ *MAMA LUPES TAQUERIA",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-1",
+  "description": "TST* THE GREEN FORK 0231",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-2",
+  "description": "TST* PHO SAIGON KITCHEN",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-3",
+  "description": "SQ *SUNRISE BAGELS",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-4",
+  "description": "TOAST*BROOKLYN PIZZA CO",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-5",
+  "description": "SQ *KIMCHI HOUSE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-8",
+  "description": "GRUBHUB*THAIORCHID",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Food Delivery",
+  "accept": [
+   "Food Delivery",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-10",
+  "description": "POSTMATES ORDER 88213",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Food Delivery",
+  "accept": [
+   "Food Delivery",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-11",
+  "description": "SQ *BLUE BOTTLE COFFEE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Coffee",
+  "accept": [
+   "Coffee",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-12",
+  "description": "TST* RISE AND GRIND CAFE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Coffee",
+  "accept": [
+   "Coffee",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-13",
+  "description": "SQ *BEAN THERE ESPRESSO",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Coffee",
+  "accept": [
+   "Coffee",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-15",
+  "description": "PEETS COFFEE 00412",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Coffee",
+  "accept": [
+   "Coffee",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-16",
+  "description": "SQ *THE DAILY GRIND",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Coffee",
+  "accept": [
+   "Coffee",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-18",
+  "description": "SAFEWAY #1844",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-19",
+  "description": "H-E-B #622",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-20",
+  "description": "PUBLIX SUPER MAR 1291",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-21",
+  "description": "WHOLEFDS MKT 10322",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-22",
+  "description": "SPROUTS FARMERS MKT 412",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-23",
+  "description": "LIDL US 2233",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-24",
+  "description": "FOOD LION #0874",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-25",
+  "description": "SQ *FARMERS MARKET STAND",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-26",
+  "description": "INSTACART*SUBSCRIPTION",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-27",
+  "description": "MEIJER # 211",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-28",
+  "description": "SQ *THE TIPSY OWL BAR",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Bars & Alcohol",
+  "accept": [
+   "Bars & Alcohol",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-29",
+  "description": "TOTAL WINE AND MORE 1104",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Bars & Alcohol",
+  "accept": [
+   "Bars & Alcohol",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-30",
+  "description": "TST* HOPS AND BARLEY TAPROOM",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Bars & Alcohol",
+  "accept": [
+   "Bars & Alcohol",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-31",
+  "description": "BINNYS BEVERAGE DEPOT",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Bars & Alcohol",
+  "accept": [
+   "Bars & Alcohol",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-34",
+  "description": "EXXONMOBIL 4421",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Gas",
+  "accept": [
+   "Gas",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-38",
+  "description": "TESLA SUPERCHARGER US",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "EV Charging",
+  "accept": [
+   "EV Charging",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-39",
+  "description": "CHARGEPOINT INC",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "EV Charging",
+  "accept": [
+   "EV Charging",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-40",
+  "description": "ELECTRIFY AMERICA 2203",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "EV Charging",
+  "accept": [
+   "EV Charging",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-43",
+  "description": "PARKMOBILE 8841",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Parking",
+  "accept": [
+   "Parking",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-44",
+  "description": "SPOTHERO 2281101",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Parking",
+  "accept": [
+   "Parking",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-45",
+  "description": "CITY OF CHICAGO PARKING METER",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Parking",
+  "accept": [
+   "Parking",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-46",
+  "description": "UNIVERSITY PARKING SVCS",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Parking",
+  "accept": [
+   "Parking",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-47",
+  "description": "CTA VENTRA 6621",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Public Transit",
+  "accept": [
+   "Public Transit",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-48",
+  "description": "MTA*NYCT PAYGO",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Public Transit",
+  "accept": [
+   "Public Transit",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-49",
+  "description": "BART CLIPPER RELOAD",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Public Transit",
+  "accept": [
+   "Public Transit",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-50",
+  "description": "AMTRAK .COM 2311",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Travel",
+  "accept": [
+   "Travel"
+  ]
+ },
+ {
+  "id": "bank-51",
+  "description": "JIFFY LUBE #1882",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Car Maintenance",
+  "accept": [
+   "Car Maintenance",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-52",
+  "description": "MIDAS #4410",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Car Maintenance",
+  "accept": [
+   "Car Maintenance",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-53",
+  "description": "DISCOUNT TIRE 0443",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Car Maintenance",
+  "accept": [
+   "Car Maintenance",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-54",
+  "description": "AUTOZONE #3302",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Car Maintenance",
+  "accept": [
+   "Car Maintenance",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-55",
+  "description": "SQ *MIKES AUTO REPAIR",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Car Maintenance",
+  "accept": [
+   "Car Maintenance",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-56",
+  "description": "OLD NAVY ON-LINE 2210",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Clothing",
+  "accept": [
+   "Clothing",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-58",
+  "description": "UNIQLO USA 1192",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Clothing",
+  "accept": [
+   "Clothing",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-59",
+  "description": "SHEIN.COM",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Clothing",
+  "accept": [
+   "Clothing",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-60",
+  "description": "SQ *THRIFT ON MAIN",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Clothing",
+  "accept": [
+   "Clothing",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-61",
+  "description": "NIKE.COM 8821",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Clothing",
+  "accept": [
+   "Clothing",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-62",
+  "description": "FOOT LOCKER #1022",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Clothing",
+  "accept": [
+   "Clothing",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-63",
+  "description": "BEST BUY 00011232",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Electronics",
+  "accept": [
+   "Electronics",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-64",
+  "description": "MICRO CENTER #071",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Electronics",
+  "accept": [
+   "Electronics",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-65",
+  "description": "B&H PHOTO 800-606-6969",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Electronics",
+  "accept": [
+   "Electronics",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-67",
+  "description": "IKEA SCHAUMBURG",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-68",
+  "description": "BED BATH BEYOND 0221",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-69",
+  "description": "HOME DEPOT #1912",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-70",
+  "description": "LOWES #00907",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-71",
+  "description": "DOLLAR TREE 4412",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-72",
+  "description": "SQ *THE HARDWARE CORNER",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-73",
+  "description": "CONTAINER STORE 41",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Household",
+  "accept": [
+   "Household",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-74",
+  "description": "ETSY.COM*SMALLSHOPCO",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Online Shopping",
+  "accept": [
+   "Online Shopping",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-75",
+  "description": "EBAY O*12-08812-11231",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Online Shopping",
+  "accept": [
+   "Online Shopping",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-76",
+  "description": "TEMU.COM",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Online Shopping",
+  "accept": [
+   "Online Shopping",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-77",
+  "description": "WAYFAIR*1234567",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Online Shopping",
+  "accept": [
+   "Online Shopping",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-78",
+  "description": "PAYPAL *ALIEXPRESS",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Online Shopping",
+  "accept": [
+   "Online Shopping",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-80",
+  "description": "DISNEY PLUS 888-905-7888",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Streaming",
+  "accept": [
+   "Streaming",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-81",
+  "description": "MAX.COM",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Streaming",
+  "accept": [
+   "Streaming",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-82",
+  "description": "YOUTUBE PREMIUM",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Streaming",
+  "accept": [
+   "Streaming",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-83",
+  "description": "PARAMOUNT+",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Streaming",
+  "accept": [
+   "Streaming",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-84",
+  "description": "PEACOCK 9C3B1 PREMIUM",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Streaming",
+  "accept": [
+   "Streaming",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-85",
+  "description": "STEAMGAMES.COM 4259522985",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Games",
+  "accept": [
+   "Games",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-86",
+  "description": "PLAYSTATION NETWORK",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Games",
+  "accept": [
+   "Games",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-87",
+  "description": "NINTENDO CB141137080",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Games",
+  "accept": [
+   "Games",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-88",
+  "description": "XBOX GAME PASS",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Games",
+  "accept": [
+   "Games",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-89",
+  "description": "TICKETMASTER*KENDRICK",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Events",
+  "accept": [
+   "Events",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-90",
+  "description": "EVENTBRITE*SPRING FORMAL",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Events",
+  "accept": [
+   "Events",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-91",
+  "description": "SEATGEEK* GAME 1123",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Events",
+  "accept": [
+   "Events",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-92",
+  "description": "SQ *OPEN MIC NIGHT",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Events",
+  "accept": [
+   "Events",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-94",
+  "description": "REGAL CINEMAS 1144",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Activities",
+  "accept": [
+   "Activities"
+  ]
+ },
+ {
+  "id": "bank-95",
+  "description": "ROUND1 BOWLING ARCADE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Activities",
+  "accept": [
+   "Activities"
+  ]
+ },
+ {
+  "id": "bank-96",
+  "description": "SQ *CLIMB NATION GYM DAY",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Activities",
+  "accept": [
+   "Activities"
+  ]
+ },
+ {
+  "id": "bank-97",
+  "description": "DAVE & BUSTERS #42",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Activities",
+  "accept": [
+   "Activities"
+  ]
+ },
+ {
+  "id": "bank-98",
+  "description": "TOPGOLF CHICAGO",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Activities",
+  "accept": [
+   "Activities"
+  ]
+ },
+ {
+  "id": "bank-99",
+  "description": "MICHAELS STORES 4412",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Hobbies & Sports",
+  "accept": [
+   "Hobbies & Sports",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-100",
+  "description": "JOANN STORES #2232",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Hobbies & Sports",
+  "accept": [
+   "Hobbies & Sports",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-101",
+  "description": "GUITAR CENTER #331",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Hobbies & Sports",
+  "accept": [
+   "Hobbies & Sports",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-102",
+  "description": "DICKS SPORTING GOODS 1204",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Hobbies & Sports",
+  "accept": [
+   "Hobbies & Sports",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-103",
+  "description": "REI #145 SEATTLE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Hobbies & Sports",
+  "accept": [
+   "Hobbies & Sports",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-104",
+  "description": "WALGREENS #1188",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Pharmacy",
+  "accept": [
+   "Pharmacy",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-105",
+  "description": "RITE AID STORE 05521",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Pharmacy",
+  "accept": [
+   "Pharmacy",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-107",
+  "description": "PLANET FITNESS 33021",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Fitness",
+  "accept": [
+   "Fitness",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-108",
+  "description": "ANYTIME FITNESS 2211",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Fitness",
+  "accept": [
+   "Fitness",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-109",
+  "description": "SQ *CORE POWER YOGA",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Fitness",
+  "accept": [
+   "Fitness",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-110",
+  "description": "CLASSPASS* MONTHLY",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Fitness",
+  "accept": [
+   "Fitness",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-111",
+  "description": "ORANGETHEORY FITNESS 0442",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Fitness",
+  "accept": [
+   "Fitness",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-112",
+  "description": "STUDENT HEALTH CENTER COPAY",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Medical",
+  "accept": [
+   "Medical",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-113",
+  "description": "QUEST DIAGNOSTICS",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Medical",
+  "accept": [
+   "Medical",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-114",
+  "description": "MINUTECLINIC #1243",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Medical",
+  "accept": [
+   "Medical",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-115",
+  "description": "URGENT CARE OF EVANSTON",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Medical",
+  "accept": [
+   "Medical",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-116",
+  "description": "LABCORP 800-845-6167",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Medical",
+  "accept": [
+   "Medical",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-117",
+  "description": "SMILE BRANDS DENTAL",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Dental & Vision",
+  "accept": [
+   "Dental & Vision",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-118",
+  "description": "WARBY PARKER 3302",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Dental & Vision",
+  "accept": [
+   "Dental & Vision",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-119",
+  "description": "ASPEN DENTAL 1182",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Dental & Vision",
+  "accept": [
+   "Dental & Vision",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-120",
+  "description": "LENSCRAFTERS #0432",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Dental & Vision",
+  "accept": [
+   "Dental & Vision",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-121",
+  "description": "BETTERHELP 6501",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Mental Health",
+  "accept": [
+   "Mental Health",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-122",
+  "description": "TALKSPACE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Mental Health",
+  "accept": [
+   "Mental Health",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-123",
+  "description": "SQ *MINDFUL COUNSELING LLC",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Mental Health",
+  "accept": [
+   "Mental Health",
+   "Health"
+  ]
+ },
+ {
+  "id": "bank-124",
+  "description": "UNIV BURSAR TUITION PMT",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Tuition",
+  "accept": [
+   "Tuition",
+   "Education"
+  ]
+ },
+ {
+  "id": "bank-125",
+  "description": "FLYWIRE*TUITION",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Tuition",
+  "accept": [
+   "Tuition",
+   "Education"
+  ]
+ },
+ {
+  "id": "bank-126",
+  "description": "COLLEGE REGISTRATION FEE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Tuition",
+  "accept": [
+   "Tuition",
+   "Education"
+  ]
+ },
+ {
+  "id": "bank-127",
+  "description": "CHEGG ORDER 8821",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Books & Supplies",
+  "accept": [
+   "Books & Supplies",
+   "Education"
+  ]
+ },
+ {
+  "id": "bank-128",
+  "description": "BARNES & NOBLE COLLEGE 2211",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Books & Supplies",
+  "accept": [
+   "Books & Supplies",
+   "Education"
+  ]
+ },
+ {
+  "id": "bank-129",
+  "description": "PEARSON EDUCATION",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Books & Supplies",
+  "accept": [
+   "Books & Supplies",
+   "Education"
+  ]
+ },
+ {
+  "id": "bank-130",
+  "description": "STAPLES 00122",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Books & Supplies",
+  "accept": [
+   "Books & Supplies",
+   "Education"
+  ]
+ },
+ {
+  "id": "bank-131",
+  "description": "OFFICE DEPOT #2201",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Books & Supplies",
+  "accept": [
+   "Books & Supplies",
+   "Education"
+  ]
+ },
+ {
+  "id": "bank-133",
+  "description": "AT&T*BILL PAYMENT",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Phone",
+  "accept": [
+   "Phone",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-136",
+  "description": "GEICO *AUTO",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Insurance",
+  "accept": [
+   "Insurance",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-137",
+  "description": "STATE FARM INSURANCE 1232",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Insurance",
+  "accept": [
+   "Insurance",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-138",
+  "description": "LEMONADE INSURANCE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Insurance",
+  "accept": [
+   "Insurance",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-139",
+  "description": "PROGRESSIVE *INSURANCE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Insurance",
+  "accept": [
+   "Insurance",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-140",
+  "description": "ADOBE *CREATIVE CLOUD",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Software",
+  "accept": [
+   "Software",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-141",
+  "description": "MICROSOFT*365 PERSONAL",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Software",
+  "accept": [
+   "Software",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-142",
+  "description": "NOTION LABS INC",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Software",
+  "accept": [
+   "Software",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-143",
+  "description": "GOOGLE *GOOGLE ONE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Software",
+  "accept": [
+   "Software",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-144",
+  "description": "DROPBOX*7H2K2",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Software",
+  "accept": [
+   "Software",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-145",
+  "description": "GRAMMARLY",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Software",
+  "accept": [
+   "Software",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-146",
+  "description": "OPENAI *CHATGPT SUBSCR",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Software",
+  "accept": [
+   "Software",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-147",
+  "description": "AMAZON PRIME*2K4L1",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Subscriptions",
+  "accept": [
+   "Subscriptions",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-149",
+  "description": "AUDIBLE*2L3K9",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Subscriptions",
+  "accept": [
+   "Subscriptions",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-150",
+  "description": "PATREON* MEMBERSHIP",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Subscriptions",
+  "accept": [
+   "Subscriptions",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-151",
+  "description": "NYTIMES DIGITAL",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Subscriptions",
+  "accept": [
+   "Subscriptions",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-152",
+  "description": "DUOLINGO PLUS",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Subscriptions",
+  "accept": [
+   "Subscriptions",
+   "Bills & Subscriptions"
+  ]
+ },
+ {
+  "id": "bank-153",
+  "description": "COMED 0123456789",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Utilities",
+  "accept": [
+   "Utilities",
+   "Housing"
+  ]
+ },
+ {
+  "id": "bank-154",
+  "description": "PG&E WEB ONLINE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Utilities",
+  "accept": [
+   "Utilities",
+   "Housing"
+  ]
+ },
+ {
+  "id": "bank-155",
+  "description": "CITY WATER DEPT",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Utilities",
+  "accept": [
+   "Utilities",
+   "Housing"
+  ]
+ },
+ {
+  "id": "bank-156",
+  "description": "CONED ENERGY BILL",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Utilities",
+  "accept": [
+   "Utilities",
+   "Housing"
+  ]
+ },
+ {
+  "id": "bank-157",
+  "description": "XFINITY INTERNET 8772",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Internet",
+  "accept": [
+   "Internet",
+   "Housing"
+  ]
+ },
+ {
+  "id": "bank-158",
+  "description": "SPECTRUM 855-707-7328",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Internet",
+  "accept": [
+   "Internet",
+   "Housing"
+  ]
+ },
+ {
+  "id": "bank-159",
+  "description": "GOOGLE FIBER",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Internet",
+  "accept": [
+   "Internet",
+   "Housing"
+  ]
+ },
+ {
+  "id": "bank-160",
+  "description": "STARLINK INTERNET",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Internet",
+  "accept": [
+   "Internet",
+   "Housing"
+  ]
+ },
+ {
+  "id": "bank-161",
+  "description": "APARTMENTS RENT PORTAL",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Rent",
+  "accept": [
+   "Rent",
+   "Housing"
+  ]
+ },
+ {
+  "id": "bank-162",
+  "description": "CAMPUS EDGE APTS RENT",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Rent",
+  "accept": [
+   "Rent",
+   "Housing"
+  ]
+ },
+ {
+  "id": "bank-163",
+  "description": "ZILLOW RENT PAYMENT",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Rent",
+  "accept": [
+   "Rent",
+   "Housing"
+  ]
+ },
+ {
+  "id": "bank-165",
+  "description": "SUPERCUTS 4432",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Personal Care",
+  "accept": [
+   "Personal Care"
+  ]
+ },
+ {
+  "id": "bank-167",
+  "description": "SEPHORA 0912",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Personal Care",
+  "accept": [
+   "Personal Care"
+  ]
+ },
+ {
+  "id": "bank-168",
+  "description": "SQ *NAIL SPA LOUNGE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Personal Care",
+  "accept": [
+   "Personal Care"
+  ]
+ },
+ {
+  "id": "bank-169",
+  "description": "SQ *FADED BARBERSHOP",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Personal Care",
+  "accept": [
+   "Personal Care"
+  ]
+ },
+ {
+  "id": "bank-170",
+  "description": "PETCO 1442",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Pets",
+  "accept": [
+   "Pets"
+  ]
+ },
+ {
+  "id": "bank-171",
+  "description": "PETSMART # 0441",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Pets",
+  "accept": [
+   "Pets"
+  ]
+ },
+ {
+  "id": "bank-172",
+  "description": "CHEWY.COM",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Pets",
+  "accept": [
+   "Pets"
+  ]
+ },
+ {
+  "id": "bank-173",
+  "description": "BANFIELD PET HOSPITAL",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Pets",
+  "accept": [
+   "Pets"
+  ]
+ },
+ {
+  "id": "bank-174",
+  "description": "SQ *DOG GROOMING STUDIO",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Pets",
+  "accept": [
+   "Pets"
+  ]
+ },
+ {
+  "id": "bank-175",
+  "description": "ATM WITHDRAWAL 1123 MAIN ST",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Cash & ATM",
+  "accept": [
+   "Cash & ATM"
+  ]
+ },
+ {
+  "id": "bank-176",
+  "description": "CASH WITHDRAWAL CHASE ATM",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Cash & ATM",
+  "accept": [
+   "Cash & ATM"
+  ]
+ },
+ {
+  "id": "bank-177",
+  "description": "ALLPOINT ATM 4421",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Cash & ATM",
+  "accept": [
+   "Cash & ATM"
+  ]
+ },
+ {
+  "id": "bank-178",
+  "description": "DELTA AIR 0062341123",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Flights",
+  "accept": [
+   "Flights",
+   "Travel"
+  ]
+ },
+ {
+  "id": "bank-179",
+  "description": "UNITED 0162211231",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Flights",
+  "accept": [
+   "Flights",
+   "Travel"
+  ]
+ },
+ {
+  "id": "bank-180",
+  "description": "SOUTHWEST AIR 5262211",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Flights",
+  "accept": [
+   "Flights",
+   "Travel"
+  ]
+ },
+ {
+  "id": "bank-181",
+  "description": "SPIRIT AIRLINES 4871",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Flights",
+  "accept": [
+   "Flights",
+   "Travel"
+  ]
+ },
+ {
+  "id": "bank-182",
+  "description": "AIRBNB HMQ3K2",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Hotels & Lodging",
+  "accept": [
+   "Hotels & Lodging",
+   "Travel"
+  ]
+ },
+ {
+  "id": "bank-183",
+  "description": "MARRIOTT CHICAGO DT",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Hotels & Lodging",
+  "accept": [
+   "Hotels & Lodging",
+   "Travel"
+  ]
+ },
+ {
+  "id": "bank-184",
+  "description": "HOLIDAY INN EXPRESS 221",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Hotels & Lodging",
+  "accept": [
+   "Hotels & Lodging",
+   "Travel"
+  ]
+ },
+ {
+  "id": "bank-185",
+  "description": "HOSTELWORLD.COM",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Hotels & Lodging",
+  "accept": [
+   "Hotels & Lodging",
+   "Travel"
+  ]
+ },
+ {
+  "id": "bank-186",
+  "description": "EXPEDIA 7212341",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Travel",
+  "accept": [
+   "Travel"
+  ]
+ },
+ {
+  "id": "bank-187",
+  "description": "GREYHOUND LINES 2211",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Travel",
+  "accept": [
+   "Travel"
+  ]
+ },
+ {
+  "id": "bank-188",
+  "description": "FLIXBUS 12093",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Travel",
+  "accept": [
+   "Travel"
+  ]
+ },
+ {
+  "id": "bank-189",
+  "description": "GOFUNDME *HELP SARAH",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Gifts & Donations",
+  "accept": [
+   "Gifts & Donations"
+  ]
+ },
+ {
+  "id": "bank-190",
+  "description": "REDCROSS DONATION",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Gifts & Donations",
+  "accept": [
+   "Gifts & Donations"
+  ]
+ },
+ {
+  "id": "bank-191",
+  "description": "SQ *CHURCH GIVING",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Gifts & Donations",
+  "accept": [
+   "Gifts & Donations"
+  ]
+ },
+ {
+  "id": "bank-192",
+  "description": "1-800-FLOWERS.COM",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Gifts & Donations",
+  "accept": [
+   "Gifts & Donations"
+  ]
+ },
+ {
+  "id": "bank-193",
+  "description": "EDIBLE ARRANGEMENTS 431",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Gifts & Donations",
+  "accept": [
+   "Gifts & Donations"
+  ]
+ },
+ {
+  "id": "bank-194",
+  "description": "MONTHLY MAINTENANCE FEE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Fees & Interest",
+  "accept": [
+   "Fees & Interest"
+  ]
+ },
+ {
+  "id": "bank-195",
+  "description": "LATE FEE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Fees & Interest",
+  "accept": [
+   "Fees & Interest"
+  ]
+ },
+ {
+  "id": "bank-196",
+  "description": "FOREIGN TRANSACTION FEE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Fees & Interest",
+  "accept": [
+   "Fees & Interest"
+  ]
+ },
+ {
+  "id": "bank-197",
+  "description": "INTEREST CHARGE ON PURCHASES",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Fees & Interest",
+  "accept": [
+   "Fees & Interest"
+  ]
+ },
+ {
+  "id": "bank-198",
+  "description": "OUT OF NETWORK ATM FEE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Fees & Interest",
+  "accept": [
+   "Fees & Interest"
+  ]
+ },
+ {
+  "id": "bank-199",
+  "description": "SQ *ROSIES DONUTS",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-200",
+  "description": "TST* SMOKE AND BONES BBQ",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-201",
+  "description": "SQ *HALAL GUYS CART",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-202",
+  "description": "TST* SUSHI ZEN",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-203",
+  "description": "SQ *WAFFLE WAGON",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-204",
+  "description": "CAVA 0221",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-205",
+  "description": "SWEETGREEN 1142",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-206",
+  "description": "WINGSTOP 1182",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-207",
+  "description": "PANDA EXPRESS #2231",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-208",
+  "description": "SQ *BOBA BLISS",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Coffee",
+  "accept": [
+   "Coffee",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-209",
+  "description": "KUNG FU TEA 221",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Coffee",
+  "accept": [
+   "Coffee",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-210",
+  "description": "SQ *SECOND CUP CAFE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Coffee",
+  "accept": [
+   "Coffee",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-212",
+  "description": "SAMS CLUB #6432",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-214",
+  "description": "SQ *CORNER BODEGA",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-215",
+  "description": "GOPUFF 8821",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Food Delivery",
+  "accept": [
+   "Food Delivery",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-216",
+  "description": "SQ *LA PALOMA BAKERY",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-217",
+  "description": "TST* OLIVE AND THYME",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-219",
+  "description": "FIVE GUYS 1142",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-220",
+  "description": "JERSEY MIKES 22311",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-221",
+  "description": "PORTILLOS #22",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Restaurants",
+  "accept": [
+   "Restaurants",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-222",
+  "description": "SQ *CAFE MOCHA LOFT",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Coffee",
+  "accept": [
+   "Coffee",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-223",
+  "description": "INTELLIGENTSIA COFFEE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Coffee",
+  "accept": [
+   "Coffee",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-224",
+  "description": "JEWEL OSCO 3341",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-225",
+  "description": "MARIANOS #8834",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-226",
+  "description": "WINCO FOODS #112",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-227",
+  "description": "SQ *ASIAN MART",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Groceries",
+  "accept": [
+   "Groceries",
+   "Food & Dining"
+  ]
+ },
+ {
+  "id": "bank-228",
+  "description": "VALERO 4412",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Gas",
+  "accept": [
+   "Gas",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-229",
+  "description": "MARATHON PETRO 1123",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Gas",
+  "accept": [
+   "Gas",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-230",
+  "description": "BP#9933224",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Gas",
+  "accept": [
+   "Gas",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-231",
+  "description": "CASEY'S #3021",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Gas",
+  "accept": [
+   "Gas",
+   "Transportation"
+  ]
+ },
+ {
+  "id": "bank-232",
+  "description": "ZARA USA 3391",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Clothing",
+  "accept": [
+   "Clothing",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-233",
+  "description": "FOREVER 21 #221",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Clothing",
+  "accept": [
+   "Clothing",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-234",
+  "description": "TJ MAXX #0771",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Clothing",
+  "accept": [
+   "Clothing",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-235",
+  "description": "ROSS STORES #1122",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Clothing",
+  "accept": [
+   "Clothing",
+   "Shopping"
+  ]
+ },
+ {
+  "id": "bank-236",
+  "description": "GAMESTOP #4412",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Games",
+  "accept": [
+   "Games",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-237",
+  "description": "SQ *BOARD GAME CAFE",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Activities",
+  "accept": [
+   "Activities"
+  ]
+ },
+ {
+  "id": "bank-238",
+  "description": "SIX FLAGS GREAT AMERICA",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Activities",
+  "accept": [
+   "Activities"
+  ]
+ },
+ {
+  "id": "bank-239",
+  "description": "SQ *ESCAPE ROOM LOOP",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Activities",
+  "accept": [
+   "Activities"
+  ]
+ },
+ {
+  "id": "bank-240",
+  "description": "HOBBY LOBBY #431",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Hobbies & Sports",
+  "accept": [
+   "Hobbies & Sports",
+   "Entertainment"
+  ]
+ },
+ {
+  "id": "bank-241",
+  "description": "BLICK ART MATERIALS",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Books & Supplies",
+  "accept": [
+   "Books & Supplies",
+   "Education"
+  ]
+ },
+ {
+  "id": "bank-242",
+  "description": "BOOKSHOP.ORG",
+  "merchant": null,
+  "amountCents": -1500,
+  "label": "Books & Supplies",
+  "accept": [
+   "Books & Supplies",
+   "Education"
+  ]
+ }
 ]

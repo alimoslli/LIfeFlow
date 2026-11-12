@@ -1,6 +1,6 @@
 /**
  * Made-up statement lines, labelled by hand with one of our default categories before any model saw them (Step 0 of
- * docs/backlog/2026-11-12-local-models.md). They add to the simulator's shops (scripts/local-models/build-purchases.mts) so
+ * docs/backlog/2026-11-12-local-models.md). They add to the simulator's shops (scripts/local-models/build-purchases.ts) so
  * the sorting test has 300 different shops, weighted toward what's hard: local places, card-reader prefixes (SQ *, TST*,
  * PAYPAL *), plain-word names, and shops whose name doesn't say what they sell. Format: "statement line | label".
  */

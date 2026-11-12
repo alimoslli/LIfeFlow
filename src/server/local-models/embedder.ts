@@ -7,15 +7,14 @@ import { LOCAL_MODELS, type LocalModel } from "./models";
  * Turns short texts into vectors with a small open model on our own server (docs/backlog/2026-11-12-local-models.md).
  * No other company sees the text, there is no per-call bill, and nothing is written anywhere: vectors live only in this
  * request's memory (the COO's rule 1, 2026-11-12: memory vectors are as private as the memory, so none are stored). Only
- * our own fixed texts (in the comparison: tool and category descriptions) are kept between requests, in this process.
+ * our own fixed texts (tool groups, category descriptions) are kept between requests, in this process.
  *
  * Every job that uses it is behind its own switch, off by default (`localModelOn`), and falls back to today's way whenever
  * the model isn't there: switched off, files missing, a hash that doesn't match, or a load error. Never throws.
  */
 
-/** The jobs that can run on a local model. Tool choosing and purchase sorting were measured and stay as they are (the report). */
-export type LocalJob = "memory";
-const SWITCH: Record<LocalJob, string> = { memory: "LOCAL_MODEL_MEMORY" };
+export type LocalJob = "memory" | "tools" | "tidy";
+const SWITCH: Record<LocalJob, string> = { memory: "LOCAL_MODEL_MEMORY", tools: "LOCAL_MODEL_TOOLS", tidy: "LOCAL_MODEL_TIDY" };
 
 /** Is this job switched to the local model? Only the exact word "on" counts. */
 export const localModelOn = (job: LocalJob, envs: Record<string, string | undefined> = process.env) => envs[SWITCH[job]] === "on";
@@ -23,20 +22,13 @@ export const localModelOn = (job: LocalJob, envs: Record<string, string | undefi
 /** Which pinned model the jobs use (LOCAL_MODEL, default MiniLM). */
 export const localModelKey = (envs: Record<string, string | undefined> = process.env): LocalModel["key"] => (envs.LOCAL_MODEL === "bge" ? "bge" : "minilm");
 
-/**
- * Where the fetched files are (scripts/fetch-local-models.mts writes them there). The ignore comment keeps the build's file
- * tracer from reading this path as "the whole project" (it added 60 MB to the chat's function); next.config.ts adds just
- * the model's own folder, and only when the switch is on.
- */
+/** Where the fetched files are (scripts/fetch-local-models.ts writes them there). */
 export const modelDir = (key: LocalModel["key"], envs: Record<string, string | undefined> = process.env) =>
-  path.join(envs.LOCAL_MODELS_DIR || path.join(/* turbopackIgnore: true */ process.cwd(), ".models"), key);
+  path.join(envs.LOCAL_MODELS_DIR || path.join(process.cwd(), ".models"), key);
 
 type Session = { run(feeds: Record<string, unknown>): Promise<Record<string, { data: Float32Array; dims: readonly number[] }>>; inputNames: readonly string[] };
 type Tokenizer = { encode(text: string): { ids: number[]; attention_mask: number[] } };
-type Ort = {
-  InferenceSession: { create(model: Uint8Array, opts?: object): Promise<Session> };
-  Tensor: new (type: "int64", data: BigInt64Array, dims: number[]) => unknown;
-};
+type Ort = { InferenceSession: { create(model: Uint8Array, opts?: object): Promise<Session> }; Tensor: new (type: "int64", data: BigInt64Array, dims: number[]) => unknown };
 type Loaded = { model: LocalModel; session: Session; tokenizer: Tokenizer; ort: Ort };
 
 const loading = new Map<string, Promise<Loaded | null>>();
@@ -64,8 +56,6 @@ async function load(key: LocalModel["key"]): Promise<Loaded | null> {
     const tokenizer = new tkMod.Tokenizer(JSON.parse(tok.toString("utf8")), {});
     // one thread: a serverless function has little CPU, and two requests shouldn't fight over it
     const session = await ort.InferenceSession.create(new Uint8Array(onnx), { intraOpNumThreads: 1, interOpNumThreads: 1 });
-    // once per instance, no content: how the owner sees it working (and the e2e check that it really loads when built)
-    console.info("[local-model] ready", key);
     return { model, session, tokenizer, ort };
   } catch (e) {
     // no text, no path: the error's own kind only (never content), and the job uses today's way
@@ -74,21 +64,10 @@ async function load(key: LocalModel["key"]): Promise<Loaded | null> {
   }
 }
 
-const ready = new Set<string>();
-/**
- * Is the model loaded in this process? `warm` starts loading it without waiting, so a turn on a cold instance never pays
- * for the load (the 300 ms rule): it goes by words, and the next one has meaning.
- */
-export const isReady = (key: LocalModel["key"] = localModelKey()) => ready.has(key);
-export const warm = (key: LocalModel["key"] = localModelKey()) => void loaded(key);
-
 function loaded(key: LocalModel["key"]) {
   let p = loading.get(key);
   if (!p) {
-    p = load(key).then((m) => {
-      if (m) ready.add(key);
-      return m;
-    });
+    p = load(key);
     loading.set(key, p);
   }
   return p;
@@ -158,7 +137,8 @@ export function cosine(a: Float32Array, b: Float32Array) {
 
 const fixed = new Map<string, Promise<Float32Array[] | null>>();
 /**
- * Vectors for our own fixed texts (never a person's), worked out once per process. A failure isn't kept, so the next request tries again.
+ * Vectors for our own fixed texts (never a person's), worked out once per process: the tool groups' descriptions, the
+ * category descriptions. A failure isn't kept, so the next request tries again.
  */
 export function embedFixed(id: string, texts: string[], key: LocalModel["key"] = localModelKey()) {
   const k = `${key}:${id}:${texts.length}`;

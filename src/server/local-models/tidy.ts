@@ -1,17 +1,14 @@
 import { createHash } from "node:crypto";
-import { cleanVendorName } from "../../src/lib/vendor";
-import type { TidyLlm } from "../../src/server/services/finance/tidy";
-import { categoryText } from "./category-hints.mjs";
-import { cosine, embed, embedFixed } from "../../src/server/local-models/embedder";
-
-// An experiment for the comparison only (docs/backlog/2026-11-12-local-models-report.md): the paid batch sorted far more
-// right, so it is not in the app.
+import { cleanVendorName } from "@/lib/vendor";
+import type { TidyLlm } from "../services/finance/tidy";
+import { categoryText } from "./category-hints";
+import { cosine, embed, embedFixed } from "./embedder";
 
 /** How close a shop must be to a category (cosine), and how far ahead of the next one, before it's filed there. */
 export const TIDY_MEANING = { min: 0.35, margin: 0.03 };
 
 /**
- * Purchase sorting on our own server, in place of the paid batch (`openAiTidy`): each
+ * Purchase sorting on our own server, in place of the paid batch (`openAiTidy`), when LOCAL_MODEL_TIDY is on: each
  * unknown shop goes to the closest of the person's own categories by meaning, only when it's clearly the closest;
  * otherwise it stays unsorted, never a guess and never a category outside their list. Money coming in isn't sorted here.
  * The display name is our own tidy of the line (`cleanVendorName`).

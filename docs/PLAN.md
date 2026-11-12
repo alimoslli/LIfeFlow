@@ -155,10 +155,11 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 - **The audit and waitlist backlog** (owner, 2026-11-11): `docs/backlog/2026-11-11-audit-and-waitlist.md`. The waitlist first (close public access before the January 2027 App Store launch, let people in in batches from HQ), then money totals and exports, authorization and retries, offline, AI costs, scale, tests and the UX proposals. One small step per session on its own branch (`claude/waitlist`), never merged, deployed or switched on without the owner. LF COO.
 - Run the full test suite on the combined branch and check its preview.
 - The owner's look at the "useful sky" pictures, then merge `claude/pensive-mendel-r1yy4a`.
-- **Our own small models (Hugging Face):** Steps 0 and 1 are done (2026-11-12, the report `docs/backlog/2026-11-12-local-models-report.md`).
-  - **Memory picking wins** (all-MiniLM-L6-v2 on our own server). On new meaning cases it finds 82% of the right memories instead of 70%, sends no wrong ones, and keeps every existing case. It adds up to about 160 ms and stores nothing. It's built behind `LOCAL_MODEL_MEMORY`, off.
-  - **Tool choosing and purchase sorting lose** to the word lists and the paid batch (37 right against 10 on the unknown shops), and stay as they are.
-  - **Waiting on the owner:** Step 2, memory picking on for his account and the demo account for a week.
+- **Our own small models (Hugging Face), `docs/backlog/2026-11-12-local-models.md`:** the owner said yes to Steps 0 and 1 and the ~12-call measuring run (2026-11-12). Order:
+  1. ~~measure the Vercel function's size and cold start~~ done 2026-11-12, both fit under 250 MB; native picked (about 0.26 s cold, 4.5 ms a text; WebAssembly 0.7 s cold, over the 300 ms rule); needs `huggingface.co` on this environment's network (owner's settings) for the official model files;
+  2. build memory picking, tool choosing and purchase sorting behind switches that are off by default, with stored memory vectors sealed and swept like memories (better: none stored);
+  3. write the comparison report.
+  Step 2 (on for the owner and the demo account) needs his next yes. Replacing the OpenAI chat stays ADR 0023 level 2. The insight-clouds builder reads `skyInsights()` for the clouds.
 - Coordinate migration numbers with HQ before merging phone sign-in (CLAUDE.md lists the order).
 
 **Open fixes** (the COO's night rounds pick these up):
@@ -360,12 +361,6 @@ Last: done 2026-11-10 evening ([the walk and the numbers](audits/2026-11-10-prod
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
-- 2026-11-12, LF Main (owner: "go the hugging face"): Hugging Face Steps 0 and 1, held on the branch.
-  - The models are downloaded from Hugging Face and pinned by revision and SHA-256. The LifeFlow environment allows Hugging Face's hosts, with the owner's yes.
-  - Measured on 300 labelled purchases, 202 tool questions and 50 new memory cases, plus one 3-call small-model run (about $0.008).
-  - Memory picking by meaning wins and is built behind the off switch `LOCAL_MODEL_MEMORY` (`src/server/local-models/`, `meaningScores` in the chat). It stores nothing, never makes a cold turn wait, and with the switch off no function carries the runtime.
-  - Tool choosing and purchase sorting lost and stay as they are; their experiments live in `scripts/local-models/`.
-  - Report: `docs/backlog/2026-11-12-local-models-report.md`.
 - 2026-11-12, LF Main (COO re-review of 75d5a1a): fixes on the branch, each with a test.
   - The Money lock is structural. A review marks each money part where it's made (`money: true` on Spending, Goals, Patterns, the morning brief's Money, and a money "One change"). `lockSafeText` drops those parts for the card and the sky alike; old reviews are read by heading, and an amount check is the last backstop. A money goal's "45%" no longer leaks (`useful-sky.test.ts`).
   - Gmail waits are read oldest first and stop after 5 refused tries with a fixed reason. One look reads at most its limit (50, then 10); the rest wait for the next look.

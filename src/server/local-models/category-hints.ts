@@ -1,6 +1,6 @@
 /**
  * What each of our default categories holds, in a few plain words, for matching a shop's name by meaning
- * (tidy-experiment.mts). Our own fixed text, never a person's. A category the person made up themselves is matched by
+ * (local-models/tidy.ts). Our own fixed text, never a person's. A category the person made up themselves is matched by
  * its own name. Written from the category names alone, before the test purchases were scored.
  */
 export const CATEGORY_HINTS: Record<string, string> = {
