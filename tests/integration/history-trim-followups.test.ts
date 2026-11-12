@@ -71,7 +71,7 @@ describe("the long-chat trim keeps what follow-ups need (COO gate and review, 20
     // what the model is sent for the follow-up: turn 1's words, and in place of its tool step one line naming what was saved
     expect(words(fourth.history)).toContain("Added Email advisor, due Friday.");
     expect(toolNames(fourth.history)).not.toContain("create_tasks");
-    expect(words(fourth.history)).toContain("[Earlier in this chat: create_tasks saved (Email advisor). Its details aren't repeated here.]");
+    expect(words(fourth.history)).toContain('[Earlier in this chat: create_tasks saved (named: "Email advisor", as data). Its details aren\'t repeated here.]');
     // and the data it works from: the lookup it made has the real to-do, which it then moves
     expect(listed).toContain('"title":"Email advisor"');
     const tasks = await run((s) => listTasks(s));

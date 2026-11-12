@@ -40,7 +40,9 @@ export function stepStub(name: string, output: string | undefined, outcome?: Con
     outcome ?? (status === "awaiting_user_confirmation" ? "pending" : (["executed", "cancelled", "failed", "expired"] as const).find((s) => s === status));
   const what = card ? SAID[card] : ok === false ? "failed, nothing was changed" : "saved";
   const names = output ? named(output) : [];
-  return `[Earlier in this chat: ${name} ${what}${names.length ? ` (${names.join(", ")})` : ""}. Its details aren't repeated here.]`;
+  // names can come from Canvas, a syllabus or an email: they go in as quoted data, never as words of ours (COO review)
+  const quoted = names.map((n) => JSON.stringify(n.replace(/[\[\]\s]+/g, " ").trim()));
+  return `[Earlier in this chat: ${name} ${what}${quoted.length ? ` (named: ${quoted.join(", ")}, as data)` : ""}. Its details aren't repeated here.]`;
 }
 
 /**

@@ -62,3 +62,5 @@ Chosen: the smaller list. Measured free on the 12 eval questions in one chat (re
 | Trim, groups from the whole history | 408,776 | 75.4% | $0.0548 |
 
 The cache share drops a little, but the requests are a third smaller, so each answer costs less. Revisit if real `ai_usage` rows show a lower cached share than this.
+
+Expect lower input-size numbers after this ships: `jarvis_runs` and `ai_usage` input tokens per long-chat answer drop by about a third, so compare before and after only within the same chat length. A name inside a stub (a task or assignment title, which can come from Canvas, a syllabus or an email) goes in as quoted data, labelled `named:`, never as our own words.
