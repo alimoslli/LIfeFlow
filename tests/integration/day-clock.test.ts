@@ -14,7 +14,7 @@ import { createAssignment, createCourse } from "@/server/services/school";
 import { createEmployer, createShift } from "@/server/services/work";
 import { makeUser, TZ } from "../helpers";
 import { eq } from "drizzle-orm";
-import { promises, tasks } from "@/server/db/schema";
+import { promises, tasks, transactions } from "@/server/db/schema";
 import { checkHabit, createHabit } from "@/server/services/habits";
 import { createPromise } from "@/server/services/promises";
 
@@ -94,9 +94,55 @@ describe("day clock data", () => {
     });
     expect(shown.sleepHours).toBeCloseTo(7.3);
     expect(shown.spentTodayCents).toBe(6920);
+    // owner, 2026-11-12: "each purchase on its own but also clearly shows days total". Only a purchase whose bank gave its
+    // time gets a mark at that time; today's total sits just before now (1:40 PM) and lists every purchase
+    expect(shown.items.filter((i) => i.origin === "spend")).toEqual([]);
+    expect(shown.items.find((i) => i.id === "spent:2026-11-07")).toMatchObject({
+      title: "Spent $69.20 so far · 2 purchases",
+      subtitle: "Lunch at work $14.20 · Shell gas $55",
+      start: 13 * 60 + 39,
+    });
     // The Money lock is on (or money isn't asked for): nothing about money, not even a zero.
     expect(hidden.spentTodayCents).toBeNull();
     expect(hidden.items.some((i) => i.amountCents != null)).toBe(false);
+  });
+
+  it("puts a purchase with the bank's own time on the line at that time, and never a time it doesn't know", async () => {
+    const { run } = await makeUser("Purchase Times");
+    const data = await run(async (s) => {
+      const bank = await createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 50000 });
+      const add = (description: string, amountCents: number, date: string, kind: "expense" | "transfer" | "refund" = "expense") =>
+        createTransaction(s, { accountId: bank.id, date, description, merchantName: description, amountCents, kind, categoryId: null, pending: false });
+      const coffee = await add("Blue Bottle", -650, "2026-11-07");
+      // bought late Thursday night, posted Friday: it belongs to Thursday
+      const late = await add("Taco truck", -1200, "2026-11-07");
+      await add("Savings", -20000, "2026-11-07", "transfer");
+      await add("Shoes", -8000, "2026-11-06");
+      await add("Shoes", 8000, "2026-11-06", "refund");
+      await s.tx
+        .update(transactions)
+        .set({ authorizedAt: new Date("2026-11-07T14:12:00Z") })
+        .where(eq(transactions.id, coffee.id));
+      await s.tx
+        .update(transactions)
+        .set({ authorizedAt: new Date("2026-11-06T04:30:00Z") })
+        .where(eq(transactions.id, late.id));
+      return dayClockData(s, TZ, NOW, { money: true });
+    });
+    const marks = data.items.filter((i) => i.origin === "spend");
+    // 9:12 AM today, and 11:30 PM Thursday (New York)
+    expect(marks.map((m) => [m.title, m.start, m.amountCents])).toEqual(
+      expect.arrayContaining([
+        ["Blue Bottle", 9 * 60 + 12, 650],
+        ["Taco truck", -2 * 1440 + 23 * 60 + 30, 1200],
+      ]),
+    );
+    expect(marks).toHaveLength(2);
+    // a transfer is never spending; a refund cancels its purchase, so that day has no total
+    expect(data.items.find((i) => i.id === "spent:2026-11-07")).toMatchObject({ title: "Spent $6.50 so far · 1 purchase" });
+    expect(data.items.find((i) => i.id === "spent:2026-11-06")).toBeUndefined();
+    expect(data.items.find((i) => i.id === "spent:2026-11-05")).toMatchObject({ title: "Spent $12 · 1 purchase" });
+    expect(data.spentTodayCents).toBe(650);
   });
 
   it("shows your life: done things where they were done, promises (never a broken one), and a short recap of each past day", async () => {
@@ -145,11 +191,20 @@ describe("day clock data", () => {
     // Friday's recap, at the end of Friday, from real records only
     const friday = data.items.find((i) => i.id === "day:2026-11-06");
     expect(friday).toMatchObject({ origin: "day", when: "Friday", icon: "😴", title: "Slept 7h 30m · 8,214 steps", start: -1440 + 1438 });
-    expect(friday?.subtitle).toBe("Slept 7h 30m · 8,214 steps · Morning run · Spent $42");
+    expect(friday?.subtitle).toBe("Slept 7h 30m · 8,214 steps · Morning run");
+    // what went out that day has its own mark, just before the recap, listing every purchase (owner, 2026-11-12)
+    expect(data.items.find((i) => i.id === "spent:2026-11-06")).toMatchObject({
+      origin: "spent",
+      title: "Spent $42 · 1 purchase",
+      subtitle: "Groceries $42",
+      start: -1440 + 1437,
+      when: "Friday",
+    });
     // no recap for a day with nothing in it, and none for today (it isn't over)
     expect(data.items.some((i) => i.id === "day:2026-11-05" || i.id === "day:2026-11-07")).toBe(false);
     // with the Money lock on, the recap says nothing about money
     expect(locked.items.find((i) => i.id === "day:2026-11-06")?.subtitle).toBe("Slept 7h 30m · 8,214 steps · Morning run");
+    expect(locked.items.some((i) => i.origin === "spent" || i.origin === "spend")).toBe(false);
   });
 
   it("puts pinned goals and milestones on the line by their day, with the emoji they were pinned with", async () => {

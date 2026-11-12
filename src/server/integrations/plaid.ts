@@ -274,12 +274,23 @@ type PlaidTxn = {
   iso_currency_code: string | null;
   date: string;
   authorized_date: string | null;
+  /** When it happened, to the minute (ISO 8601), only from banks that say; often null. */
+  authorized_datetime?: string | null;
+  datetime?: string | null;
   name: string;
   merchant_name: string | null;
   pending: boolean;
   pending_transaction_id: string | null;
   personal_finance_category?: { primary: string; detailed: string } | null;
 };
+
+/** When the purchase happened, from the bank's own time (authorized first, then posted); null when it doesn't say. Never guessed. */
+export function purchaseTime(t: Pick<PlaidTxn, "authorized_datetime" | "datetime">): Date | null {
+  const raw = t.authorized_datetime ?? t.datetime;
+  if (!raw) return null;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
 
 /** Plaid's categories → LifeFlow's default category names and transaction kinds. */
 /** Money coming in that's really income: payroll and peer payments, which banks often report as transfers. */
@@ -525,6 +536,7 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
         accountId,
         date: t.date,
         authorizedDate: t.authorized_date,
+        authorizedAt: purchaseTime(t),
         description,
         merchantName,
         amountCents,
@@ -541,6 +553,7 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
           kind: transactions.kind,
           notes: transactions.notes,
           merchantName: transactions.merchantName,
+          authorizedAt: transactions.authorizedAt,
         })
         .from(transactions)
         .where(and(eq(transactions.userId, scope.userId), eq(transactions.providerTransactionId, t.transaction_id)));
@@ -552,6 +565,8 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
             ...values,
             // Keep a name the user (or a tidy-up) already chose; refresh the rest from the bank.
             merchantName: existing.merchantName ?? values.merchantName,
+            // a time the bank gave once stays, if a later update leaves it out
+            authorizedAt: values.authorizedAt ?? existing.authorizedAt,
             categoryId: existing.categoryId ?? values.categoryId,
             kind: existing.categoryId ? existing.kind : values.kind,
           })

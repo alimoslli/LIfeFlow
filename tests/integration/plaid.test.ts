@@ -257,6 +257,37 @@ describe("Plaid", () => {
     expect(syncCalls.map((c) => c.body.cursor)).toEqual([undefined, "c1", "c2"]);
   });
 
+  // owner, 2026-11-12 (docs/backlog/2026-11-12-useful-sky.md): a purchase sits on the timeline at its real time, only when the bank says
+  it("saves the bank's own time of a purchase, keeps it when a later update leaves it out, and never makes one up", async () => {
+    const pages = [
+      {
+        added: [
+          txn("timed", 6.5, { authorized_datetime: "2026-10-20T13:42:00Z", datetime: "2026-10-21T08:00:00Z" }),
+          txn("posted-only", 12, { datetime: "2026-10-20T18:05:00Z" }),
+          txn("untimed", 30),
+        ],
+        modified: [],
+        removed: [],
+        next_cursor: "c1",
+        has_more: false,
+      },
+      { added: [], modified: [txn("timed", 6.5)], removed: [], next_cursor: "c2", has_more: false },
+    ];
+    const fake = fakePlaid({ pages, noInvestments: true });
+    const { user, run, item } = await connected(fake);
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    const at = async () =>
+      Object.fromEntries(
+        (await run((s) => s.tx.select().from(transactions).where(eq(transactions.userId, user.id)))).map((t) => [
+          t.providerTransactionId,
+          t.authorizedAt?.toISOString() ?? null,
+        ]),
+      );
+    expect(await at()).toEqual({ timed: "2026-10-20T13:42:00.000Z", "posted-only": "2026-10-20T18:05:00.000Z", untimed: null });
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    expect((await at()).timed).toBe("2026-10-20T13:42:00.000Z");
+  });
+
   it("marks a connection that needs the user to sign in again, and keeps that status", async () => {
     const good = fakePlaid();
     const { user, run, item } = await connected(good);

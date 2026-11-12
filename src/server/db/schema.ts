@@ -811,6 +811,8 @@ export const transactions = pgTable(
       .references(() => financialAccounts.id, { onDelete: "cascade" }),
     date: date("date", { mode: "string" }).notNull(),
     authorizedDate: date("authorized_date", { mode: "string" }),
+    /** When the purchase happened, to the minute, when the bank says (Plaid's authorized_datetime or datetime). Never guessed. */
+    authorizedAt: tstz("authorized_at"),
     description: text("description").notNull(),
     merchantName: text("merchant_name"),
     amountCents: cents("amount_cents").notNull(),

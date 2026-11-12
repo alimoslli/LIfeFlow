@@ -132,18 +132,20 @@ export function itemColor(it: Pick<ClockItem, "cat" | "origin">): string {
   if (it.origin === "reminder") return "#8fa3bf";
   if (it.origin === "goal" || it.origin === "money_goal") return "#22b866";
   if (it.origin === "milestone") return "#f06292";
-  if (it.origin === "bill" || it.origin === "trial" || it.origin === "pay") return "#0f8f80";
+  if (it.origin === "bill" || it.origin === "trial" || it.origin === "pay" || it.origin === "spend" || it.origin === "spent") return "#0f8f80";
   return "#06b0cc";
 }
 /** A to-do or an assignment still open after its time (or after its day, with no time): it's late, and sits at now. */
 export const isLate = (it: ClockItem, now: number) =>
   (it.origin === "task" || it.origin === "assignment") && !it.done && !it.someday && (it.allDay ? dayOf(it.start) < dayOf(now) : (it.end ?? it.start) < now);
-// Milestones and goals live on the timeline, not on Today's path; to-dos and assignments are done only when you say so.
-const OFF_PATH = ["milestone", "goal", "money_goal"];
+// Milestones, goals and purchases live on the timeline, not on Today's path; to-dos and assignments are done only when you say so.
+const PURCHASES = ["spend", "spent"];
+const OFF_PATH = ["milestone", "goal", "money_goal", ...PURCHASES];
 const STILL_TO_DO = ["task", "assignment", ...OFF_PATH];
-/** Its time has passed and it isn't something still to do: it counts as done (a star). */
+/** Its time has passed and it isn't something still to do: it counts as done (a star). A purchase is never a star. */
 export const isFinished = (it: ClockItem, now: number) =>
-  !!it.done || (!it.someday && !it.allDay && (it.end ?? it.start + 1) <= now && !STILL_TO_DO.includes(it.origin ?? ""));
+  !PURCHASES.includes(it.origin ?? "") &&
+  (!!it.done || (!it.someday && !it.allDay && (it.end ?? it.start + 1) <= now && !STILL_TO_DO.includes(it.origin ?? "")));
 
 /* ---------- the timeline's window (painted by the engine) ---------- */
 export type StripOpts = {

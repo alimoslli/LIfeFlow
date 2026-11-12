@@ -5,7 +5,7 @@ import type { UserScope } from "@/server/db/with-user";
 import { series } from "@/server/db/series";
 import { assignments, habitChecks, habits, healthSamples, promises, tasks } from "@/server/db/schema";
 import { getAgenda, type AgendaItem } from "./calendar";
-import { summarizeCashflow } from "./finance/cashflow";
+import { summarizeCashflow, type CashflowTxn } from "./finance/cashflow";
 import { expectedPay, upcomingBills } from "./finance/forecast";
 import { bankSeries, listGoals } from "./finance/planning";
 import { upcomingTrials } from "./finance/subscriptions";
@@ -233,11 +233,17 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
           amountCents: g.targetCents,
           origin: "money_goal",
         });
+    // by the day it really happened (the bank's own time or date; posted date only when that's all there is), so the
+    // marks, the day's total and "spent today" agree
     const byDay = new Map<string, typeof todays>();
-    for (const t of todays) byDay.set(t.date, [...(byDay.get(t.date) ?? []), t]);
+    for (const t of todays) {
+      const d = purchaseDay(t, tz);
+      byDay.set(d, [...(byDay.get(d) ?? []), t]);
+    }
     spentByDay = new Map([...byDay].map(([d, rows]) => [d, { out: summarizeCashflow(rows).netSpendingCents, in: summarizeCashflow(rows).incomeCents }]));
     const spent = spentByDay.get(today)?.out ?? 0;
     spentTodayCents = spent > 0 ? spent : null;
+    items.push(...purchaseMarks(todays, { tz, today, from, now }));
   }
   items.push(...(await dayRecaps(scope, today, from, spentByDay)));
   items.sort((a, b) => a.start - b.start);
@@ -400,8 +406,8 @@ async function dayRecaps(scope: UserScope, today: string, from: string, money: M
     if (active) facts.push(["🏃", `${Math.round(Number(active))} min active`]);
     const did = checks.filter((c) => c.day === d).map((c) => c.title);
     if (did.length) facts.push(["✅", did.length === 1 ? did[0] : `${did.length} habits`]);
+    // what went out has its own mark beside this one (purchaseMarks); what came in stays here
     const m = money.get(d);
-    if (m && m.out > 0) facts.push(["💸", `Spent ${usd(m.out)}`]);
     if (m && m.in > 0) facts.push(["💵", `${usd(m.in)} came in`]);
     if (!facts.length) continue;
     out.push({
@@ -423,6 +429,91 @@ async function dayRecaps(scope: UserScope, today: string, from: string, money: M
       origin: "day",
       when: formatDateStr(d, "EEEE"),
       done: true,
+    });
+  }
+  return out;
+}
+
+type PurchaseRow = CashflowTxn & {
+  id: string;
+  date: string;
+  authorizedDate: string | null;
+  authorizedAt: Date | null;
+  merchantName: string | null;
+  description: string;
+  categoryName?: string | null;
+};
+
+/** The day a purchase happened: the bank's own time, else its authorized date, else the posted date. */
+export function purchaseDay(t: Pick<PurchaseRow, "date" | "authorizedDate" | "authorizedAt">, tz: string) {
+  return t.authorizedAt ? localDateOf(t.authorizedAt, tz) : (t.authorizedDate ?? t.date);
+}
+
+/** "$6.50", "$42", "$1,240": cents only under $100. */
+function price(cents: number) {
+  const c = Math.abs(cents);
+  return c < 10_000 && c % 100 ? `$${(c / 100).toFixed(2)}` : `$${Math.round(c / 100).toLocaleString("en-US")}`;
+}
+
+/**
+ * Purchases on the line (owner, 2026-11-12: "each purchase on its own but also clearly shows days total"; Money lock open
+ * only): a purchase whose bank gave its time is a mark at that time, with its name and amount; one without a time is never
+ * given one. Every day with spending has one total at its end, listing every purchase; today's sits just before now and
+ * says "so far". Refunds lower the total (as on Money); transfers and excluded rows are left out.
+ */
+export function purchaseMarks(rows: PurchaseRow[], o: { tz: string; today: string; from: string; now: Date }): ClockItem[] {
+  const spend = rows.filter((t) => !t.excluded && t.kind === "expense" && t.amountCents < 0);
+  const name = (t: PurchaseRow, max: number) => (t.merchantName || t.description).slice(0, max);
+  const out: ClockItem[] = [];
+  for (const t of spend) {
+    if (!t.authorizedAt) continue;
+    const day = localDateOf(t.authorizedAt, o.tz);
+    if (day < o.from || day > o.today || t.authorizedAt > o.now) continue;
+    out.push({
+      id: `spend:${t.id}`,
+      kind: "due",
+      cat: "other",
+      icon: "💳",
+      title: name(t, 40),
+      start: wallMinutes(t.authorizedAt, o.tz, o.today),
+      end: null,
+      allDay: false,
+      href: "/finances/transactions",
+      source: "From your bank",
+      subtitle: [t.categoryName, t.pending ? "Pending" : null].filter(Boolean).join(" · ") || null,
+      amountCents: -t.amountCents,
+      origin: "spend",
+    });
+  }
+  const nowMin = wallMinutes(o.now, o.tz, o.today);
+  const byDay = new Map<string, PurchaseRow[]>();
+  for (const t of rows) {
+    if (t.excluded) continue;
+    const d = purchaseDay(t, o.tz);
+    if (d >= o.from && d <= o.today) byDay.set(d, [...(byDay.get(d) ?? []), t]);
+  }
+  for (const [d, dayRows] of byDay) {
+    const total = summarizeCashflow(dayRows).netSpendingCents;
+    const bought = spend.filter((t) => purchaseDay(t, o.tz) === d).sort((a, b) => (a.authorizedAt?.getTime() ?? 0) - (b.authorizedAt?.getTime() ?? 0));
+    if (total <= 0 || !bought.length) continue;
+    const isToday = d === o.today;
+    const list = bought.slice(0, 6).map((t) => `${name(t, 30)} ${price(t.amountCents)}`);
+    if (bought.length > 6) list.push(`and ${bought.length - 6} more`);
+    out.push({
+      id: `spent:${d}`,
+      kind: "due",
+      cat: "other",
+      icon: "💸",
+      title: `Spent ${price(total)}${isToday ? " so far" : ""} · ${bought.length} purchase${bought.length === 1 ? "" : "s"}`,
+      // the end of a past day (just before its recap); today, just before now
+      start: isToday ? Math.max(0, nowMin - 1) : daysBetween(o.today, d) * 1440 + 1437,
+      end: null,
+      allDay: false,
+      href: "/finances/transactions",
+      source: "From your bank",
+      subtitle: list.join(" · "),
+      origin: "spent",
+      when: isToday ? undefined : formatDateStr(d, "EEEE"),
     });
   }
   return out;

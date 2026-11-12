@@ -185,7 +185,15 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   const billOf = (it: ClockItem) => {
     if (it.amountCents == null) return null;
     const m = money(it.amountCents);
-    return it.origin === "pay" ? `${m} expected` : it.origin === "trial" ? `then ${m}` : it.origin === "money_goal" ? `${m} goal` : `${m} due`;
+    return it.origin === "spend"
+      ? m
+      : it.origin === "pay"
+        ? `${m} expected`
+        : it.origin === "trial"
+          ? `then ${m}`
+          : it.origin === "money_goal"
+            ? `${m} goal`
+            : `${m} due`;
   };
   // a day in words from anywhere on the line: "today", "tomorrow", "Wed", "Nov 29", "Apr 7, 2027"
   const dayShort = (d: number) => (dayInfo(d) ? dayName(d) : dayLongOf(d));
@@ -887,13 +895,15 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
           ? "Open the class"
           : href.startsWith("/tasks")
             ? "Open to-dos"
-            : href.startsWith("/finances")
-              ? "Open bills"
-              : href.startsWith("/jarvis")
-                ? "Ask about it"
-                : href.startsWith("/habits")
-                  ? "Open Health"
-                  : "Open";
+            : href.startsWith("/finances/transactions")
+              ? "Open activity"
+              : href.startsWith("/finances")
+                ? "Open bills"
+                : href.startsWith("/jarvis")
+                  ? "Ask about it"
+                  : href.startsWith("/habits")
+                    ? "Open Health"
+                    : "Open";
   const agoOf = (d: number) =>
     d <= 0
       ? "Today"
@@ -945,29 +955,35 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       ? "No day yet. Pin it to a day when you know."
       : it.origin === "day"
         ? "How the day went"
-        : it.origin === "promise"
-          ? it.done
-            ? "You kept it"
-            : `You said you'd do it by ${fmt(it.start)}`
-          : it.done
-            ? `Done at ${fmt(it.start)}`
-            : it.origin === "milestone"
-              ? agoOf(-dayOf(t))
-              : it.origin === "goal" || it.origin === "money_goal"
-                ? `${it.amountCents != null ? `${money(it.amountCents)}, y` : "Y"}our goal by the end of this day`
-                : it.origin === "reminder"
-                  ? `Reminder at ${fmt(it.start)}`
-                  : it.origin === "trial"
-                    ? `Trial ends ${dayWord(dayOf(t))}, then ${money(it.amountCents ?? 0)}`
-                    : billOf(it)
-                      ? `${billOf(it)} ${dayWord(dayOf(t))}`
-                      : it.allDay
-                        ? it.kind === "due"
-                          ? "Due by the end of the day"
-                          : "All day"
-                        : it.end != null
-                          ? `${fmt(it.start)} – ${fmt(it.end)}`
-                          : `Due ${fmt(it.start)}`;
+        : it.origin === "spend"
+          ? `${money(it.amountCents ?? 0)} at ${fmt(it.start)}`
+          : it.origin === "spent"
+            ? dayOf(t) === dayOf(S.now)
+              ? "Every purchase today, so far"
+              : "Every purchase that day"
+            : it.origin === "promise"
+              ? it.done
+                ? "You kept it"
+                : `You said you'd do it by ${fmt(it.start)}`
+              : it.done
+                ? `Done at ${fmt(it.start)}`
+                : it.origin === "milestone"
+                  ? agoOf(-dayOf(t))
+                  : it.origin === "goal" || it.origin === "money_goal"
+                    ? `${it.amountCents != null ? `${money(it.amountCents)}, y` : "Y"}our goal by the end of this day`
+                    : it.origin === "reminder"
+                      ? `Reminder at ${fmt(it.start)}`
+                      : it.origin === "trial"
+                        ? `Trial ends ${dayWord(dayOf(t))}, then ${money(it.amountCents ?? 0)}`
+                        : billOf(it)
+                          ? `${billOf(it)} ${dayWord(dayOf(t))}`
+                          : it.allDay
+                            ? it.kind === "due"
+                              ? "Due by the end of the day"
+                              : "All day"
+                            : it.end != null
+                              ? `${fmt(it.start)} – ${fmt(it.end)}`
+                              : `Due ${fmt(it.start)}`;
     const sub = [it.subtitle, it.source].filter(Boolean).join(" · ");
     const canDo = (it.origin === "task" || it.origin === "reminder" || it.origin === "assignment") && !!it.ref && !it.done;
     const inPlace = it.origin === "event" || it.origin === "shift" || it.origin === "assignment";
