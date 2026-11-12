@@ -270,8 +270,9 @@ const summary = (m: GmailMessage) => ({
 });
 
 /** Gmail search (same syntax as the Gmail search box). */
-export async function searchEmail(scope: UserScope, query: string, max = 10, f: Fetch = fetch) {
-  const q = new URLSearchParams({ q: query, maxResults: String(Math.min(Math.max(max, 1), 25)) });
+/** The most a search returns: 25 for the skyling's own searches; filing's first look asks for its own 50 (`cap`). */
+export async function searchEmail(scope: UserScope, query: string, max = 10, f: Fetch = fetch, cap = 25) {
+  const q = new URLSearchParams({ q: query, maxResults: String(Math.min(Math.max(max, 1), cap)) });
   const list = await api<{ messages?: { id: string }[] }>(scope, `${GMAIL}/messages?${q}`, {}, f);
   const out = [];
   for (const { id } of list.messages ?? []) {

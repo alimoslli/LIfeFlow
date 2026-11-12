@@ -10,6 +10,9 @@ import { AiRefusedError, providerRefusedBeforeWork, reserveAi, subjectFor } from
 import { nameAtStart } from "@/lib/assistant";
 import { monthOpensOn } from "../ai-limits";
 
+/** How a document the limits refused starts its reason: it was kept, not read, and a mailbox look tries it again later. */
+export const NOT_READ_YET = "Saved, but not read";
+
 /**
  * Reads one forwarded email, upload or share (text, PDFs, photos) and returns
  * structured facts. The content is untrusted: it's data to extract from, never
@@ -120,8 +123,8 @@ export async function extractDocument(input: ExtractInput, ctx: AiContext, llm =
     if (!(e instanceof AiRefusedError)) throw e;
     throw new Error(
       e.refusal.scope === "company"
-        ? `Saved, but not read: ${nameAtStart(subject.name)} isn't available right now.`
-        : `Saved, but not read yet: this month's skyling allowance is used up. It opens up again on ${monthOpensOn(subject, new Date())}.`,
+        ? `${NOT_READ_YET}: ${nameAtStart(subject.name)} isn't available right now.`
+        : `${NOT_READ_YET} yet: this month's skyling allowance is used up. It opens up again on ${monthOpensOn(subject, new Date())}.`,
     );
   }
   const base = { userId: ctx.userId, door: ctx.door, parentId: ctx.parentId, feature: "document" as const, provider: "openai", model: llm.model };

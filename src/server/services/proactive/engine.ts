@@ -11,7 +11,7 @@ import { performAction } from "./respond";
 import { fillRegularShifts } from "../work";
 import { listActiveMemories } from "../memory";
 import { attachWaitingReceiptsSafely, runInboxCleanupOnce } from "../inbox/cleanup";
-import { fileFromGmail, gmailFilingOn } from "../inbox/gmail";
+import { emailFilingOn, fileFromGmail } from "../inbox/gmail";
 
 export type Slot = "morning" | "midday" | "evening";
 export type JarvisMessage = typeof jarvisMessages.$inferSelect;
@@ -241,7 +241,7 @@ async function runSlot(scope: UserScope, tz: string, prefs: UserPreferences | un
   // Receipts kept while their bank charge hadn't posted ride along on it once it has. Never blocks the rest.
   await attachWaitingReceiptsSafely(scope, todayIn(tz, now));
   // Mornings, if the user turned it on: file new school, bill and work emails from Gmail. Never blocks the rest.
-  if (slot === "morning" && gmailFilingOn(prefs) && aiAllowed(prefs))
+  if (slot === "morning" && emailFilingOn(prefs, "gmail") && aiAllowed(prefs))
     await fileFromGmail(scope, tz, todayIn(tz, now)).catch((e) => console.error("[gmail filing]", e instanceof Error ? e.name : e));
   return runProactive({ scope, tz, prefs, trigger: slot, now });
 }
