@@ -38,9 +38,9 @@ export const TESTING_LIMITS = {
   voiceCallsPerDay: 2,
   voiceCallsPerMonth: 10,
   voiceCallMinutes: 3,
-  /** Counted limits that apply while model prices aren't set (owner, 2026-11-12, decision 4; adjust from real use). */
+  /** Counted limits that apply while model prices aren't set (owner, 2026-11-12, decision 4; documents raised to 200 so Gmail's reading fits). */
   webSearchesPerMonth: 60,
-  documentsPerMonth: 100,
+  documentsPerMonth: 200,
   tidyRunsPerDay: 10,
 } as const;
 

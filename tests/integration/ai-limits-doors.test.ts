@@ -144,9 +144,9 @@ describe("web search is limited, and a refused search never reaches the provider
 });
 
 describe("documents are limited: saved, not read, and said plainly", () => {
-  it("100 a month while prices aren't set", async () => {
+  it("200 a month while prices aren't set", async () => {
     const u = await makeUser();
-    await fillUp(u.user.id, month(), "docs", 100);
+    await fillUp(u.user.id, month(), "docs", 200);
     const { client, calls } = fakeFetchClient();
     await expect(extractDocument({ text: "x", files: [], today: day() }, { userId: u.user.id, door: "upload" }, { client, model: "m" })).rejects.toThrow(
       /Saved, but not read yet: this month's skyling allowance is used up\. It opens up again on [A-Z][a-z]+ 1\./,
@@ -156,7 +156,7 @@ describe("documents are limited: saved, not read, and said plainly", () => {
 
   it("the inbox row is kept, marked failed, with that reason", async () => {
     const u = await makeUser();
-    await fillUp(u.user.id, month(), "docs", 100);
+    await fillUp(u.user.id, month(), "docs", 200);
     const { client } = fakeFetchClient();
     const row = await u.run((s) =>
       processDocument(s, TZ, day(), { channel: "upload", subject: "Bill", text: "x", files: [] }, (i, ctx) => extractDocument(i, ctx!, { client, model: "m" })),
