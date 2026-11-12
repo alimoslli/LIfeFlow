@@ -2,7 +2,19 @@ import { deleteUserBudgets } from "./ai-budget";
 import { and, count, desc, eq, ilike, inArray, like, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
 import { microsoftConfig } from "../integrations/microsoft";
 import type { Database } from "../db/client";
-import { adminActions, aiBudgets, announcements, appAccess, errorReports, ownerInbox, passkeys, rememberedDevices, sessions, users } from "../db/schema";
+import {
+  adminActions,
+  aiBudgets,
+  aiHolds,
+  announcements,
+  appAccess,
+  errorReports,
+  ownerInbox,
+  passkeys,
+  rememberedDevices,
+  sessions,
+  users,
+} from "../db/schema";
 import { todayIn } from "@/lib/dates";
 import { isAdminEmail, type Admin } from "../auth/admin";
 import { billingConfig, inTestingPhase, TESTING_LIMITS } from "../billing";
@@ -494,6 +506,8 @@ export async function resetLimits(db: Database, actor: Admin, userId: string) {
     if (!u) throw new AdminError("That user no longer exists.");
     if (u.accountKind !== "standard") throw new AdminError("You can't do that to the demo account.");
     const p = periodsFor(u.timezone);
+    // what is set aside for those counters goes too, so a later settle can't push "held" below zero
+    await tx.delete(aiHolds).where(or(like(aiHolds.key, `u:${userId}:${p.day}:%`), like(aiHolds.key, `u:${userId}:${p.month}:%`)));
     await tx.delete(aiBudgets).where(or(like(aiBudgets.key, `u:${userId}:${p.day}:%`), like(aiBudgets.key, `u:${userId}:${p.month}:%`)));
     await log(tx, actor, "reset_limits", { id: u.id, email: u.email });
   });

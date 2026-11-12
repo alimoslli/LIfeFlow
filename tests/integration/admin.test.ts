@@ -244,7 +244,31 @@ describe("AI use, limits and invites", () => {
     expect(typeof all.pricing.dollarsCounting).toBe("boolean");
     expect(all.people.find((p) => p.userId === user.id)).toMatchObject({ email: user.email, messagesMonth: 3 });
 
+    // something still set aside for this person's counters
+    const { aiHolds, aiBudgets } = await import("@/server/db/schema");
+    const { like } = await import("drizzle-orm");
+    await reserveBudget([{ key: `u:${user.id}:${day}:msgs`, kind: "count", amount: 1, limit: null }], 300);
+    expect(
+      (
+        await db()
+          .select()
+          .from(aiHolds)
+          .where(like(aiHolds.key, `u:${user.id}:%`))
+      ).length,
+    ).toBeGreaterThan(0);
     await resetLimits(db(), admin, user.id);
+    expect(
+      await db()
+        .select()
+        .from(aiHolds)
+        .where(like(aiHolds.key, `u:${user.id}:%`)),
+    ).toHaveLength(0);
+    expect(
+      await db()
+        .select()
+        .from(aiBudgets)
+        .where(like(aiBudgets.key, `u:${user.id}:%`)),
+    ).toHaveLength(0);
     expect(await usageFor(db(), user.id)).toMatchObject({ messagesToday: 0, messagesMonth: 0, voiceToday: 0 });
     const [logged] = await db().select().from(adminActions).where(eq(adminActions.targetUserId, user.id));
     expect(logged.action).toBe("reset_limits");
