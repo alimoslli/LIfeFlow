@@ -131,3 +131,41 @@ A student pays $5.99. At 10 answers a day, gpt-5.5 alone costs more than that, s
 ## What changed because of this report
 
 Nothing live. The history trim and the free request-size measurement are on `claude/long-chat-trim`; the token counter and `openai-mini` as a try-out candidate are on `claude/local-models`.
+
+## The paid try-out (2026-11-12, owner's yes through the COO: about $3, stop above $5, one pass)
+
+Same made-up student, the same 20 questions (the 12 eval questions and 8 hard ones) through the real assistant loop (`scripts/compare-models.ts --once`), each model on every question, no retries. Every call was priced from its own `ai_usage` row with the published prices. Raw answers, calls and costs: `docs/backlog/2026-11-12-tryout-results.json`.
+
+**Real total spent: $1.41** ($1.19 gpt-5.5, $0.20 gpt-5.4-mini, $0.0086 for the one-question pilot, $0 for the Groq calls Groq refused). The $5 cap held as a hard stop before every turn.
+
+**gpt-oss-120b was skipped, as agreed:** Groq's free tier refused every request as too large (requests of 8,898 and 14,830 tokens against its 8,000-a-minute limit). It needs the paid Dev tier on the owner's Groq account. Nothing was signed up for.
+
+| Measured | gpt-5.5 | gpt-5.4-mini |
+|---|---|---|
+| Model calls | 45 | 47 |
+| All automatic checks pass | 6 of 20 | 4 of 20 |
+| Facts found by the automatic check | 11 of 20 | 7 of 20 |
+| Right tools | 17 of 20 | 17 of 20 |
+| More tool calls than needed | 4 | 5 |
+| Wrote something it shouldn't | 1 (the integrity case saved a duplicate essay again) | 0 |
+| Errors | 0 | 0 |
+| First word, median / p90 | 2.5 s / 5.3 s | 2.6 s / 6.4 s |
+| Whole answer, median / p90 | 3.7 s / 7.9 s | 3.7 s / 8.6 s |
+| Input tokens (cached share) | 493,050 (63%) | 522,981 (67%) |
+| Output tokens | 4,038 | 9,733 |
+| Cost per question | $0.059 | $0.0099 |
+| Cost per fully passing answer | $0.198 | $0.050 |
+
+**Read with care.** The automatic fact checks are partly out of date: on "afford", "subscriptions", "work" and "hardest" both models miss the same numbers, and their answers quote the current tools' real figures instead ($842.17, −$498, $1,113.37 in bills, 15.5 hours, 8.5 and 7.2 hours). So "facts" undercounts both. Read side by side, the two models answer the same lookups with the same numbers and the same length.
+
+Where they really differ:
+- **gpt-5.4-mini:** one real mistake on the hardest money question. Asked "can I still afford groceries", it said "groceries look fine" from the $842.17 balance, ignoring that this week's bills are larger. It also writes more output tokens.
+- **gpt-5.5:** on the integrity case it refused the essay but saved a duplicate assignment again (the bug in the 2026-11-07 report, still open). On "anything overdue?" its answer was weaker.
+- Both: over the tool budget on money summaries and the multi-part question.
+
+**What it says:**
+- On read-only lookups, gpt-5.4-mini answers as well as gpt-5.5 at about a sixth of the cost, with the same speed. Moving those (what's due, today, hours, last payment, subscriptions, hardest day) to the small model is supported by this run, pending the COO's review.
+- Money reasoning across several facts stays on gpt-5.5, and so does planning.
+- Next, free: refresh the eval's answer checks to today's tool outputs before the next run, so the automatic score is trustworthy.
+- Next, paid: an open model needs a paid Groq tier (owner's account) or another host.
+

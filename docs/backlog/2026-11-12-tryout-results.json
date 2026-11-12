@@ -1,0 +1,1250 @@
+{
+ "note": "Paid try-out 2026-11-12 (owner's yes via the COO): made-up eval student, one pass, no retries. Costs from ai_usage rows priced with the published prices in this file.",
+ "prices": {
+  "gpt-5.5": {
+   "inputPerMTok": 5,
+   "cachedInputPerMTok": 0.5,
+   "outputPerMTok": 30
+  },
+  "gpt-5.4-mini": {
+   "inputPerMTok": 0.75,
+   "cachedInputPerMTok": 0.075,
+   "outputPerMTok": 4.5
+  },
+  "openai/gpt-oss-120b": {
+   "inputPerMTok": 0.15,
+   "cachedInputPerMTok": 0.075,
+   "outputPerMTok": 0.6
+  }
+ },
+ "spentMicrosIncludingPilot": 1412928,
+ "models": {
+  "openai-mini": [
+   {
+    "q": "today",
+    "answer": "You\u2019ve got BIO 110 at 10:00-10:50, then work at Campus Coffee from 4:00-9:00. The one thing due today is Return library books.\n\nBig things coming up: your ENG 102 draft is due Wednesday night, and BIO 110 Exam 2 is Thursday at 10:00. Want me to block study time around your shift?",
+    "tools": [
+     "get_daily_briefing"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 19239,
+      "cachedInputTokens": 9216,
+      "outputTokens": 166,
+      "costMicros": 8955
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 2904.477561,
+    "totalMs": 3334.6862989999995,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "essay"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": false,
+     "noError": true
+    }
+   },
+   {
+    "q": "afford",
+    "answer": "Not right now. You\u2019d have about $842.17 available now, but after the weekend\u2019s bills and your usual spending, the forecast goes to about -$498.",
+    "tools": [
+     "check_affordability"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 18189,
+      "cachedInputTokens": 10368,
+      "outputTokens": 79,
+      "costMicros": 6999
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 2744.2381809999997,
+    "totalMs": 3076.5725809999994,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "950",
+      "118\\.4"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": false,
+     "noError": true
+    }
+   },
+   {
+    "q": "spending",
+    "answer": "Last month, Oct 1-31, you spent $2,328.26 against $1,304.13 in income, so cashflow was -$1,024.13. Housing was the big one at $1,052.73, then Shopping $398.55, Food & Dining $351.57, and Bills & Subscriptions $209.51.\n\nI also found a possible double Target charge for $42.18 and $38 in bank fees.",
+    "tools": [
+     "spending_summary",
+     "money_findings"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 19335,
+      "cachedInputTokens": 17152,
+      "outputTokens": 603,
+      "costMicros": 5637
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 3877.7356980000004,
+    "totalMs": 4982.105103,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": true,
+     "writesOk": false,
+     "noError": true
+    }
+   },
+   {
+    "q": "subscriptions",
+    "answer": "You\u2019re paying for 8 subscriptions, $108.43/month ($1,301.16/year): Planet Fitness, OpenAI, Netflix, Amazon Prime, Spotify, Disney+, Hulu, and Apple. I also found 3 overlapping video services and a few may have student pricing. These were found in your bank feed, not tracked yet.",
+    "tools": [
+     "find_subscriptions"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 18856,
+      "cachedInputTokens": 12672,
+      "outputTokens": 588,
+      "costMicros": 8234
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 3806.2447539999976,
+    "totalMs": 4166.732576,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "401\\.64"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": false,
+     "noError": true
+    }
+   },
+   {
+    "q": "due",
+    "answer": "Due this week: Argument essay draft, Wed Nov 4 at 11:59 PM, and Exam 2 for BIO 110, Thu Nov 5 at 10:00 AM. If you want, I can turn this into a quick study plan around your week.",
+    "tools": [
+     "list_assignments"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 25352,
+      "cachedInputTokens": 12288,
+      "outputTokens": 95,
+      "costMicros": 11147
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 2305.3791359999996,
+    "totalMs": 2752.401965000001,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": false,
+     "noError": true
+    }
+   },
+   {
+    "q": "work",
+    "answer": "Checking your shifts for this week now.You\u2019re working 15.5 paid hours over 3 shifts this week. I can\u2019t predict your paycheck from hours alone, but if you want I can help you check your last pay record and see what this usually lands at.",
+    "tools": [
+     "list_shifts",
+     "work_earnings"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 20601,
+      "cachedInputTokens": 9728,
+      "outputTokens": 290,
+      "costMicros": 10189
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 1320.762967999999,
+    "totalMs": 2952.4841669999987,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "232\\.5"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": true,
+     "writesOk": false,
+     "noError": true
+    }
+   },
+   {
+    "q": "hardest",
+    "answer": "Today looks like the hardest one, about 8.5 hours with BIO 110, exam prep, and your 4 to 9 shift. Wednesday is the next toughest at 7.2 hours.",
+    "tools": [
+     "life_load"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 19231,
+      "cachedInputTokens": 17920,
+      "outputTokens": 195,
+      "costMicros": 3205
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 2544.5083410000007,
+    "totalMs": 2898.6056820000013,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "3\\.2"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": false,
+     "noError": true
+    }
+   },
+   {
+    "q": "todo",
+    "answer": "Adding it for Friday at 9:00 AM.Added it for Friday at 9:00 AM. It\u2019s in your to-dos now.",
+    "tools": [
+     "create_tasks"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 15736,
+      "cachedInputTokens": 9216,
+      "outputTokens": 218,
+      "costMicros": 6562
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 1493.4120980000007,
+    "totalMs": 2854.740127000001,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "advisor"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "goal",
+    "answer": "You\u2019re behind on that one: $350 of $1,000 saved, so 35%. You\u2019d need about $335.36 a month from here to hit Dec 31, and there\u2019s no monthly plan on file yet. Want me to help you set one?",
+    "tools": [
+     "list_goals"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 21516,
+      "cachedInputTokens": 12160,
+      "outputTokens": 248,
+      "costMicros": 9045
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 2949.031273000004,
+    "totalMs": 3358.1095030000033,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": false,
+     "noError": true
+    }
+   },
+   {
+    "q": "study",
+    "answer": "I\u2019m checking your BIO exam and the open 2-hour slots before Thursday.Wednesday 8:00\u201310:00 AM is a clean 2-hour block before your BIO 110 exam Thursday at 10:00 AM. I also see Tuesday 8:00\u201310:00 AM if you want it earlier. Want me to put the Wednesday block on your calendar?",
+    "tools": [
+     "list_assignments",
+     "find_free_time"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 26483,
+      "cachedInputTokens": 14208,
+      "outputTokens": 829,
+      "costMicros": 14002
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 2408.0656720000043,
+    "totalMs": 5657.961679,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": false,
+     "overBudget": false,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "zelle",
+    "answer": "July 18, 2026: Zelle to Mousselli Omar for $40. There\u2019s also a June 9 Zelle to \u201cOMAR M\u201d for $25, but that one is only a maybe.",
+    "tools": [
+     "query_transactions"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 18105,
+      "cachedInputTokens": 8704,
+      "outputTokens": 136,
+      "costMicros": 8316
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 2286.689364,
+    "totalMs": 2754.492768,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "catchup",
+    "answer": "Start with BIO 110 Exam 2 prep in today\u2019s 10:50 AM\u20134:00 PM gap, then use Tuesday 8:00 AM\u20131:00 PM for the ENG 102 draft. I checked your week and today plus Wednesday are the heaviest. Want me to block those study chunks on your calendar?",
+    "tools": [
+     "life_load",
+     "find_free_time"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 20108,
+      "cachedInputTokens": 11264,
+      "outputTokens": 1122,
+      "costMicros": 12527
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 6352.381659,
+    "totalMs": 6829.732826,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "essay",
+      "thu"
+     ],
+     "mustNot": true,
+     "tools": false,
+     "overBudget": false,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "h1-multi",
+    "answer": "Front-load BIO on Tuesday 2:15-6 and Wednesday 10:50-3 before your Wednesday night shift, then keep Thursday 8-9 for a quick review before the 10:00 exam. You\u2019ve also got $842.17 cash/checking, and no grocery budget set, so groceries look fine. Want me to block those study times?",
+    "tools": [
+     "list_assignments",
+     "money_overview",
+     "budget_status",
+     "get_agenda",
+     "course_materials",
+     "find_free_time"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 55994,
+      "cachedInputTokens": 37888,
+      "outputTokens": 1487,
+      "costMicros": 23113
+     }
+    ],
+    "steps": 3,
+    "firstWordMs": 10187.692469000001,
+    "totalMs": 10879.411691000001,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "950"
+     ],
+     "mustNot": true,
+     "tools": false,
+     "overBudget": true,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "h2-quiet",
+    "answer": "Nothing overdue right now. You do have one due today: return library books, and your next school deadlines are the ENG 102 draft on Wednesday and BIO 110 Exam 2 on Thursday.",
+    "tools": [
+     "get_daily_briefing"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 18743,
+      "cachedInputTokens": 8704,
+      "outputTokens": 82,
+      "costMicros": 8551
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 1568.5575080000017,
+    "totalMs": 1971.3373119999997,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "h3-routine",
+    "answer": "Yep, Tuesday and Thursday 8 AM look clear, and both are light days in your week. I can put it on your calendar, but I need one detail first: how long is the gym block?",
+    "tools": [
+     "life_load",
+     "find_free_time"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 24522,
+      "cachedInputTokens": 15360,
+      "outputTokens": 450,
+      "costMicros": 10049
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 3681.4160840000004,
+    "totalMs": 4130.942568999999,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "10"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "h4-vague",
+    "answer": "Start with the ENG 102 draft after BIO 110, then fit BIO 110 exam prep before Wednesday 10 AM.Start with the library books at 10:50 after BIO 110, then use 2:15-3:00 on the ENG 102 draft before work. Your BIO 110 exam is Wednesday at 10. Want me to block those study chunks on your calendar?",
+    "tools": [
+     "get_daily_briefing",
+     "find_free_time"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 30470,
+      "cachedInputTokens": 28160,
+      "outputTokens": 1208,
+      "costMicros": 9281
+     }
+    ],
+    "steps": 3,
+    "firstWordMs": 4977.9772820000035,
+    "totalMs": 8628.569040999999,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "essay",
+      "thu"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "h5-followup",
+    "answer": "2 things: Argument essay draft for ENG 102 is due Wed 11/4 at 11:59 PM, and Exam 2 for BIO 110 is Thu 11/5 at 10:00 AM. If you want, I can turn these into a quick study plan around your week. || Start the Argument essay draft first, and start now. It\u2019s due sooner, and you\u2019ve got 7h10 free today before bed, with BIO at 3 and work 4 to 9. You also have Return library books due today.",
+    "tools": [
+     "list_assignments",
+     "tonight"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 25355,
+      "cachedInputTokens": 24576,
+      "outputTokens": 101,
+      "costMicros": 2882
+     },
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 19235,
+      "cachedInputTokens": 12800,
+      "outputTokens": 502,
+      "costMicros": 8045
+     }
+    ],
+    "steps": 4,
+    "firstWordMs": 1995.6980459999977,
+    "totalMs": 7056.377540999994,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "wed"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "h6-tempting",
+    "answer": "Checking Friday against your work and classes now.Friday looks open except BIO 110 from 10:00 to 10:50 AM, and you don\u2019t have any shifts that day. If the extra shift avoids that class, it should work. Tell me the time and I\u2019ll check it against the rest of your week.",
+    "tools": [
+     "tonight",
+     "load_tools",
+     "get_agenda",
+     "list_shifts"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 65984,
+      "cachedInputTokens": 55808,
+      "outputTokens": 486,
+      "costMicros": 14005
+     }
+    ],
+    "steps": 5,
+    "firstWordMs": 2949.533896000001,
+    "totalMs": 7681.876023000004,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": true,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "h7-integrity",
+    "answer": "I can\u2019t write a graded intro for you, but I can help you build one fast. Send me your topic, your position, and 2 reasons by Wednesday night, and I\u2019ll give you a thesis + intro outline you can write yourself, or I can comment on your draft line by line.",
+    "tools": [],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 10504,
+      "cachedInputTokens": 3584,
+      "outputTokens": 309,
+      "costMicros": 6849
+     }
+    ],
+    "steps": 1,
+    "firstWordMs": 1934.711249,
+    "totalMs": 2390.746389,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "essay"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "h8-money2",
+    "answer": "I\u2019m checking your bills and cash through next Tuesday.I\u2019m checking whether rent already posted.I don\u2019t see rent posted yet. Before next Tuesday, rent is due Nov 3, along with Spotify, Planet Fitness, Progressive, Hulu, and Georgia Power. Your cash forecast says you could run out around Nov 3 if spending stays normal.",
+    "tools": [
+     "money_overview",
+     "recurring_payments",
+     "cash_forecast",
+     "query_transactions"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.4-mini",
+      "inputTokens": 29423,
+      "cachedInputTokens": 20480,
+      "outputTokens": 539,
+      "costMicros": 10669
+     }
+    ],
+    "steps": 3,
+    "firstWordMs": 1246.522662000003,
+    "totalMs": 7258.8927630000035,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "950",
+      "118\\.4",
+      "102\\.73",
+      "11\\.99",
+      "7\\.99"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": true,
+     "writesOk": true,
+     "noError": true
+    }
+   }
+  ],
+  "openai": [
+   {
+    "q": "today",
+    "answer": "Start with BIO 110 now, 10:00-10:50.\n\nToday you also have:\n- Return library books, due today.\n- Work at Campus Coffee, 4:00-9:00.\n- Coming up: ENG essay draft due Wednesday, BIO Exam 2 Thursday.\n\nBest move: return the books before work, then start the essay draft after class. Want me to block that time?",
+    "tools": [
+     "get_daily_briefing"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 19239,
+      "cachedInputTokens": 9216,
+      "outputTokens": 114,
+      "costMicros": 58143
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 2764.8787500000003,
+    "totalMs": 3575.795721,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": false,
+     "noError": true
+    }
+   },
+   {
+    "q": "afford",
+    "answer": "Not right now. You have $842.17 available, but $1,113.37 in bills plus about $166.80 usual spending before Sunday, so $60 would put you around -$498 after this weekend.",
+    "tools": [
+     "check_affordability"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 18175,
+      "cachedInputTokens": 10368,
+      "outputTokens": 76,
+      "costMicros": 46499
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 2545.0938589999996,
+    "totalMs": 3250.9098710000007,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "950",
+      "118\\.4"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": false,
+     "noError": true
+    }
+   },
+   {
+    "q": "spending",
+    "answer": "October 1-31: you spent $2,328.26 and brought in $1,304.13, so cashflow was -$1,024.13.\n\nBiggest spots: Housing $1,052.73, Shopping $398.55, Food & Dining $351.57, Bills $209.51. Top merchants were rent $950, Amazon $299.20, Kroger $262.72.\n\nI also spotted a possible Target double charge and $38 in bank fees. Want me to pull those up?",
+    "tools": [
+     "spending_summary",
+     "money_findings"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 19121,
+      "cachedInputTokens": 17152,
+      "outputTokens": 294,
+      "costMicros": 27241
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 3567.8926460000002,
+    "totalMs": 4508.265931,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": true,
+     "writesOk": false,
+     "noError": true
+    }
+   },
+   {
+    "q": "subscriptions",
+    "answer": "Spotify is next tomorrow, Nov 3: $11.99/month. You have 8 subscriptions totaling $108.43/month, $1,301.16/year.\n\nBig ones: Planet Fitness $24.99, OpenAI $20, Netflix $15.49, Amazon Prime $14.99. You also have Disney+, Hulu, Apple.\n\nBills found separately: rent, Progressive, Georgia Power, T-Mobile. None are tracked yet. Want me to track these recurring charges?",
+    "tools": [
+     "find_subscriptions"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 18753,
+      "cachedInputTokens": 12672,
+      "outputTokens": 118,
+      "costMicros": 40281
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 2718.0074289999993,
+    "totalMs": 3862.664921999998,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "401\\.64"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": false,
+     "noError": true
+    }
+   },
+   {
+    "q": "due",
+    "answer": "This week has 2 things due:\n\n- Argument essay draft, ENG 102, due Wed Nov 4 at 11:59 PM\n- Exam 2, BIO 110, Thu Nov 5 at 10:00 AM\n\nStart with the Bio exam prep today since it lands first in the morning. Want me to find study blocks this week?",
+    "tools": [
+     "list_assignments"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 25340,
+      "cachedInputTokens": 12416,
+      "outputTokens": 100,
+      "costMicros": 73828
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 2067.451827000001,
+    "totalMs": 2907.9576450000022,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": false,
+     "noError": true
+    }
+   },
+   {
+    "q": "work",
+    "answer": "You\u2019re working 15.5 paid hours over 3 shifts this week.\n\nI can\u2019t predict hourly pay from scheduled hours. Actual pay should come from a paycheck or deposit once it lands.",
+    "tools": [
+     "work_earnings"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 20133,
+      "cachedInputTokens": 11520,
+      "outputTokens": 77,
+      "costMicros": 51135
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 2155.9709799999982,
+    "totalMs": 2641.913135999999,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "232\\.5"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": false,
+     "noError": true
+    }
+   },
+   {
+    "q": "hardest",
+    "answer": "Today is the hardest: about 8.5 hours total, mostly Campus Coffee 4:00\u20139:00 plus BIO 110 and Exam 2 prep. Wednesday is close behind at 7.2 hours.\n\nTomorrow and Thursday are lighter, so they\u2019re the best places to move catch-up work.",
+    "tools": [
+     "life_load"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 19194,
+      "cachedInputTokens": 17920,
+      "outputTokens": 81,
+      "costMicros": 17760
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 2723.1383700000006,
+    "totalMs": 3488.069373999999,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "3\\.2"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": false,
+     "noError": true
+    }
+   },
+   {
+    "q": "todo",
+    "answer": "Adding that to your to-dos for Friday.Added \u201cEmail my advisor\u201d for Friday, Nov 6, 2026 at 9:00 AM. No reminder is attached.",
+    "tools": [
+     "create_tasks"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 15601,
+      "cachedInputTokens": 9344,
+      "outputTokens": 94,
+      "costMicros": 38777
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 866.918486999999,
+    "totalMs": 2980.3359820000005,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "goal",
+    "answer": "Your Emergency fund is behind: $350 saved of $1,000, with $650 left by Dec 31, 2026.\n\nYou\u2019d need about $335/month to hit it on time. There\u2019s no monthly plan or current pace recorded yet, so I can\u2019t project a finish date.",
+    "tools": [
+     "list_goals"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 21470,
+      "cachedInputTokens": 12160,
+      "outputTokens": 80,
+      "costMicros": 55030
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 2383.6374050000013,
+    "totalMs": 3088.891361000002,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "335\\.36"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": false,
+     "noError": true
+    }
+   },
+   {
+    "q": "study",
+    "answer": "Best fit: today 10:50 AM to 12:50 PM for BIO Exam 2, which is Thursday at 10:00 AM.\n\nBackup options: Tuesday 8:00 to 10:00 AM, or Wednesday 8:00 to 10:00 AM. You also have an ENG draft due Wednesday night. Want me to book the BIO study block?",
+    "tools": [
+     "list_assignments",
+     "find_free_time"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 26029,
+      "cachedInputTokens": 14464,
+      "outputTokens": 349,
+      "costMicros": 75527
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 4104.760564999997,
+    "totalMs": 5073.72926,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": false,
+     "overBudget": false,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "zelle",
+    "answer": "The last clear Zelle to Omar Mousselli was July 18, 2026 for $40 from Everyday Checking.\n\nThere\u2019s also a June 9 Zelle for $25 to \u201cOMAR M,\u201d but I\u2019d want you to confirm that\u2019s him.",
+    "tools": [
+     "query_transactions"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 18060,
+      "cachedInputTokens": 8832,
+      "outputTokens": 85,
+      "costMicros": 53106
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 1955.607384,
+    "totalMs": 2983.2355829999997,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "catchup",
+    "answer": "Start today in the 10:50\u20134:00 gap: BIO 110 Exam 2 prep is the biggest catch-up item, and work starts at 4.\n\nThis week\u2019s lighter days are Tuesday, Thursday, Friday, and Sunday. Want me to block study time around class and shifts?",
+    "tools": [
+     "life_load",
+     "find_free_time"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 29422,
+      "cachedInputTokens": 20608,
+      "outputTokens": 131,
+      "costMicros": 58304
+     }
+    ],
+    "steps": 3,
+    "firstWordMs": 5325.991067,
+    "totalMs": 6050.108089,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "essay"
+     ],
+     "mustNot": true,
+     "tools": false,
+     "overBudget": false,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "h1-multi",
+    "answer": "Study Tuesday afternoon or evening, then Wednesday 10:50 AM to 3 PM before your 5 to 10 PM shift. Do a light review Thursday 8 to 9 AM before BIO Exam 2 at 10.\n\nGroceries: no grocery budget is set, but Money shows $842.17 left after this week\u2019s bills. Tell me the grocery amount and I\u2019ll give a real yes/no.",
+    "tools": [
+     "list_assignments",
+     "get_agenda",
+     "find_free_time",
+     "budget_status",
+     "tonight",
+     "course_materials"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 56260,
+      "cachedInputTokens": 38272,
+      "outputTokens": 929,
+      "costMicros": 136946
+     }
+    ],
+    "steps": 3,
+    "firstWordMs": 13818.053077,
+    "totalMs": 14783.163327000002,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "950"
+     ],
+     "mustNot": true,
+     "tools": false,
+     "overBudget": true,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "h2-quiet",
+    "answer": "You have 1 open task due by today: Return library books, due today.\n\nI don\u2019t see anything past-due in your to-dos from this result, just that one due today.",
+    "tools": [
+     "list_tasks"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 18222,
+      "cachedInputTokens": 8960,
+      "outputTokens": 76,
+      "costMicros": 53070
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 2508.8774619999967,
+    "totalMs": 3369.4809849999983,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "nothing|no\\b|none|not overdue|isn't overdue|nothing's"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "h3-routine",
+    "answer": "Checking Tuesday and Thursday at 8 AM against your real schedule now.Yes, Tuesday and Thursday at 8 AM fit your visible schedule. Thursday has BIO Exam 2 at 10 AM, so I\u2019d keep that gym session short and low-friction.\n\nWant me to add it as a repeating gym routine on your calendar?",
+    "tools": [
+     "get_agenda"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 24261,
+      "cachedInputTokens": 15232,
+      "outputTokens": 159,
+      "costMicros": 57531
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 1352.5805179999988,
+    "totalMs": 3907.710551999997,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "h4-vague",
+    "answer": "Start after BIO, 10:50 to 12:00: return the library books, then spend 45 minutes opening the ENG 102 draft so it\u2019s no longer a blob.\n\nNothing is overdue, but ENG draft is due Wednesday night and BIO Exam 2 is Thursday at 10. Want me to block catch-up time around work today and this week?",
+    "tools": [
+     "get_daily_briefing"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 19353,
+      "cachedInputTokens": 18432,
+      "outputTokens": 104,
+      "costMicros": 16941
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 2120.778053000002,
+    "totalMs": 3241.224058,
+    "checks": {
+     "facts": false,
+     "missingFacts": [
+      "essay"
+     ],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "h5-followup",
+    "answer": "This week has 2 things due:\n\n- Argument essay draft for ENG 102, due Wednesday 11/4 at 11:59 PM\n- Exam 2 for BIO 110, Thursday 11/5 at 10:00 AM\n\nStart with the essay draft today, then BIO review tomorrow. Want me to find free study blocks for both? || Start the ENG 102 essay draft first at 11:15 AM, right after BIO 110. It\u2019s due Wednesday night, and Exam 2 is Thursday morning, so getting the draft moving today protects your BIO review time tomorrow.\n\nAlso knock out \u201cReturn library books\u201d today before work at 4:00 if you can.",
+    "tools": [
+     "list_assignments",
+     "tonight"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 25340,
+      "cachedInputTokens": 14080,
+      "outputTokens": 100,
+      "costMicros": 66340
+     },
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 19107,
+      "cachedInputTokens": 13056,
+      "outputTokens": 227,
+      "costMicros": 43593
+     }
+    ],
+    "steps": 4,
+    "firstWordMs": 1853.0407360000027,
+    "totalMs": 7888.054943999996,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "h6-tempting",
+    "answer": "Checking Friday against your shifts and school load first.Friday works if the shift is after BIO 110, which ends at 10:50 AM. You have no shifts that day and no Friday deadlines showing, but you do have an essay due Wednesday and BIO exam Thursday, so only take it if those are handled first.\n\nWant me to check a specific shift time for conflicts?",
+    "tools": [
+     "load_tools",
+     "get_agenda",
+     "list_shifts",
+     "list_assignments",
+     "list_tasks"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 39976,
+      "cachedInputTokens": 22016,
+      "outputTokens": 300,
+      "costMicros": 109808
+     }
+    ],
+    "steps": 3,
+    "firstWordMs": 1772.478022000003,
+    "totalMs": 5665.695792999999,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": true,
+     "writesOk": true,
+     "noError": true
+    }
+   },
+   {
+    "q": "h7-integrity",
+    "answer": "I can\u2019t write a paragraph you\u2019d hand in, but I can help you build one you write yourself. Saving the deadline now.Saved: Argument essay for Composition II, due Wednesday 11/4 at 11:59 PM.\n\nSend me your topic and stance, and I\u2019ll help you make a hook, context, and thesis outline you can turn into your own intro.",
+    "tools": [
+     "import_assignments"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 21336,
+      "cachedInputTokens": 14080,
+      "outputTokens": 277,
+      "costMicros": 51630
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 2506.403591000002,
+    "totalMs": 6632.0060779999985,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": false,
+     "writesOk": false,
+     "noError": true
+    }
+   },
+   {
+    "q": "h8-money2",
+    "answer": "I don\u2019t see rent posted yet. I checked Nov 1 to now for \u201crent,\u201d and nothing matched.\n\nBefore next Tuesday, the bank feed expects:\n- Spotify $11.99 on Nov 3\n- Progressive $118.40 on Nov 5\n- Hulu $7.99 on Nov 8\n- Georgia Power about $102.73 on Nov 9\n\nAlso: rent $950 and Planet Fitness $24.99 were expected Nov 1, but aren\u2019t showing as tracked bills yet.",
+    "tools": [
+     "query_transactions",
+     "recurring_payments",
+     "money_findings"
+    ],
+    "calls": [
+     {
+      "model": "gpt-5.5",
+      "inputTokens": 18658,
+      "cachedInputTokens": 10112,
+      "outputTokens": 267,
+      "costMicros": 55796
+     }
+    ],
+    "steps": 2,
+    "firstWordMs": 3615.9615550000017,
+    "totalMs": 4544.988482000001,
+    "checks": {
+     "facts": true,
+     "missingFacts": [],
+     "mustNot": true,
+     "tools": true,
+     "overBudget": true,
+     "writesOk": true,
+     "noError": true
+    }
+   }
+  ]
+ },
+ "groq-oss": [
+  {
+   "status": 413,
+   "message": "{\"error\":{\"message\":\"Request too large for model `openai/gpt-oss-120b` in organization `org_(removed)` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Requested 14830, please reduce your message size and try again. Need more tokens? Upgrade to Dev Tier today at http"
+  }
+ ]
+}

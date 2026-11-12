@@ -94,6 +94,9 @@ async function questions(): Promise<Q[]> {
     todo: ["advisor", "fri|nov 6"],
     goal: ["350", "1000", "335\\.36"],
     study: ["bio", "tue|wed|mon"],
+    // added to the eval after this script (2026-11-12): from their perfect answers
+    zelle: ["jul(y)? 18", "\\b40\\b"],
+    catchup: ["essay", "10:50", "exam", "thu"],
   };
   const altTools: Record<string, string[][]> = { due: [["list_assignments"], ["get_daily_briefing"]] };
   const evalQs: Q[] = EVAL.map((c) => ({
@@ -395,7 +398,8 @@ async function runModel(modelId: string) {
     }
     return out;
   };
-  const NOT_WRITES = new Set(["conversations", "messages", "jarvis_runs", "audit_events", "attachments"]);
+  // bookkeeping every turn writes (ai_usage: the paid-call record, ADR 0035), not something the answer changed
+  const NOT_WRITES = new Set(["conversations", "messages", "jarvis_runs", "audit_events", "attachments", "ai_usage"]);
   const diffCounts = (a: Record<string, string>, b: Record<string, string>) => {
     const d: Record<string, number> = {};
     for (const t of Object.keys(b)) {
