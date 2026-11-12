@@ -9,17 +9,46 @@ import { HttpError } from "./http";
 /**
  * LifeFlow Pro (ADR 0018). Free: everything you enter yourself, Jarvis with a daily
  * limit. Pro: connections (bank, Google), texting and voice, and a much bigger Jarvis allowance (ADR 0035).
- * Until Stripe is configured, nothing is limited, so the owner can test everything.
+ * Until Stripe is configured (or the plans paywall is live), nothing is limited, so the owner can test everything.
  */
 export type BillingConfig = { secretKey: string; webhookSecret: string; priceId: string; appUrl: string };
 
-export function billingConfig(env: Record<string, string | undefined> = process.env): BillingConfig | null {
+type Env = Record<string, string | undefined>;
+
+/** The plans switch: exactly the string "on", nothing else (no trimming, no other spelling). */
+export const plansEnabled = (env: Env = process.env) => env.PLANS_PAYWALL === "on";
+
+/** Only a test-mode secret or restricted key may sell plans. */
+const TEST_KEY = /^(sk|rk)_test_/;
+
+/**
+ * The plans' Stripe setup (switch on, a test-mode key, the webhook secret, the app address and at least one plan price), or null.
+ * Test keys are refused in production (VERCEL_ENV or NODE_ENV) so a Stripe test card can never grant real access there,
+ * unless PLANS_ALLOW_TEST_KEYS_IN_PRODUCTION=yes is set on purpose.
+ */
+export function plansBase(env: Env = process.env): BillingConfig | null {
+  if (!plansEnabled(env)) return null;
   const secretKey = env.STRIPE_SECRET_KEY?.trim();
   const webhookSecret = env.STRIPE_WEBHOOK_SECRET?.trim();
-  // The plans (server/plans.ts) have their own price ids; any one of them also counts as "Stripe is set up".
-  const priceId = (env.STRIPE_PRICE_ID || env.STRIPE_PRICE_STUDENT_OPENAI || env.STRIPE_PRICE_STANDARD_OPENAI || "").trim();
+  const priceId = (env.STRIPE_PRICE_STUDENT_OPENAI || env.STRIPE_PRICE_STANDARD_OPENAI || "").trim();
   const appUrl = env.APP_URL?.trim().replace(/\/$/, "");
-  return secretKey && webhookSecret && priceId && appUrl ? { secretKey, webhookSecret, priceId, appUrl } : null;
+  if (!secretKey || !webhookSecret || !priceId || !appUrl || !TEST_KEY.test(secretKey)) return null;
+  const production = env.VERCEL_ENV === "production" || env.NODE_ENV === "production";
+  if (production && env.PLANS_ALLOW_TEST_KEYS_IN_PRODUCTION !== "yes") return null;
+  return { secretKey, webhookSecret, priceId, appUrl };
+}
+
+/** The one question: is the paywall live? Switch on and the plans' Stripe setup is good. Pages, the door and the lock all ask this. */
+export const paywallActive = (env: Env = process.env) => plansBase(env) !== null;
+
+/** Stripe is set up: the old single-price setup (STRIPE_PRICE_ID, as before) or the plans' setup while the paywall is live. */
+export function billingConfig(env: Env = process.env): BillingConfig | null {
+  const secretKey = env.STRIPE_SECRET_KEY?.trim();
+  const webhookSecret = env.STRIPE_WEBHOOK_SECRET?.trim();
+  const priceId = env.STRIPE_PRICE_ID?.trim();
+  const appUrl = env.APP_URL?.trim().replace(/\/$/, "");
+  if (secretKey && webhookSecret && priceId && appUrl) return { secretKey, webhookSecret, priceId, appUrl };
+  return plansBase(env);
 }
 
 export const FREE_JARVIS_PER_DAY = 15;
@@ -131,6 +160,7 @@ export function checkoutUrl(
   user: { id: string; email: string; stripeCustomerId: string | null },
   fetchImpl?: typeof fetch,
   priceId: string = cfg.priceId,
+  extra: Record<string, string> = {},
 ) {
   return stripe(
     cfg,
@@ -142,6 +172,7 @@ export function checkoutUrl(
       client_reference_id: user.id,
       ...(user.stripeCustomerId ? { customer: user.stripeCustomerId } : { customer_email: user.email }),
       allow_promotion_codes: "true",
+      ...extra,
       success_url: `${cfg.appUrl}/settings/plan?upgraded=1`,
       cancel_url: `${cfg.appUrl}/settings/plan`,
     },

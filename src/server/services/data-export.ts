@@ -73,6 +73,7 @@ export const NOT_EXPORTED: Record<string, string> = {
   oauth_identities: "Apple and Google sign-in links (provider account ids)",
   password_resets: "password reset links (hashes)",
   login_challenges: "two-step sign-in in progress",
+  student_verifications: "a student address they confirmed for the student price, kept encrypted with the date; kept with the account, not exported",
   email_confirmations: "a keyed hash of the 6-digit code emailed to confirm their email, kept up to 10 minutes; a one-time code, not exported",
   waitlist_referrals:
     "rows tying an inviter to a friend's one-way keyed email hash, kept so one email can't count twice; what applies to the person (place, invite code, dates, whether they joined through a link, how many friends counted) is in the profile",

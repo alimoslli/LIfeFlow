@@ -2162,3 +2162,22 @@ export const hqBriefs = pgTable(
   },
   (t) => [index("hq_briefs_created_idx").on(t.createdAt)],
 );
+
+/**
+ * The student price needs a verified student address (owner, 2026-11-12). One row per person: the address they typed (encrypted),
+ * a keyed hash of the 6-digit code sent there (same rules as email_confirmations: 10 minutes, 5 tries, single use), when it was
+ * confirmed and when a checkout used it. A confirmed row is spent by exactly one checkout (`used_at`), so each student payment asks
+ * for a fresh code. Account data like `email_confirmations`: no RLS, column `account_id`, reached only through services.
+ */
+export const studentVerifications = pgTable("student_verifications", {
+  userId: uuid("account_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  email: sealedText("email").notNull(),
+  codeHash: text("code_hash").notNull(),
+  expiresAt: tstz("expires_at").notNull(),
+  attempts: integer("attempts").notNull().default(0),
+  verifiedAt: tstz("verified_at"),
+  usedAt: tstz("used_at"),
+  createdAt: createdAt(),
+});

@@ -38,6 +38,7 @@ const LOOKED_UP_BEFORE_SIGN_IN = new Set([
 // Reviewed here with the reason. `waitlist_fingerprints` has no foreign key (it keeps only a one-way hash), so it isn't found by this guard.
 const POINTS_AT_USER_BY_OTHER_NAME: Record<string, string> = {
   email_confirmations: "account data: the hashed confirm code, read before and after sign-in (like login_challenges); only email-confirm.ts reaches it",
+  student_verifications: "account data: the hashed student-email code and the confirmed address (encrypted), only email-confirm.ts and plans.ts reach it",
   waitlist_referrals: "account data: who invited whom for the waitlist (keyed email hash), read by the queue services before and after sign-in",
   owner_inbox: "owner operations data behind requireAdmin; written by sendFeedback, never read in a user's scope",
   admin_actions: "the owner's log of admin actions behind requireAdmin; names the admin, not user content",

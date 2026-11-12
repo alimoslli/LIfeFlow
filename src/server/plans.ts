@@ -1,8 +1,9 @@
 import type { SessionUser } from "./auth/sessions";
-import { eq } from "drizzle-orm";
-import { billingConfig, checkoutUrl, type BillingConfig } from "./billing";
+import { and, eq, gt, isNotNull, isNull } from "drizzle-orm";
+import { checkoutUrl, paywallActive, plansBase, plansEnabled, type BillingConfig } from "./billing";
 import type { Database } from "./db/client";
-import { users } from "./db/schema";
+import { studentVerifications, users } from "./db/schema";
+import { STUDENT_VERIFIED_MS } from "./services/email-confirm";
 import { HttpError } from "./http";
 
 /**
@@ -10,7 +11,10 @@ import { HttpError } from "./http";
  * PLANS_PAYWALL=on is set. Off means nothing is sold, no price is shown to a user and no checkout answers.
  * The paywall goes live only with the App Store launch, after the owner's yes on the pictures.
  */
-export const plansEnabled = (env: Record<string, string | undefined> = process.env) => env.PLANS_PAYWALL?.trim().toLowerCase() === "on";
+export { paywallActive, plansEnabled };
+
+export const STUDENT_NOT_VERIFIED = "Confirm your student email first.";
+export const ALREADY_ON_A_PLAN = "You already have a plan. Use Manage or cancel to change it.";
 
 export type PlanKey = "student_own" | "student_openai" | "standard_own" | "standard_openai";
 export type Audience = "student" | "standard";
@@ -77,9 +81,8 @@ const PRICE_ENV: Record<PlanKey, string> = {
  * null, so live prices cannot be sold through this path and test and live stay apart.
  */
 export function plansConfig(env: Record<string, string | undefined> = process.env): PlansConfig | null {
-  if (!plansEnabled(env)) return null;
-  const base = billingConfig(env);
-  if (!base || !/^(sk|rk)_test_/.test(base.secretKey)) return null;
+  const base = plansBase(env);
+  if (!base) return null;
   const prices = Object.fromEntries((Object.keys(PRICE_ENV) as PlanKey[]).map((k) => [k, env[PRICE_ENV[k]]?.trim() || undefined])) as PlansConfig["prices"];
   return { ...base, prices };
 }
@@ -103,8 +106,39 @@ export async function startPlanCheckout(
 ): Promise<string> {
   const cfg = opts.cfg === undefined ? plansConfig() : opts.cfg;
   if (!cfg) throw new HttpError(404, "Not found");
+  const [row] = await db.select({ stripeCustomerId: users.stripeCustomerId, plan: users.plan }).from(users).where(eq(users.id, user.id));
+  // Never a second subscription for someone who already has one, whatever plan is posted.
+  if (row?.plan === "pro") throw new HttpError(409, ALREADY_ON_A_PLAN);
   const priceId = priceIdFor(cfg, audienceFor(user), key);
   if (!priceId) throw new HttpError(400, "That plan isn't available.");
-  const [row] = await db.select({ stripeCustomerId: users.stripeCustomerId }).from(users).where(eq(users.id, user.id));
-  return checkoutUrl(cfg, { id: user.id, email: user.email, stripeCustomerId: row?.stripeCustomerId ?? null }, opts.fetchImpl, priceId);
+  const customer = { id: user.id, email: user.email, stripeCustomerId: row?.stripeCustomerId ?? null };
+  if (!key.startsWith("student_")) return checkoutUrl(cfg, customer, opts.fetchImpl, priceId);
+  // The student price needs a student address confirmed with a code, spent by this one checkout (so each student payment asks for a
+  // fresh code). Stripe's automatic renewals don't ask again: no person is paying then, and the plan page says so.
+  const now = new Date();
+  const [claimed] = await db
+    .update(studentVerifications)
+    .set({ usedAt: now })
+    .where(
+      and(
+        eq(studentVerifications.userId, user.id),
+        isNotNull(studentVerifications.verifiedAt),
+        isNull(studentVerifications.usedAt),
+        gt(studentVerifications.verifiedAt, new Date(now.getTime() - STUDENT_VERIFIED_MS)),
+      ),
+    )
+    .returning({ verifiedAt: studentVerifications.verifiedAt });
+  if (!claimed) throw new HttpError(403, STUDENT_NOT_VERIFIED);
+  try {
+    // The confirmation's date travels with the checkout, so the payment is bound to the code that allowed it (never the address).
+    const stamp = claimed.verifiedAt!.toISOString();
+    return await checkoutUrl(cfg, customer, opts.fetchImpl, priceId, {
+      "metadata[student_verified_at]": stamp,
+      "subscription_data[metadata][student_verified_at]": stamp,
+    });
+  } catch (e) {
+    // Nothing was started, so the confirmed code is not used up.
+    await db.update(studentVerifications).set({ usedAt: null }).where(eq(studentVerifications.userId, user.id));
+    throw e;
+  }
 }

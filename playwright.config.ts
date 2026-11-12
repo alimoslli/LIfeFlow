@@ -50,6 +50,7 @@ export default defineConfig({
         ADMIN_EMAILS: "admin-owner@example.com",
         // The plans switch is off unless a run turns it on (E2E_PLANS=on: tests/e2e/plans.spec.ts, test-mode made-up Stripe keys, never reachable).
         PLANS_PAYWALL: process.env.E2E_PLANS === "on" ? "on" : "",
+        PLANS_ALLOW_TEST_KEYS_IN_PRODUCTION: "yes", // the e2e server runs a production build with made-up test keys
         ...(process.env.E2E_PLANS === "on"
           ? {
               STRIPE_SECRET_KEY: "sk_test_e2e_made_up",

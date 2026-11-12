@@ -2,7 +2,7 @@ import { randomInt, timingSafeEqual } from "node:crypto";
 import { and, eq, lt, sql } from "drizzle-orm";
 import { keyedHash } from "../crypto";
 import type { Database } from "../db/client";
-import { emailConfirmations, users } from "../db/schema";
+import { emailConfirmations, studentVerifications, users } from "../db/schema";
 import { emailConfig, sendEmail, type EmailConfig } from "../integrations/email";
 import { rateLimit } from "../rate-limit";
 import { verifyEmail, type VerifyResult } from "./referrals";
@@ -23,7 +23,7 @@ export const CONFIRM_SENDS_PER_HOUR = 3;
 // limits above are the guard, and sign-up keeps its own per-network limit.
 
 // Keyed (HMAC under a key derived from ENCRYPTION_KEY, its own label), so a stolen table can't be run against all million codes.
-const codeHash = (userId: string, code: string) => keyedHash("email-confirm-code", `${userId}:${code}`);
+const codeHash = (userId: string, code: string, label = "email-confirm-code") => keyedHash(label, `${userId}:${code}`);
 const same = (a: string, b: string) => {
   const x = Buffer.from(a, "hex");
   const y = Buffer.from(b, "hex");
@@ -119,4 +119,112 @@ export async function confirmEmailCode(db: Database, userId: string, code: strin
 export async function purgeExpiredConfirmCodes(db: Database): Promise<number> {
   const gone = await db.delete(emailConfirmations).where(lt(emailConfirmations.expiresAt, new Date())).returning({ id: emailConfirmations.userId });
   return gone.length;
+}
+
+/**
+ * The student price (owner, 2026-11-12): the same code rules as above (keyed hash bound to the person, single use, 10 minutes,
+ * 5 tries, 3 sends an hour, sent only with the provider's id) but to ANY student address the person types, kept apart from the
+ * account's own confirmation. The address is stored encrypted and never returned in full or put in a log or an error.
+ * Each student payment needs its own fresh code (plans.ts `startPlanCheckout` spends it); Stripe's automatic renewals
+ * don't ask again, because no person is paying then.
+ */
+/** A confirmed student code can start a checkout for this long, then a fresh one is needed. */
+export const STUDENT_VERIFIED_MS = 30 * 60_000;
+const studentHash = (userId: string, code: string) => codeHash(userId, code, "student-verify-code");
+const ADDRESS = /^[^\s@<>"',;]{1,64}@[^\s@<>"',;]{1,190}\.[^\s@<>"',;]{2,}$/;
+
+/** "ab***@school.edu": enough to recognise it, never the whole address. */
+export const maskAddress = (email: string) => {
+  const [local = "", domain = ""] = email.split("@");
+  return `${local.slice(0, 2)}***@${domain}`;
+};
+
+export type StudentSendResult = { ok: true; id: string } | { ok: false; reason: "invalid" | "unavailable" | "too_many" | "failed" };
+
+export async function sendStudentCode(
+  db: Database,
+  userId: string,
+  address: string,
+  deps: { send?: SendEmailFn; config?: EmailConfig | null; now?: number; code?: () => string } = {},
+): Promise<StudentSendResult> {
+  const cfg = deps.config === undefined ? emailConfig() : deps.config;
+  if (!cfg) return { ok: false, reason: "unavailable" };
+  const email = address.trim().toLowerCase();
+  if (email.length > 254 || !ADDRESS.test(email)) return { ok: false, reason: "invalid" };
+  if (!(await rateLimit(db, `student-verify:send:user:${userId}`, CONFIRM_SENDS_PER_HOUR, 3600)).allowed) return { ok: false, reason: "too_many" };
+  const code = deps.code?.() ?? String(randomInt(0, 1_000_000)).padStart(6, "0");
+  const now = deps.now ?? Date.now();
+  const row = {
+    email,
+    codeHash: studentHash(userId, code),
+    expiresAt: new Date(now + CONFIRM_CODE_TTL_MS),
+    attempts: 0,
+    verifiedAt: null,
+    usedAt: null,
+    createdAt: new Date(now),
+  };
+  try {
+    const sent = await (deps.send ?? sendEmail)(cfg, {
+      to: email,
+      subject: `${code} is your LifeFlow student code`,
+      text: `Your LifeFlow student code is ${code}.\n\nIt works once, for 10 minutes. If you didn't ask for it, you can ignore this email.`,
+      html: `<p>Your LifeFlow student code is</p><p style="font-size:28px;font-weight:600;letter-spacing:4px">${code}</p><p>It works once, for 10 minutes. If you didn't ask for it, you can ignore this email.</p>`,
+    });
+    if (!sent.id) throw new Error("no id");
+    await db
+      .insert(studentVerifications)
+      .values({ userId, ...row })
+      .onConflictDoUpdate({ target: studentVerifications.userId, set: row });
+    return { ok: true, id: sent.id };
+  } catch {
+    return { ok: false, reason: "failed" };
+  }
+}
+
+export type StudentConfirmResult = { ok: true } | { ok: false; reason: "wrong" | "expired" | "none" | "locked" | "too_many" };
+
+/** Checks the student code. A right one stamps `verified_at` once (the code can't be used again); a wrong, expired or missing one grants nothing. */
+export async function confirmStudentCode(db: Database, userId: string, code: string, now = Date.now()): Promise<StudentConfirmResult> {
+  if (!(await rateLimit(db, `student-verify:try:user:${userId}`, CONFIRM_TRIES_PER_DAY, 86400)).allowed) return { ok: false, reason: "too_many" };
+  const typed = code.replace(/\s/g, "");
+  return db.transaction(async (tx) => {
+    const [c] = await tx
+      .update(studentVerifications)
+      .set({ attempts: sql`${studentVerifications.attempts} + 1` })
+      .where(eq(studentVerifications.userId, userId))
+      .returning();
+    // Nothing waiting, or already confirmed (a used code): it didn't work.
+    if (!c || c.verifiedAt) return { ok: false, reason: "none" } as const;
+    if (c.expiresAt.getTime() < now) {
+      await tx.delete(studentVerifications).where(eq(studentVerifications.userId, userId));
+      return { ok: false, reason: "expired" } as const;
+    }
+    if (c.attempts > CONFIRM_MAX_ATTEMPTS) {
+      await tx.delete(studentVerifications).where(eq(studentVerifications.userId, userId));
+      return { ok: false, reason: "locked" } as const;
+    }
+    if (!(/^\d{6}$/.test(typed) && same(studentHash(userId, typed), c.codeHash))) {
+      if (c.attempts >= CONFIRM_MAX_ATTEMPTS) {
+        await tx.delete(studentVerifications).where(eq(studentVerifications.userId, userId));
+        return { ok: false, reason: "locked" } as const;
+      }
+      return { ok: false, reason: "wrong" } as const;
+    }
+    const taken = await tx
+      .update(studentVerifications)
+      .set({ verifiedAt: new Date(now), codeHash: "" })
+      .where(and(eq(studentVerifications.userId, userId), eq(studentVerifications.codeHash, c.codeHash), sql`${studentVerifications.verifiedAt} is null`))
+      .returning({ id: studentVerifications.userId });
+    return taken.length ? ({ ok: true } as const) : ({ ok: false, reason: "none" } as const);
+  });
+}
+
+/** What the plan page may show: nothing, a code is waiting for a masked address, or confirmed and ready for one checkout. */
+export async function studentVerificationState(db: Database, userId: string, now = Date.now()) {
+  const [c] = await db.select().from(studentVerifications).where(eq(studentVerifications.userId, userId));
+  if (!c || c.usedAt) return { step: "none" as const };
+  if (c.verifiedAt)
+    return c.verifiedAt.getTime() + STUDENT_VERIFIED_MS < now ? { step: "none" as const } : { step: "verified" as const, masked: maskAddress(c.email) };
+  if (c.expiresAt.getTime() < now) return { step: "none" as const };
+  return { step: "sent" as const, masked: maskAddress(c.email) };
 }

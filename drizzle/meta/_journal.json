@@ -442,6 +442,13 @@
       "when": 1798600000000,
       "tag": "0067_ai_budgets",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1798700000000,
+      "tag": "0068_student_verifications",
+      "breakpoints": true
     }
   ]
 }

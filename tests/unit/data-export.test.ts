@@ -62,7 +62,7 @@ describe("Download my data", () => {
   });
 
   it("keeps the exclusion list short and real: each entry is a user table that isn't also exported", () => {
-    expect(Object.keys(NOT_EXPORTED).length).toBeLessThanOrEqual(16);
+    expect(Object.keys(NOT_EXPORTED).length).toBeLessThanOrEqual(17);
     for (const [name, reason] of Object.entries(NOT_EXPORTED)) {
       expect(userTables, name).toContain(name);
       expect(exported.has(name), name).toBe(false);

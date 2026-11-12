@@ -1,4 +1,4 @@
-import { plansEnabled } from "@/server/plans";
+import { paywallActive } from "@/server/plans";
 import { after } from "next/server";
 import { z } from "zod";
 import { getSessionUser } from "@/server/auth/current-user";
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     if (!isPro(user) && !(await rateLimit(getDb(), `jarvis:free:${user.id}`, FREE_JARVIS_PER_DAY, 86_400)).allowed)
       throw new HttpError(
         402,
-        plansEnabled()
+        paywallActive()
           ? `You've used today's ${FREE_JARVIS_PER_DAY} free messages. A plan has a much bigger daily allowance (Settings → Plan).`
           : `You've used today's ${FREE_JARVIS_PER_DAY} free messages. They come back tomorrow.`,
       );

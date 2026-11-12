@@ -34,6 +34,9 @@ test.describe("plans: switch on", () => {
     const options = page.getByTestId("plan-options");
     await expect(options).toContainText("$9.99 a month");
     await expect(options).not.toContainText("$14.99");
+    // the student price asks for a student email first: no Choose button until a code is confirmed
+    await expect(page.getByTestId("student-verify")).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Choose/ })).toHaveCount(0);
     await expect(page.locator("body")).toContainText("15 messages with your skyling a day");
     await expect(page.locator("body")).not.toContainText(/assistant|companion|jarvis/i);
     for (const b of await page.getByRole("button", { name: /^Choose/ }).all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
@@ -44,6 +47,7 @@ test.describe("plans: switch on", () => {
     await as(page, "working");
     await page.goto("/settings/plan");
     await expect(page.getByTestId("plan-options")).toContainText("$14.99 a month");
+    await expect(page.getByTestId("student-verify")).toHaveCount(0);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `standard-${test.info().project.name}.png`), fullPage: true });
   });
 });

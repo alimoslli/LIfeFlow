@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/surface";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { requireUser } from "@/server/auth/current-user";
-import { billingConfig, FREE_JARVIS_PER_DAY, isPro } from "@/server/billing";
-import { audienceFor, planOptions, plansEnabled } from "@/server/plans";
+import { FREE_JARVIS_PER_DAY, isPro } from "@/server/billing";
+import { audienceFor, paywallActive, planOptions } from "@/server/plans";
 import { SettingsHeader } from "../settings-header";
-import { choosePlanAction, manageBillingAction } from "./actions";
+import { Input } from "@/components/ui/field";
+import { studentVerificationState } from "@/server/services/email-confirm";
+import { getDb } from "@/server/db/client";
+import { choosePlanAction, confirmStudentCodeAction, manageBillingAction, sendStudentCodeAction } from "./actions";
 
 export const metadata: Metadata = { title: "Plan" };
 
@@ -20,13 +23,27 @@ const INCLUDED = [
   "Talk to your skyling by voice",
 ];
 
+const STUDENT_NOTES: Record<string, string> = {
+  sent: "Code sent. It works once, for 10 minutes.",
+  verified: "Student email confirmed. Choose your plan below.",
+  invalid: "That doesn't look like an email address.",
+  unavailable: "Email codes aren't available yet.",
+  too_many: "We've sent a few codes already. Use the newest one, or try again in an hour.",
+  failed: "We couldn't send the email just now. Try again in a minute.",
+  wrong: "That code didn't match. Try again.",
+  expired: "That code ran out. Send a new one.",
+  none: "That code didn't work. Send a new one.",
+  locked: "Too many tries. Send a new code.",
+};
+
 /** The plan picker and paywall. Not there at all (a 404) while the plans switch is off. Payments and cancelling happen on Stripe's pages. */
-export default async function PlanPage({ searchParams }: { searchParams: Promise<{ upgraded?: string; need?: string }> }) {
-  if (!plansEnabled() || !billingConfig()) notFound();
+export default async function PlanPage({ searchParams }: { searchParams: Promise<{ upgraded?: string; need?: string; problem?: string; student?: string }> }) {
+  if (!paywallActive()) notFound();
   const sp = await searchParams;
   const u = await requireUser();
   const pro = isPro(u);
   const options = planOptions(audienceFor(u));
+  const student = options.some((o) => o.key.startsWith("student_")) && !pro ? await studentVerificationState(getDb(), u.id) : null;
   // Inside the App Store app, subscriptions must go through Apple, so the web checkout isn't offered there.
   const inApp = ((await headers()).get("user-agent") ?? "").includes("LifeFlowApp");
   return (
@@ -35,6 +52,10 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       {sp.upgraded && !pro && (
         <p className="rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem]">Payment received. Your plan turns on in a moment; refresh if it doesn&apos;t.</p>
       )}
+      {sp.problem && (
+        <p className="rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem]">That didn&apos;t go through. Nothing was charged. Try again in a bit.</p>
+      )}
+      {sp.student && STUDENT_NOTES[sp.student] && <p className="rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem]">{STUDENT_NOTES[sp.student]}</p>}
       {sp.need && !pro && <p className="rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem]">Connecting your accounts is part of a plan.</p>}
       <Card className="p-5">
         <p className="text-[0.8125rem] text-muted">Your plan</p>
@@ -69,12 +90,43 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
                 <p className="font-display text-[1.375rem] leading-tight font-medium">{o.title}</p>
                 <p className="text-[0.9375rem] text-text-2">{o.blurb}</p>
                 <p className="text-[1.5rem] font-medium">{o.priceLabel}</p>
-                <form action={choosePlanAction}>
-                  <input type="hidden" name="plan" value={o.key} />
-                  <Button type="submit" className="min-h-11 w-full">
-                    Choose {o.title}
-                  </Button>
-                </form>
+                {o.key.startsWith("student_") && student?.step !== "verified" ? (
+                  <div className="flex flex-col gap-3" data-testid="student-verify">
+                    <p className="text-[0.9375rem] text-text-2">
+                      The student price needs a student email. We send a code to it each time you pay. Renewals don&apos;t ask again.
+                    </p>
+                    <form action={sendStudentCodeAction} className="flex flex-col gap-2">
+                      <Input name="email" type="email" required autoComplete="off" placeholder="Your school email" aria-label="Your school email" />
+                      <Button type="submit" className="min-h-11 w-full">
+                        {student?.step === "sent" ? "Send a new code" : "Send code"}
+                      </Button>
+                    </form>
+                    {student?.step === "sent" && (
+                      <form action={confirmStudentCodeAction} className="flex flex-col gap-2">
+                        <p className="text-[0.8125rem] text-muted">Sent to {student.masked}</p>
+                        <Input
+                          name="code"
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
+                          maxLength={6}
+                          required
+                          placeholder="6-digit code"
+                          aria-label="6-digit code"
+                        />
+                        <Button type="submit" className="min-h-11 w-full">
+                          Confirm code
+                        </Button>
+                      </form>
+                    )}
+                  </div>
+                ) : (
+                  <form action={choosePlanAction}>
+                    <input type="hidden" name="plan" value={o.key} />
+                    <Button type="submit" className="min-h-11 w-full">
+                      Choose {o.title}
+                    </Button>
+                  </form>
+                )}
               </Card>
             ))}
           </div>
