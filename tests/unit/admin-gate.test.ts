@@ -31,11 +31,10 @@ describe("admin gate", () => {
       [
         "src/app/(auth)/actions.ts",
         "src/app/(app)/settings/doors-data.ts",
-        "src/app/api/jarvis/chat/route.ts",
-        "src/app/api/jarvis/voice/session/route.ts",
         "src/server/auth/admin.ts",
         "src/server/auth/oauth.ts",
         "src/server/auth/require-admin.ts",
+        "src/server/services/ai-gate.ts",
       ].sort(),
     );
   });

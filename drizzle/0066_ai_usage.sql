@@ -1,4 +1,4 @@
--- One usage record for every paid AI use (ADR 0034). Numbers only, never content. Safe to re-run.
+-- One usage record for every paid AI use (ADR 0035). Numbers only, never content. Safe to re-run.
 CREATE TABLE IF NOT EXISTS "ai_usage" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS "ai_usage" (
 	"steps" integer,
 	"usage_from" text,
 	"cost_micros" bigint,
-	"price_key" text,
+	"priced_with" text,
 	"counted_micros" bigint
 );
 --> statement-breakpoint

@@ -3,10 +3,11 @@ import type { Database } from "../db/client";
 import { getDb } from "../db/client";
 import { aiUsage, type AiFeature, type AiState, type AiUsageFrom } from "../db/schema";
 import { withUser, type UserScope } from "../db/with-user";
+import { settleBudget } from "./ai-budget";
 import type { TokenUsage } from "../jarvis/providers/types";
 
 /**
- * The one record of paid AI use (ADR 0034). Every paid call writes a row through here: a chat or text turn, a voice call,
+ * The one record of paid AI use (ADR 0035). Every paid call writes a row through here: a chat or text turn, a voice call,
  * a web search, a document read, a tidying batch. Numbers only, never content. Cost is empty when unknown, never 0.
  */
 
@@ -164,8 +165,13 @@ export async function settleVoiceUsage(
           outputTokens: reported ? (browser.outputTokens ?? null) : null,
         })
         .where(eq(aiUsage.id, held.id));
-      return { id: held.id, seconds };
+      return { id: held.id, seconds, holdId: held.holdId };
     },
     db,
-  );
+  ).then(async (done) => {
+    // The minutes really used (our clock) replace what was set aside. A hold that already expired was counted in full and stays so.
+    if (done?.holdId)
+      await settleBudget(done.holdId, { seconds: done.seconds }, db).catch((e) => console.error("[ai-budget] settle", e instanceof Error ? e.name : typeof e));
+    return done && { id: done.id, seconds: done.seconds };
+  });
 }

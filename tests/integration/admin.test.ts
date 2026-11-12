@@ -227,13 +227,16 @@ describe("AI use, limits and invites", () => {
   it("reads each person's testing-limit counters and resets them, logged", async () => {
     const { admin } = await makeAdmin();
     const { user } = await makeUser("Heavy user");
-    const { rateLimit } = await import("@/server/rate-limit");
-    const { LIMIT_MONTH_SECONDS } = await import("@/server/billing");
-    for (let i = 0; i < 3; i++) {
-      await rateLimit(db(), `jarvis:testing:${user.id}`, 30, 86_400);
-      await rateLimit(db(), `jarvis:testing-month:${user.id}`, 300, LIMIT_MONTH_SECONDS);
-    }
-    await rateLimit(db(), `voice:testing:${user.id}`, 2, 86_400);
+    const { reserveBudget, settleBudget } = await import("@/server/services/ai-budget");
+    const { todayIn } = await import("@/lib/dates");
+    const day = todayIn(user.timezone);
+    const use = async (period: string, what: string, amount: number) => {
+      const r = await reserveBudget([{ key: `u:${user.id}:${period}:${what}`, kind: "count", amount, limit: null }], 60);
+      if (r.ok && r.holdId) await settleBudget(r.holdId);
+    };
+    await use(day, "msgs", 3);
+    await use(day.slice(0, 7), "msgs", 3);
+    await use(day, "vcalls", 1);
     const { usage, usageFor, resetLimits } = await import("@/server/services/admin");
     expect(await usageFor(db(), user.id)).toMatchObject({ messagesToday: 3, messagesMonth: 3, voiceToday: 1, voiceMonth: 0 });
     const all = await usage(db());

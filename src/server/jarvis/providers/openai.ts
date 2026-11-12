@@ -105,6 +105,7 @@ export class OpenAIProvider implements ModelProvider {
     effort,
     verbosity,
     signal,
+    maxOutputTokens,
   }: {
     system: string;
     history: ChatItem[];
@@ -113,6 +114,7 @@ export class OpenAIProvider implements ModelProvider {
     effort?: TurnEffort;
     verbosity?: ReplyVerbosity;
     signal?: AbortSignal;
+    maxOutputTokens?: number;
   }): ModelTurn {
     const input: ResponseInputItem[] = toResponsesInput(history);
     let toolDefs = toToolDefs(tools);
@@ -135,6 +137,7 @@ export class OpenAIProvider implements ModelProvider {
         parallel_tool_calls: true,
         store: false,
         stream: true,
+        ...(maxOutputTokens && { max_output_tokens: maxOutputTokens }),
         ...(cacheKey && { prompt_cache_key: cacheKey }),
         ...(reasoning && { include: ["reasoning.encrypted_content"] }),
         ...(reasoning && reasoningEffort && { reasoning: { effort: reasoningEffort } }),

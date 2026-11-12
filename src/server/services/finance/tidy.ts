@@ -9,6 +9,8 @@ import { env } from "../../env";
 import { toUsage } from "../../jarvis/providers/openai";
 import { priceFromSettings } from "../ai-prices";
 import { recordAiQuiet, type AiContext, type AiDoor } from "../ai-usage";
+import { tidyEstimate } from "../ai-estimates";
+import { AiRefusedError, providerRefusedBeforeWork, reserveAi, subjectFor } from "../ai-gate";
 import { keywordCategory, matchRule } from "./categorize";
 import { ensureDefaultCategories } from "./categories";
 import { merchantKey } from "./recurring-detect";
@@ -41,6 +43,8 @@ export function openAiTidy(ctx: AiContext): TidyLlm | null {
     // a small job (sorting shop names into the person's own categories): the small model (owner, 2026-11-10)
     const model = e.OPENAI_MODEL_SMALL || e.OPENAI_MODEL;
     const base = { userId: ctx.userId, door: ctx.door, parentId: ctx.parentId, feature: "tidy" as const, provider: "openai", model };
+    // One tidy run is one set-aside: it counts against runs a day and the dollar limits. Refused: AiRefusedError, and the run goes on without the AI part.
+    const hold = await reserveAi(await subjectFor(ctx.userId), { feature: "tidy", estimateMicros: tidyEstimate(model) });
     let res;
     try {
       res = await client.responses.create({
@@ -74,11 +78,14 @@ export function openAiTidy(ctx: AiContext): TidyLlm | null {
         },
       });
     } catch (err) {
+      if (providerRefusedBeforeWork(err)) await hold.release();
+      else await hold.settle({ micros: null });
       await recordAiQuiet({ ...base, state: "failed" });
       throw err;
     }
     const usage = toUsage(res.usage) ?? null;
     const priced = priceFromSettings(model, usage);
+    await hold.settle({ micros: priced.costMicros });
     await recordAiQuiet({ ...base, usage, costMicros: priced.costMicros, priceKey: priced.priceKey });
     return aiGuessSchema.parse(JSON.parse(res.output_text ?? "{}")).items;
   };
@@ -222,13 +229,21 @@ export async function tidyTransactions(scope: UserScope, opts: { llm?: TidyLlm |
     }
   }
 
-  if (opts.llm && unknown.size) {
+  // The AI part may be refused (an allowance is used up): the run then goes on as if AI were off, and those rows are asked about later.
+  let llm = opts.llm ?? null;
+  if (llm && unknown.size) {
     const byName = new Map(cats.map((c) => [c.name, c]));
     const batch = [...unknown.entries()].slice(0, MAX_AI).map(([key, g]) => ({ key, text: g.text, spent: g.spent }));
-    const guesses = await opts.llm(
-      batch,
-      cats.filter((c) => c.kind === "expense").map((c) => c.name),
-    );
+    let guesses: TidyGuess[] = [];
+    try {
+      guesses = await llm(
+        batch,
+        cats.filter((c) => c.kind === "expense").map((c) => c.name),
+      );
+    } catch (e) {
+      if (!(e instanceof AiRefusedError)) throw e;
+      llm = null;
+    }
     for (const g of guesses) {
       const left = unknown.get(g.key);
       if (!left) continue; // only keys we asked about
@@ -251,14 +266,14 @@ export async function tidyTransactions(scope: UserScope, opts: { llm?: TidyLlm |
   }
   // Stamp the rows. One the AI still has to look at stays open when AI is on and its vendor wasn't in this batch;
   // with AI off it is stamped but marked pending, so a later run with AI on asks about it.
-  const asked = new Set(opts.llm ? [...unknown.keys()].slice(0, MAX_AI) : []);
+  const asked = new Set(llm ? [...unknown.keys()].slice(0, MAX_AI) : []);
   const needsAi = new Map<string, boolean>(); // row id -> still to be asked
   for (const [key, g] of unknown) for (const x of g.rows) needsAi.set(x.id, !asked.has(key));
   const done: string[] = [];
   const pending: string[] = [];
   for (const r of rows) {
     if (!needsAi.get(r.id)) done.push(r.id);
-    else if (!opts.llm) pending.push(r.id);
+    else if (!llm) pending.push(r.id);
   }
   const stamp = async (ids: string[], aiPending: boolean) => {
     if (ids.length)

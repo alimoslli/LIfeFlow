@@ -3,6 +3,8 @@ import type { Response as OpenAIResponse } from "openai/resources/responses/resp
 import { env } from "../env";
 import { toUsage } from "../jarvis/providers/openai";
 import { priceSearch } from "../services/ai-prices";
+import { searchEstimate } from "../services/ai-estimates";
+import { AiRefusedError, providerRefusedBeforeWork, reserveAi, subjectFor } from "../services/ai-gate";
 import { recordAiQuiet, type AiContext } from "../services/ai-usage";
 
 /**
@@ -68,13 +70,21 @@ const BASE_INSTRUCTIONS =
 /** Runs one search. With `json`, the answer must be JSON matching the schema (still searched and cited). */
 export async function searchWeb(
   query: string,
-  /** Whose search this is and which entrance it came through: every paid call is recorded (ADR 0034). */
+  /** Whose search this is and which entrance it came through: every paid call is recorded (ADR 0035). */
   ctx: AiContext,
   opts: { instructions?: string; json?: { name: string; schema: Record<string, unknown> }; search?: SearchClient | null; country?: string } = {},
 ): Promise<WebAnswer> {
   const search = opts.search === undefined ? webSearchClient() : opts.search;
   if (!search) throw new WebSearchError("Live web search isn't available right now.");
   const today = new Date().toISOString().slice(0, 10);
+  // The estimated cost and the search itself are set aside first; a refused search never reaches the provider.
+  let hold;
+  try {
+    hold = await reserveAi(await subjectFor(ctx.userId), { feature: "web_search", estimateMicros: searchEstimate(search.model) });
+  } catch (e) {
+    if (e instanceof AiRefusedError) throw new WebSearchError("Live web search isn't available right now.");
+    throw e;
+  }
   let res;
   try {
     res = await search.client.responses.create({
@@ -88,6 +98,9 @@ export async function searchWeb(
       ...(opts.json && { text: { format: { type: "json_schema", name: opts.json.name, schema: opts.json.schema, strict: true } } }),
     });
   } catch (e) {
+    // A provider that refused before doing any work billed nothing; anything else may have been billed, so its estimate counts.
+    if (providerRefusedBeforeWork(e)) await hold.release();
+    else await hold.settle({ micros: null });
     await recordAiQuiet({
       userId: ctx.userId,
       door: ctx.door,
@@ -104,6 +117,7 @@ export async function searchWeb(
   const usage = toUsage(res.usage) ?? null;
   const searchCalls = Math.max(1, (res.output ?? []).filter((i) => i.type === "web_search_call").length);
   const priced = priceSearch(search.model, usage, searchCalls);
+  await hold.settle({ micros: priced.costMicros });
   await recordAiQuiet({
     userId: ctx.userId,
     door: ctx.door,

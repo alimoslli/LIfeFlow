@@ -1743,7 +1743,7 @@ export type AiState = "held" | "settled" | "expired" | "failed";
 export type AiUsageFrom = "provider" | "server_clock" | "browser";
 
 /**
- * One row per paid AI use (migration 0066; ADR 0034): a chat or text turn, a voice call, a web search, a document read or a
+ * One row per paid AI use (migration 0066; ADR 0035): a chat or text turn, a voice call, a web search, a document read or a
  * tidying batch. Numbers only: no prompts, queries, file or vendor names, phone numbers or error text. `cost_micros` is empty (never 0)
  * when the cost isn't known (no price set, a model the prices weren't copied for, or no usage reported). It outlives its chat
  * (`conversation_id` is set null when a chat is deleted), so deleting a chat never resets an allowance.
@@ -1777,7 +1777,7 @@ export const aiUsage = pgTable(
     /** Measured cost in millionths of a dollar; null = unknown. */
     costMicros: bigint("cost_micros", { mode: "number" }),
     /** Which configured price set priced it (a model name), null when unpriced. */
-    priceKey: text("price_key"),
+    priceKey: text("priced_with"),
     /** What counted against allowances: the measured cost, else the estimate set aside, else null. */
     countedMicros: bigint("counted_micros", { mode: "number" }),
   },
@@ -1790,7 +1790,7 @@ export const aiUsage = pgTable(
 );
 
 /**
- * Counters for AI allowances and spending ceilings (migration 0067, ADR 0034). Operations data like rate_limit_buckets: a key
+ * Counters for AI allowances and spending ceilings (migration 0067, ADR 0035). Operations data like rate_limit_buckets: a key
  * ("u:<user>:2026-11:msgs", "g:2026-11:micros"), what has been used and what is set aside right now. Numbers only, no RLS.
  * Written only by the SQL functions ai_reserve / ai_settle / ai_release / ai_sweep through services/ai-budget.ts.
  */

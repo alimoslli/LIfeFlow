@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * Every paid AI call must go through a place that writes the usage record (ADR 0034). This fails when a new file creates an
+ * Every paid AI call must go through a place that writes the usage record (ADR 0035). This fails when a new file creates an
  * OpenAI client or calls a paid endpoint, so a new paid path can't ship without being added here (and recorded).
  */
 const PAID =

@@ -4,7 +4,7 @@ import type { TokenUsage } from "../jarvis/providers/types";
 import { modelPrices, smallModelPrices } from "../jarvis/providers";
 
 /**
- * Prices come only from settings (JARVIS_PRICE_*), never from code (ADR 0034). Unknown stays unknown: no price, a price copied
+ * Prices come only from settings (JARVIS_PRICE_*), never from code (ADR 0035). Unknown stays unknown: no price, a price copied
  * for a different model, or no reported usage all give null, never 0.
  */
 

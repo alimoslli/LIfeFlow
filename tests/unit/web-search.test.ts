@@ -1,6 +1,12 @@
 import OpenAI from "openai";
 import { describe, expect, it, vi } from "vitest";
 vi.mock("@/server/services/ai-usage", () => ({ recordAiQuiet: async () => null }));
+vi.mock("@/server/services/ai-gate", () => ({
+  subjectFor: async () => ({}),
+  reserveAi: async () => ({ holdId: null, settle: async () => {}, release: async () => {} }),
+  AiRefusedError: class extends Error {},
+  providerRefusedBeforeWork: () => false,
+}));
 import { parseSearchResponse, searchWeb, WebSearchError } from "@/server/integrations/web-search";
 
 const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });

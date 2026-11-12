@@ -4,7 +4,6 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SessionUser } from "@/server/auth/sessions";
 import { closeDb, getDb } from "@/server/db/client";
 import { users, voiceSessions, voiceToolCalls } from "@/server/db/schema";
-import { recordRun } from "@/server/jarvis/metrics";
 import { purgeExpiredVoiceSessions, relayVoiceTool, startVoiceSession } from "@/server/jarvis/voice";
 import { listTasks } from "@/server/services/tasks";
 import { makeUser, TZ } from "../helpers";
@@ -125,36 +124,21 @@ describe("voice tool guards", () => {
   });
 });
 
-describe("voice session route: monthly dollar cap", () => {
-  it("refuses a new call once this month's measured spend reaches the testing cap", async () => {
+describe("voice session route: the monthly allowance", () => {
+  it("refuses a new call once this month's measured spend reaches the testing cap, before anything is created", async () => {
     const { POST } = await import("@/app/api/jarvis/voice/session/route");
+    const { reserveBudget, settleBudget } = await import("@/server/services/ai-budget");
+    const { todayIn } = await import("@/lib/dates");
     const a = await person();
-    const conv = await startVoiceSession(a.session, "home", fake);
     current = a.session;
-    const post = () => POST(new Request("https://lifeflow.test/api/jarvis/voice/session", { method: "POST", body: "{}" }));
-    await a.run((s) =>
-      recordRun(s, {
-        conversationId: conv.conversationId,
-        messageId: null,
-        provider: "test",
-        model: "m",
-        promptVersion: "v",
-        outcome: "ok",
-        errorKind: null,
-        latencyMs: 1,
-        firstTokenMs: null,
-        steps: 1,
-        toolCalls: 0,
-        toolErrors: 0,
-        confirmations: 0,
-        toolNames: [],
-        usage: null,
-        costMicros: 5_000_000,
-        memoryIds: [],
-      }),
-    );
-    const res = await post();
+    // $4 of measured spend this month, counted in the allowance counters
+    const key = `u:${a.user.id}:${todayIn(TZ).slice(0, 7)}:micros`;
+    const hold = await reserveBudget([{ key, kind: "micros", amount: 4_000_000, limit: null }], 60);
+    if (!hold.ok || !hold.holdId) throw new Error("no hold");
+    await settleBudget(hold.holdId, { micros: 4_000_000 });
+    const res = await POST(new Request("https://lifeflow.test/api/jarvis/voice/session", { method: "POST", body: "{}" }));
     expect(res.status).toBe(429);
+    expect(((await res.json()) as { error?: string; message?: string }).error ?? "").toMatch(/this month's skyling limit/);
     current = null;
   });
 });

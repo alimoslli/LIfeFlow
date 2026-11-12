@@ -6,10 +6,11 @@ import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/
 import { runJarvisTurn, type JarvisEvent } from "@/server/jarvis/agent";
 import { getProvider, modelPrices, smallModelPrices } from "@/server/jarvis/providers";
 import { ProviderUnavailableError } from "@/server/jarvis/providers/types";
-import { FREE_JARVIS_PER_DAY, inTestingPhase, isPro, LIMIT_MONTH_SECONDS, TESTING_BUDGET_MESSAGE, TESTING_LIMITS, testingLimitMessage } from "@/server/billing";
+import { FREE_JARVIS_PER_DAY, isPro } from "@/server/billing";
+import { peekAi, subjectFor } from "@/server/services/ai-gate";
+import { refusalMessage } from "@/server/services/ai-limits";
+import { turnStateOf } from "@/server/jarvis/turn-state";
 import { withUser } from "@/server/db/with-user";
-import { adminFor } from "@/server/auth/admin";
-import { spendSinceMicros } from "@/server/jarvis/metrics";
 import { getDb } from "@/server/db/client";
 import { rateLimit } from "@/server/rate-limit";
 import { AI_CONSENT_NEEDED, aiAllowed } from "@/lib/ai-consent";
@@ -41,14 +42,19 @@ export async function POST(req: Request) {
     await enforceRateLimit(`jarvis:day:${user.id}`, 400, 86_400);
     if (!isPro(user) && !(await rateLimit(getDb(), `jarvis:free:${user.id}`, FREE_JARVIS_PER_DAY, 86_400)).allowed)
       throw new HttpError(402, `You've used today's ${FREE_JARVIS_PER_DAY} free messages. LifeFlow Pro has no daily limit (Settings → Plan).`);
-    if (inTestingPhase() && !(await adminFor(getDb(), user.id))) {
-      const day = await rateLimit(getDb(), `jarvis:testing:${user.id}`, TESTING_LIMITS.messagesPerDay, 86_400);
-      if (!day.allowed) throw new HttpError(429, testingLimitMessage("messages", TESTING_LIMITS.messagesPerDay, day.retryAfterSeconds));
-      const month = await rateLimit(getDb(), `jarvis:testing-month:${user.id}`, TESTING_LIMITS.messagesPerMonth, LIMIT_MONTH_SECONDS);
-      if (!month.allowed) throw new HttpError(429, testingLimitMessage("messages", TESTING_LIMITS.messagesPerMonth, month.retryAfterSeconds, "month"));
-      // The dollar cap uses each turn's measured cost (only when model prices are configured).
-      const spent = await withUser(user.id, (s) => spendSinceMicros(s, new Date(Date.now() - LIMIT_MONTH_SECONDS * 1000)));
-      if (spent >= TESTING_LIMITS.assistantDollarsPerMonth * 1_000_000) throw new HttpError(429, TESTING_BUDGET_MESSAGE);
+    // Allowances (messages, the monthly amount, the company's ceiling): a friendly "no" before anything is saved. The real check,
+    // which sets the cost aside in one step, is inside the turn. A retry of a send that was already received skips this look.
+    const resend = parsed.data.clientMessageId ? await withUser(user.id, (s) => turnStateOf(s, parsed.data.clientMessageId!)) : null;
+    if (!resend?.conversationId) {
+      const subject = await subjectFor(user.id, {
+        id: user.id,
+        timezone: user.timezone,
+        plan: user.plan,
+        accountKind: user.accountKind,
+        preferences: user.preferences,
+      });
+      const refused = await peekAi(subject, { feature: "chat", firstStep: true, estimateMicros: 1 });
+      if (refused) throw new HttpError(refused.scope === "company" ? 503 : 429, refusalMessage(refused, subject, new Date()));
     }
     const locked = await moneyLocked(user);
 

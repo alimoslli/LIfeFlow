@@ -57,7 +57,7 @@ const schema = z.object({
   JARVIS_PRICE_SMALL_CACHED_INPUT_PER_MTOK: optionalNumber,
   JARVIS_PRICE_SMALL_OUTPUT_PER_MTOK: optionalNumber,
   /**
-   * The model each set of prices was copied for (ADR 0034). When the running model differs, its cost is unknown instead of
+   * The model each set of prices was copied for (ADR 0035). When the running model differs, its cost is unknown instead of
    * mispriced. Unset: the prices belong to OPENAI_MODEL / OPENAI_MODEL_SMALL as configured.
    */
   JARVIS_PRICE_MODEL: z
@@ -70,6 +70,17 @@ const schema = z.object({
     .or(z.literal("").transform(() => undefined)),
   /** The provider's fee in US dollars per 1,000 web searches. Unset: a search's cost is unknown (never guessed). */
   JARVIS_PRICE_WEB_SEARCH_PER_1K_CALLS: optionalNumber,
+  /**
+   * The company ceilings on paid AI (ADR 0035), in US dollars; they count only where a price is configured. Unset: the owner's
+   * numbers for the 10-student test ($50 a month, $10 a day). Warnings at 50% and 80%; at 100% the skyling pauses for everyone but admins.
+   */
+  AI_GLOBAL_MONTH_DOLLARS: optionalNumber,
+  AI_GLOBAL_DAY_DOLLARS: optionalNumber,
+  /** Optional ceilings on the number of paid AI uses for the whole company (for features whose cost isn't priced). Unset: no count ceiling. */
+  AI_GLOBAL_MONTH_CALLS: optionalNumber,
+  AI_GLOBAL_DAY_CALLS: optionalNumber,
+  /** A Pro person's monthly AI allowance in US dollars after paid plans turn on (decision 7). OFF until the owner picks a number: unset means no per-person dollar limit for Pro. */
+  AI_PRO_MONTH_DOLLARS: optionalNumber,
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
 

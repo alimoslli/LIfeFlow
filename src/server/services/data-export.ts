@@ -48,6 +48,7 @@ export const EXPORT_TABLES = {
   pendingActions: schema.pendingActions,
   assistantMessages: schema.jarvisMessages,
   jarvisRuns: schema.jarvisRuns,
+  aiUsage: schema.aiUsage,
   inboxItems: schema.inboxItems,
   inboxSenders: schema.inboxSenders,
   gmailMessages: schema.gmailMessages,

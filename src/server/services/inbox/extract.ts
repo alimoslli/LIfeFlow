@@ -5,6 +5,10 @@ import { env } from "../../env";
 import { toUsage } from "../../jarvis/providers/openai";
 import { priceFromSettings } from "../ai-prices";
 import { recordAiQuiet, type AiContext } from "../ai-usage";
+import { documentEstimate } from "../ai-estimates";
+import { AiRefusedError, providerRefusedBeforeWork, reserveAi, subjectFor } from "../ai-gate";
+import { nameAtStart } from "@/lib/assistant";
+import { monthOpensOn } from "../ai-limits";
 
 /**
  * Reads one forwarded email, upload or share (text, PDFs, photos) and returns
@@ -100,6 +104,19 @@ export async function extractDocument(input: ExtractInput, ctx: AiContext, llm =
         : { type: "input_file", filename: f.filename, file_data: `data:${f.mimeType};base64,${f.base64}` },
     ),
   ];
+  // Set the estimated cost aside before the document is sent. A refused one is saved but not read, and says why in plain words.
+  const subject = await subjectFor(ctx.userId);
+  let hold;
+  try {
+    hold = await reserveAi(subject, { feature: "document", estimateMicros: documentEstimate(llm.model, input.text?.length ?? 0, input.files.length) });
+  } catch (e) {
+    if (!(e instanceof AiRefusedError)) throw e;
+    throw new Error(
+      e.refusal.scope === "company"
+        ? `Saved, but not read: ${nameAtStart(subject.name)} isn't available right now.`
+        : `Saved, but not read yet: this month's skyling allowance is used up. It opens up again on ${monthOpensOn(subject, new Date())}.`,
+    );
+  }
   const base = { userId: ctx.userId, door: ctx.door, parentId: ctx.parentId, feature: "document" as const, provider: "openai", model: llm.model };
   let res;
   try {
@@ -111,11 +128,14 @@ export async function extractDocument(input: ExtractInput, ctx: AiContext, llm =
       text: { format: { type: "json_schema", name: "inbox_extract", schema: SCHEMA, strict: true } },
     });
   } catch (e) {
+    if (providerRefusedBeforeWork(e)) await hold.release();
+    else await hold.settle({ micros: null });
     await recordAiQuiet({ ...base, state: "failed" });
     throw e;
   }
   const usage = toUsage(res.usage) ?? null;
   const priced = priceFromSettings(llm.model, usage);
+  await hold.settle({ micros: priced.costMicros });
   await recordAiQuiet({ ...base, usage, costMicros: priced.costMicros, priceKey: priced.priceKey });
   const text = res.output_text ?? "";
   return JSON.parse(text) as Extraction;

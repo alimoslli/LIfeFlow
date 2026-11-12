@@ -1,4 +1,4 @@
--- Counters and holds for AI allowances and spending ceilings (ADR 0034). Operations data: keys, counts and
+-- Counters and holds for AI allowances and spending ceilings (ADR 0035). Operations data: keys, counts and
 -- micro-dollar amounts only, no user content and no row per message, so no RLS (like rate_limit_buckets and job_locks).
 -- Per-person counter keys start "u:<user id>:" and are removed with the account. Safe to re-run (IF NOT EXISTS, CREATE OR REPLACE).
 CREATE TABLE IF NOT EXISTS "ai_budgets" (

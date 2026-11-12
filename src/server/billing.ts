@@ -8,7 +8,7 @@ import { HttpError } from "./http";
 
 /**
  * LifeFlow Pro (ADR 0018). Free: everything you enter yourself, Jarvis with a daily
- * limit. Pro: connections (bank, Google), texting and voice, unlimited Jarvis.
+ * limit. Pro: connections (bank, Google), texting and voice, and a much bigger Jarvis allowance (ADR 0035).
  * Until Stripe is configured, nothing is limited, so the owner can test everything.
  */
 export type BillingConfig = { secretKey: string; webhookSecret: string; priceId: string; appUrl: string };
@@ -38,25 +38,40 @@ export const TESTING_LIMITS = {
   voiceCallsPerDay: 2,
   voiceCallsPerMonth: 10,
   voiceCallMinutes: 3,
+  /** Counted limits that apply while model prices aren't set (owner, 2026-11-12, decision 4; adjust from real use). */
+  webSearchesPerMonth: 60,
+  documentsPerMonth: 100,
+  tidyRunsPerDay: 10,
 } as const;
 
-/** "Month" for limits: a rolling-ish 30-day window. */
+/** The old rolling 30-day window, kept for the older counters. AI allowances reset on the 1st of the calendar month (owner, 2026-11-12). */
 export const LIMIT_MONTH_SECONDS = 30 * 86_400;
 
 /** True while paid plans are switched off. */
 export const inTestingPhase = (cfg = billingConfig()) => !cfg;
 
-/** The message shown when a testing limit is reached. */
-export function testingLimitMessage(what: "messages" | "voice calls", limit: number, retryAfterSeconds: number, period: "day" | "month" = "day") {
+/**
+ * The message shown when a message or voice-call limit is reached. A month's limit says the date it opens up (the 1st);
+ * a day's says roughly when (hours or days), as before.
+ */
+export function testingLimitMessage(
+  what: "messages" | "voice calls",
+  limit: number,
+  retryAfterSeconds: number,
+  period: "day" | "month" = "day",
+  opensOn?: string,
+) {
   const hours = Math.max(1, Math.ceil(retryAfterSeconds / 3600));
   const when = hours <= 36 ? `about ${hours} hour${hours === 1 ? "" : "s"}` : `about ${Math.ceil(hours / 24)} days`;
   const span = period === "day" ? "today's" : "this month's";
-  return `You've used ${span} ${limit} ${what}. While LifeFlow is in testing, everyone gets ${limit} a ${period}. More open up in ${when}.`;
+  return `You've used ${span} ${limit} ${what}. While LifeFlow is in testing, everyone gets ${limit} a ${period}. More open up ${opensOn ? `on ${opensOn}` : `in ${when}`}.`;
 }
 
-/** Shown when the monthly assistant budget is used up. */
-export const TESTING_BUDGET_MESSAGE =
-  "You've reached this month's skyling limit while LifeFlow is in testing. It frees up again over the next few days as older use rolls off. Everything else in the app keeps working.";
+/** Shown when the monthly skyling allowance (or a counted limit such as voice minutes) is used up. */
+export const monthlyLimitMessage = (opensOn: string, testing = inTestingPhase()) =>
+  testing
+    ? `You've reached this month's skyling limit while LifeFlow is in testing. It opens up again on ${opensOn}. Everything else in the app keeps working.`
+    : `You've reached this month's skyling allowance. It opens up again on ${opensOn}. Everything else in the app keeps working.`;
 export const PRO_FEATURES = {
   bank: "Bank sync",
   google: "Gmail and Google Calendar",

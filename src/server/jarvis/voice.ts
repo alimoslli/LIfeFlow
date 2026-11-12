@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { and, desc, eq, gt, inArray, lt } from "drizzle-orm";
 import { inTestingPhase, requirePro, TESTING_LIMITS } from "../billing";
 import { AI_CONSENT_NEEDED, aiAllowed } from "@/lib/ai-consent";
@@ -16,6 +17,7 @@ import { describeToolCall, describeToolResult, memoryProposalOf } from "./labels
 import { selectMemories } from "./memory-retrieval";
 import { recordRun } from "./metrics";
 import { recordAiQuiet, settleVoiceUsage } from "../services/ai-usage";
+import { reserveAi, subjectFor } from "../services/ai-gate";
 import { buildSystemPrompt, PROMPT_VERSION } from "./prompt";
 import { toolSpecs } from "./registry";
 
@@ -92,39 +94,58 @@ export async function startVoiceSession(user: SessionUser, module: JarvisModule 
   if (!e.OPENAI_API_KEY) throw new Error("Voice isn't available right now.");
   const openai = client ?? new OpenAI({ apiKey: e.OPENAI_API_KEY, baseURL: e.OPENAI_BASE_URL, maxRetries: 1, timeout: 20_000 });
   if (conversationId) await ownedConversation(user, conversationId);
-  const session = await buildVoiceSession(user, module, new Date(), conversationId ? await recentLines(user, conversationId) : []);
-  const secret = await openai.realtime.clientSecrets.create({
-    expires_after: { anchor: "created_at", seconds: 120 },
-    session: {
-      type: "realtime",
-      model: e.OPENAI_REALTIME_MODEL,
-      instructions: session.instructions,
-      tools: session.tools,
-      audio: {
-        input: {
-          transcription: { model: "gpt-4o-mini-transcribe" },
-          // Semantic turn detection: it listens to what's said, so a mid-sentence pause ("so I need to... um") waits,
-          // and a finished thought gets an answer. The client also has a Done button for noisy places.
-          turn_detection: { type: "semantic_vad", eagerness: "auto", create_response: true, interrupt_response: true },
-          // Far-field suits laptop mics and phones on speaker, and keeps room noise from sounding like speech.
-          noise_reduction: { type: "far_field" },
-        },
-        output: { voice: session.voice },
-      },
-    },
-  });
   const maxSeconds = inTestingPhase() ? TESTING_LIMITS.voiceCallMinutes * 60 : VOICE_SESSION_SECONDS;
+  // The longest the call can run is set aside before anything is created (calls a day and a month, minutes a month, the company's ceiling);
+  // a refused call never reaches the voice service. The call's own id is the hold's id, so the end of the call settles exactly this hold.
+  const voiceSessionId = randomUUID();
+  const subject = await subjectFor(user.id, {
+    id: user.id,
+    timezone: user.timezone,
+    plan: user.plan,
+    accountKind: user.accountKind,
+    preferences: user.preferences,
+  });
+  const hold = await reserveAi(subject, { feature: "voice", seconds: maxSeconds }, { holdId: voiceSessionId });
+  let secret;
+  let session;
+  try {
+    session = await buildVoiceSession(user, module, new Date(), conversationId ? await recentLines(user, conversationId) : []);
+    secret = await openai.realtime.clientSecrets.create({
+      expires_after: { anchor: "created_at", seconds: 120 },
+      session: {
+        type: "realtime",
+        model: e.OPENAI_REALTIME_MODEL,
+        instructions: session.instructions,
+        tools: session.tools,
+        audio: {
+          input: {
+            transcription: { model: "gpt-4o-mini-transcribe" },
+            // Semantic turn detection: it listens to what's said, so a mid-sentence pause ("so I need to... um") waits,
+            // and a finished thought gets an answer. The client also has a Done button for noisy places.
+            turn_detection: { type: "semantic_vad", eagerness: "auto", create_response: true, interrupt_response: true },
+            // Far-field suits laptop mics and phones on speaker, and keeps room noise from sounding like speech.
+            noise_reduction: { type: "far_field" },
+          },
+          output: { voice: session.voice },
+        },
+      },
+    });
+  } catch (err) {
+    // No call was made: give the minutes back.
+    await hold.release();
+    throw err;
+  }
   // The server's own record of this call: tool calls are accepted only for a live row of this user and conversation.
   const conversation = await withUser(user.id, async (s) => {
     const c = conversationId ? { id: conversationId } : await createConversation(s, module, `Talking with ${session.name}`);
     await purgeExpiredVoiceSessions(s);
     const [vs] = await s.tx
       .insert(voiceSessions)
-      .values({ userId: s.userId, conversationId: c.id, expiresAt: new Date(Date.now() + (maxSeconds + VOICE_GRACE_SECONDS) * 1000) })
+      .values({ id: voiceSessionId, userId: s.userId, conversationId: c.id, expiresAt: new Date(Date.now() + (maxSeconds + VOICE_GRACE_SECONDS) * 1000) })
       .returning({ id: voiceSessions.id });
     return { id: c.id, voiceSessionId: vs.id };
   });
-  // The usage record (ADR 0034): held now for the longest the call can run, settled from our own clock when it ends,
+  // The usage record (ADR 0035): held now for the longest the call can run, settled from our own clock when it ends,
   // or closed as expired by the daily clean-up if no end ever arrives. Prices for voice aren't configured, so the cost stays unknown.
   await recordAiQuiet({
     userId: user.id,

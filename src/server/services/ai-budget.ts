@@ -5,7 +5,7 @@ import { getDb, type Database } from "../db/client";
 import { aiBudgets } from "../db/schema";
 
 /**
- * Setting AI cost and use aside before the work starts (ADR 0034). The check and the set-aside are one SQL function
+ * Setting AI cost and use aside before the work starts (ADR 0035). The check and the set-aside are one SQL function
  * (ai_reserve, migration 0067) on its own short connection, never inside the person's own transaction, so a rollback
  * can't erase a hold for work that ran and requests running at the same time can't all pass the same limit.
  */

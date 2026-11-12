@@ -41,6 +41,8 @@ export interface ModelProvider {
     /** How long the visible answer should be (owner, 2026-11-09: short by default). Providers that can't set it ignore it. */
     verbosity?: ReplyVerbosity;
     signal?: AbortSignal;
+    /** The most one step may write (also the bound the cost estimate uses). Providers that can't set it ignore it. */
+    maxOutputTokens?: number;
   }): ModelTurn;
 }
 

@@ -13,7 +13,10 @@ import { claimContinuation, turnStateOf, TURN_DEADLINE_MS } from "./turn-state";
 import { executeToolCall, serializeResult } from "./executor";
 import { selectMemories } from "./memory-retrieval";
 import { addUsage, errorKindOf, recordRun, type ModelPrices } from "./metrics";
-import { priceTokens } from "../services/ai-prices";
+import { pickPrices, priceTokens } from "../services/ai-prices";
+import { AiRefusedError, providerRefusedBeforeWork, subjectFor, reserveAi, type AiHold } from "../services/ai-gate";
+import type { AiRefusal, PersonLimits } from "../services/ai-limits";
+import { chatStepEstimate, inputChars, STEP_OUTPUT_TOKEN_CAP } from "../services/ai-estimates";
 import { recordAiQuiet, type AiDoor } from "../services/ai-usage";
 import { routeSkills } from "./skills";
 import { buildSystemPrompt, PROMPT_VERSION } from "./prompt";
@@ -80,6 +83,8 @@ export type TurnInput = {
   moneyLocked?: boolean;
   /** Which entrance this turn came through, for the usage record (chat_route by default; texts say sms_inbound). */
   door?: AiDoor;
+  /** Replaces the per-person limits for this turn. For tests only; the app always uses the configured limits. */
+  aiLimits?: PersonLimits;
 };
 
 export function makeToolContext(user: SessionUser, conversationId: string, now = new Date(), userText = "", moneyLocked = false): ToolContext {
@@ -101,7 +106,7 @@ export function makeToolContext(user: SessionUser, conversationId: string, now =
  * loop (max MAX_STEPS), persist every tool call and result, and stream
  * progress events. Every write goes through the user's RLS scope.
  */
-export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId: string; runId: string | null }> {
+export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId: string; runId: string | null; refused?: AiRefusal | null }> {
   const { user, provider } = input;
   const now = input.now ?? new Date();
   const started = performance.now();
@@ -228,6 +233,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
     effort,
     verbosity,
     signal: AbortSignal.timeout(deadlineMs),
+    maxOutputTokens: STEP_OUTPUT_TOKEN_CAP,
   });
   let nextTools: ToolSpec[] | undefined;
   let toolResults: { callId: string; output: string }[] | undefined;
@@ -235,6 +241,16 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   const tally = { steps: 0, toolCalls: 0, toolErrors: 0, confirmations: 0, toolNames: [] as string[], usage: null as TokenUsage | null };
   let outcome: JarvisRunOutcome = "ok";
   let errorKind: string | null = null;
+  let refused: AiRefusal | null = null;
+  let hold: AiHold | null = null;
+  let extraChars = 0;
+  const subject = await subjectFor(user.id, {
+    id: user.id,
+    timezone: user.timezone,
+    plan: user.plan,
+    accountKind: user.accountKind,
+    preferences: user.preferences,
+  });
   // Only the Stop button ends a turn early. A dropped connection (a phone locking, a network blip) never does:
   // the turn runs to the end and is saved whether or not anyone is still listening.
   // A tool that hangs cannot hold the turn past its deadline (the tool itself can't be cancelled, but the turn is closed and recorded).
@@ -255,15 +271,42 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       await stopIfAsked();
       let text = "";
       let calls: { callId: string; name: string; arguments: string }[] = [];
+      // Set the step's estimated cost aside (and, on the first step, the message itself) before the model is called; refused work never reaches it.
+      const stepModel = turn.model ?? provider.model;
+      const { chars, attachments } = inputChars(system, history, extraChars);
+      hold = await reserveAi(
+        subject,
+        {
+          feature: input.door === "sms_inbound" ? "sms" : "chat",
+          firstStep: step === 0 && !continuing,
+          estimateMicros: chatStepEstimate(pickPrices(stepModel, input.prices, input.smallPrices, provider.model), chars, attachments),
+        },
+        { limits: input.aiLimits },
+      );
       tally.steps++;
-      for await (const ev of turn.step(toolResults, nextTools)) {
-        if (ev.type === "text_delta") emit({ type: "text", delta: ev.delta });
-        else {
-          text = ev.text;
-          calls = ev.toolCalls;
-          tally.usage = addUsage(tally.usage, ev.usage);
+      let sawEvent = false;
+      let stepUsage: TokenUsage | undefined;
+      try {
+        for await (const ev of turn.step(toolResults, nextTools)) {
+          sawEvent = true;
+          if (ev.type === "text_delta") emit({ type: "text", delta: ev.delta });
+          else {
+            text = ev.text;
+            calls = ev.toolCalls;
+            stepUsage = ev.usage;
+            tally.usage = addUsage(tally.usage, ev.usage);
+          }
         }
+      } catch (e) {
+        // A provider that refused before doing any work billed nothing: give the hold back. Anything else may have been billed: its estimate counts.
+        if (!sawEvent && providerRefusedBeforeWork(e)) await hold.release();
+        else await hold.settle({ micros: null });
+        hold = null;
+        throw e;
       }
+      await hold.settle({ micros: priceTokens(turn.model ?? provider.model, stepUsage ?? null, input.prices, input.smallPrices, provider.model).costMicros });
+      hold = null;
+      extraChars += text.length;
       if (text.trim()) {
         const [m] = await run((s) =>
           s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "assistant", content: text }).returning({ id: messages.id }),
@@ -307,6 +350,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
           if (proposal) emit({ type: "memory_proposal", callId: call.callId, ...proposal });
         }
         toolResults.push({ callId: call.callId, output: serializeResult(outcome.result) });
+        extraChars += toolResults[toolResults.length - 1].output.length;
         if (call.name === "load_tools" && outcome.kind === "result" && outcome.result.ok) {
           const loaded = ((outcome.result.data as { loaded?: string[] } | undefined)?.loaded ?? []).filter((g): g is ToolGroup =>
             (TOOL_GROUPS as readonly string[]).includes(g),
@@ -327,6 +371,15 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       // The user pressed Stop: nothing more runs, what was already saved stays, and no error is shown.
       outcome = "cancelled";
       errorKind = "cancelled";
+    } else if (e instanceof AiRefusedError) {
+      // A limit was reached: the model was never called for this step. Said plainly in the thread, like any other end of a turn.
+      refused = e.refusal;
+      outcome = "error";
+      errorKind = "limit";
+      await run((s) =>
+        s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "assistant", content: e.message, status: "error" }),
+      );
+      emit({ type: "error", message: e.message });
     } else {
       console.error("[jarvis] turn failed", e);
       const timedOut = e instanceof TimedOutError || Date.now() >= deadline;
@@ -367,23 +420,24 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
     // Metrics must never break a turn the user already received.
     console.error("[jarvis] could not record run metrics", e);
   }
-  // The usage record (ADR 0034): one row per turn, written in its own short transaction, so it exists even if the run row could not be saved.
-  await recordAiQuiet({
-    userId: user.id,
-    feature: input.door === "sms_inbound" ? "sms" : "chat",
-    door: input.door ?? "chat_route",
-    provider: provider.name,
-    model: usedModel,
-    state: outcome === "error" ? "failed" : "settled",
-    conversationId: conversation.id,
-    runId,
-    usage: tally.usage,
-    steps: tally.steps,
-    costMicros: priced.costMicros,
-    priceKey: priced.priceKey,
-  });
+  // The usage record (ADR 0035): one row per turn, written in its own short transaction, so it exists even if the run row could not be saved.
+  if (!(refused && tally.steps === 0))
+    await recordAiQuiet({
+      userId: user.id,
+      feature: input.door === "sms_inbound" ? "sms" : "chat",
+      door: input.door ?? "chat_route",
+      provider: provider.name,
+      model: usedModel,
+      state: outcome === "error" ? "failed" : "settled",
+      conversationId: conversation.id,
+      runId,
+      usage: tally.usage,
+      steps: tally.steps,
+      costMicros: priced.costMicros,
+      priceKey: priced.priceKey,
+    });
   emit({ type: "done", messageId: finalMessageId, runId });
-  return { conversationId: conversation.id, runId };
+  return { conversationId: conversation.id, runId, refused };
 }
 
 /**

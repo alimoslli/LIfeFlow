@@ -9,13 +9,13 @@ import {
   errorReports,
   ownerInbox,
   passkeys,
-  rateLimitBuckets,
   rememberedDevices,
   sessions,
   users,
 } from "../db/schema";
+import { todayIn } from "@/lib/dates";
 import { isAdminEmail, type Admin } from "../auth/admin";
-import { billingConfig, inTestingPhase, LIMIT_MONTH_SECONDS, TESTING_LIMITS } from "../billing";
+import { billingConfig, inTestingPhase, TESTING_LIMITS } from "../billing";
 import { emailConfig } from "../integrations/email";
 import { googleConfig } from "../integrations/google";
 import { plaidConfig } from "../integrations/plaid";
@@ -409,47 +409,51 @@ export async function health(db: Database, env: Record<string, string | undefine
 // AI use (testing-phase limits)
 
 /**
- * How much of the testing limits people have used, read from the limiter's own counters (rate_limit_buckets
- * holds counts only, no content, and isn't per-user private data). Counts include tries that were blocked.
+ * How much of the per-person AI limits people have used, read from the allowance counters (ai_budgets: counts only, no content, and not
+ * per-user private data). A person's day and month are in their own time zone. Counts include what is set aside for work in progress.
  */
 export type UsageRow = { userId: string; email: string | null; messagesToday: number; messagesMonth: number; voiceToday: number; voiceMonth: number };
 export type Usage = { testing: boolean; limits: typeof TESTING_LIMITS; messagesToday: number; voiceToday: number; people: UsageRow[]; atLimit: number };
 
-const windowStart = (seconds: number) => new Date(Math.floor(Date.now() / (seconds * 1000)) * seconds * 1000);
-const USAGE_KEYS = {
-  "jarvis:testing": "messagesToday",
-  "jarvis:testing-month": "messagesMonth",
-  "voice:testing": "voiceToday",
-  "voice:testing-month": "voiceMonth",
-} as const;
+/** The counter keys of one person's current day and month (their time zone). */
+function periodsFor(tz: string, now = new Date()) {
+  const day = todayIn(tz, now);
+  return { day, month: day.slice(0, 7) };
+}
 
 async function usageRows(tx: Tx, userId?: string) {
-  const day = windowStart(86_400);
-  const month = windowStart(LIMIT_MONTH_SECONDS);
-  const buckets = await tx
-    .select({ key: rateLimitBuckets.key, windowStart: rateLimitBuckets.windowStart, count: rateLimitBuckets.count })
-    .from(rateLimitBuckets)
-    .where(
-      and(
-        or(sql`${rateLimitBuckets.key} like 'jarvis:testing%'`, sql`${rateLimitBuckets.key} like 'voice:testing%'`),
-        or(eq(rateLimitBuckets.windowStart, day), eq(rateLimitBuckets.windowStart, month)),
-        ...(userId ? [sql`${rateLimitBuckets.key} like ${"%:" + userId}`] : []),
-      ),
-    );
-  const byUser = new Map<string, UsageRow>();
-  for (const b of buckets) {
-    const i = b.key.lastIndexOf(":");
-    const prefix = b.key.slice(0, i) as keyof typeof USAGE_KEYS;
-    const id = b.key.slice(i + 1);
-    const field = USAGE_KEYS[prefix];
-    if (!field) continue;
-    const isDayKey = field.endsWith("Today");
-    if ((isDayKey ? day : month).getTime() !== b.windowStart.getTime()) continue;
-    const row = byUser.get(id) ?? { userId: id, email: null, messagesToday: 0, messagesMonth: 0, voiceToday: 0, voiceMonth: 0 };
-    row[field] = b.count;
-    byUser.set(id, row);
+  const now = new Date();
+  let ids: string[];
+  if (userId) ids = [userId];
+  else {
+    // anyone with a message or call counter in the months around now (a time zone can be a day ahead or behind UTC)
+    const months = [...new Set([-1, 0, 1].map((d) => new Date(now.getTime() + d * 86_400_000).toISOString().slice(0, 7)))];
+    const found = await tx
+      .select({ key: aiBudgets.key })
+      .from(aiBudgets)
+      .where(or(...months.flatMap((m) => [sql`${aiBudgets.key} like ${"u:%:" + m + ":msgs"}`, sql`${aiBudgets.key} like ${"u:%:" + m + ":vcalls"}`])));
+    ids = [...new Set(found.map((r) => r.key.split(":")[1]))].filter((id) => /^[0-9a-f-]{36}$/i.test(id));
   }
-  return [...byUser.values()];
+  if (!ids.length) return [];
+  const tzs = await tx.select({ id: users.id, tz: users.timezone }).from(users).where(inArray(users.id, ids));
+  const keyOf = (id: string, period: string, what: string) => `u:${id}:${period}:${what}`;
+  const wanted = tzs.flatMap((u) => {
+    const p = periodsFor(u.tz, now);
+    return [keyOf(u.id, p.day, "msgs"), keyOf(u.id, p.month, "msgs"), keyOf(u.id, p.day, "vcalls"), keyOf(u.id, p.month, "vcalls")];
+  });
+  const counters = wanted.length ? await tx.select().from(aiBudgets).where(inArray(aiBudgets.key, wanted)) : [];
+  const count = new Map(counters.map((c) => [c.key, c.used + c.held]));
+  return tzs.map((u): UsageRow => {
+    const p = periodsFor(u.tz, now);
+    return {
+      userId: u.id,
+      email: null,
+      messagesToday: count.get(keyOf(u.id, p.day, "msgs")) ?? 0,
+      messagesMonth: count.get(keyOf(u.id, p.month, "msgs")) ?? 0,
+      voiceToday: count.get(keyOf(u.id, p.day, "vcalls")) ?? 0,
+      voiceMonth: count.get(keyOf(u.id, p.month, "vcalls")) ?? 0,
+    };
+  });
 }
 
 export async function usage(db: Database): Promise<Usage> {
@@ -481,7 +485,7 @@ export async function usageFor(db: Database, userId: string): Promise<UsageRow> 
   });
 }
 
-/** Gives someone a fresh start on today's and this month's testing limits. Allowed on any standard account, the admin's own included. */
+/** Gives someone a fresh start on today's and this month's AI limits. Allowed on any standard account, the admin's own included. */
 export async function resetLimits(db: Database, actor: Admin, userId: string) {
   await limited(db, actor);
   if (!/^[0-9a-f-]{36}$/i.test(userId)) throw new AdminError("Unknown user.");
@@ -489,12 +493,8 @@ export async function resetLimits(db: Database, actor: Admin, userId: string) {
     const [u] = await tx.select().from(users).where(eq(users.id, userId));
     if (!u) throw new AdminError("That user no longer exists.");
     if (u.accountKind !== "standard") throw new AdminError("You can't do that to the demo account.");
-    await tx.delete(rateLimitBuckets).where(
-      inArray(
-        rateLimitBuckets.key,
-        Object.keys(USAGE_KEYS).map((k) => `${k}:${userId}`),
-      ),
-    );
+    const p = periodsFor(u.timezone);
+    await tx.delete(aiBudgets).where(or(like(aiBudgets.key, `u:${userId}:${p.day}:%`), like(aiBudgets.key, `u:${userId}:${p.month}:%`)));
     await log(tx, actor, "reset_limits", { id: u.id, email: u.email });
   });
 }

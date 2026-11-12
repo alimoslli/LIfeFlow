@@ -9,6 +9,7 @@ import { decidePendingAction } from "./decide";
 import type { ModelProvider } from "./providers/types";
 import type { ModelPrices } from "./metrics";
 import { isPro } from "../billing";
+import { rateLimit } from "../rate-limit";
 import { aiAllowed } from "@/lib/ai-consent";
 
 /**
@@ -65,6 +66,7 @@ export async function answerText(
   const sms = u.preferences.sms ?? {};
   const moneyLocked = sms.money !== true;
   let reply: string;
+  let limited = false;
 
   const decision = smsDecision(body);
   if (decision && sms.pendingActionId) {
@@ -79,7 +81,7 @@ export async function answerText(
     let pendingSummary = "";
     let conversationId = sms.conversationId;
     try {
-      await runJarvisTurn({
+      const turn = await runJarvisTurn({
         user,
         conversationId: sms.conversationId ?? null,
         text: body.slice(0, 4000),
@@ -108,6 +110,7 @@ export async function answerText(
           if (e.type === "error") text += `\n${e.message}`;
         },
       });
+      limited = !!turn.refused;
     } catch (e) {
       // Only the kind of failure: an error's message can quote the text that was sent.
       const err = e as { status?: number; code?: string } | undefined;
@@ -123,6 +126,8 @@ export async function answerText(
     await setSms(db, user.id, { conversationId, pendingActionId: pending });
     reply = text.trim() || "Done.";
   }
+  // A limit notice goes out at most once a day; after that the texts are quietly not answered until the allowance opens.
+  if (limited && !(await rateLimit(db, `sms:limit:${user.id}`, 1, 86_400)).allowed) return null;
   const out = toSmsText(reply);
   await deps.send(replyTo, out);
   return out;
