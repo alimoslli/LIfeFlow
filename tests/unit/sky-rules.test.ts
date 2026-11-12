@@ -93,7 +93,7 @@ describe("Tonight", () => {
         { name: "Rent", date: "2026-12-01", amountCents: -90_000 },
       ],
     } as unknown as LifeSnapshot["money"];
-    expect(tonightRule(snap("17:00", { money }))[0].detail).toBe("Nothing is due before tomorrow noon. $460 is left after this week's bills.");
+    expect(tonightRule(snap("17:00", { money }))[0].detail).toBe("Nothing is due before tomorrow noon. $460 left after this week's bills.");
     expect(tonightRule(snap("17:00"))[0].detail).toBe("Nothing is due before tomorrow noon.");
   });
 });

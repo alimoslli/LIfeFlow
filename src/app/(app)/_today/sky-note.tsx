@@ -116,7 +116,7 @@ export function SkyNote({
         <p
           data-testid="assistant-line"
           className={cn(
-            "line-clamp-2 max-w-[22rem] text-center text-[0.9375rem] leading-snug",
+            "line-clamp-3 max-w-[22rem] text-center text-[0.9375rem] leading-snug",
             storm && "rounded-2xl bg-danger-soft px-3 py-1 ring-1 ring-danger/40",
           )}
         >

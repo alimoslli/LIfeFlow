@@ -98,7 +98,7 @@ export const tonightRule = (s: LifeSnapshot): Insight[] => {
   if (s.money) {
     const weekEnd = addDaysStr(s.today, 6);
     const bills = s.money.billsNext30.filter((b) => b.date <= weekEnd).reduce((n, b) => n + -b.amountCents, 0);
-    moneyLine = ` ${usd(s.money.liquidCents - bills)} is left after this week's bills.`;
+    moneyLine = ` ${usd(s.money.liquidCents - bills)} left after this week's bills.`;
   }
   return [
     {
@@ -164,7 +164,7 @@ export const dueMathRule = (s: LifeSnapshot): Insight[] => {
         tone: "attention",
         icon: "book",
         text: `No free time before ${a.title} is due`,
-        detail: `It's due ${when}, and your time until then is booked.`,
+        detail: `Due ${when}, and you're booked until then.`,
         action: { label: "Find time", prompt: `${a.title} is due ${when} and my schedule is full until then. Help me find time for it.` },
         weather: "storm",
         score: 88,

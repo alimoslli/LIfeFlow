@@ -13,12 +13,19 @@ const seed = (email: string, scene: "gap" | "tonight" | "storm") =>
     stdio: "pipe",
   });
 
-const studyBlocks = async (email: string) =>
-  (
-    await pool.query<{ title: string }>("select e.title from calendar_events e join users u on u.id = e.user_id where u.email = $1 and e.kind = 'study'", [
-      email,
-    ])
-  ).rows.map((r) => r.title);
+/** Their study blocks, read as them (calendar_events has row-level security, like every user table). */
+async function studyBlocks(email: string) {
+  const c = await pool.connect();
+  try {
+    await c.query("begin");
+    const [{ id }] = (await c.query<{ id: string }>("select id from users where email = $1", [email])).rows;
+    await c.query("select set_config('app.user_id', $1, true)", [id]);
+    return (await c.query<{ title: string }>("select title from calendar_events where kind = 'study'")).rows.map((r) => r.title);
+  } finally {
+    await c.query("commit");
+    c.release();
+  }
+}
 
 test("a free gap between a class and a shift: Block it books it, Undo takes it back", async ({ page }) => {
   const email = await signUp(page, "Gap Finder");
