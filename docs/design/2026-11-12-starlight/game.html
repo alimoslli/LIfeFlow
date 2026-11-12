@@ -1,0 +1,140 @@
+<title>Starlight</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Geist:wght@400;600;800&display=swap">
+<style>
+/* Layout: the night sky is the whole screen (a canvas); one score on top; frosted night-glass cards over it. */
+:root {
+  --night: #152643;
+  --glass: rgba(21, 38, 67, 0.7);
+  --edge: rgba(255, 255, 255, 0.16);
+  --text: #f6f8fb;
+  --muted: #b9c7dd;
+  --star: #ffdc6e;
+  --star-deep: #dcae35;
+  --ink: #262320;
+  --good: #86d3a0;
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-body: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--night); color: var(--text); font-family: var(--font-body);
+  overflow: hidden; overscroll-behavior: none; -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+}
+#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:focus-visible, textarea:focus-visible { outline: 3px solid var(--star); outline-offset: 2px; }
+
+#hud {
+  position: fixed; left: 0; right: 0; top: 0; z-index: 2; pointer-events: none;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; grid-template-columns: 44px 1fr 44px; align-items: start;
+}
+.iconbtn {
+  pointer-events: auto; width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--edge);
+  background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: grid; place-items: center; padding: 0;
+}
+.pausebars { width: 12px; height: 14px; border-left: 4px solid var(--text); border-right: 4px solid var(--text); box-sizing: border-box; }
+.score { text-align: center; text-shadow: 0 2px 0 rgba(10, 18, 36, 0.45); }
+#score { font: 800 2.25rem/1 var(--font-body); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; display: inline-flex; align-items: center; gap: 8px; }
+#score canvas { width: 28px; height: 28px; image-rendering: pixelated; }
+#best { display: block; margin-top: 4px; font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 1.2em; }
+#score.bump { animation: bump 0.22s ease-out; }
+@keyframes bump { 45% { transform: scale(1.12); } }
+
+.overlay {
+  position: fixed; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; box-sizing: border-box; overflow-y: auto;
+  padding-block: calc(env(safe-area-inset-top, 0px) + 16px) calc(env(safe-area-inset-bottom, 0px) + 16px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.card {
+  width: 100%; max-width: 400px; box-sizing: border-box; padding: 24px 20px 18px; border-radius: 26px; margin: auto;
+  background: var(--glass); border: 1px solid var(--edge); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 20px 60px rgba(5, 12, 28, 0.35); display: grid; gap: 16px; text-align: center;
+}
+.card .hero { justify-self: center; width: 96px; height: 96px; image-rendering: pixelated; }
+h1 { margin: 0; font: 800 clamp(2.4rem, 12vw, 3.25rem)/0.95 var(--font-display); letter-spacing: -0.02em; }
+h2 { margin: 0; font: 600 1.375rem/1.2 var(--font-display); text-wrap: balance; }
+p { margin: 0; line-height: 1.45; color: var(--muted); }
+.lead { font-size: 1.0625rem; color: var(--text); text-wrap: balance; }
+.btn {
+  min-height: 54px; border-radius: 16px; border: 0; font-weight: 800; font-size: 1.0625rem;
+  background: var(--star); color: var(--ink); box-shadow: 0 4px 0 var(--star-deep); transition: transform 0.08s, box-shadow 0.08s;
+}
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--star-deep); }
+.btn.ghost { background: rgba(255, 255, 255, 0.1); color: var(--text); box-shadow: inset 0 0 0 1px var(--edge); font-weight: 600; }
+.links { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; }
+.link { background: none; border: 0; color: var(--muted); font-size: 0.875rem; text-decoration: underline; text-underline-offset: 3px; min-height: 44px; padding: 0 4px; }
+.total { font: 800 3.25rem/1 var(--font-body); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; display: inline-flex; gap: 10px; align-items: center; justify-content: center; }
+.total canvas { width: 40px; height: 40px; image-rendering: pixelated; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.chip { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 0.8125rem; font-weight: 600; background: rgba(255, 255, 255, 0.12); }
+.chip.gold { background: var(--star); color: var(--ink); }
+.facts { font-size: 0.9375rem; color: var(--muted); line-height: 1.5; }
+.facts b { color: var(--text); font-weight: 600; }
+.note { display: grid; gap: 10px; padding: 12px 14px; border-radius: 16px; background: rgba(255, 220, 110, 0.1); border: 1px solid rgba(255, 220, 110, 0.3); text-align: left; }
+.note .opts { display: flex; gap: 8px; flex-wrap: wrap; }
+.note .opts button { min-height: 40px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--edge); background: rgba(255, 255, 255, 0.08); font-weight: 600; font-size: 0.875rem; }
+.note .opts button[aria-pressed="true"] { background: var(--star); color: var(--ink); border-color: var(--star); }
+textarea, .log {
+  width: 100%; box-sizing: border-box; border-radius: 12px; border: 1px solid var(--edge); background: rgba(5, 12, 28, 0.35);
+  color: var(--text); font: 0.9375rem/1.4 var(--font-body); padding: 10px 12px; resize: vertical; text-align: left;
+}
+.log { font-size: 0.75rem; max-height: 40vh; overflow: auto; white-space: pre-wrap; -webkit-user-select: text; user-select: text; }
+.tiny { font-size: 0.75rem; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { #score.bump { animation: none; } }
+</style>
+
+<canvas id="c" aria-label="Starlight. Tap a star to send Twinkle there. Keep climbing above the rising sea."></canvas>
+
+<div id="hud" hidden>
+  <button class="iconbtn" id="pauseBtn" aria-label="Pause"><span class="pausebars"></span></button>
+  <div class="score"><span id="score"><canvas width="7" height="7"></canvas><span id="scoreN">0</span></span><span id="best"></span></div>
+  <span></span>
+</div>
+
+<div class="overlay" id="start">
+  <div class="card">
+    <canvas class="hero" id="hero" width="24" height="24"></canvas>
+    <h1>Starlight</h1>
+    <p class="lead">Tap stars to climb. Don't let the sea catch Twinkle.</p>
+    <button class="btn" id="playBtn">Play</button>
+    <p id="startBest" class="tiny"></p>
+    <div class="links">
+      <button class="link" id="soundBtn"></button>
+      <button class="link" id="notesBtn">Your runs</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="pause" hidden>
+  <div class="card">
+    <h2>Paused</h2>
+    <button class="btn" id="resumeBtn">Keep playing</button>
+    <button class="btn ghost" id="restartBtn">Start again</button>
+  </div>
+</div>
+
+<div class="overlay" id="end" hidden>
+  <div class="card" id="endCard"></div>
+</div>
+
+<div class="overlay" id="notes" hidden>
+  <div class="card">
+    <h2>Your runs</h2>
+    <p>Kept only in this browser, for tuning. Copy them into the chat if you want me to look.</p>
+    <div class="log" id="logBox"></div>
+    <button class="btn" id="copyBtn">Copy</button>
+    <button class="btn ghost" id="closeNotes">Close</button>
+    <p class="tiny" id="copyMsg" aria-live="polite"></p>
+  </div>
+</div>
+
+<script>/*ENGINE*/</script>
+<script>/*GAME*/</script>

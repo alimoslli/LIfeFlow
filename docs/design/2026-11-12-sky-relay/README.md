@@ -98,3 +98,10 @@ Debug parameters for local testing: `?bot=1`, `?speed=N`, `?leg=N` (start at a l
   times, and saves screenshots of each leg.
 
 Build and check: `node docs/design/2026-11-12-sky-relay/build.mjs && node docs/design/2026-11-12-sky-relay/check.mjs`.
+
+## The owner's verdict (2026-11-12) and what changed
+
+"Honestly it felt like replicas of different games in one long ununderstandable game." Five moves in 90 seconds
+left nothing to master, each move came from a familiar game, and too many systems ran at once. Asked what had felt
+good, the owner named Ray's swing, Twinkle's stars and Goldie's or Dreamy's moves, and chose to go deep on one move:
+Twinkle's stars. That became Starlight (`../2026-11-12-starlight/`). Sky Relay stays here as the record.
