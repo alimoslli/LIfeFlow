@@ -30,8 +30,8 @@ export type DayClockOptions = {
   /** A tap on an empty spot of the open line: pin something at that time (minutes from the start of today). */
   onPin: (at: { start: number }) => void;
   reducedMotion: boolean;
-  /** A made-up example (the waitlist's explainer): "now" stays at this many minutes from midnight and cards have no Open, Edit or Done. */
-  example?: { now: number };
+  /** A made-up example (the waitlist's explainer): cards have no Open, Edit or Done. "now" stays at this many minutes from midnight when given, else it is the real time. */
+  example?: { now?: number };
 };
 
 export type DayClockHandle = {
