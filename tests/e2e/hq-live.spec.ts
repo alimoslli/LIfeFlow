@@ -64,7 +64,7 @@ test("Live HQ: Right now shows who is working on what, the room and the desk say
 
   // The end of its turn: nobody is working, and it says when the next round starts.
   await pool.query("update hq_chats set live_state = 'idle', live_at = now() where id = $1", [DESK_CHAT]);
-  await expect(now).toContainText(/Nobody's working right now\. Next: .+ at \d{1,2}:\d{2} [AP]M\./, { timeout: 25_000 });
+  await expect(now).toContainText(/Nobody's working right now\. Next: .+ at (?:(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) )?\d{1,2}:\d{2} [AP]M\./, { timeout: 25_000 });
 });
 
 test("Live HQ on a phone: Right now fits, with no sideways scroll and a 44 px Watch button", async ({ browser }) => {
