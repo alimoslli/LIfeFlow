@@ -1,0 +1,84 @@
+{
+  "id": "s0042-student-free-trial-ends-monday-card-charge",
+  "title": "Roommate community college student (night class Monday, part-time barista, Canvas, afternoon studier) gets an email on Friday that a free study-app trial ends Monday and $19.99 a month starts on her card; Dev surfaces the trial with a reminder and cancel steps, and cancels nothing.",
+  "persona": "p6003-community-college-roommates-part-time",
+  "now": "2026-11-13T17:00",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 6102,
+  "changes": [
+    {
+      "id": "c-trial",
+      "type": "email",
+      "at": "2026-11-13T09:05",
+      "sender_type": "promotions",
+      "sender_name": "StudyLoop",
+      "from_address": "billing-studyloop@example.com",
+      "subject": "Your free trial ends Nov 16: $19.99 a month starts then"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-trial",
+      "check": "drift",
+      "what": "A free trial of StudyLoop ends Monday Nov 16, and then $19.99 a month is charged to her card (email c-trial, Friday 9:05 AM). Nothing in her bank or her messages shows she has used it, so Dev cannot say whether she wants it.",
+      "by_when": "2026-11-13T17:30",
+      "facts": [
+        "c-trial"
+      ]
+    }
+  ],
+  "best_fix": {
+    "for": "n-trial",
+    "action": "reminder",
+    "needs_user": true,
+    "send_at": "2026-11-13T17:05",
+    "what": "One card with three taps: 'Your StudyLoop free trial ends Monday Nov 16, then $19.99 a month on your card. [Keep it] [Show me how to cancel] [Remind me Sunday at 12:15 PM].' The cancel steps come from the email's own link and are shown to her; Dev does not cancel anything or open the account. If she taps the reminder, it fires once on Sunday Nov 15 at 12:15 PM, after her groceries (10:30 to 12:00) and before her 1:00 study window and her 4:00 PM shift; if she taps Keep it, Dev adds it to her subscriptions with the next charge on Nov 16 and says nothing more.",
+    "why": "A trial that turns into a charge is the clearest case of a thing Dev can show before it happens, with a day to decide. Her Friday evening is free, and Sunday midday is the gap between her routines, so the reminder does not interrupt study or work."
+  },
+  "must_not": [
+    "cancel the trial or open the account for her",
+    "say she 'forgot' or should have read the terms",
+    "send more than one reminder for the same trial",
+    "tell her to move money or count the Friday paycheck against the charge (she has $1,966.71 and no shortfall)",
+    "put a cancel-the-trial block in her Sunday 1:00 to 3:30 PM study window"
+  ],
+  "stay_quiet": false,
+  "tags": [
+    "student",
+    "community college",
+    "roommates",
+    "part-time job",
+    "canvas",
+    "night class",
+    "afternoon studier",
+    "steady",
+    "5 classes",
+    "16 credits",
+    "trial",
+    "subscription",
+    "email find",
+    "drift",
+    "reminder",
+    "routine fit",
+    "insight cloud"
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "put a cancel-the-trial block in her Sunday 1:00 to 3:30 PM study window",
+        "routine": "study",
+        "why_wrong": "Sunday afternoon is her second study window before her 4:00 PM shift, and a reminder at 12:15 PM fits the gap after groceries",
+        "facts": [
+          "m-01"
+        ]
+      }
+    ]
+  },
+  "assumptions": [
+    "The trial email names the end date and the price in its subject; the card charge on Nov 16 is not yet in her data.",
+    "Dev knows nothing about whether she uses the app; it asks, it does not guess.",
+    "Available now is $1,966.71 and the card has room, so the charge is not an affordability problem."
+  ]
+}

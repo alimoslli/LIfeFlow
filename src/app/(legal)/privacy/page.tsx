@@ -27,7 +27,10 @@ export default function PrivacyPolicy() {
       <h2>The short version</h2>
       <ul>
         <li>We collect what you put into LifeFlow and what you choose to connect. We use it only to run LifeFlow for you.</li>
-        <li>We do not sell your personal information, we do not use it for advertising, and we do not use it to train AI models.</li>
+        <li>
+          We do not sell your personal information, we do not use it for advertising, and we do not use it to train shared AI models. What your skyling learns
+          about your routines comes only from your own data, stays in your account and is deleted with it.
+        </li>
         <li>Your data is separated from every other account at the database level, and connection tokens are encrypted.</li>
         <li>You can export everything or delete your account and its data at any time from Settings.</li>
       </ul>

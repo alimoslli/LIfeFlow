@@ -34,7 +34,7 @@ describe("per-person limits", () => {
       voiceCallsPerMonth: 10,
       voiceSecondsPerMonth: 1800,
       searchesPerMonth: 60,
-      documentsPerMonth: 100,
+      documentsPerMonth: 200,
       tidyRunsPerDay: 10,
     });
     expect(TESTING_LIMITS.webSearchesPerMonth).toBe(60);

@@ -1,0 +1,130 @@
+{
+  "id": "s0044-student-final-moved-to-saturday-usual-shift",
+  "title": "Commuter community college student (nearly full-time barista, nursing track, 4 classes, 13 credits, Canvas, morning crammer) learns on Friday that the Ethics final moves to Saturday Dec 12, 9 to 11 AM, a day he usually works 8 to 4; Dev asks for the shift off before the schedule posts and puts two morning study blocks in his window.",
+  "persona": "p6006-community-college-commuter-nearly-full-t",
+  "now": "2026-11-13T19:00",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 6104,
+  "changes": [
+    {
+      "id": "c-final",
+      "type": "exam_move",
+      "course": "PHIL 114",
+      "exam": "Final exam",
+      "date": "2026-12-12",
+      "start": "09:00",
+      "end": "11:00",
+      "announced_at": "2026-11-13T16:30",
+      "title": "Ethics final exam moved to Saturday Dec 12, 9 to 11 AM",
+      "announcement": "The classroom is needed on Monday Dec 14, so the Ethics final exam moves to Saturday Dec 12, 9:00 to 11:00 AM, Library 319. No other change to the exam."
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-final",
+      "check": "late fact",
+      "what": "The Ethics final moved from Monday Dec 14, 8:00 AM to Saturday Dec 12, 9:00 to 11:00 AM (c-final.announcement, exam-phil-114-final-exam, posted today at 4:30 PM). He has worked every Saturday from 8 AM to 4 PM (shift-main-2026-11-21 is the latest posted) and the schedule for Dec 6 to 12 posts around Nov 30 (post-main-2026-11-15 was posted Nov 9 for the week of Nov 15), so the Saturday shift is not in the schedule yet but it is his usual. The day before, Friday Dec 11, is his nursing clinical from 6:30 AM to 3:00 PM.",
+      "by_when": "2026-11-13T21:00",
+      "facts": [
+        "c-final.announcement",
+        "exam-phil-114-final-exam",
+        "shift-main-2026-11-21",
+        "post-main-2026-11-15",
+        "m-01"
+      ]
+    }
+  ],
+  "best_fix": [
+    {
+      "for": "n-final",
+      "action": "draft for them",
+      "needs_user": true,
+      "send_at": "2026-11-13T19:05",
+      "what": "A draft for his supervisor, ready to send tonight: 'Hi, my Ethics final has moved to Saturday Dec 12, 9 to 11 AM, so I need Saturday morning off. Could you leave me off that morning or start me after 12:30?' He sends it; Dev does not message the supervisor. It goes before the schedule for that week posts around Nov 30, when it is easy to say yes.",
+      "why": "A shift is easiest to move before the schedule is posted, and a final cannot move. Dev should not guess whether he can take a late start."
+    },
+    {
+      "for": "n-final",
+      "action": "plan",
+      "needs_user": true,
+      "send_at": "2026-11-13T19:05",
+      "what": "Two study blocks for the Ethics final in his morning window at the library: Tuesday Dec 8 and Thursday Dec 10, 7:35 to 9:35 AM, before the 11:00 class. [Add the blocks]. He crams in the last few days, and both are inside that. Nothing on Friday Dec 11 after the clinical (up at 5:20 AM), and nothing at night.",
+      "why": "He studies mornings before class and cannot focus at night (m-01); Tuesday and Thursday mornings are free of work, and the last day before the exam is a clinical day.",
+      "placements": [
+        {
+          "id": "pl-eth-1",
+          "activity": "study",
+          "label": "Ethics final review",
+          "start": "2026-12-08T07:35",
+          "end": "2026-12-08T09:35"
+        },
+        {
+          "id": "pl-eth-2",
+          "activity": "study",
+          "label": "Ethics final review",
+          "start": "2026-12-10T07:35",
+          "end": "2026-12-10T09:35"
+        }
+      ]
+    }
+  ],
+  "must_not": [
+    "tell him to skip the final or ask the instructor to move it back",
+    "message the supervisor for him or mark the Saturday shift as cancelled",
+    "put study on Friday evening Dec 11 after a clinical day",
+    "study after 10 PM or at night on any day",
+    "write, solve or check anything for the final (planning only)",
+    "use guilt words about missing a shift"
+  ],
+  "stay_quiet": false,
+  "tags": [
+    "student",
+    "community college",
+    "commuter",
+    "nearly full-time job",
+    "nursing",
+    "canvas",
+    "morning crammer",
+    "4 classes",
+    "13 credits",
+    "moved exam",
+    "late fact",
+    "draft for them",
+    "study blocks",
+    "routine fit",
+    "insight cloud",
+    "free gap"
+  ],
+  "routine_fit": {
+    "placements": [
+      {
+        "placement": "pl-eth-1",
+        "routine": "study",
+        "window": "morning-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-eth-2",
+        "routine": "study",
+        "window": "morning-1",
+        "fits": true
+      }
+    ],
+    "tempting": [
+      {
+        "suggestion": "study after 10 PM or at night on any day",
+        "routine": "study",
+        "why_wrong": "he studies mornings before class and cannot focus at night",
+        "facts": [
+          "m-01"
+        ]
+      }
+    ]
+  },
+  "assumptions": [
+    "Shifts post about 6 to 8 days ahead, on Mondays at 3 PM, for the Sunday to Saturday week after (the Nov 15 week posted Nov 9).",
+    "Finals week has no regular classes, but his shifts continue.",
+    "He can ask for a late start or the morning off; Dev never decides it."
+  ]
+}

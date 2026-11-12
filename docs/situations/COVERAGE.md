@@ -2,11 +2,25 @@
 
 Updated by the situation writer after every batch. Run `python3 docs/situations/validate.py` for live counts.
 
-**Cases:** 40 (s0001 to s0015 batch 1, s0016 to s0020 batch 2, s0021 to s0025 batch 3, s0026 to s0030 batch 4, s0031 to s0035 batch 5, s0036 to s0040 batch 6, 2026-11-10) · **Stay-quiet share:** 10 of 40 (25%) · **Student share:** 28 of 40 (70%; batch 6 is 5 of 5) · **Routine-fit share:** 30 of 40 (75%) · **Targets:** 30 before Dev's brain is built (reached), 300 before the 10-student test, about a quarter stay-quiet, **at least 70% students** (owner, 2026-11-05), at least one in five testing routine fit.
+**Cases:** 45 (s0001 to s0015 batch 1, s0016 to s0020 batch 2, s0021 to s0025 batch 3, s0026 to s0030 batch 4, s0031 to s0035 batch 5, s0036 to s0040 batch 6, s0041 to s0045 batch 7, 2026-11-12) · **Stay-quiet share:** 11 of 45 (24%) · **Student share:** 32 of 45 (71%; batch 7 is 4 of 5) · **Routine-fit share:** 34 of 45 (76%) · **Targets:** 30 before Dev's brain is built (reached), 300 before the 10-student test, about a quarter stay-quiet, **at least 70% students** (owner, 2026-11-05), at least one in five testing routine fit.
 
 Worked examples (full cases with generated connections, not counted above): `examples/e0001-student-aunt-away-short-before-payday` (community college student who works) and `examples/e0002-night-nurse-school-closure`.
 
-Stay-quiet cases: s0039 (the week told again, all already saved), s0010 (pay $18.40 lower after daylight saving), s0012 (cancelled tutorial, essay already handled by her morning routine), s0013 (sick day covered by paid sick leave), s0014 (food spending spike from hosting Thanksgiving), s0023 (full week already handled), s0020, s0030 (retired, covered, index fund up but not needed).
+Stay-quiet cases: s0043 (eating out a little above usual, nothing due, no fix), s0039 (the week told again, all already saved), s0010 (pay $18.40 lower after daylight saving), s0012 (cancelled tutorial, essay already handled by her morning routine), s0013 (sick day covered by paid sick leave), s0014 (food spending spike from hosting Thanksgiving), s0023 (full week already handled), s0020, s0030 (retired, covered, index fund up but not needed).
+
+## Batch 7 (s0041 to s0045, 2026-11-12): what the Today clouds and email finds now show
+
+Built on the new insight clouds (a clash, a shortfall before a bill, free gaps, Tonight from 4 PM, exams and study blocks, spending above usual only with a fix, double charges and trials), finds from email (receipts, bookings, school changes) and purchases on the timeline. Four students (four new generated personas, p6001, p6003, p6005, p6006) and one shift worker (p6004). Facts or a fix, never a scolding.
+
+| Case | Person | Covers |
+|---|---|---|
+| s0041 | community college, with family, nearly full-time grocery, 4 classes (12 credits), Blackboard, evening studier, first-gen (p6001) | double charge: bookstore $89.99 twice three minutes apart, one receipt email; Available now $240.00, Thursday insurance $141.37 covered either way; draft note to the bookstore, refund never counted |
+| s0042 | community college, roommates, part-time barista, night class, 5 classes (16 credits), Canvas, afternoon steady (p6003) | trial: email says a free study-app trial ends Monday, then $19.99 a month; one card (keep, cancel steps, remind Sunday 12:15 PM, between groceries and the study window); Dev cancels nothing |
+| s0043 | university, dorm, no job, 4 classes (12 credits), online Physics, Canvas, afternoon steady, meal plan (p6005) | stay quiet: eating out $31.88 a week vs $24.81, nothing due, no fix, so no spending card; Tonight at 4 PM only shows an open evening; Sunday morning kept free |
+| s0044 | community college commuter, nearly full-time barista, nursing track, 4 classes (13 credits), Canvas, morning crammer (p6006) | school change: Ethics final moved to Saturday Dec 12, 9 to 11 AM, his usual shift day, the day after a clinical; draft for the supervisor before the schedule posts (about Nov 30) and two morning study blocks in his window |
+| s0045 | warehouse worker, 4 on 4 off, 6 AM shifts, not a student (p6004) | purchase and booking on the timeline: $164.00 concert tickets for Tue Nov 24, after a shift and his 6 PM gym, 6 AM again on Wednesday; one line the evening before and an optional reminder, no advice |
+
+Routine-fit cases: s0042, s0043, s0044, s0045. Kinds added: a shift worker who is not a student with a purchase on the timeline, a commuter nursing student, a dorm student with no job and a meal plan. Simulator notes: a `bill_add` whose first charge is after `now` produces nothing visible, so a trial is planted only as its email; pinning a low checking balance for a nearly full-time worker (p6001) needs a shorter history (42 days); personas read from the simulator show the "usual" shifts of unposted weeks only in `truth.json`, so s0044 argues from the last posted Saturday shift and the posting pattern. Gaps still open: a refund landing, a due date moved later, Tonight with a real clash at 4 PM, a card statement find.
 
 ## Batch 6 (s0036 to s0040, 2026-11-10): the new one-step week setup, "can I afford", and a receipt filed once
 

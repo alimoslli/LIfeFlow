@@ -254,9 +254,9 @@ describe("second review fixes", () => {
     ]);
     const sum = await u.run((s) => spendingSummary(s, { from: daysAgo(30), to: daysAgo(0), search: "Omar Mousselli" }));
     expect(sum.netSpendingCents).toBe(4000);
-    expect(sum.unconfirmed).toEqual({ count: 2, cents: 8500 });
+    expect(sum.unconfirmed).toEqual({ count: 2, paidCents: 8500, receivedCents: 0 });
     const none = await u.run((s) => spendingSummary(s, { from: daysAgo(30), to: daysAgo(0) }));
-    expect(none.unconfirmed).toEqual({ count: 0, cents: 0 });
+    expect(none.unconfirmed).toEqual({ count: 0, paidCents: 0, receivedCents: 0 });
   });
 
   it("L2: a curly apostrophe or backtick in stored text is ignored like the straight one", async () => {
@@ -274,5 +274,94 @@ describe("second review fixes", () => {
     const d = await tool(u, { search: "Nichola Ross" });
     expect(d.transactions.map((t) => t.sure)).toEqual([false]);
     expect(d.matchType).toBe("similar");
+  });
+});
+
+describe("totals and lookups agree (mission 0a62c1cb)", () => {
+  const range = () => ({ from: daysAgo(400), to: daysAgo(0) });
+
+  it("'how much did I Zelle Omar in total' counts what 'when did I last Zelle Omar' finds, and names it", async () => {
+    const u = await bank([
+      { daysAgo: 100, description: "ZELLE TO OMAR HADDAD 1", cents: 10000, merchant: "Omar Haddad" },
+      { daysAgo: 80, description: "ZELLE TO OMAR HADDAD 2", cents: 5000, merchant: "Omar Haddad" },
+      { daysAgo: 60, description: "OMAR H ZELLE", cents: 9000 },
+      { daysAgo: 40, description: "ZELLE TO OMAR HADDAD 3", cents: 100 },
+    ]);
+    const found = await u.run((s) => queryTransactions(s, { search: "Zelle Omar" }));
+    const sum = await u.run((s) => spendingSummary(s, { ...range(), search: "Zelle Omar" }));
+    expect(sum.netSpendingCents).toBe(found.reduce((n, r) => n - r.amountCents, 0));
+    expect(sum.netSpendingCents).toBe(24100);
+    expect(sum.countedNames).toEqual([
+      { name: "Omar Haddad", count: 2, paidCents: 15000, receivedCents: 0 },
+      { name: "OMAR H ZELLE", count: 1, paidCents: 9000, receivedCents: 0 },
+      { name: "ZELLE TO OMAR HADDAD 3", count: 1, paidCents: 100, receivedCents: 0 },
+    ]);
+    // Through the tool: dollars, same list.
+    const out = (await executeToolCall(
+      "spending_summary",
+      JSON.stringify({ ...range(), search: "Zelle Omar" }),
+      makeToolContext(session(u), crypto.randomUUID()),
+      "t1",
+    )) as {
+      result: { ok: boolean; data: { countedNames: { name: string; count: number; paid: number }[] } };
+    };
+    expect(out.result.ok).toBe(true);
+    expect(out.result.data.countedNames.map((n) => [n.name, n.count, n.paid])).toEqual([
+      ["Omar Haddad", 2, 150],
+      ["OMAR H ZELLE", 1, 90],
+      ["ZELLE TO OMAR HADDAD 3", 1, 1],
+    ]);
+  });
+
+  it("a different person with a similar name is never merged into the total", async () => {
+    const u = await bank([
+      { daysAgo: 10, description: "ZELLE TO OMAR HADDAD", cents: 4000 },
+      { daysAgo: 9, description: "ZELLE TO OMAR HADID", cents: 7000 },
+      { daysAgo: 8, description: "ZELLE TO OMAR M 1", cents: 3000 },
+    ]);
+    const sum = await u.run((s) => spendingSummary(s, { ...range(), search: "Omar Haddad" }));
+    expect(sum.netSpendingCents).toBe(4000);
+    expect(sum.countedNames.map((n) => n.name)).toEqual(["ZELLE TO OMAR HADDAD"]);
+    expect(JSON.stringify(sum.countedNames)).not.toMatch(/HADID|OMAR M/);
+  });
+
+  it("no search means no names list; Money lock still covers the tool", async () => {
+    const u = await bank([{ daysAgo: 4, description: "ZELLE TO OMAR HADDAD", cents: 1000 }]);
+    expect((await u.run((s) => spendingSummary(s, range()))).countedNames).toEqual([]);
+    const locked = makeToolContext(session(u), crypto.randomUUID(), new Date(), "", true);
+    const out = (await executeToolCall("spending_summary", JSON.stringify({ ...range(), search: "Omar" }), locked, "t2")) as {
+      result: { ok: boolean; error: string };
+    };
+    expect(out.result.ok).toBe(false);
+    expect(out.result.error).toMatch(/Money is locked/);
+  });
+
+  it("names add up exactly to the totals across expense, income, refund and a transfer from the same person", async () => {
+    const u = await bank([{ daysAgo: 20, description: "ZELLE TO OMAR HADDAD", cents: 10000 }]);
+    await u.run(async (s) => {
+      const acct = (await s.tx.query.financialAccounts.findFirst())!;
+      const add = (days: number, description: string, amountCents: number, kind: "income" | "refund" | "transfer") =>
+        createTransaction(s, { accountId: acct.id, date: daysAgo(days), description, amountCents, kind });
+      await add(15, "ZELLE FROM OMAR HADDAD", 2500, "income");
+      await add(10, "ZELLE REFUND OMAR HADDAD", 1500, "refund");
+      await add(5, "ZELLE OMAR HADDAD OWN ACCOUNT", -7000, "transfer");
+    });
+    const sum = await u.run((s) => spendingSummary(s, { ...range(), search: "Omar Haddad" }));
+    expect(sum.netSpendingCents).toBe(8500);
+    expect(sum.incomeCents).toBe(2500);
+    expect(sum.countedNames.reduce((n, x) => n + x.paidCents, 0)).toBe(sum.netSpendingCents);
+    expect(sum.countedNames.reduce((n, x) => n + x.receivedCents, 0)).toBe(sum.incomeCents);
+    expect(sum.countedLeftOut).toEqual({ count: 1, cents: 7000 });
+  });
+
+  it("an unsure incoming line is reported as received, apart from paid", async () => {
+    const u = await bank([{ daysAgo: 20, description: "ZELLE TO OMAR HADDAD", cents: 1000 }]);
+    await u.run(async (s) => {
+      const acct = (await s.tx.query.financialAccounts.findFirst())!;
+      await createTransaction(s, { accountId: acct.id, date: daysAgo(3), description: "ZELLE FROM OMAR H", amountCents: 8500, kind: "income" });
+    });
+    const sum = await u.run((s) => spendingSummary(s, { ...range(), search: "Omar Haddad" }));
+    expect(sum.incomeCents).toBe(0);
+    expect(sum.unconfirmed).toEqual({ count: 1, paidCents: 0, receivedCents: 8500 });
   });
 });
