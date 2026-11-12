@@ -39,22 +39,53 @@ describe("the integrity case never saves a second copy of the essay (open since 
     expect(after.filter((a) => /argument essay/i.test(a.title)).map((a) => a.title)).toEqual(["Argument essay draft"]);
     // the tool says it's the one already saved, so the skyling can't claim it saved something new
     expect(said).toContain('"skippedDuplicates":[{"id"');
+    expect(said).toContain('"asked":"Argument essay"');
     expect(said).toContain('"created":[]');
   });
 
-  it("different pieces of work stay apart: same day, neither title inside the other", async () => {
+  it("different pieces of work due the same day stay apart; only the same work said another way merges (COO review)", async () => {
     const { session } = await seedEvalStudent();
-    const r = await withUser(session.id, (s) =>
-      importAssignments(
-        s,
-        TZ,
-        [
-          { title: "Lab report final", courseName: "ENG 102", dueDate: "2026-11-04" },
-          { title: "Argument essay outline", courseName: "ENG 102", dueDate: "2026-11-05" },
-        ],
-        { now: EVAL_NOW },
-      ),
-    );
-    expect(r.created.map((c) => c.title)).toEqual(["Lab report final", "Argument essay outline"]);
+    const day = "2026-11-06";
+    const add = (titles: string[]) =>
+      withUser(session.id, (s) =>
+        importAssignments(
+          s,
+          TZ,
+          titles.map((title) => ({ title, courseName: "ENG 102", dueDate: day })),
+          { now: EVAL_NOW },
+        ),
+      );
+    const r = await add([
+      "Essay draft",
+      "Essay final",
+      "Reading 1",
+      "Reading 2",
+      "Reading 1 response",
+      "Lab 4",
+      "Lab 4 retake",
+      "Quiz",
+      "Quiz 2",
+      "Peer review",
+    ]);
+    expect(r.created.map((c) => c.title)).toEqual([
+      "Essay draft",
+      "Essay final",
+      "Reading 1",
+      "Reading 2",
+      "Reading 1 response",
+      "Lab 4",
+      "Lab 4 retake",
+      "Quiz",
+      "Quiz 2",
+      "Peer review",
+    ]);
+    expect(r.duplicates).toEqual([]);
+    // the same work said again, or with only "draft" added, is the one already there, and the result says which
+    const again = await add(["peer review", "Peer review draft"]);
+    expect(again.created).toEqual([]);
+    expect(again.duplicates.map((d) => [d.asked, d.title])).toEqual([
+      ["peer review", "Peer review"],
+      ["Peer review draft", "Peer review"],
+    ]);
   });
 });

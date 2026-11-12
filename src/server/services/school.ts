@@ -309,7 +309,8 @@ export type ImportItem = z.input<typeof importItemSchema>;
 
 export type ImportOutcome = {
   created: { id: string; title: string; course: string; dueAt: Date | null }[];
-  duplicates: { id: string; title: string; course: string }[];
+  /** Already saved: `title` is the saved one; `asked` is the title the import gave, when it was matched to it by its words. */
+  duplicates: { id: string; title: string; course: string; asked?: string }[];
   needsCourse: { title: string; courseName: string | null; candidates: { id: string; name: string; code: string | null }[] }[];
   errors: { title: string; error: string }[];
   warnings: string[];
@@ -328,7 +329,14 @@ const titleWords = (t: string) =>
       .filter(Boolean),
   );
 
-/** An assignment in this class due the same day whose title's words all appear in the other's (either way round). */
+/**
+ * The same piece of work said another way, in this class and due the same day: the titles may differ only by words that
+ * don't name a different piece of work ("Argument essay" and "Argument essay draft"). Anything else stays apart, because a
+ * skipped item is a missed deadline (COO review, 2026-11-12): titles that differ by a number ("Quiz" and "Quiz 2",
+ * "Reading 1" and "Reading 2"), by any other word ("Reading 1 response", "Lab 4 retake", "Essay final"), or whose
+ * shorter one is a single word.
+ */
+const SAME_WORK_WORDS = new Set(["draft", "the", "my", "a", "an", "for", "due", "assignment", "submission"]);
 async function resemblingAssignment(scope: UserScope, tz: string, courseId: string, title: string, dueDate: string) {
   const mine = titleWords(title);
   if (!mine.size) return null;
@@ -343,13 +351,13 @@ async function resemblingAssignment(scope: UserScope, tz: string, courseId: stri
         lt(assignments.dueAt, startOfLocalDay(addDaysStr(dueDate, 1), tz)),
       ),
     );
-  const within = (a: Set<string>, b: Set<string>) => [...a].every((w) => b.has(w));
-  return (
-    rows.find((r) => {
-      const theirs = titleWords(r.title);
-      return theirs.size > 0 && (within(mine, theirs) || within(theirs, mine));
-    }) ?? null
-  );
+  const same = (a: Set<string>, b: Set<string>) => {
+    const [short, long] = a.size <= b.size ? [a, b] : [b, a];
+    if (![...short].every((w) => long.has(w))) return false;
+    if (short.size < 2 && short.size !== long.size) return false;
+    return [...long].every((w) => short.has(w) || SAME_WORK_WORDS.has(w));
+  };
+  return rows.find((r) => same(mine, titleWords(r.title))) ?? null;
 }
 
 export async function importAssignments(
@@ -389,7 +397,7 @@ export async function importAssignments(
     // already there, never a second copy (it once saved a duplicate essay on a "write my intro" request, 2026-11-07/12)
     const twin = item.dueDate ? await resemblingAssignment(scope, tz, course.id, item.title, item.dueDate) : null;
     if (twin) {
-      out.duplicates.push({ id: twin.id, title: twin.title, course: course.name });
+      out.duplicates.push({ id: twin.id, title: twin.title, course: course.name, asked: item.title });
       continue;
     }
     try {
