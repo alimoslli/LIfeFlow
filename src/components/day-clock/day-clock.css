@@ -1202,12 +1202,17 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   justify-content: center;
   pointer-events: auto;
 }
+/* each dot is a whole 44 px target around its small pixel (COO re-review, 2026-11-12: WCAG 2.5.8). It reaches up over the
+   words, never further down than the 22 px dot did, so it stays off the cloud's dots under it; the strip is absolute
+   under the words, so nothing moves */
 .dc-fact-dots button {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  min-width: 1.375rem;
-  height: 1.375rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-top: -1.375rem;
+  padding-bottom: calc(0.6875rem - 2.5px);
 }
 .dc-fact-dots i {
   display: block;

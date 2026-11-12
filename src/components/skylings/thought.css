@@ -237,19 +237,22 @@
   position: relative;
 }
 /* each dot is a whole 44 px target (COO review, 2026-11-12) while it looks like a small pixel on the label's line: the
-   button reaches above and below that line without moving anything, and the label stops short of the dots */
+   button reaches below that line without moving anything, and the label stops short of the dots */
 .lf-idea-dots {
   position: absolute;
-  top: -0.6875rem;
+  /* inside the stack's own top: the sky's fact dots sit right above it */
+  top: 0;
   right: 0.75rem;
   display: flex;
 }
 .lf-idea-dots button {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   width: 2.75rem;
   height: 2.75rem;
+  /* the pixel sits on the label's line, the rest of the target under it */
+  padding-top: 0.625rem;
 }
 .lf-idea-stack .lf-thought-who {
   max-width: calc(100% - 2.25rem - var(--dots-w, 11rem));

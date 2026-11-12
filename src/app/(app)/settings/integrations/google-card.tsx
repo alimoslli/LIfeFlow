@@ -34,8 +34,9 @@ export function GoogleCard({
       </div>
       <p className="mt-3 text-sm text-text-2">
         Once Google is connected, <AssistantName /> reads your new email automatically each morning for due dates, exam changes, bills, receipts, deliveries and
-        bookings, and puts them on your sky, marked &ldquo;From your email&rdquo;, with Undo. Only mail Gmail confirms came from its sender. The switch below
-        turns the reading off. It never sends anything without asking you.
+        bookings, and puts them on your sky, marked &ldquo;From your email&rdquo;, with Undo. Only mail Gmail confirms came from its sender. Each email it reads
+        is sent to our AI provider to read; we keep what was found (details such as amounts, dates and confirmation numbers), the sender and the subject, never
+        the email itself. The switch below turns the reading off. It never sends anything without asking you.
       </p>
 
       {!configured ? (

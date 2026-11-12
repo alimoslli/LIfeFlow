@@ -14,6 +14,8 @@ import { respondToMessage } from "@/server/services/proactive/respond";
 import { collectSnapshot } from "@/server/briefing/collect";
 import { skyInsights } from "@/server/services/sky-insights";
 import { listInsights } from "@/server/services/insights";
+import { createGoal } from "@/server/services/finance/planning";
+import { toCard } from "@/server/services/proactive/present";
 import { makeUser, TZ } from "../helpers";
 
 // Owner, 2026-11-12 (docs/backlog/2026-11-12-useful-sky.md): study blocks before exams, a head start for people who usually
@@ -228,6 +230,8 @@ describe("the one list", () => {
       for (const d of ["2026-11-14", "2026-11-15", "2026-11-12"])
         await createTransaction(s, { accountId: acct.id, date: d, description: "Chipotle", merchantName: "Chipotle", amountCents: -2650 });
       await createTask(s, TZ, { title: "Laundry", dueDate: "2026-11-14" });
+      // COO re-review: a money goal's line has no "$" ("Emergency fund: 45%"), and is still money
+      await createGoal(s, { name: "Emergency fund", targetCents: 200_000, savedCents: 90_000, purpose: "emergency" });
     });
     await run((s) => runDueSlot(s, TZ, user.preferences, sunday("18:10")));
     await stamp(run, sunday("18:10"));
@@ -245,11 +249,16 @@ describe("the one list", () => {
     // still there, with what isn't money
     expect(review.sections?.map((x) => x.heading)).toEqual(expect.arrayContaining(["Wins", "Still open"]));
     expect(review.money).toBe(false);
-    expect(JSON.stringify(locked)).not.toMatch(/\$\s?\d|Spending/);
+    expect(open.sections?.find((x) => x.heading === "Goals")?.lines).toEqual([expect.stringMatching(/^Emergency fund: 45%/)]);
+    expect(JSON.stringify(locked)).not.toMatch(/\$\s?\d|Spending|Emergency fund|45%/);
 
     const lockedPrefs = { ...user.preferences, moneyLock: { enabled: true } } as never;
     const clouds = await run((s) => listInsights(s, TZ, lockedPrefs, when));
     expect(clouds.some((i) => i.kind === "weekly_review")).toBe(true);
-    expect(JSON.stringify(clouds)).not.toMatch(/\$\s?\d/);
+    expect(JSON.stringify(clouds)).not.toMatch(/\$\s?\d|Emergency fund|45%/);
+    // the Updates card says the same as the sky
+    const card = toCard(stored, TZ, { moneyLocked: true });
+    expect(JSON.stringify(card)).not.toMatch(/\$\s?\d|Spending|Emergency fund|45%/);
+    expect(card.sections?.map((x) => x.heading)).toEqual(expect.arrayContaining(["Wins", "Still open"]));
   });
 });

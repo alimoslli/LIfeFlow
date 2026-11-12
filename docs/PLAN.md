@@ -361,6 +361,12 @@ Last: done 2026-11-10 evening ([the walk and the numbers](audits/2026-11-10-prod
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-12, LF Main (COO re-review of 75d5a1a): fixes on the branch, each with a test.
+  - The Money lock is structural. A review marks each money part where it's made (`money: true` on Spending, Goals, Patterns, the morning brief's Money, and a money "One change"). `lockSafeText` drops those parts for the card and the sky alike; old reviews are read by heading, and an amount check is the last backstop. A money goal's "45%" no longer leaks (`useful-sky.test.ts`).
+  - Gmail waits are read oldest first and stop after 5 refused tries with a fixed reason. One look reads at most its limit (50, then 10); the rest wait for the next look.
+  - A failed read keeps only our own plain reason (`PlainReason`), never a provider's error text (`gmail-useful.test.ts`).
+  - The fact dots under the sky are 44 px targets that cover no other button (`insight-clouds-phone.spec.ts`).
+  - The Google card and the privacy page say each email goes to our AI provider to read, and that we keep details such as amounts, dates and confirmation numbers, the sender, the subject and the message ID.
 - 2026-11-12, LF Main (COO review of 815db4c): fixes on the branch, each with a test.
   - The Money lock now decides by what a message says, not its topic. The Sunday review keeps its spending out of the sky's list and the clouds under the lock (`lockSafeText`, shared with the Updates card; `useful-sky.test.ts`).
   - A Gmail error halfway through no longer loses waiting emails. Each keeps its row until its own read works; only one deleted from Gmail stops waiting, and its row says why (`gmail-useful.test.ts`).

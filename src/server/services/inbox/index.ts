@@ -28,7 +28,10 @@ import { createEvent, deleteEvent } from "../calendar";
 import { createTask, deleteTask } from "../tasks";
 import { addPaycheck, deletePaycheck, listEmployers } from "../work";
 import { restoreMerged } from "./cleanup";
-import { extractDocument, type ExtractInput, type Extraction } from "./extract";
+import { extractDocument, PlainReason, type ExtractInput, type Extraction } from "./extract";
+
+/** Why a document wasn't read when the reason isn't one of ours: fixed words, never an error's own text. */
+export const READ_FAILED = "Couldn't read it this time.";
 import type { AiDoor } from "../ai-usage";
 import {
   attachReceipt,
@@ -649,12 +652,13 @@ export async function processDocument(
   let ex: Extraction;
   try {
     const [owner] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId));
-    if (!aiAllowed(owner?.preferences)) throw new Error("Saved. Allow your skyling to use AI (in Settings) to have it read and filed automatically.");
+    if (!aiAllowed(owner?.preferences)) throw new PlainReason("Saved. Allow your skyling to use AI (in Settings) to have it read and filed automatically.");
     ex = await extract({ ...doc, today }, { userId: scope.userId, door: opts.door ?? (doc.channel === "email" ? "email_in" : doc.channel) });
   } catch (e) {
     const [failed] = await scope.tx
       .update(inboxItems)
-      .set({ status: "failed", reason: e instanceof Error ? e.message.slice(0, 300) : "Couldn't read it." })
+      // only our own plain reasons are kept; a provider's error text never reaches the row (COO review, 2026-11-12)
+      .set({ status: "failed", reason: e instanceof PlainReason ? e.message.slice(0, 300) : READ_FAILED })
       .where(eq(inboxItems.id, row.id))
       .returning();
     return failed;

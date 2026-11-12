@@ -5,8 +5,9 @@ import { closeDb } from "@/server/db/client";
 import { calendarEvents, inboxItems, transactions } from "@/server/db/schema";
 import { saveGoogleConnection } from "@/server/integrations/google";
 import { processDocument } from "@/server/services/inbox";
-import { DAILY_LOOK, FIRST_LOOK, emailFilingOn, fileFromGmail } from "@/server/services/inbox/gmail";
-import { NOT_READ_YET } from "@/server/services/inbox/extract";
+import { DAILY_LOOK, FIRST_LOOK, GAVE_UP, WAIT_TRIES, emailFilingOn, fileFromGmail } from "@/server/services/inbox/gmail";
+import { READ_FAILED } from "@/server/services/inbox";
+import { NOT_READ_YET, PlainReason } from "@/server/services/inbox/extract";
 import type { Extraction } from "@/server/services/inbox/extract";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { createAssignment, createCourse } from "@/server/services/school";
@@ -95,7 +96,7 @@ describe("Gmail is on with the connection", () => {
     await connect(run);
     const id = "18c2a1b0f3d4e5b7";
     const refused = (async () => {
-      throw new Error(`${NOT_READ_YET} yet: this month's skyling allowance is used up. It opens up again on December 1.`);
+      throw new PlainReason(`${NOT_READ_YET} yet: this month's skyling allowance is used up. It opens up again on December 1.`);
     }) as never;
     await run((s) => fileFromGmail(s, TZ, "2026-11-17", { fetch: fakeGmail([id]).f, extract: refused }));
     const rows = () =>
@@ -125,7 +126,7 @@ describe("Gmail is on with the connection", () => {
     await connect(run);
     const [busy, gone, fine, fresh] = ["18c2a1b0f3d4e5c1", "18c2a1b0f3d4e5c2", "18c2a1b0f3d4e5c3", "18c2a1b0f3d4e5c4"];
     const refused = (async () => {
-      throw new Error(`${NOT_READ_YET} yet: this month's skyling allowance is used up. It opens up again on December 1.`);
+      throw new PlainReason(`${NOT_READ_YET} yet: this month's skyling allowance is used up. It opens up again on December 1.`);
     }) as never;
     await run((s) => fileFromGmail(s, TZ, "2026-11-17", { fetch: fakeGmail([busy, gone, fine]).f, extract: refused }));
     const rows = () =>
@@ -158,6 +159,76 @@ describe("Gmail is on with the connection", () => {
     const last = await run((s) => fileFromGmail(s, TZ, "2026-11-19", { fetch: fakeGmail([]).f, extract }));
     expect(last).toMatchObject({ checked: 2, filed: 2 });
     expect((await rows())[gone]).toBe("failed: It isn't in Gmail anymore, so it wasn't read.");
+  });
+
+  // COO re-review, 2026-11-12: a 403 that never clears used to wait forever and could fill every look
+  it("an email Gmail keeps refusing stops waiting after a few tries, with a fixed reason", async () => {
+    const { user, run } = await makeUser("Never Hands Over");
+    await connect(run);
+    const stuck = "18c2a1b0f3d4e5d1";
+    const extract = (async () => base) as never;
+    const reason = () =>
+      run(
+        async (s) =>
+          (
+            await s.tx
+              .select({ reason: inboxItems.reason })
+              .from(inboxItems)
+              .where(eq(inboxItems.externalId, `gmail:${stuck}`))
+          )[0]?.reason,
+      );
+    // each look that's refused is one try; the last one gives up
+    for (let day = 0; day < WAIT_TRIES - 1; day++) {
+      await run((s) => fileFromGmail(s, TZ, `2026-11-${17 + day}`, { fetch: fakeGmail(day ? [] : [stuck], { [stuck]: 403 }).f, extract }));
+      expect(await reason()).toMatch(new RegExp(`^${NOT_READ_YET}`));
+    }
+    await run((s) => fileFromGmail(s, TZ, `2026-11-${17 + WAIT_TRIES}`, { fetch: fakeGmail([], { [stuck]: 403 }).f, extract }));
+    expect(await reason()).toBe(GAVE_UP);
+    // and it isn't asked for again
+    const later = fakeGmail([], { [stuck]: 403 });
+    await run((s) => fileFromGmail(s, TZ, "2026-11-24", { fetch: later.f, extract }));
+    expect(later.asked.some((u) => u.includes(stuck))).toBe(false);
+    expect(await reason()).toBe(GAVE_UP);
+    void user;
+  });
+
+  it("one look reads at most its limit, waiting ones first and oldest first; the rest wait, none dropped", async () => {
+    const { run } = await makeUser("Full Look");
+    await connect(run);
+    const id = (n: number) => `18c2a1b0f3d4${String(n).padStart(4, "0")}`;
+    const refused = (async () => {
+      throw new PlainReason(`${NOT_READ_YET} yet: this month's skyling allowance is used up. It opens up again on December 1.`);
+    }) as never;
+    // the first look: 50 found, all refused by the monthly limit, so 50 wait
+    await run((s) => fileFromGmail(s, TZ, "2026-11-17", { fetch: fakeGmail(Array.from({ length: FIRST_LOOK.max }, (_, i) => id(i))).f, extract: refused }));
+    // the next look finds 10 new ones too: it reads 10 (its limit), the waiting ones first, and the new ones wait
+    const next = fakeGmail(Array.from({ length: DAILY_LOOK.max }, (_, i) => id(100 + i)));
+    const r = await run((s) => fileFromGmail(s, TZ, "2026-11-18", { fetch: next.f, extract: (async () => base) as never }));
+    expect(r.checked).toBe(DAILY_LOOK.max);
+    const read = next.asked.filter((u) => u.includes("format=full")).map((u) => u.match(/messages\/([^?]+)/)![1]);
+    // the ones that waited go first (saved together, so in no set order among themselves), never a new one
+    expect(read).toHaveLength(DAILY_LOOK.max);
+    expect(read.every((r) => Number(r.slice(-4)) < 100)).toBe(true);
+    const waiting = await run((s) =>
+      s.tx
+        .select({ id: inboxItems.externalId })
+        .from(inboxItems)
+        .where(and(eq(inboxItems.status, "failed"), eq(inboxItems.userId, s.userId))),
+    );
+    expect(waiting.map((w) => w.id)).toEqual(expect.arrayContaining(Array.from({ length: DAILY_LOOK.max }, (_, i) => `gmail:${id(100 + i)}`)));
+    expect(waiting).toHaveLength(FIRST_LOOK.max - DAILY_LOOK.max + DAILY_LOOK.max);
+  });
+
+  it("a read that fails with the provider's own words keeps fixed words instead", async () => {
+    const { user, run } = await makeUser("Raw Error");
+    await connect(run);
+    const id = "18c2a1b0f3d4e5e1";
+    const raw = (async () => {
+      throw new Error("400 Invalid 'input[0].content': sk-proj-abc123 request_id=req_9f8e");
+    }) as never;
+    await run((s) => fileFromGmail(s, TZ, "2026-11-17", { fetch: fakeGmail([id]).f, extract: raw }));
+    const [row] = await run((s) => s.tx.select({ reason: inboxItems.reason }).from(inboxItems).where(eq(inboxItems.userId, user.id)));
+    expect(row.reason).toBe(READ_FAILED);
   });
 });
 

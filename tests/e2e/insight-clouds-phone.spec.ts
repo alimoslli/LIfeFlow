@@ -187,6 +187,25 @@ test("the facts under the sky: dots the keyboard reaches, the arrow keys move th
   const dots = strip.getByRole("button", { name: /^Fact \d of \d$/ });
   await expect.poll(() => dots.count(), { timeout: 15_000 }).toBeGreaterThanOrEqual(2);
   expect(await dots.first().getAttribute("tabindex")).toBeNull();
+  // every dot is a whole 44 px target, and covers no other button or link on the page (COO re-review, 2026-11-12)
+  const clash = await dots.evaluateAll((els) => {
+    const out: string[] = [];
+    const others = [...document.querySelectorAll<HTMLElement>("button, a, [role=button], textarea")].filter(
+      (o) => !els.includes(o) && o.getClientRects().length && getComputedStyle(o).visibility !== "hidden",
+    );
+    for (const d of els) {
+      const r = d.getBoundingClientRect();
+      if (r.width < 44 || r.height < 44) out.push(`small ${r.width}x${r.height}`);
+      for (const o of others) {
+        const q = o.getBoundingClientRect();
+        // more than a rounding pixel's overlap
+        if (q.width && q.height && r.left < q.right - 1 && q.left < r.right - 1 && r.top < q.bottom - 1 && q.top < r.bottom - 1)
+          out.push(`${d.getAttribute("aria-label")} over ${o.getAttribute("aria-label") ?? o.textContent?.trim().slice(0, 30)}`);
+      }
+    }
+    return out;
+  });
+  expect(clash).toEqual([]);
   await dots.first().focus();
   await page.keyboard.press("ArrowRight");
   await expect(dots.nth(1)).toHaveAttribute("aria-current", "true");

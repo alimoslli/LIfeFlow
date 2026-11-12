@@ -1,4 +1,4 @@
-import { and, eq, inArray, like, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, like, sql } from "drizzle-orm";
 import { inboxItems, type UserPreferences } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { getGoogleConnection, GoogleError, readEmail, searchEmail } from "../../integrations/google";
@@ -28,8 +28,13 @@ export const emailFilingOn = (prefs: UserPreferences | undefined, provider: keyo
 /** Why a waiting email is no longer read again: it isn't in Gmail anymore. */
 export const GONE = "It isn't in Gmail anymore, so it wasn't read.";
 
-/** An email Google didn't hand over this time: kept as waiting, so the next look reads it (never dropped silently). */
-async function keepForLater(scope: UserScope, m: { id: string; from: string; subject: string }) {
+/** Why a waiting email is no longer read again: Google refused it on every try. */
+export const GAVE_UP = "Gmail wouldn't hand it over after several tries, so it wasn't read.";
+/** A waiting email Google keeps refusing (a 400 or 403 that never clears) stops being asked for after this many tries. */
+export const WAIT_TRIES = 5;
+
+/** An email not read this time (Google didn't hand it over, or the look was full): kept as waiting, so a later look reads it. */
+async function keepForLater(scope: UserScope, m: { id: string; from: string; subject: string }, tries: number) {
   await scope.tx
     .insert(inboxItems)
     .values({
@@ -39,7 +44,8 @@ async function keepForLater(scope: UserScope, m: { id: string; from: string; sub
       fromAddress: (parseFromAddress(m.from) || m.from).slice(0, 200) || null,
       subject: m.subject.slice(0, 300) || null,
       status: "failed",
-      reason: `${NOT_READ_YET}: Gmail didn't hand it over this time. It's read on the next look.`,
+      reason: `${NOT_READ_YET}: ${tries ? "Gmail didn't hand it over this time" : "there were more new emails than one look reads"}. It's read on the next look.`,
+      extracted: { waitTries: tries },
     })
     .onConflictDoNothing({ target: [inboxItems.userId, inboxItems.externalId], where: sql`external_id is not null` });
 }
@@ -59,8 +65,9 @@ export async function fileFromGmail(scope: UserScope, tz: string, today: string,
   const look = before ? DAILY_LOOK : FIRST_LOOK;
   // what the limits refused earlier is read again first (owner via the COO: never dropped silently). Its row stays until
   // that email's own read works (COO review, 2026-11-12), so a Google error halfway through loses nothing.
+  // oldest first, so a later one can't keep an older one waiting
   const waiting = await scope.tx
-    .select({ id: inboxItems.id, externalId: inboxItems.externalId })
+    .select({ id: inboxItems.id, externalId: inboxItems.externalId, extracted: inboxItems.extracted })
     .from(inboxItems)
     .where(
       and(
@@ -70,12 +77,13 @@ export async function fileFromGmail(scope: UserScope, tz: string, today: string,
         like(inboxItems.reason, `${NOT_READ_YET}%`),
       ),
     )
+    .orderBy(asc(inboxItems.createdAt))
     .limit(look.max);
-  const kept = new Map(waiting.map((w) => [w.externalId!.slice("gmail:".length), w.id]));
+  const kept = new Map(waiting.map((w) => [w.externalId!.slice("gmail:".length), { id: w.id, tries: Number(w.extracted?.waitTries ?? 0) }]));
   const again = [...kept.keys()].map((id) => ({ id, from: "", subject: "" }));
   const fresh = await searchEmail(scope, gmailFilingQuery(look.days), look.max, deps.fetch, FIRST_LOOK.max);
-  const found = [...again, ...fresh.filter((m) => !kept.has(m.id))];
-  if (!found.length) return { filed: 0, checked: 0 };
+  const all = [...again, ...fresh.filter((m) => !kept.has(m.id))];
+  if (!all.length) return { filed: 0, checked: 0 };
   const seen = new Set(
     (
       await scope.tx
@@ -86,12 +94,15 @@ export async function fileFromGmail(scope: UserScope, tz: string, today: string,
             eq(inboxItems.userId, scope.userId),
             inArray(
               inboxItems.externalId,
-              found.map((m) => `gmail:${m.id}`),
+              all.map((m) => `gmail:${m.id}`),
             ),
           ),
         )
     ).map((r) => r.id),
   );
+  // one look reads at most `look.max` ("up to 50" stays true): new ones past that wait for the next look, never dropped
+  const found = all.slice(0, look.max);
+  for (const m of all.slice(look.max)) if (!kept.has(m.id) && !seen.has(`gmail:${m.id}`)) await keepForLater(scope, m, 0);
   let filed = 0;
   let checked = 0;
   // once Google stops letting us in (access removed), the rest wait for the next look without another call
@@ -107,16 +118,25 @@ export async function fileFromGmail(scope: UserScope, tz: string, today: string,
       // anything else (a timeout, a dropped connection, Google busy) only waits for the next look
       const g = e instanceof GoogleError ? e : null;
       if (g?.reauth) shut = true;
-      if (g?.status === 404) {
-        // gone from Gmail (deleted): the one thing that ends a wait, and the row says why
-        if (old) await scope.tx.update(inboxItems).set({ reason: GONE }).where(eq(inboxItems.id, old));
-      } else if (!old) await keepForLater(scope, m);
+      if (!old) {
+        if (g?.status !== 404) await keepForLater(scope, m, 1);
+      } else if (g?.status === 404) {
+        // gone from Gmail (deleted): a wait ends, and the row says why
+        await scope.tx.update(inboxItems).set({ reason: GONE }).where(eq(inboxItems.id, old.id));
+      } else {
+        // refused again: counted, and after WAIT_TRIES it stops waiting with a fixed reason (COO re-review, 2026-11-12)
+        const tries = old.tries + 1;
+        await scope.tx
+          .update(inboxItems)
+          .set(tries >= WAIT_TRIES ? { reason: GAVE_UP, extracted: null } : { extracted: { waitTries: tries } })
+          .where(eq(inboxItems.id, old.id));
+      }
       continue;
     }
     checked++;
     const address = parseFromAddress(mail.from);
     if (!address || !senderAuthenticated(mail.authHeaders, address, { via: "gmail" })) {
-      if (old) await scope.tx.delete(inboxItems).where(eq(inboxItems.id, old));
+      if (old) await scope.tx.delete(inboxItems).where(eq(inboxItems.id, old.id));
       const [ig] = await recordIgnored(
         scope,
         address || mail.from,
@@ -130,7 +150,7 @@ export async function fileFromGmail(scope: UserScope, tz: string, today: string,
       continue;
     }
     // read now: the waiting row makes way for the real one (one row per Gmail message)
-    if (old) await scope.tx.delete(inboxItems).where(eq(inboxItems.id, old));
+    if (old) await scope.tx.delete(inboxItems).where(eq(inboxItems.id, old.id));
     // Past the sender check above, so this is the authenticated path: it may update what the user already has.
     const row = await processDocument(
       scope,
