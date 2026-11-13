@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import { closeDb, getDb } from "@/server/db/client";
-import { aiHolds } from "@/server/db/schema";
+import { aiBudgets, aiHolds } from "@/server/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { deleteUserBudgets, readBudgets, releaseBudget, reserveBudget, settleBudget, sweepBudgets, type BudgetLine } from "@/server/services/ai-budget";
 
@@ -155,5 +155,54 @@ describe("first use of several keys", () => {
       ),
     );
     expect(results.every((r) => r.ok)).toBe(true);
+  });
+});
+
+describe("held can never go negative (migration 0069)", () => {
+  it("reserves, settles, releases and repeats at the same moment: held matches the holds, never below zero, never past the limit", async () => {
+    const k = key();
+    const LIMIT = 10_000;
+    const check = async () => {
+      const [row] = await getDb().select().from(aiBudgets).where(eq(aiBudgets.key, k));
+      const holds = await getDb().select().from(aiHolds).where(eq(aiHolds.key, k));
+      expect(row.held).toBeGreaterThanOrEqual(0);
+      expect(row.used).toBeGreaterThanOrEqual(0);
+      expect(row.used + row.held).toBeLessThanOrEqual(LIMIT);
+      expect(row.held).toBe(holds.reduce((n, h) => n + h.amount, 0));
+    };
+    const ids = Array.from({ length: 30 }, () => randomUUID());
+    const reserved = await Promise.all(ids.map((id) => reserveBudget([line(k, 1_000, LIMIT, "micros")], 300, { holdId: id })));
+    expect(reserved.filter((r) => r.ok)).toHaveLength(10);
+    await check();
+    const won = ids.filter((_, i) => reserved[i].ok);
+    // Every hold is settled twice and released once, all at the same moment: only the first of the three may do anything.
+    const calls = won.flatMap((id) => [settleBudget(id, { micros: 900 }), settleBudget(id, { micros: 900 }), releaseBudget(id)]);
+    const results = await Promise.all(calls);
+    expect(results.filter(Boolean)).toHaveLength(won.length);
+    await check();
+    const after = await read(k);
+    expect(after.held).toBe(0);
+    expect(after.used + after.held).toBeLessThanOrEqual(LIMIT);
+    // A second settle (or release) of a closed hold is a no-op.
+    expect(await settleBudget(won[0], { micros: 900 })).toBe(false);
+    expect(await releaseBudget(won[0])).toBe(false);
+    expect(await read(k)).toEqual(after);
+  });
+
+  it("a counter can't disappear while work is set aside on it: its holds go with it, so a later counter never starts negative", async () => {
+    const k = key();
+    const r = await reserveBudget([line(k, 1_000, 10_000, "micros")], 1);
+    expect(r.ok).toBe(true);
+    await getDb().delete(aiBudgets).where(eq(aiBudgets.key, k));
+    expect(await getDb().select().from(aiHolds).where(eq(aiHolds.key, k))).toHaveLength(0);
+    await new Promise((res) => setTimeout(res, 1_100));
+    expect((await reserveBudget([line(k, 1_000, 10_000, "micros")], 300)).ok).toBe(true);
+    expect(await read(k)).toEqual({ used: 0, held: 1_000 });
+  });
+
+  it("the database refuses a negative counter", async () => {
+    const k = key();
+    await getDb().insert(aiBudgets).values({ key: k });
+    await expect(getDb().update(aiBudgets).set({ held: -1 }).where(eq(aiBudgets.key, k))).rejects.toThrow();
   });
 });
