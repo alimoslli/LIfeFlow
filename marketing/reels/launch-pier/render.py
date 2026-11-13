@@ -22,10 +22,11 @@ NAVY, GOLD, SOFT = (20, 36, 81), (255, 210, 122), (243, 245, 250)
 T_N = 352                      # Tyler: all of IMG_4105
 A1_S, A1_E = 57, 513           # IMG_4127 1.9 s .. 17.1 s ("What's up" ... "and all your finances", the last "s" kept)
 A2_S, A2_E = 585, 672          # IMG_4127 19.5 s .. 22.4 s ("with a very smart skyling by your side all day.")
-C_S, C_E = 29, 85              # IMG_4126 (fr/c starts at 21.0 s): 21.967 s .. 23.833 s ("Be ready by January, 2027.")
-SLOW_N = 22                    # IMG_4126 from 23.833 s at 120 fps, one source frame per output frame (0.25x): he gets up
+C_S, C_E = 29, 83              # IMG_4126 (fr/c starts at 21.0 s): 21.967 s .. 23.733 s ("Be ready by January, 2027."), fading to black as he gets up
+SLOW_N = 0                     # no slow motion (Ali, v3 notes)
+BLACK_N = 4                    # black while "2027" finishes, then the logo ending fades up
 END_N = 105
-O_A1 = T_N; O_A2 = O_A1 + (A1_E - A1_S); O_C = O_A2 + (A2_E - A2_S); O_SL = O_C + (C_E - C_S); O_END = O_SL + SLOW_N; N = O_END + END_N
+O_A1 = T_N; O_A2 = O_A1 + (A1_E - A1_S); O_C = O_A2 + (A2_E - A2_S); O_SL = O_C + (C_E - C_S); O_END = O_SL + SLOW_N + BLACK_N; N = O_END + END_N
 ZOOM2 = 1.06
 
 def seg_of(i):
@@ -34,7 +35,7 @@ def seg_of(i):
     if i < O_A2: s = A1_S + (i - O_A1); return "a", s / FPS, f"{L}/fr/a/{s + 1:04d}.jpg", 1.0, s + 1
     if i < O_C: s = A2_S + (i - O_A2); return "a", s / FPS, f"{L}/fr/a/{s + 1:04d}.jpg", ZOOM2, s + 1
     if i < O_SL: s = C_S + (i - O_C); return "c", 21.0 + s / FPS, f"{L}/fr/c/{s + 1:04d}.jpg", 1.0, f"{L}/fr/cm/{s + 1:04d}.png"
-    if i < O_END: k = 16 + (i - O_SL); return "c", 23.7 + k / 120, f"{L}/fr/cslow/{min(k + 1, 40):04d}.jpg", 1.0, f"{L}/fr/csm/{min(k + 1, 40):04d}.png"
+    if i < O_END: return "black", 0.0, None, 1.0, None
     return "end", (i - O_END) / FPS, None, 1.0, None
 
 TRK = {c: [np.vstack([np.array(m), [0, 0, 1]]) for m in json.load(open(f"{HERE}/track_{c}.json"))] for c in "tac"}
@@ -356,6 +357,7 @@ def mosaic(arr, size):
 def frame(i):
     global END
     clip, t, path, z, src = seg_of(i)
+    if clip == "black": return np.zeros((H, W, 3), np.uint8)
     if clip == "end":
         if END is None: END = end_frames()
         img = Image.fromarray(END[min(i - O_END, len(END) - 1)]).convert("RGBA"); te = (i - O_END) / FPS; u = clamp((te - 0.7) / 0.5)
@@ -364,7 +366,9 @@ def frame(i):
             dd.text((540, 352), "Early January 2027", font=FONT_END, fill=SOFT + (int(235 * out3(u)),), anchor="mm")
             dd.text((540, 1530), "lifeflowweb.com", font=FONT_URL, fill=(201, 213, 238, int(235 * out3(u))), anchor="mm")
             fade = clamp((3.5 - te) / 0.5); d.putalpha(d.getchannel("A").point(lambda v: int(v * fade))); img.alpha_composite(d)
-        return np.array(img.convert("RGB"))
+        arr = np.array(img.convert("RGB")).astype(np.float32)
+        k = clamp((i - O_END) / 9) * clamp((N - 1 - i) / 14)     # up from black, and down to black at the very end
+        return (arr * smooth(k)).astype(np.uint8)
     bg = load_bg(path, z)
     if clip == "a": img = overlays_ali(np.array(bg), t, z, src)
     else:
@@ -378,9 +382,7 @@ def frame(i):
     if O_A1 - 11 <= i < O_A1: u = (i - (O_A1 - 11)) / 11; arr = whip(arr, 1400 * u ** 3, 6 + 220 * u ** 2)
     elif O_A1 <= i < O_A1 + 12: u = (i - O_A1) / 12; arr = whip(arr, -1400 * (1 - u) ** 3, 6 + 220 * (1 - u) ** 2)
     cap = Image.fromarray(arr).convert("RGBA"); draw_caption(cap, clip, t); arr = np.array(cap.convert("RGB"))
-    if O_END - 9 <= i < O_END:
-        if END is None: END = end_frames()
-        u = (i - (O_END - 9)) / 9; arr = mosaic(arr, int(1 + 70 * u ** 1.5)); arr = (arr * (1 - smooth(u)) + END[0] * smooth(u)).astype(np.uint8)
+    if clip == "c": arr = (arr.astype(np.float32) * smooth(clamp((23.733 - t) / 0.2))).astype(np.uint8)   # to black as he starts to get up
     return arr
 
 if __name__ == "__main__":

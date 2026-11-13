@@ -9,7 +9,11 @@
 - No back pages and very few full-screen recordings.
 - Nothing from the old LifeFlow.
 
-Final: `LifeFlow_Launch_Pier_v3.mp4` (v2 with the score), 35.9 s, 1080 x 1920, 30 fps, -14 LUFS. Footage is not committed.
+Final: `LifeFlow_Launch_Pier_v4.mp4`, 35.3 s, 1080 x 1920, 30 fps, -14 LUFS. Footage is not committed.
+
+## v4 (Ali's notes on v3)
+- **Quieter music while Ali talks.** From the cut into Ali's part the score sits 5 dB lower, and it dips a little more while he speaks. Tyler's intro is unchanged.
+- **No slow motion.** IMG_4126 plays at normal speed. It fades to black from 23.55 to 23.73 s, as Ali leans forward to get up, so he's never seen standing. His "2027" finishes over 4 frames of black. The logo ending ("Early January 2027", the logo, "Let's clear your sky.", lifeflowweb.com) fades up from black and ends on black.
 
 ## v2 (Ali's notes on v1)
 - **No whole-app screen.** Two pieces of the app are pulled out with no background and shown in 3D behind Ali:
