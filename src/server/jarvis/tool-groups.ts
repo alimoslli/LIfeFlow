@@ -161,6 +161,32 @@ const GROUP_INFO: Record<LoadableGroup, string> = {
   files: "read a file or photo the user attached earlier",
 };
 
+/**
+ * Tools whose results carry money (balances, bills, pay, prices, money goals). Money is never worded by the small model
+ * (COO review 2, 2026-11-12): once one of these has run, the main model answers the rest of the turn. A guard test
+ * (tool-groups.test.ts) fails when a tool that handles money is missing here.
+ */
+export const MONEY_RESULT_TOOLS: ReadonlySet<string> = new Set([
+  ...GROUP_TOOLS.money,
+  ...GROUP_TOOLS.money_edit,
+  ...GROUP_TOOLS.savings,
+  "get_daily_briefing",
+  "tonight",
+  "life_load",
+  "set_up_schedule",
+  "list_jobs",
+  "add_job",
+  "update_job",
+  "add_paycheck",
+  "work_earnings",
+  "list_habits",
+  "create_habit",
+  "list_personal_goals",
+  "goals_today",
+  "log_goal_checkin",
+  "list_milestones",
+]);
+
 const groupOfTool = new Map(Object.entries(GROUP_TOOLS).flatMap(([g, names]) => names.map((n) => [n, g as ToolGroup] as const)));
 export const groupOf = (tool: string): ToolGroup | undefined => groupOfTool.get(tool);
 

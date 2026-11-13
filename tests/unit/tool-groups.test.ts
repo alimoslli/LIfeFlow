@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { chooseEffort } from "@/server/jarvis/effort";
 import { ALL_TOOLS, toolSpecs, toolSpecsFor } from "@/server/jarvis/registry";
 import { routeSkills, SKILLS } from "@/server/jarvis/skills";
-import { GROUP_TOOLS, groupOf, TOOL_GROUPS } from "@/server/jarvis/tool-groups";
+import { GROUP_TOOLS, groupOf, MONEY_RESULT_TOOLS, TOOL_GROUPS } from "@/server/jarvis/tool-groups";
 import { selectToolGroups } from "@/server/jarvis/tool-select";
 import type { ChatItem } from "@/server/jarvis/providers/types";
 
@@ -144,6 +144,75 @@ describe("auto thinking level", () => {
       expect(effort(q), q).not.toBe("low");
     // and a lookup that brings the money tools along is never low either, whatever its words
     expect(chooseEffort({ text: "what's new?", skills: [], hasFiles: false, coachMode: false, moneyTools: true })).toBe("medium");
+  });
+
+  // COO review 2, 2026-11-12: every sentence from the review, other languages, and a lookup must name the day to go low
+  it("sends every money question from the COO's review, in any language, to the main model", () => {
+    for (const q of [
+      "What's left this month?",
+      "What are my expenses?",
+      "What's the total?",
+      "What's my payday?",
+      "When is my payment due?",
+      "How much is my phone plan?",
+      "What's the split?",
+      "What's in my wallet?",
+      "Cuanto dinero tengo?",
+      "When is my electric due?",
+      "When does my stipend come in?",
+      "When is tuition due?",
+      "Did my financial aid come in?",
+      "When is my tax refund?",
+      "Do I have a library fine?",
+      "Did I overdraft?",
+      "What's on my tab?",
+      "What did the debit card do today?",
+      "What's my allowance this week?",
+      "How much do I have in my fund?",
+      "Did my paycheck clear?",
+      "Is my check in?",
+      "Do I have dining dollars left?",
+      "What's my net this month?",
+    ])
+      expect(effort(q), q).toBe("medium");
+    for (const q of [
+      "¿Cuánto gasté hoy?",
+      "¿Cuándo tengo que pagar la renta?",
+      "¿Cuánta plata me queda?",
+      "Combien d'argent j'ai ?",
+      "Quand est-ce que je paie le loyer ?",
+      "Wie viel Geld habe ich?",
+      "Wann ist die Miete fällig?",
+      "Quanto dinheiro eu tenho?",
+      "Quanto costa l'affitto?",
+      "كم فلوس عندي؟",
+      "متى الإيجار؟",
+      "मेरे पास कितने पैसे हैं?",
+      "我还有多少钱？",
+      "お金はいくらある？",
+      "돈 얼마 있어?",
+      "Сколько у меня денег?",
+    ])
+      expect(effort(q), q).toBe("medium");
+  });
+
+  it("goes low only when the question names the day, school, to-dos, shifts or the calendar", () => {
+    for (const q of ["hi", "thanks!", "what's new?", "what's up?", "anything else?", "tell me something"]) expect(effort(q), q).toBe("medium");
+  });
+
+  it("never sends a plan, said as a question, to the small model under a planning skill", () => {
+    const planner = SKILLS.find((s) => s.name === "daily-planner")!;
+    for (const q of ["What's the plan for tomorrow?", "What do I do first?", "What is best to do now?", "What should I do tonight?", "What's next?"]) {
+      expect(effort(q), q).not.toBe("low");
+      expect(chooseEffort({ text: q, skills: [planner], hasFiles: false, coachMode: false }), q).not.toBe("low");
+    }
+  });
+
+  it("lists every tool that handles money, so its result is never worded by the small model", () => {
+    const handlesMoney = ALL_TOOLS.filter((t) => /cents|dollar|money|cash|balance|spend|\bpay|rate|price|amount|budget|bill/i.test(t.execute.toString()));
+    expect(handlesMoney.length).toBeGreaterThan(40);
+    for (const t of handlesMoney) expect(MONEY_RESULT_TOOLS.has(t.name), t.name).toBe(true);
+    for (const t of ["get_daily_briefing", "tonight", "life_load", "work_earnings"]) expect(MONEY_RESULT_TOOLS.has(t), t).toBe(true);
   });
 
   it("thinks hardest for files and big plans", () => {

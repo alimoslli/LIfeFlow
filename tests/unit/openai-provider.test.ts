@@ -221,6 +221,35 @@ describe("OpenAI Responses provider", () => {
     expect(second).toEqual(expect.arrayContaining(["function_call", "function_call_output"]));
   });
 
+  it("a broken stream or a timeout from the small model before any words: the main model answers, and the small one stays in use", async () => {
+    for (const trouble of ["broken", "timeout"] as const) {
+      const models: string[] = [];
+      const fakeFetch = (async (_url: string, init: RequestInit) => {
+        const body = JSON.parse(String(init.body));
+        models.push(body.model);
+        if (body.model === "gpt-5.4-mini") {
+          if (trouble === "timeout") throw new DOMException("The operation timed out.", "TimeoutError");
+          return sse([{ type: "error", code: "server_error", message: "stream broke", param: null, sequence_number: 0 }]);
+        }
+        return sse([
+          { type: "response.output_text.delta", delta: "ok", sequence_number: 1, item_id: "m", output_index: 0, content_index: 0, logprobs: [] },
+          completed([{ type: "message", id: "m", role: "assistant", status: "completed", content: [{ type: "output_text", text: "ok", annotations: [] }] }]),
+        ]);
+      }) as unknown as typeof fetch;
+      const provider = new OpenAIProvider({ apiKey: "sk-test", model: "gpt-5.5", smallModel: "gpt-5.4-mini", reasoningEffort: "auto", fetch: fakeFetch });
+      const turn = provider.startTurn({ system: "S", history: [{ type: "user", text: "what's due today?" }], tools: [], effort: "low" });
+      const events: StepEvent[] = [];
+      for await (const e of turn.step()) events.push(e);
+      expect(events.at(-1), trouble).toMatchObject({ type: "step_done", text: "ok" });
+      expect(turn.model, trouble).toBe("gpt-5.5");
+      expect(models, trouble).toEqual(["gpt-5.4-mini", "gpt-5.5"]);
+      // a bad moment doesn't set the small model aside: the next lookup tries it again
+      const next = provider.startTurn({ system: "S", history: [{ type: "user", text: "hi" }], tools: [], effort: "low" });
+      for await (const _ of next.step()) void _;
+      expect(models.at(-2), trouble).toBe("gpt-5.4-mini");
+    }
+  });
+
   it("if the small model refuses our request, the main model answers, and the small one is set aside", async () => {
     const models: string[] = [];
     const fakeFetch = (async (_url: string, init: RequestInit) => {

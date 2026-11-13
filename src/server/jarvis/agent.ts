@@ -23,7 +23,7 @@ import { buildSystemPrompt, PROMPT_VERSION } from "./prompt";
 import type { ModelProvider, TokenUsage } from "./providers/types";
 import { toolSpecsFor, type ToolSpec } from "./registry";
 import { chooseEffort } from "./effort";
-import { TOOL_GROUPS, type ToolGroup } from "./tool-groups";
+import { MONEY_RESULT_TOOLS, TOOL_GROUPS, type ToolGroup } from "./tool-groups";
 import { selectToolGroups } from "./tool-select";
 import type { ToolContext } from "./tool";
 import { describeToolCall, describeToolResult, memoryProposalOf } from "./labels";
@@ -236,6 +236,8 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
     maxOutputTokens: STEP_OUTPUT_TOKEN_CAP,
   });
   let nextTools: ToolSpec[] | undefined;
+  // a result with money in it is worded by the main model, never the small one (COO review 2)
+  let moneySeen = false;
   let toolResults: { callId: string; output: string }[] | undefined;
   let finalMessageId: string | null = null;
   const tally = { steps: 0, toolCalls: 0, toolErrors: 0, confirmations: 0, toolNames: [] as string[], usage: null as TokenUsage | null };
@@ -288,7 +290,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       let stepUsage: TokenUsage | undefined;
       let cutOff = false;
       try {
-        for await (const ev of turn.step(toolResults, nextTools, { mainModel: groups.has("money") || groups.has("money_edit") })) {
+        for await (const ev of turn.step(toolResults, nextTools, { mainModel: moneySeen || groups.has("money") || groups.has("money_edit") })) {
           sawEvent = true;
           if (ev.type === "text_delta") emit({ type: "text", delta: ev.delta });
           else {
@@ -345,6 +347,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
         const outcome = await beforeDeadline(executeToolCall(call.name, call.arguments, ctx, call.callId));
         tally.toolCalls++;
         tally.toolNames.push(call.name);
+        if (MONEY_RESULT_TOOLS.has(call.name)) moneySeen = true;
         if (outcome.kind === "confirmation") tally.confirmations++;
         else if (!outcome.result.ok) tally.toolErrors++;
         let args: Record<string, unknown> = {};
