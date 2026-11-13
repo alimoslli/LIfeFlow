@@ -288,7 +288,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       let stepUsage: TokenUsage | undefined;
       let cutOff = false;
       try {
-        for await (const ev of turn.step(toolResults, nextTools)) {
+        for await (const ev of turn.step(toolResults, nextTools, { mainModel: groups.has("money") || groups.has("money_edit") })) {
           sawEvent = true;
           if (ev.type === "text_delta") emit({ type: "text", delta: ev.delta });
           else {

@@ -12,11 +12,14 @@ import { EVAL_NOW } from "../fixtures/jarvis-eval";
  */
 afterAll(closeDb);
 
-function recording(models: string[]) {
+function recording(models: string[], firstLoads?: string[]) {
   const fetchImpl = (async (_url: string, init: RequestInit) => {
     models.push((JSON.parse(String(init.body)) as { model: string }).model);
     const usage = { input_tokens: 1, output_tokens: 1, input_tokens_details: { cached_tokens: 0 }, output_tokens_details: { reasoning_tokens: 0 } };
-    const output = [{ type: "message", id: "m1", role: "assistant", status: "completed", content: [{ type: "output_text", text: "ok", annotations: [] }] }];
+    const output =
+      firstLoads && models.length === 1
+        ? [{ type: "function_call", id: "f1", call_id: "c1", name: "load_tools", arguments: JSON.stringify({ groups: firstLoads }), status: "completed" }]
+        : [{ type: "message", id: "m1", role: "assistant", status: "completed", content: [{ type: "output_text", text: "ok", annotations: [] }] }];
     const events = [
       { type: "response.output_text.delta", sequence_number: 0, item_id: "m1", output_index: 0, content_index: 0, delta: "ok", logprobs: [] },
       { type: "response.completed", sequence_number: 1, response: { id: "r", object: "response", status: "completed", output, usage } },
@@ -47,6 +50,11 @@ const MONEY = [
   "What's my balance?",
   "When is rent due?",
   "Do I have any bills this week?",
+  // money said without a money word (COO review)
+  "Is 40 too much for dinner?",
+  "How do we split the pizza?",
+  "What's left this week?",
+  "What's €15 for?",
 ];
 
 describe("the small model gets plain lookups and never a money question", () => {
@@ -64,4 +72,15 @@ describe("the small model gets plain lookups and never a money question", () => 
       expect(models, q).not.toContain("gpt-5.4-mini");
     }
   }, 120_000);
+
+  it("a lookup whose answer needs the money tools moves to the main model as soon as they load", async () => {
+    const { session } = await seedEvalStudent();
+    const models: string[] = [];
+    await runJarvisTurn({ user: session, text: "Anything new?", provider: recording(models, ["money"]), emit: () => {}, now: EVAL_NOW });
+    expect(models).toEqual(["gpt-5.4-mini", "gpt-5.5"]);
+    // and loading something else keeps the small model
+    const other: string[] = [];
+    await runJarvisTurn({ user: session, text: "Anything new?", provider: recording(other, ["health"]), emit: () => {}, now: EVAL_NOW });
+    expect(other).toEqual(["gpt-5.4-mini", "gpt-5.4-mini"]);
+  });
 });

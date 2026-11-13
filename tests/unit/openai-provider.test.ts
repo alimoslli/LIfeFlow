@@ -195,6 +195,32 @@ describe("OpenAI Responses provider", () => {
     expect(requests.at(-1)!.model).toBe("gpt-5.5");
   });
 
+  it("a small-model turn that loads money tools moves to the main model, without the small model's reasoning", async () => {
+    const requests: { model: string; input: { type?: string }[] }[] = [];
+    const fakeFetch = (async (_url: string, init: RequestInit) => {
+      requests.push(JSON.parse(String(init.body)));
+      return requests.length === 1
+        ? sse([
+            completed([
+              { type: "reasoning", id: "rs1", summary: [], encrypted_content: "small-model-only" },
+              { type: "function_call", id: "fc1", call_id: "c1", name: "load_tools", arguments: '{"groups":["money"]}', status: "completed" },
+            ]),
+          ])
+        : sse([
+            completed([{ type: "message", id: "m", role: "assistant", status: "completed", content: [{ type: "output_text", text: "ok", annotations: [] }] }]),
+          ]);
+    }) as unknown as typeof fetch;
+    const provider = new OpenAIProvider({ apiKey: "sk-test", model: "gpt-5.5", smallModel: "gpt-5.4-mini", reasoningEffort: "auto", fetch: fakeFetch });
+    const turn = provider.startTurn({ system: "S", history: [{ type: "user", text: "anything new?" }], tools: [], effort: "low" });
+    for await (const _ of turn.step()) void _;
+    for await (const _ of turn.step([{ callId: "c1", output: '{"ok":true}' }], [], { mainModel: true })) void _;
+    expect(requests.map((r) => r.model)).toEqual(["gpt-5.4-mini", "gpt-5.5"]);
+    expect(turn.model).toBe("gpt-5.5");
+    const second = requests[1].input.map((i) => i.type);
+    expect(second).not.toContain("reasoning");
+    expect(second).toEqual(expect.arrayContaining(["function_call", "function_call_output"]));
+  });
+
   it("if the small model refuses our request, the main model answers, and the small one is set aside", async () => {
     const models: string[] = [];
     const fakeFetch = (async (_url: string, init: RequestInit) => {

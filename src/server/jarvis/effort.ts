@@ -35,6 +35,17 @@ const THINK =
  */
 const MONEY =
   /\$|\bmoney\b|\bspen[dt]|afford|budget|\bbills?\b|\bpa(y|id|ying)\b|paycheck|\bearn|\bmake\b|\bcosts?\b|price|balance|\bbank|subscri|charge|\bsav(e|es|ed|ing)\b|\bowe|debt|\brent\b|\bcash\b|zell|venmo|transaction|purchase|bought|\bbuy|refund|\bfees?\b|income|deposit|\bloan|credit|grocer|\btips?\b|\bwage|salary|\bdollars?\b|\bchecking\b|\bsavings\b|\baccounts? balance|\bnet worth/;
+/**
+ * Money said without a money word (COO review, 2026-11-12): splitting a bill, a currency word or sign, "how much", what's
+ * left or coming out, a store, or a bare amount ("is 40 too much for dinner?", "12.50"). An amount is a number of 10 or
+ * more, or one with cents, that isn't a time, a date or a count of something else ("at 10", "10:30", "the 15th",
+ * "10 pages"). Catching too much only costs a little more; missing one sends a money question to the small model.
+ */
+const MONEY_TOO =
+  /\bsplit|\bquid\b|\bbucks?\b|\beuros?\b|\bpounds?\b|\bpesos?\b|[£€¥₹₩]|\bhow much\b|\bleft (this|for|to|until|till|after|over)\b|\bwhat'?s left\b|\bcoming out\b|\bphone plan\b|\b(target|walmart|costco|trader joe'?s|whole foods|starbucks|amazon|cvs|walgreens|chipotle|doordash|uber ?eats|grubhub|instacart)\b/;
+const AMOUNT =
+  /(?<![\d:/.-]|\bat )\b(\d{2,}(\.\d{1,2})?|\d+\.\d{2})\b(?![:/-]|\s*(?:a\.?m\b|p\.?m\b|st\b|nd\b|rd\b|th\b|hours?|hrs?|minutes?|mins?|days?|weeks?|months?|years?|pages?|words?|questions?|problems?|chapters?|steps?|%|percent|o'?clock))/;
+
 const MONEY_SKILLS = new Set(["budget-coach", "purchase-advisor", "savings-goals", "paycheck-planner", "subscription-hunter"]);
 
 /**
@@ -48,7 +59,7 @@ const LOOKUP =
 export function chooseEffort(i: { text: string; skills: SkillFile[]; hasFiles: boolean; coachMode: boolean; moneyTools?: boolean }): Effort {
   const t = i.text.toLowerCase().trim();
   if (i.hasFiles || t.length > 600 || DEEP.test(t)) return "high";
-  const money = !!i.moneyTools || MONEY.test(t) || i.skills.some((s) => MONEY_SKILLS.has(s.name));
+  const money = !!i.moneyTools || MONEY.test(t) || MONEY_TOO.test(t) || AMOUNT.test(t) || i.skills.some((s) => MONEY_SKILLS.has(s.name));
   if (i.coachMode || THINK.test(t)) return "medium";
   if (money) return "medium";
   if (i.skills.some((s) => THINKING_SKILLS.has(s.name)) && !LOOKUP.test(t)) return "medium";

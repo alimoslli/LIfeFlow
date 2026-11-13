@@ -161,9 +161,16 @@ export class OpenAIProvider implements ModelProvider {
       get model() {
         return model;
       },
-      async *step(toolResults, nextTools) {
+      async *step(toolResults, nextTools, opts) {
         for (const r of toolResults ?? []) input.push({ type: "function_call_output", call_id: r.callId, output: r.output });
         if (nextTools) toolDefs = toToolDefs(nextTools);
+        // Money never stays on the small model (COO review, 2026-11-12): once money tools are loaded the main model takes
+        // the rest of the turn. The small model's reasoning items belong to it, so they are left out; its tool calls and
+        // their results stay, so nothing is looked up or saved twice.
+        if (opts?.mainModel && small && model === small) {
+          model = config.model;
+          for (let k = input.length - 1; k >= 0; k--) if ((input[k] as { type?: string }).type === "reasoning") input.splice(k, 1);
+        }
         let stream;
         try {
           stream = await send(model);

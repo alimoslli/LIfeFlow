@@ -95,6 +95,14 @@ describe("auto thinking level", () => {
       "When is my BIO exam?",
       "How many hours am I working this week?",
       "Am I free Thursday afternoon?",
+      // times, dates and counts are not amounts
+      "Am I free at 10?",
+      "Do I have class at 10:30?",
+      "What's due on the 15th?",
+      "What do I have on 11/20?",
+      "When is my 10 page essay due?",
+      "What's due in 14 days?",
+      "What's my schedule tomorrow?",
     ])
       expect(effort(q), q).toBe("low");
   });
@@ -114,6 +122,24 @@ describe("auto thinking level", () => {
       "What did I buy at Target?",
       "How much is left in my checking?",
       "How much is in my savings?",
+      // money said without a money word (COO review, 2026-11-12)
+      "How do we split the pizza?",
+      "What did we split last night?",
+      "Is 40 too much for dinner?",
+      "Can I do 200 this weekend?",
+      "Is 12.50 ok for lunch?",
+      "How much is 30 quid?",
+      "How many bucks do I have?",
+      "What's £20 for?",
+      "What's €15 for?",
+      "What's 25 euros in dollars?",
+      "What's left this week?",
+      "How much is left?",
+      "What did I get at Target?",
+      "Anything coming out this week?",
+      "How much is my phone plan?",
+      "Who owes me?",
+      "What's my tip total?",
     ])
       expect(effort(q), q).not.toBe("low");
     // and a lookup that brings the money tools along is never low either, whatever its words
