@@ -8,6 +8,7 @@ import { addGoogleEvent, exchangeCode, saveGoogleConnection, syncGoogleCalendar 
 import { providerTimeoutMs } from "@/server/integrations/timeout";
 import { saveMicrosoftConnection, syncMicrosoftCalendar } from "@/server/integrations/microsoft";
 import { makeToolContext, runJarvisTurn, type JarvisEvent } from "@/server/jarvis/agent";
+import { groupOf } from "@/server/jarvis/tool-groups";
 import { resolvePendingAction, runLimitMs } from "@/server/jarvis/executor";
 import { ScriptedProvider } from "@/server/jarvis/providers/scripted";
 import { toUiMessages } from "@/server/jarvis/ui-messages";
@@ -55,7 +56,16 @@ describe("1. a crash after the claim doesn't leave an action running forever", (
       user: session,
       text: "do",
       emit: (e) => events.push(e),
-      provider: new ScriptedProvider(({ step }) => (step === 0 ? { toolCalls: [{ name: "delete_task", args: { id: task.id } }] } : { text: "ok" })),
+      provider: new ScriptedProvider(({ step }) =>
+        step === 0
+          ? {
+              toolCalls: [
+                { name: "load_tools", args: { groups: [groupOf("delete_task")] } },
+                { name: "delete_task", args: { id: task.id } },
+              ],
+            }
+          : { text: "ok" },
+      ),
     });
     const c = events.find((e) => e.type === "confirmation") as Extract<JarvisEvent, { type: "confirmation" }>;
     return { session, actionId: c.actionId, task };
@@ -348,7 +358,14 @@ describe("provider calls have a time limit, and a slow success beats the lost ve
       text: "mail",
       emit: (e) => events.push(e),
       provider: new ScriptedProvider(({ step }) =>
-        step === 0 ? { toolCalls: [{ name: "send_email", args: { to: "prof@uni.edu", subject: "Hi", body: "Hello" } }] } : { text: "ok" },
+        step === 0
+          ? {
+              toolCalls: [
+                { name: "load_tools", args: { groups: [groupOf("send_email")] } },
+                { name: "send_email", args: { to: "prof@uni.edu", subject: "Hi", body: "Hello" } },
+              ],
+            }
+          : { text: "ok" },
       ),
     });
     const c = events.find((e) => e.type === "confirmation") as Extract<JarvisEvent, { type: "confirmation" }>;

@@ -9,6 +9,7 @@ import { addGoogleEvent, exchangeCode, saveGoogleConnection, syncGoogleCalendar,
 import { saveMicrosoftConnection, syncMicrosoftCalendar } from "@/server/integrations/microsoft";
 import { connectCanvasFeed, syncCanvas } from "@/server/integrations/canvas";
 import { makeToolContext, runJarvisTurn, type JarvisEvent } from "@/server/jarvis/agent";
+import { groupOf } from "@/server/jarvis/tool-groups";
 import { resolvePendingAction } from "@/server/jarvis/executor";
 import { ScriptedProvider } from "@/server/jarvis/providers/scripted";
 import { getAgenda } from "@/server/services/calendar";
@@ -245,7 +246,16 @@ describe("D3: confirming twice runs the action once", () => {
       user: session,
       text: "do it",
       emit: (e) => events.push(e),
-      provider: new ScriptedProvider(({ step }) => (step === 0 ? { toolCalls: [{ name: tool, args }] } : { text: "Press Confirm." })),
+      provider: new ScriptedProvider(({ step }) =>
+        step === 0
+          ? {
+              toolCalls: [
+                { name: "load_tools", args: { groups: [groupOf(tool)] } },
+                { name: tool, args },
+              ],
+            }
+          : { text: "Press Confirm." },
+      ),
     });
     const c = events.find((e) => e.type === "confirmation") as Extract<JarvisEvent, { type: "confirmation" }>;
     const conv = (events.find((e) => "conversationId" in e) as { conversationId?: string } | undefined)?.conversationId;
