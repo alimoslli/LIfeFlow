@@ -56,7 +56,7 @@ function draw(minute, { t = 0, up = 1 } = {}) {
   LF.drawCompanion(sprite, info, "idle", 0, night, false, floats, floats);
   const FP = floats ? 26 : 34, sy = floats ? lineY - 40 - 21 * FP : lineY - 15 * FP + 6, rise = (1 - up) * (floats ? 22 * FP : 15 * FP);
   // reflection: soft, flipped, fading down into the water
-  g.save(); g.beginPath(); g.rect(0, HY, W, H - HY); g.clip(); g.filter = "blur(7px)"; g.globalAlpha = 0.35 * up; g.imageSmoothingEnabled = false;
+  g.save(); g.beginPath(); g.rect(0, HY, W, H - HY); g.clip(); g.filter = "blur(7px)"; g.globalAlpha = 0.0; g.imageSmoothingEnabled = false;
   g.translate(0, 2 * lineY); g.scale(1, -1); g.drawImage(sprite, Math.round(CX - 12 * FP), Math.round(sy + rise), 24 * FP, 24 * FP); g.restore();
   for (let i = 0; i < 7; i++) { const yy = HY + 18 + i * 14, w = 260 - i * 26; const lg = g.createRadialGradient(CX, yy, 0, CX, yy, w);
     lg.addColorStop(0, rgb(gc, 0.32 - i * 0.035)); lg.addColorStop(1, rgb(gc, 0)); g.save(); g.scale(1, 0.18); g.fillStyle = lg; g.beginPath(); g.arc(CX, yy / 0.18, w, 0, 6.283); g.fill(); g.restore(); }

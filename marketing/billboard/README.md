@@ -13,3 +13,10 @@ billboard for our app". Nothing AI-made: the art is drawn by the app's own code 
   push-in. The photos are Ali's own and are not committed.
 - Needs `lf2.js`, the two woff2 fonts and `icon.png` beside the page (see `marketing/logo/v2`).
 - No credits used. Not posted; it's a mockup for Ali.
+
+## v3 (2026-11-13): printed, not pasted
+Ali: "that looks so fake". The sign glowed like a perfect screen. Now the art is the vinyl's colour and is lit by the
+real light measured on the old billboard: `composite2.py` fits a smooth floodlight field (a cubic over the billboard) to
+the pixels that were plain white vinyl, multiplies in linear light, adds grain of the photo's own strength, and finishes
+with the phone's light sharpening and JPEG. The design is the bright daytime one with Ray (a light printed board reads as
+real at night, like the original). `composite2_seq.py` does the digital loop the same way.
