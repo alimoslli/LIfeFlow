@@ -2,7 +2,7 @@
 the score (ElevenLabs Music via Higgsfield, owner approved), and the logo ending's own sound."""
 import subprocess, wave, numpy as np, os
 HERE = os.path.dirname(os.path.abspath(__file__)); L = os.path.dirname(HERE); SP = os.path.dirname(L)
-SR = 48000; DUR = 1058 / 30; N = int(SR * DUR)
+SR = 48000; DUR = 1051 / 30; N = int(SR * DUR)
 def load(path, filt=None):
     cmd = ["ffmpeg", "-v", "error", "-i", path] + (["-af", filt] if filt else []) + ["-ac", "2", "-ar", str(SR), "-f", "s16le", "-"]
     a = np.frombuffer(subprocess.run(cmd, capture_output=True, check=True).stdout, np.int16).reshape(-1, 2) / 32768.
@@ -18,7 +18,7 @@ def put(buf, a, t, g=0., fade_in=0.004, fade_out=0.004):
 VOICE = "highpass=f=85,afftdn=nr=10:nf=-42,equalizer=f=3200:t=q:w=1.2:g=2,acompressor=threshold=-24dB:ratio=2.6:attack=6:release=140:makeup=2,loudnorm=I=-16:TP=-2:LRA=8"
 ty = load(f"{HERE}/raw_4105.wav", VOICE); al = load(f"{HERE}/raw_4127.wav", VOICE); al2 = load(f"{HERE}/raw_4126.wav", VOICE)
 s = lambda a, t0, t1: a[int(t0 * SR): int(t1 * SR)]
-O_A1, O_A2, O_C, O_SL, O_END = 352 / 30, 808 / 30, 895 / 30, 949 / 30, 953 / 30
+O_A1, O_A2, O_C, O_SL, O_END = 352 / 30, 808 / 30, 895 / 30, 949 / 30, 937 / 30
 A1 = lambda t: O_A1 + t - 1.9; A2 = lambda t: O_A2 + t - 19.5; C = lambda t: O_C + t - 21.9667
 put(mix_v, s(ty, 0, 11.70), 0.0, 0, 0.002, 0.12)
 put(mix_v, s(al, 1.9, 17.11), O_A1, 0, 0.12, 0.015)                    # "...and all your finances" (kept whole)
@@ -42,7 +42,8 @@ cues += [(FX["whoosh_scene_change"], A2(19.5), -12), (FX["night_stars_twinkle"],
 cues += [(FX["tap"], A2(t), -6) for t in [21.76, 21.86, 21.96, 22.06, 22.16]]                 # "all day": five skylings
 cues += [(FX["skylings_pop_up"], C(21.98), -6), (FX["sun_goal_reached"], C(22.78), -5)]
 for a, t, g in cues: put(mix_fx, a, max(0, t), g)
-end = load(f"{SP}/kit/lifeflow-brand/assets/logo/LifeFlow_Logo_Ending.mp4"); put(mix_fx, end, O_END, -2, 0.01, 0.2)
+end = load(f"{SP}/kit/lifeflow-brand/assets/logo/LifeFlow_Logo_Ending.mp4"); end[: int(0.6 * SR)] *= np.linspace(0.35, 1, int(0.6 * SR))[:, None]   # under "2027" as it dissolves in
+put(mix_fx, end, O_END, -2, 0.01, 0.2)
 # the score: ElevenLabs Music v2.5 through Higgsfield (owner approved, 5.24 credits), 36 s, instrumental; 0.5 s later than
 # the picture so its build lands on the whip into Ali. About 12 dB under the voices, 4 dB more while someone talks.
 music = load(f"{L}/music_el.mp3"); bed = np.zeros((N, 2), np.float32); put(bed, music, 0.5, -12, 0.01, 0.8)
@@ -51,8 +52,8 @@ tt = np.arange(N) / SR
 lvl = np.where(tt < O_A1 - 0.3, 0, np.where(tt < O_A1 + 0.3, -5 * (tt - (O_A1 - 0.3)) / 0.6, np.where(tt < O_END, -5, -5 + 2 * np.clip((tt - O_END) / 0.6, 0, 1))))
 voice_env = np.convolve(np.abs(mix_v[:, 0]), np.ones(4800) / 4800, mode="same"); duck = 1 - 0.42 * np.clip(voice_env / 0.04, 0, 1)
 bed *= (duck * 10 ** (lvl / 20))[:, None]
-bed[int(O_SL * SR):int(O_END * SR)] *= 0.6
 out = mix_v + mix_fx + bed
+out[-int(0.5 * SR):] *= np.linspace(1, 0, int(0.5 * SR))[:, None] ** 2   # the sound settles on the held logo
 peak = np.abs(out).max(); print("peak", round(float(peak), 3))
 with wave.open(f"{L}/launch_mix_pre.wav", "wb") as w:
     w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes((np.clip(out, -1, 1) * 32767).astype(np.int16).tobytes())

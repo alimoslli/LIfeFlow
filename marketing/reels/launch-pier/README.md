@@ -9,7 +9,12 @@
 - No back pages and very few full-screen recordings.
 - Nothing from the old LifeFlow.
 
-Final: `LifeFlow_Launch_Pier_v4.mp4`, 35.3 s, 1080 x 1920, 30 fps, -14 LUFS. Footage is not committed.
+Final: `LifeFlow_Launch_Pier_v5.mp4`, 35.0 s, 1080 x 1920, 30 fps, -14 LUFS. Footage is not committed.
+
+## v5 (Ali: "not black")
+- **No black anywhere.** Ali's last 12 frames (23.33 to 23.73 s, as he leans forward to get up) dissolve straight into the logo ending.
+- **The logo ending stops on its fullest frame and holds there to the end.** That's frame 93: sun up, "Let's clear your sky.", LifeFlow, lifeflowweb.com, plus "Early January 2027" on top. The file's own fade to black after it isn't used.
+- **The ending's sound** comes in softly under Ali's "2027".
 
 ## v4 (Ali's notes on v3)
 - **Quieter music while Ali talks.** From the cut into Ali's part the score sits 5 dB lower, and it dips a little more while he speaks. Tyler's intro is unchanged.
