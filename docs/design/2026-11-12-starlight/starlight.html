@@ -91,7 +91,7 @@ textarea, .log {
 @media (prefers-reduced-motion: reduce) { #score.bump { animation: none; } }
 </style>
 
-<canvas id="c" aria-label="Starlight. Tap a star to send Twinkle there. Keep climbing above the rising sea."></canvas>
+<canvas id="c" aria-label="Starlight. Drag back and let go to fly Twinkle up through the stars. Keep above the rising sea."></canvas>
 
 <div id="hud" hidden>
   <button class="iconbtn" id="pauseBtn" aria-label="Pause"><span class="pausebars"></span></button>
@@ -103,7 +103,7 @@ textarea, .log {
   <div class="card">
     <canvas class="hero" id="hero" width="24" height="24"></canvas>
     <h1>Starlight</h1>
-    <p class="lead">Tap stars to climb. Don't let the sea catch Twinkle.</p>
+    <p class="lead">Drag back and let go to fly Twinkle up through the stars. Don't let the sea catch it.</p>
     <button class="btn" id="playBtn">Play</button>
     <p id="startBest" class="tiny"></p>
     <div class="links">
@@ -158,30 +158,33 @@ textarea, .log {
 
   // ---------- tuning ----------
   const FIELD = 560; // the playfield's width (world units)
-  const REACH = 300; // how far Twinkle can zip, from the star it stands on
-  const ZIP = 1900; // zip speed
+  const REACH = 300; // how close the sky keeps a way up (a strong flick goes much further)
   const STAND = 34; // Twinkle's middle above the star it stands on
-  const GRAV = 950;
   const U = 3.4; // world units per skyling pixel
   const STAR = 46; // a star's size
-  const TAP = 46; // how close (screen px) a tap must land to a star: you tap the star you mean
-  // the sea is felt from the first tap (it starts close and rises at once), then speeds up gently: no sudden wall
-  const seaBase = (t) => Math.min(440, 50 + 1.05 * t);
-  const SEA_LEASH = 480; // the sea never trails further than this below you
+  const FLY_G = 1500; // gravity while flying
+  const V_MIN = 420; // the softest flick
+  const V_MAX = 1480; // the strongest flick: about five rows up
+  const DRAG_MIN = 16; // screen px: shorter drags do nothing, so a touch never launches by accident
+  const TOUCH = 50; // how close Twinkle must pass a star to light it
+  const CATCH = 80; // falling past a star this close (side to side) catches Twinkle: a miss costs height, not the run
+  // the sea waits for the first flick, then rises at once and speeds up steadily
+  const seaBase = (t) => Math.min(420, 30 + 1.15 * t);
+  const SEA_LEASH = 460; // the sea never trails further than this below you
   const SEA_CALM = 200; // how far a finished shape pushes the sea back
   // the sky changes as you climb: one new thing at a time, each told once when it comes into view
-  const SWAY_FROM = 1500;
-  const STORM_FROM = 3500;
-  const TWINKLE_FROM = 6000;
-  const SHOOT_FROM = 8500;
+  const SWAY_FROM = 3000;
+  const STORM_FROM = 7000;
+  const TWINKLE_FROM = 12000;
+  const SHOOT_FROM = 17000;
   const ZONES = [
-    { h: SWAY_FROM, title: "The sky sways", sub: "Stars move now. Time your taps" },
-    { h: STORM_FROM, title: "Storm clouds", sub: "They stop a zip. Go around them" },
+    { h: SWAY_FROM, title: "The sky sways", sub: "Stars move now. Time your flick" },
+    { h: STORM_FROM, title: "Storm clouds", sub: "They knock Twinkle back. Fly around them" },
     { h: TWINKLE_FROM, title: "Twinkling stars", sub: "Catch them while they glow" },
     { h: SHOOT_FROM, title: "Shooting stars", sub: "Catch one for a big bonus" },
-    { h: 11500, title: "Higher still", sub: "Everything a little faster" },
+    { h: 23000, title: "Higher still", sub: "Everything a little faster" },
   ];
-  const LAST_CHANCE = 0.75; // seconds to jump away once the sea reaches Twinkle's star
+  const LAST_CHANCE = 0.9; // seconds to flick away once the sea reaches Twinkle's star
 
   // ---------- this browser only ----------
   const store = {
@@ -375,6 +378,10 @@ textarea, .log {
         tone(note(12), 0.3, { type: "triangle", vol: 0.1, at: 0.06 });
       },
       warn: () => tone(110, 0.25, { vol: 0.08, slide: 0.9 }),
+      bonk: () => tone(240, 0.09, { type: "triangle", vol: 0.1, slide: 0.7 }),
+      land: () => tone(180, 0.12, { vol: 0.12, slide: 1.6 }),
+      combo: (n) =>
+        [0, 4, 7, 12].slice(0, Math.min(4, n - 1)).forEach((s, i) => tone(523.25 * 2 ** (s / 12), 0.4, { type: "triangle", vol: 0.1, at: 0.05 + i * 0.07 })),
       splash: () => noise(0.7, { vol: 0.25, freq: 900, type: "lowpass", sweep: 0.3 }),
       best: () => [0, 2, 4, 7, 9, 12].forEach((s, i) => tone(note(5 + i), 0.35, { type: "triangle", vol: 0.1, at: i * 0.07 })),
     };
@@ -563,7 +570,8 @@ textarea, .log {
       vt: 0,
       S: 0,
       seaDrop: 0,
-      tw: { x: FIELD / 2, y: -200 - STAND, vy: 0, on: null, zip: null, fromX: 0, fromY: 0 },
+      tw: { x: FIELD / 2, y: -200 - STAND, on: null, fly: null },
+      air: 1,
       stars: [],
       shapes: [],
       genY: -200,
@@ -589,8 +597,8 @@ textarea, .log {
       shootT: 6,
       shoot: null,
       cx: (FIELD - VW) / 2,
-      cy: 80 - VH,
-      stats: { taps: 0, far: 0, dark: 0, relit: 0, lit: 0, shapes: 0, broken: 0, catches: 0, falls: 0, close: 0, zaps: 0, shooting: 0, misses: 0, stuck: 0 },
+      cy: -200 - VH * 0.6,
+      stats: { flicks: 0, airFlicks: 0, bestFlick: 0, oneFlickShapes: 0, bounces: 0, lit: 0, shapes: 0, broken: 0, close: 0, zaps: 0, shooting: 0, stuck: 0 },
       told: {},
       waitFor: null,
       wet: null,
@@ -636,11 +644,11 @@ textarea, .log {
   }
   function addRow(h) {
     const R = G.R;
-    const hard = clamp((h - 400) / 9000, 0, 1);
+    const hard = clamp((h - 400) / 24000, 0, 1);
     G.genY -= lerp(100, 150, hard) * (0.85 + R() * 0.3);
     const n = 1 + (R() < 0.7 - hard * 0.3 ? 1 : 0);
     // a swaying row: every star in it moves together, side to side
-    const sh = clamp((h - SWAY_FROM) / 9000, 0, 1);
+    const sh = clamp((h - SWAY_FROM) / 20000, 0, 1);
     const sway =
       h > SWAY_FROM && R() < lerp(0.5, 0.85, sh)
         ? { amp: lerp(55, 125, sh) * (0.6 + R() * 0.4), w: (TAU / lerp(4.6, 2.6, sh)) * (R() < 0.5 ? 1 : -1), phi: R() * TAU }
@@ -655,7 +663,7 @@ textarea, .log {
       }
       xs.push(x);
     }
-    const tw = h > TWINKLE_FROM ? lerp(0.25, 0.5, clamp((h - TWINKLE_FROM) / 6000, 0, 1)) : 0;
+    const tw = h > TWINKLE_FROM ? lerp(0.25, 0.5, clamp((h - TWINKLE_FROM) / 14000, 0, 1)) : 0;
     const row = xs.map((x) => {
       const o = { twinkle: R() < tw, bx: x };
       if (sway) Object.assign(o, { amp: sway.amp, w: sway.w, phi: sway.phi });
@@ -664,10 +672,10 @@ textarea, .log {
       return st;
     });
     cover(G.prevRow, row);
-    if (h < TWINKLE_FROM + 3000 && row.every((s) => s.twinkle)) row[0].twinkle = false;
+    if (h < TWINKLE_FROM + 6000 && row.every((s) => s.twinkle)) row[0].twinkle = false;
     // a storm cloud sits in the row, level with where Twinkle stands, and blocks the zips that cross it; it never
     // closes the way up, and never drifts onto a star
-    if (h > STORM_FROM && R() < lerp(0.45, 0.7, clamp((h - STORM_FROM) / 8000, 0, 1))) {
+    if (h > STORM_FROM && R() < lerp(0.45, 0.7, clamp((h - STORM_FROM) / 18000, 0, 1))) {
       const cw = 30 + ((R() * 10) | 0);
       const storm = { x: 0, bx: 0, y: G.genY - STAND, cw, rx: cw * 2 * 0.92, ry: 24, amp: 20 + R() * 25, w: TAU / (5 + R() * 3), phi: R() * TAU };
       for (let k = 0; k < 12; k++) {
@@ -729,144 +737,137 @@ textarea, .log {
     G.nextShapeAt = -G.genY + 600 + R() * 450;
   }
 
-  // a twinkling star you stand on stays lit (Twinkle's own light); twinkling only decides when you can jump to it
-  const phase = (s) => (((G.clock * 0.55 + s.ph) % 1) + 1) % 1;
-  const glowing = (s) => !s.twinkle || s === G.tw.on || phase(s) < 0.65;
-  const fading = (s) => s.twinkle && s !== G.tw.on && phase(s) > 0.53 && phase(s) < 0.65;
+  // a twinkling star only counts while it glows (the one Twinkle stands on stays lit)
+  const phaseAt = (s, t) => (((t * 0.55 + s.ph) % 1) + 1) % 1;
+  const glowingAt = (s, t) => !s.twinkle || s === G.tw.on || phaseAt(s, t) < 0.65;
+  const glowing = (s) => glowingAt(s, G.clock);
+  const fading = (s) => s.twinkle && s !== G.tw.on && phaseAt(s, G.clock) > 0.53 && phaseAt(s, G.clock) < 0.65;
   const feet = () => ({ x: G.tw.x, y: G.tw.y + STAND });
+  const inside = (sm, x, y) => ((x - sm.x) / (sm.rx + 6)) ** 2 + ((y - sm.y) / (sm.ry + 12)) ** 2 < 1;
 
-  // ---------- the move ----------
-  // You tap the star you mean. A star out of reach shakes and the reach ring flashes; a tap on empty sky does nothing.
-  function tapAt(sx, sy) {
-    if (state !== "play") return;
-    Sound.unlock();
-    G.stats.taps++;
-    const s = resolveTap(G.cx + sx / SC, G.cy + sy / SC);
-    if (!s) return;
-    if (G.tw.zip) {
-      G.queued = s;
-      return;
-    }
-    go(s);
+  // ---------- the move: drag anywhere, let go, and Twinkle flies the other way ----------
+  function flickVelocity(dx, dy) {
+    const len = Math.hypot(dx, dy) || 1;
+    const p = clamp(len / clamp(Math.min(W, H) * 0.34, 110, 220), 0, 1);
+    const v = lerp(V_MIN, V_MAX, p);
+    return { vx: (-dx / len) * v, vy: (-dy / len) * v, p };
   }
-  function resolveTap(wx, wy) {
-    const f = feet();
-    const can = (s) => !s.out && s !== G.tw.on;
-    let under = null;
-    let ud = TAP;
-    for (const s of G.stars) {
-      if (!can(s)) continue;
-      const d = Math.hypot(s.x - wx, s.y - wy) * SC;
-      if (d < ud) {
-        ud = d;
-        under = s;
-      }
-    }
-    if (under && dist(under, f) <= REACH) return under;
-    if (under) {
-      G.stats.far++;
-      G.flashReach = 0.6;
-      under.shake = 0.3;
-      Sound.no();
-      if (tell("far")) text(under.x, under.y - 40, "Too far", "#ffffff", 22);
-    } else {
-      G.stats.misses++;
-      G.ripples.push({ x: wx, y: wy, life: 0.35 });
-    }
-    return null;
-  }
-  // the first few times a rule bites, say it in two words
-  function tell(id) {
-    G.told[id] = (G.told[id] || 0) + 1;
-    return G.told[id] <= 3;
-  }
-  function go(s) {
-    const f = feet();
-    if (dist(s, f) > REACH) return;
-    if (!glowing(s)) {
-      // wait for it: Twinkle jumps the moment it glows
-      G.waitFor = { s, until: G.clock + 1.3 };
-      G.stats.dark++;
-      if (tell("dark")) text(s.x, s.y - 40, "Wait for the glow", "#d8e6ff", 22);
-      return;
-    }
-    G.waitFor = null;
+  const canFlick = () => state === "play" && (!!G.tw.on || (!!G.tw.fly && G.air > 0));
+  function launch(vx, vy) {
     const tw = G.tw;
+    const air = !tw.on;
+    if (air) {
+      G.air--;
+      G.stats.airFlicks++;
+      tw.fly.from = null;
+    } else {
+      G.air = 1;
+      tw.fly = { from: tw.on, t: 0, lit: [], zapped: null, bounces: 0 };
+    }
+    tw.fly.vx = vx;
+    tw.fly.vy = vy;
+    tw.fly.t = 0;
+    tw.on = null;
     if (G.wet != null) {
       G.wet = null;
       G.stats.close++;
       text(tw.x, tw.y - 60, "Close one!", "#86d3a0", 26);
     }
-    tw.fromX = tw.x;
-    tw.fromY = tw.y;
-    tw.zip = s;
-    // a zip that starts touching a storm isn't stopped by that one
-    tw.zipFrom = G.storms.find((sm) => ((tw.x - sm.x) / (sm.rx + 8)) ** 2 + ((tw.y - sm.y) / (sm.ry + 14)) ** 2 < 1) || null;
-    tw.falling = !tw.on;
-    tw.on = null;
+    G.stats.flicks++;
+    G.squash = 0;
     Sound.zip();
     if (!G.started) G.started = true;
   }
-  function arrive(s) {
+  function flyStep(dt) {
     const tw = G.tw;
-    tw.x = s.x;
-    tw.y = s.y - STAND;
-    tw.vy = 0;
-    tw.on = s;
-    tw.zip = null;
-    G.squash = 1;
-    burst(s.x, s.y, s.lit ? "#cfe0ff" : "#ffdc6e", s.lit ? 4 : 12, s.lit ? 120 : 240, 5);
-    if (tw.falling) {
-      G.stats.catches++;
-      text(s.x, s.y - 70, "Caught it!", "#cfe0ff", 26);
-      Sound.catch();
+    const f = tw.fly;
+    f.t += dt;
+    f.vy += FLY_G * dt;
+    const y0 = tw.y;
+    tw.x += f.vx * dt;
+    tw.y += f.vy * dt;
+    G.trailT = (G.trailT || 0) + dt;
+    if (G.trailT > 0.016) {
+      G.trailT = 0;
+      G.trail.push({ x: tw.x, y: tw.y, life: 0.3 });
     }
+    // the sides bounce: bank shots
+    if (tw.x < 26 || tw.x > FIELD - 26) {
+      tw.x = clamp(tw.x, 26, FIELD - 26);
+      f.vx = -f.vx * 0.72;
+      f.bounces++;
+      G.stats.bounces++;
+      Sound.bonk();
+      if (f.bounces === 1) text(tw.x < FIELD / 2 ? tw.x + 70 : tw.x - 70, tw.y, "Bank!", "#d8e6ff", 22);
+    }
+    // a storm knocks Twinkle back down
+    for (const sm of G.storms)
+      if (sm !== f.zapped && inside(sm, tw.x, tw.y)) {
+        f.zapped = sm;
+        f.vx *= -0.35;
+        f.vy = Math.max(f.vy, 300);
+        G.stats.zaps++;
+        text(tw.x, tw.y - 50, "Zap!", "#ffc1b4", 28);
+        burst(tw.x, tw.y, "#d8e6ff", 10, 260, 5);
+        Sound.no();
+        buzz(25);
+      }
+    // stars: everything Twinkle passes lights up; on the way down, the first star it drops past catches it
+    let catchStar = null;
+    for (const s of G.stars) {
+      if (s.out || !glowing(s) || (s === f.from && f.t < 0.25)) continue;
+      const stand = s.y - STAND;
+      if (f.vy > 0 && y0 <= stand && tw.y >= stand && Math.abs(s.x - tw.x) < CATCH && (!catchStar || stand < catchStar.y - STAND)) catchStar = s;
+      if (Math.abs(s.x - tw.x) > TOUCH || Math.abs(s.y - tw.y) > TOUCH) continue;
+      if (Math.hypot(s.x - tw.x, s.y - tw.y) > TOUCH) continue;
+      if (!s.lit || s.shooting) lightInFlight(s);
+    }
+    if (catchStar) return catchOn(catchStar);
+    // the sea
+    if (tw.y > G.S - 12) over();
+  }
+  function lightInFlight(s) {
+    const f = G.tw.fly;
     if (s.shooting) {
       s.shooting = false;
       s.vx = 0;
+      s.bx = s.x;
+      s.amp = 0;
       G.stats.shooting++;
       G.score += 10;
       G.seaDrop += 260;
       call("Shooting star!", "+10 stars · the sea calms", "#ffdc6e");
       Sound.best();
     }
-    if (!s.lit) light(s);
-    else {
-      G.stats.relit++;
-      Sound.relight();
-    }
-    G.top = Math.max(G.top, -s.y);
-    if (G.queued) {
-      const q = G.queued;
-      G.queued = null;
-      if (!q.out && q !== s) go(q);
-    }
-  }
-  function light(s) {
+    if (s.lit) return;
     s.lit = true;
     s.litT = G.clock;
     G.stats.lit++;
-    G.score += 1;
+    f.lit.push(s);
+    // each star in one flick is worth more than the last: 1, 2, 3, 4...
+    const k = f.lit.length;
+    G.score += k;
     bumpScore();
-    // quick taps climb the scale, a pause starts it again
-    G.noteI = G.clock - G.noteT < 1.3 ? Math.min(G.noteI + 1, 12) : 0;
-    G.noteT = G.clock;
-    Sound.star(s.shape ? s.note + 2 : G.noteI);
-    buzz(6);
+    text(s.x, s.y - 34, `+${k}`, k >= 3 ? "#ffdc6e" : "#ffffff", 18 + Math.min(k, 6) * 2);
+    Sound.star(Math.min(3 + k, 14));
+    burst(s.x, s.y, "#ffdc6e", 10, 230, 5);
+    buzz(5);
     const c = s.shape;
     if (c && !c.done && !c.broken && c.stars.every((x) => x.lit)) {
       c.done = true;
       G.stats.shapes++;
-      const n = c.stars.length;
+      const one = c.stars.every((x) => f.lit.includes(x));
+      const n = c.stars.length * (one ? 4 : 2);
       G.score += n;
       bumpScore();
-      G.seaDrop += SEA_CALM;
+      G.seaDrop += SEA_CALM * (one ? 1.5 : 1);
+      if (one) G.stats.oneFlickShapes++;
       if (!found.has(c.name)) {
         found.add(c.name);
         G.newFound.push(c.name);
         store.set("found", [...found]);
       }
-      call(c.name, `+${n} stars · the sea calms`, "#ffdc6e");
+      call(c.name, one ? `In one flick! +${n} stars · the sea calms` : `+${n} stars · the sea calms`, "#ffdc6e");
       Sound.shape(c.stars.map((x) => x.note + 2).sort((a, b) => a - b));
       for (const x of c.stars) burst(x.x, x.y, "#fff3c4", 10, 220, 6);
       buzz(18);
@@ -876,6 +877,27 @@ textarea, .log {
       call("New best!", "Keep going", "#86d3a0");
       Sound.best();
     }
+  }
+  const FLICK_WORDS = ["", "", "", "Nice!", "Lovely!", "Brilliant!", "Dazzling!", "Starburst!"];
+  function catchOn(s) {
+    const tw = G.tw;
+    const f = tw.fly;
+    if (!s.lit || s.shooting) lightInFlight(s);
+    tw.on = s;
+    tw.fly = null;
+    tw.x = s.x;
+    tw.y = s.y - STAND;
+    G.air = 1;
+    G.squash = 1;
+    Sound.land();
+    burst(s.x, s.y, "#cfe0ff", 5, 140, 4);
+    const n = f.lit.length;
+    G.stats.bestFlick = Math.max(G.stats.bestFlick, n);
+    if (n >= 3) {
+      call(FLICK_WORDS[Math.min(n, 7)], `${n} stars in one flick`, "#ffdc6e");
+      Sound.combo(n);
+    }
+    G.top = Math.max(G.top, -s.y);
   }
 
   // ---------- one step ----------
@@ -891,10 +913,10 @@ textarea, .log {
     if (G.stars.some((st) => st.vx && (st.x < -90 || st.x > FIELD + 90))) G.stars = G.stars.filter((st) => !st.vx || (st.x > -90 && st.x < FIELD + 90));
     if (G.top > SHOOT_FROM && G.started && G.clock > G.shootNext) {
       const dir = G.R() < 0.5 ? 1 : -1;
-      addStar(dir > 0 ? -60 : FIELD + 60, tw.y - 140 - G.R() * 170, { vx: dir * (260 + G.R() * 120), shooting: true });
-      G.shootNext = G.clock + 9 + G.R() * 7;
+      addStar(dir > 0 ? -60 : FIELD + 60, tw.y - 160 - G.R() * 220, { vx: dir * (240 + G.R() * 110), shooting: true });
+      G.shootNext = G.clock + 8 + G.R() * 6;
     }
-    if (tw.on && !tw.zip) {
+    if (tw.on) {
       tw.x = tw.on.x;
       tw.y = tw.on.y - STAND;
     }
@@ -914,42 +936,9 @@ textarea, .log {
         G.seaDrop -= k;
       }
     }
-    // Twinkle
-    if (tw.zip) {
-      const s = tw.zip;
-      const tx = s.x;
-      const ty = s.y - STAND;
-      const d = Math.hypot(tx - tw.x, ty - tw.y);
-      const stepLen = ZIP * dt;
-      G.trail.push({ x: tw.x, y: tw.y, life: 0.25 });
-      const inside = (sm) => ((tw.x - sm.x) / (sm.rx + 8)) ** 2 + ((tw.y - sm.y) / (sm.ry + 14)) ** 2 < 1;
-      const hit = G.storms.find((sm) => sm !== tw.zipFrom && inside(sm));
-      if (hit) {
-        // a storm stops the zip: Twinkle drops, and a quick tap can still catch a star
-        tw.zip = null;
-        tw.vy = 140;
-        G.queued = null;
-        G.stats.zaps++;
-        G.flashReach = 0.3;
-        text(tw.x, tw.y - 50, "Zap!", "#ffc1b4", 28);
-        burst(tw.x, tw.y, "#d8e6ff", 10, 260, 5);
-        Sound.no();
-        buzz(25);
-      } else if (d <= stepLen) arrive(s);
-      else {
-        tw.x += ((tx - tw.x) / d) * stepLen;
-        tw.y += ((ty - tw.y) / d) * stepLen;
-      }
-    } else if (tw.on) {
-      // a tap that's waiting for a twinkling star to glow
-      const w = G.waitFor;
-      if (w) {
-        if (w.s.out || G.clock > w.until) G.waitFor = null;
-        else if (glowing(w.s)) go(w.s);
-      }
-    } else {
-      tw.vy = Math.min(tw.vy + GRAV * dt, 900);
-      tw.y += tw.vy * dt;
+    if (tw.fly) {
+      flyStep(dt);
+      if (state !== "play") return;
     }
     // stars the sea reaches go out
     for (const s of G.stars) {
@@ -962,51 +951,56 @@ textarea, .log {
         if (s.y < G.cy + VH + 40) burst(s.x, G.S, "#9fb4d8", 4, 80, 4);
       }
     }
-    // the sea reaches Twinkle: a last moment to jump away, then caught
-    if (!tw.zip && G.wet == null && tw.y + STAND * 0.6 > G.S) {
+    // the sea reaches the star Twinkle stands on: a last moment to flick away
+    if (tw.on && G.wet == null && tw.y + STAND * 0.6 > G.S) {
       G.wet = LAST_CHANCE;
-      text(tw.x, tw.y - 64, "Jump!", "#ffc1b4", 32);
+      text(tw.x, tw.y - 64, "Flick!", "#ffc1b4", 32);
       Sound.warn();
       buzz(20);
     }
-    if (G.wet != null && !tw.zip) {
+    if (G.wet != null && tw.on) {
       G.wet -= dt;
-      tw.y += 50 * dt;
       if (G.wet <= 0) return over();
     }
     // hints, once per device
-    hint("tap", true);
+    hint("flick", true);
     if (G.started) {
       const vis = (s) => s.y > G.cy + 120 / SC && s.y < G.cy + VH - 60;
       const sh = G.shapes.find((c) => !c.done && !c.broken && c.stars.every(vis));
       if (sh) hint("shape", sh);
-      if (G.clock > 1.2) hint("sea", true);
+      if (G.clock > 3 && tw.on) hint("sea", true);
+      if (tw.fly && tw.fly.vy > 300 && G.air > 0 && tw.fly.from && tw.y > tw.fly.from.y - STAND + 80) hint("air", true);
     }
-    // danger hum
+    // the hum quickens as the sea gets close
     G.warnT -= dt;
     const gapNow = G.S - feet().y;
     if (G.started && gapNow < 240 && G.warnT <= 0) {
       Sound.warn();
       G.warnT = 0.3 + 0.7 * clamp(gapNow / 240, 0, 1);
     }
-    // stuck check (for the bot's fairness report): standing with no way up
-    if (BOT && tw.on && !tw.zip) {
-      const f = feet();
-      const up = G.stars.some((s) => !s.out && s !== tw.on && s.y < f.y - 20 && dist(s, f) <= REACH);
-      G.stuckT = up ? 0 : G.stuckT + dt;
-      if (G.stuckT > 2.5) {
-        G.stats.stuck++;
-        G.stuckT = -99;
+    // the bot's fairness report: standing with no flick that lands at least as high, for 3 seconds
+    if (BOT && tw.on) {
+      G.stuckCheckT = (G.stuckCheckT || 0) + dt;
+      if (G.stuckCheckT > 0.5) {
+        G.stuckCheckT = 0;
+        const p = botPlan(false);
+        G.stuckT = p && p.gain > -20 ? 0 : G.stuckT + 0.5;
+        if (G.stuckT >= 3) {
+          G.stats.stuck++;
+          G.stuckT = -99;
+        }
       }
     }
-    gen(G.cy - 500);
-    if (G.stars.length > 400) G.stars = G.stars.filter((s) => s.y < G.S + 300 || s.shape);
+    gen(G.cy - 700);
+    if (G.stars.length > 420) G.stars = G.stars.filter((s) => s.y < G.S + 300 || s.shape);
   }
 
   function hint(id, what) {
     if (seen.has(id) || G.hints.some((h) => h.id === id)) return;
-    if (id === "tap" && G.started) return;
-    G.hints.push({ id, what, life: id === "tap" ? 999 : 3.2 });
+    if (id === "flick" && G.started) return;
+    // one at a time, never over a big moment
+    if (id !== "flick" && (G.hints.length || G.calls.length)) return;
+    G.hints.push({ id, what, life: id === "flick" ? 999 : 3.2 });
     seen.add(id);
     if (!BOT) store.set("hints", [...seen]);
   }
@@ -1027,7 +1021,6 @@ textarea, .log {
     G.calls.push({ s, sub, col, life: 1.6 });
     if (G.calls.length > 2) G.calls.shift();
   }
-  let bumpT = 0;
   function bumpScore() {
     $("scoreN").textContent = fmt(G.score);
     if (RM) return;
@@ -1035,22 +1028,42 @@ textarea, .log {
     el.classList.remove("bump");
     void el.offsetWidth;
     el.classList.add("bump");
-    bumpT = 0;
   }
 
-  // ---------- input ----------
+  // ---------- input: one drag per move ----------
+  let drag = null;
   cv.addEventListener("pointerdown", (e) => {
     e.preventDefault();
-    if (state === "end") return;
-    tapAt(e.clientX, e.clientY);
+    if (state !== "play" || drag) return;
+    Sound.unlock();
+    try {
+      cv.setPointerCapture(e.pointerId);
+    } catch {}
+    drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY };
+  });
+  cv.addEventListener("pointermove", (e) => {
+    if (drag && e.pointerId === drag.id) {
+      drag.x = e.clientX;
+      drag.y = e.clientY;
+    }
+  });
+  cv.addEventListener("pointerup", (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = drag.x - drag.x0;
+    const dy = drag.y - drag.y0;
+    drag = null;
+    if (Math.hypot(dx, dy) < DRAG_MIN || !canFlick()) return;
+    const v = flickVelocity(dx, dy);
+    launch(v.vx, v.vy);
+  });
+  cv.addEventListener("pointercancel", (e) => {
+    if (drag && e.pointerId === drag.id) drag = null;
   });
   cv.addEventListener("contextmenu", (e) => e.preventDefault());
   window.addEventListener("keydown", (e) => {
-    if (e.code === "Space" || e.code === "Enter") {
-      if (state === "end" && e.code === "Space") {
-        e.preventDefault();
-        play();
-      }
+    if (e.code === "Space" && state === "end") {
+      e.preventDefault();
+      play();
     }
     if (e.code === "Escape" && state === "play") pause();
   });
@@ -1058,43 +1071,82 @@ textarea, .log {
     if (document.hidden && state === "play") pause();
   });
 
-  // the star a sensible player would pick next (the bot)
-  function botPick() {
+  // ---------- the bot (?bot=1 plays well, ?bot=human like a first-timer): it aims by trying flicks in its head ----------
+  function simulate(vx, vy, maxT = 2.6) {
     const tw = G.tw;
-    const f = feet();
-    let best = null;
-    let bs = -1e9;
-    const gap = G.S - f.y;
-    for (const s of G.stars) {
-      if (s.out || s === tw.on || dist(s, f) > REACH || !glowing(s) || blocked(f, s)) continue;
-      let sc = f.y - s.y;
-      if (s.shooting) sc += 600;
-      if (!s.lit) sc += 80;
-      if (s.shape && !s.shape.done && !s.shape.broken) sc += !s.lit && gap > 280 ? 380 : 150;
-      if (s.twinkle) sc -= fading(s) ? 400 : 60;
-      if (gap < 260) sc += (f.y - s.y) * 2;
-      if (sc > bs) {
-        bs = sc;
-        best = s;
+    const from = tw.on || (tw.fly && tw.fly.from);
+    let x = tw.x;
+    let y = tw.y;
+    let lit = 0;
+    let shape = 0;
+    const near = G.stars.filter((s) => !s.out && Math.abs(s.y - y) < 1000);
+    const dt = 1 / 60;
+    const hit = new Set();
+    for (let t = 0; t < maxT; t += dt) {
+      vy += FLY_G * dt;
+      const y0 = y;
+      x += vx * dt;
+      y += vy * dt;
+      if (x < 26 || x > FIELD - 26) {
+        x = clamp(x, 26, FIELD - 26);
+        vx = -vx * 0.72;
+      }
+      if (G.storms.some((sm) => inside(sm, x, y))) return null;
+      if (y > G.S - 40) return null;
+      for (const s of near) {
+        if ((s === from && t < 0.25) || !glowingAt(s, G.clock + t)) continue;
+        const stand = s.y - STAND;
+        if (vy > 0 && y0 <= stand && y >= stand && Math.abs(s.x - x) < CATCH * 0.85)
+          return { star: s, lit: lit + (s.lit ? 0 : 1), shape, gain: tw.y + STAND - s.y, t };
+        if (Math.hypot(s.x - x, s.y - y) > TOUCH * 0.8) continue;
+        if (!s.lit && !hit.has(s)) {
+          hit.add(s);
+          lit++;
+          if (s.shape && !s.shape.done) shape++;
+        }
       }
     }
+    return null;
+  }
+  function botPlan(human) {
+    let best = null;
+    for (let a = -175; a <= -5; a += 7)
+      for (let p = 0.25; p <= 1.001; p += 0.125) {
+        const ang = (a * Math.PI) / 180;
+        const v = lerp(V_MIN, V_MAX, p);
+        const r = simulate(Math.cos(ang) * v, Math.sin(ang) * v);
+        if (!r) continue;
+        const gap = G.S - feet().y;
+        const score = r.gain * (gap < 260 ? 2 : 1) + r.lit * 70 + r.shape * 60 + (r.star.shooting ? 400 : 0) - (human ? 0 : r.t * 30);
+        if (!best || score > best.score) best = { ...r, score, vx: Math.cos(ang) * v, vy: Math.sin(ang) * v };
+      }
     return best;
   }
-  // ?bot=1 plays well; ?bot=human taps like a first-timer: slower, and now and then a so-so choice
   const HUMAN = Q.get("bot") === "human";
   function bot() {
-    if (G.tw.zip) return;
     G.botT -= 1 / 120;
-    if (G.botT > 0 && G.tw.on) return;
-    G.botT = HUMAN ? 0.55 + Math.random() * 0.45 : 0.2 + Math.random() * 0.25;
-    let s = botPick();
-    if (HUMAN && Math.random() < 0.2) {
-      const f = feet();
-      const any = G.stars.filter((x) => !x.out && x !== G.tw.on && dist(x, f) <= REACH);
-      if (any.length) s = any[(Math.random() * any.length) | 0];
+    if (G.botT > 0) return;
+    const tw = G.tw;
+    if (tw.on) {
+      G.botT = HUMAN ? 0.9 + Math.random() * 0.8 : 0.35 + Math.random() * 0.3;
+      const plan = botPlan(HUMAN);
+      if (plan) {
+        // a first-timer's aim is a little off
+        const n = HUMAN ? 1 + (Math.random() - 0.5) * 0.22 : 1;
+        const turn = HUMAN ? (Math.random() - 0.5) * 0.12 : 0;
+        const c = Math.cos(turn);
+        const sn = Math.sin(turn);
+        launch((plan.vx * c - plan.vy * sn) * n, (plan.vx * sn + plan.vy * c) * n);
+      }
+    } else if (tw.fly && G.air > 0 && tw.fly.vy > 200 && tw.fly.t > 0.4) {
+      G.botT = 0.15;
+      const r = simulate(tw.fly.vx, tw.fly.vy);
+      if (!r || r.gain < -150) {
+        const plan = botPlan(HUMAN);
+        if (plan) launch(plan.vx, plan.vy);
+      }
     }
-    if (s) go(s);
-    if (BOT && G.clock > (Number(Q.get("cap")) || 1e9)) G.S = G.tw.y - 200;
+    if (BOT && G.clock > (Number(Q.get("cap")) || 1e9)) G.S = G.tw.y - 300;
   }
 
   // ---------- drawing ----------
@@ -1286,16 +1338,36 @@ textarea, .log {
       }
       ctx.setLineDash([]);
     }
-    // the reach: a faint ring around the star Twinkle stands on
-    if (state === "play") {
-      g.flashReach = Math.max(0, g.flashReach - 1 / 60);
-      ctx.strokeStyle = `rgba(207,224,255,${0.13 + g.flashReach * 0.8})`;
-      ctx.lineWidth = 2 + g.flashReach * 3;
-      ctx.setLineDash([5, 10]);
+    // aiming: the pull behind Twinkle, and the start of the arc ahead (longer for your first runs)
+    if (state === "play" && drag && canFlick() && Math.hypot(drag.x - drag.x0, drag.y - drag.y0) >= DRAG_MIN) {
+      const v = flickVelocity(drag.x - drag.x0, drag.y - drag.y0);
+      const sp = Math.hypot(v.vx, v.vy);
+      ctx.strokeStyle = "rgba(255,255,255,0.5)";
+      ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.arc(f.x, f.y, REACH, 0, TAU);
+      ctx.moveTo(tw.x, tw.y);
+      ctx.lineTo(tw.x - (v.vx / sp) * (30 + 70 * v.p), tw.y - (v.vy / sp) * (30 + 70 * v.p));
       ctx.stroke();
-      ctx.setLineDash([]);
+      const aimT = runs.length < 2 ? 0.6 : runs.length < 5 ? 0.42 : 0.3;
+      let x = tw.x;
+      let y = tw.y;
+      let vx = v.vx;
+      let vy = v.vy;
+      for (let i = 1; i <= 24; i++) {
+        const dt = aimT / 24;
+        vy += FLY_G * dt;
+        x += vx * dt;
+        y += vy * dt;
+        if (x < 26 || x > FIELD - 26) {
+          x = clamp(x, 26, FIELD - 26);
+          vx = -vx * 0.72;
+        }
+        if (i % 2) continue;
+        ctx.globalAlpha = 0.9 - i / 30;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(x - 4, y - 4, 8, 8);
+      }
+      ctx.globalAlpha = 1;
     }
     // the zip's streak
     for (const t of g.trail) {
@@ -1354,7 +1426,6 @@ textarea, .log {
         ctx.stroke();
       }
       if (!inView(s)) continue;
-      const reach = !s.out && dist(s, f) <= REACH && s !== tw.on;
       const lightOn = glowing(s);
       let look;
       if (s.shooting) look = "lit";
@@ -1362,7 +1433,7 @@ textarea, .log {
       else if (s.twinkle && !lightOn) look = "dark";
       else if (s.lit) look = "lit";
       else if (s.twinkle) look = "glow";
-      else look = reach ? "near" : "dim";
+      else look = "near";
       let size = s.shooting ? STAR * 1.25 : STAR;
       if (look === "dark") size *= 0.75;
       if (look === "dim") size *= 0.86;
@@ -1391,10 +1462,16 @@ textarea, .log {
     if (state !== "end") {
       let pose = "idle";
       let fr = vt % 3.2 < 0.12 ? 1 : 0;
-      if (tw.zip) {
-        pose = "celebrate";
-        fr = 2;
-      } else if (!tw.on || g.wet != null || g.S - f.y < 200) {
+      const aiming = drag && tw.on && Math.hypot(drag.x - drag.x0, drag.y - drag.y0) >= DRAG_MIN;
+      if (tw.fly) {
+        pose = tw.fly.vy < 0 ? "celebrate" : g.S - f.y < 200 ? "surprised" : "celebrate";
+        fr = tw.fly.vy < 0 ? 2 : 1;
+      } else if (aiming) {
+        pose = "stretch";
+        fr = 0;
+        const v = flickVelocity(drag.x - drag.x0, drag.y - drag.y0);
+        g.squash = Math.max(g.squash, v.p * 0.8);
+      } else if (g.wet != null || g.S - f.y < 200) {
         pose = "surprised";
         fr = 0;
       } else if (!g.started) {
@@ -1406,7 +1483,7 @@ textarea, .log {
       const sy = 1 - 0.2 * g.squash;
       const img = sprite(pose, fr);
       const s = 24 * U;
-      const lean = tw.zip ? clamp((tw.zip.x - tw.x) / 600, -0.4, 0.4) : 0;
+      const lean = tw.fly ? clamp(tw.fly.vx / 1600, -0.5, 0.5) : 0;
       ctx.save();
       ctx.translate(tw.x, tw.y);
       ctx.rotate(lean);
@@ -1414,26 +1491,46 @@ textarea, .log {
       if (state === "over") ctx.globalAlpha = clamp(1 - g.overT * 1.6, 0, 1);
       ctx.drawImage(img, -12 * U, -14 * U + (1 - sy) * 30, s, s);
       ctx.restore();
+      // the mid-air flick that's still there: a little spark circling Twinkle
+      if (tw.fly && g.air > 0) {
+        const a = vt * 8;
+        ctx.fillStyle = "#fff3c4";
+        ctx.fillRect(tw.x + Math.cos(a) * 46 - 4, tw.y + Math.sin(a) * 46 - 4, 8, 8);
+      }
     }
     // hints
     for (const hn of g.hints) {
-      if (state === "play" && hn.id !== "tap") hn.life -= 1 / 60;
+      if (state === "play" && hn.id !== "flick") hn.life -= 1 / 60;
       let x;
       let y;
       let label;
-      if (hn.id === "tap") {
-        const s = botPick();
-        if (!s) continue;
-        x = s.x;
-        y = s.y;
-        label = "Tap a star to climb";
-        const r = 30 + 6 * Math.sin(vt * 6);
-        ctx.strokeStyle = "rgba(255,255,255,0.9)";
-        ctx.lineWidth = 3;
+      if (hn.id === "flick") {
+        // a ghost of the move: a finger pulls down, the arc shows where Twinkle would go
+        const k = (vt % 2.2) / 2.2;
+        const pull = Math.min(1, k * 2.2);
+        ctx.strokeStyle = "rgba(255,255,255,0.55)";
+        ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.arc(x, y, r, 0, TAU);
+        ctx.moveTo(tw.x, tw.y + 50);
+        ctx.lineTo(tw.x + 40 * pull, tw.y + 50 + 110 * pull);
         ctx.stroke();
-        y -= 46;
+        ctx.fillStyle = "rgba(255,255,255,0.85)";
+        ctx.beginPath();
+        ctx.arc(tw.x + 40 * pull, tw.y + 50 + 110 * pull, 14, 0, TAU);
+        ctx.fill();
+        for (let i = 1; i <= 8; i++) {
+          const t = i * 0.05 * pull;
+          ctx.globalAlpha = 0.8 - i * 0.08;
+          ctx.fillRect(tw.x - 330 * t * 0.35 - 4, tw.y - 1150 * t + 0.5 * FLY_G * t * t - 4, 8, 8);
+        }
+        ctx.globalAlpha = 1;
+        x = tw.x;
+        y = tw.y - 110;
+        label = "Drag back, let go";
+      } else if (hn.id === "air") {
+        x = f.x;
+        y = f.y - 110;
+        label = "Flick again in mid-air!";
       } else if (hn.id === "shape") {
         const c = hn.what;
         x = c.stars.reduce((a, s) => a + s.x, 0) / c.stars.length;
@@ -1446,14 +1543,16 @@ textarea, .log {
       } else {
         x = f.x;
         y = f.y + 70;
-        label = "The sea is rising. Keep climbing!";
+        label = "The sea is rising. Keep climbing";
       }
-      x = clamp(x, g.cx + 150, g.cx + VW - 150);
+      ctx.font = `800 26px Geist, ui-sans-serif, system-ui, sans-serif`;
+      const half = ctx.measureText(label).width / 2 + 12;
+      x = clamp(x, g.cx + half, g.cx + VW - half);
       ctx.globalAlpha = clamp(hn.life, 0, 1);
       label3d(label, x, y, "#ffffff", 26);
       ctx.globalAlpha = 1;
     }
-    g.hints = g.hints.filter((hn) => hn.life > 0 && !(hn.id === "tap" && g.started));
+    g.hints = g.hints.filter((hn) => hn.life > 0 && !(hn.id === "flick" && g.started));
     // ripples where a tap hit no star
     for (const r of g.ripples) {
       r.life -= 1 / 60;
@@ -1577,6 +1676,8 @@ textarea, .log {
       el("b", null, String(rec.shapes)),
       document.createTextNode(rec.shapes === 1 ? " shape · " : " shapes · "),
       el("b", null, m ? `${m} min ${s} s` : `${s} s`),
+      document.createTextNode(" · best flick "),
+      el("b", null, `${rec.bestFlick} stars`),
     );
     card.append(facts, el("p", "tiny", `Shapes found: ${found.size} of ${SHAPES.length}`));
     if (runs.length === 3 || runs.length === 8) card.append(noteBox(rec));
@@ -1677,7 +1778,7 @@ textarea, .log {
       `Starlight runs (${runs.length}), newest last. Shapes found ${found.size}/${SHAPES.length}.`,
       ...runs.map(
         (r) =>
-          `${r.at} stars ${r.score}${r.best ? " (best)" : ""} ${r.seconds}s climbed ${r.climbed}m shapes ${r.shapes} broken ${r.broken} taps ${r.taps} too-far ${r.far} dark ${r.dark} catches ${r.catches} drops ${r.falls} fps ${r.fps} worst ${r.worstFrameMs}ms${r.wantedAnother ? ` | another go: ${r.wantedAnother}` : ""}${r.note ? ` | "${r.note}"` : ""}`,
+          `${r.at} stars ${r.score}${r.best ? " (best)" : ""} ${r.seconds}s climbed ${r.climbed}m flicks ${r.flicks} air ${r.airFlicks} best-flick ${r.bestFlick} shapes ${r.shapes} one-flick-shapes ${r.oneFlickShapes} bank ${r.bounces} zaps ${r.zaps} shooting ${r.shooting} saves ${r.close} fps ${r.fps} worst ${r.worstFrameMs}ms${r.wantedAnother ? ` | another go: ${r.wantedAnother}` : ""}${r.note ? ` | "${r.note}"` : ""}`,
       ),
     ].join("\n");
   $("notesBtn").onclick = () => {
@@ -1727,8 +1828,15 @@ textarea, .log {
     if (G && (state === "play" || state === "over")) {
       const f = feet();
       // the view rides with the sea, so it's always there at the bottom; Twinkle climbs away from it or sinks toward it
-      let want = G.S + 80 - VH;
-      if (G.tw.y - want < VH * 0.3) want = G.tw.y - VH * 0.3;
+      // standing: Twinkle a little below the middle, so the sky it can reach is in view; flying: the view only rises
+      // to keep Twinkle on screen, and follows a fall down
+      const tw = G.tw;
+      if (G.camWant == null) G.camWant = tw.y - VH * 0.58;
+      if (tw.fly) {
+        G.camWant = Math.min(G.camWant, tw.y - VH * 0.32);
+        if (tw.y > G.camWant + VH * 0.82) G.camWant = tw.y - VH * 0.82;
+      } else G.camWant = tw.y - VH * 0.58;
+      const want = G.camWant;
       G.cy = lerp(G.cy, want, Math.min(1, dt * 4));
       G.cx = (FIELD - VW) / 2;
       for (const p of G.fx) {

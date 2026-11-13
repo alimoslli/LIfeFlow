@@ -84,3 +84,20 @@ the sky ever changed. What changed:
 - The sea is a little quicker (50 a second, +1.05 a second).
 - Checks: first-timer-like bot runs last about 1.5 to 2.5 minutes and meet a new thing every 15 to 20 seconds; a
   strong bot is capped at 5 minutes; never stuck, no page errors, 60 fps.
+
+## Round 4: the flick (owner, 2026-11-13)
+
+The owner reached 1,728 m: "felt more interesting but lost because my wrist hurt of all the touches ... it's easy and
+not the addicting worldwide game I wanted." He chose the flick, and to share the next version with a few people.
+- One drag per move, about every 2 seconds: drag anywhere, let go, Twinkle flies the opposite way (a longer drag is
+  a stronger flick, up to about five rows). Drags under 16 px do nothing. The aim line shows only the start of the arc
+  (longer in the first runs).
+- Everything Twinkle passes lights up, and each star in one flick is worth more than the last (1, 2, 3, 4...), with
+  "Nice!", "Lovely!", "Brilliant!" from 3 stars. A whole shape in one flick is worth double.
+- On the way down, the first star Twinkle drops past (within 80 to the side) catches it: a miss costs height, not the
+  run. One more flick in mid-air per launch. The sides bounce (bank shots). Storms knock Twinkle back down.
+- The sky's new things are spaced for the faster climb: swaying at 300 m, storms 700 m, twinkling 1,200 m, shooting
+  stars 1,700 m, higher still 2,300 m. The sea starts at 30 a second and adds 1.15 a second.
+- One hint at a time, never over a big moment.
+- The bot now aims by trying about 175 flicks in its head. First-timer-like runs: 45 s to 3.4 min (about 1 min 45 s
+  typical), up to 11 stars in one flick; never stuck, no page errors, 60 fps.
