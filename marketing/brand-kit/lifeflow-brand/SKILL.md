@@ -20,8 +20,9 @@ Only the basics below are fixed.
    (golden hour), Twinkle (into the evening), Dreamy (late at night). Stills in `assets/skylings/` (night versions of
    Twinkle and Dreamy for dark skies) and moving frames in `assets/skylings_animated/` (idle, wave, celebrate, think; one
    frame every 0.18 s, looped). Five only: never six, never Noon or Dusk. Never redraw, restyle or AI-generate them.
-3. **Pixel clouds:** the app's own idea clouds in `assets/clouds/` (three shapes, day and night). Short text goes inside
-   in navy. Stretch only the flat middle, never the puffs.
+3. **Pixel clouds with words:** make them ONLY with `tools/make_cloud.py "Your words" out.png [--shape 1|2|3] [--night] [--zoom 4]`.
+   It draws them exactly like the app: the cloud hugs the words, the words are Geist SemiBold navy `#13213D`, a soft
+   shadow sits under it. Never type words over a cloud picture yourself. See `assets/clouds/example-cloud-day.png`.
 4. **Pixel art scaling:** skylings and clouds scale only in whole steps with no smoothing (nearest neighbor), so every
    pixel stays sharp.
 5. **Fonts:** Fraunces for headlines, captions and the name; Geist for small text and anything that looks like the app

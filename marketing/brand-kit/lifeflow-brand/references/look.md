@@ -37,6 +37,8 @@ Transparent PNGs drawn by the app's own code, at 20 screen pixels per art pixel.
 multiples, with no smoothing ("nearest neighbor"), so the pixels stay crisp. Use the night versions of Twinkle and
 Dreamy on dark or night backgrounds. The pixel style is the brand: never smooth, redraw or AI-generate them.
 
-## Pixel clouds (`assets/clouds/`)
-The app's own idea clouds (three shapes, day and night). Put short text inside them (a few words, Geist or Fraunces in
-navy), like the clouds on the app's Today screen. Stretch only the flat middle part, never the puffs.
+## Pixel clouds (`assets/clouds/`, `tools/make_cloud.py`)
+The app's own idea clouds: three shapes, day and night. In the app the cloud is only as wide as its words, the words
+are Geist SemiBold in navy `#13213D` and sit right inside the cloud (they may run under the puffs), and a soft navy
+shadow sits 4 px under it. Use `tools/make_cloud.py` for any words so it always looks like the app. The plain cloud
+pictures are for clouds without words.
