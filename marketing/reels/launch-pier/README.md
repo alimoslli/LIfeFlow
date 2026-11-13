@@ -9,7 +9,7 @@
 - No back pages and very few full-screen recordings.
 - Nothing from the old LifeFlow.
 
-Final: `LifeFlow_Launch_Pier_v2.mp4`, 35.9 s, 1080 x 1920, 30 fps, -14 LUFS. Footage is not committed.
+Final: `LifeFlow_Launch_Pier_v3.mp4` (v2 with the score), 35.9 s, 1080 x 1920, 30 fps, -14 LUFS. Footage is not committed.
 
 ## v2 (Ali's notes on v1)
 - **No whole-app screen.** Two pieces of the app are pulled out with no background and shown in 3D behind Ali:
@@ -39,6 +39,7 @@ Final: `LifeFlow_Launch_Pier_v2.mp4`, 35.9 s, 1080 x 1920, 30 fps, -14 LUFS. Foo
    - `cap_timeline.cjs` runs at 10:40 PM: the day opened as a timeline, with the strip's sky, stars and water hidden so only the line, its stops and labels stay. Scroll 1300 to 2160, 2.5 px a frame.
    - Both use `lib2.cjs` (the "What's new" `lib.cjs` plus see-through PNG shots).
 4. **Render and sound.** `render.py` (the wheel gets `wheel_mask.png` for a soft dome edge), then `mix.py`, then mux.
+5. **Music (v3).** ElevenLabs Music v2.5 through Higgsfield, instrumental, 36 s, 5.24 credits, approved by Ali on 2026-11-13. The prompt is in `mix.py`'s notes and in the playbook. The file goes in as `music_el.mp3`, 0.5 s after the picture so its build lands on the whip, about 12 dB under the voices and 4 dB lower while someone talks.
 
 ## Words
 - Ali's and Tyler's voices are kept as they spoke. The captions are their exact words, including Ali's "manage your life".

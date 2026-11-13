@@ -1,5 +1,5 @@
 """Sound for the launch video: Tyler's and Ali's real voices (cleaned), the kit's pixel sounds on the overlays,
-a soft local pad under it all (placeholder; no generated music), and the logo ending's own sound."""
+the score (ElevenLabs Music via Higgsfield, owner approved), and the logo ending's own sound."""
 import subprocess, wave, numpy as np, os
 HERE = os.path.dirname(os.path.abspath(__file__)); L = os.path.dirname(HERE); SP = os.path.dirname(L)
 SR = 48000; DUR = 1078 / 30; N = int(SR * DUR)
@@ -45,24 +45,11 @@ cues += [(FX["tap"], A2(t), -6) for t in [21.76, 21.86, 21.96, 22.06, 22.16]]   
 cues += [(FX["skylings_pop_up"], C(21.98), -6), (FX["sun_goal_reached"], C(22.78), -5), (FX["whoosh_scene_change"], O_END - 0.3, -9)]
 for a, t, g in cues: put(mix_fx, a, max(0, t), g)
 end = load(f"{SP}/kit/lifeflow-brand/assets/logo/LifeFlow_Logo_Ending.mp4"); put(mix_fx, end, O_END, -2, 0.01, 0.2)
-# a soft pad (placeholder bed): D major, slow chords, 10 dB under the voices, ducked while someone talks
-t = np.arange(N) / SR; pad = np.zeros(N, np.float32)
-chords = [(0, [146.83, 220.0, 293.66, 369.99]), (6, [123.47, 185.0, 246.94, 293.66]), (11.73, [146.83, 220.0, 293.66, 369.99]),
-          (16.4, [196.0, 246.94, 293.66, 392.0]), (21.0, [164.81, 246.94, 329.63, 415.3]), (26.7, [123.47, 185.0, 246.94, 369.99]),
-          (29.73, [146.83, 220.0, 293.66, 440.0]), (DUR, [])]
-for (t0, fr), (t1, _) in zip(chords[:-1], chords[1:]):
-    i0, i1 = int(t0 * SR), int(min(t1 + 0.6, DUR) * SR); tt = t[i0:i1] - t0
-    env = np.minimum(1, tt / 0.9) * np.clip((t1 + 0.6 - t0 - tt) / 0.9, 0, 1)
-    for k, f in enumerate(fr):
-        for det in (-0.12, 0.12):
-            pad[i0:i1] += (np.sin(2 * np.pi * (f + det) * tt + k) * 0.5 + 0.12 * np.sin(4 * np.pi * (f + det) * tt)) * env / len(fr)
-# a gentle pluck on each overlay beat
-for tp, f in [(0, 587.33), (9.0, 739.99), (A1(6.62), 880.0), (A1(13.24), 739.99), (A1(13.92), 659.25), (A1(14.70), 587.33), (A1(16.28), 739.99), (A2(20.3), 880.0), (C(22.78), 1174.66)]:
-    i0 = int(tp * SR); n = int(1.2 * SR); tt = np.arange(n) / SR
-    if i0 + n < N: pad[i0:i0 + n] += 0.35 * np.sin(2 * np.pi * f * tt) * np.exp(-tt * 4)
-voice_env = np.convolve(np.abs(mix_v[:, 0]), np.ones(4800) / 4800, mode="same"); duck = 1 - 0.55 * np.clip(voice_env / 0.04, 0, 1)
-bed = np.stack([pad, pad], 1) * duck[:, None] * db(-25)
-bed[int(O_END * SR):] *= np.linspace(1, 0, N - int(O_END * SR))[:, None] ** 2       # the ending's own sound takes over
+# the score: ElevenLabs Music v2.5 through Higgsfield (owner approved, 5.24 credits), 36 s, instrumental; 0.5 s later than
+# the picture so its build lands on the whip into Ali. About 12 dB under the voices, 4 dB more while someone talks.
+music = load(f"{L}/music_el.mp3"); bed = np.zeros((N, 2), np.float32); put(bed, music, 0.5, -12, 0.01, 0.8)
+voice_env = np.convolve(np.abs(mix_v[:, 0]), np.ones(4800) / 4800, mode="same"); duck = 1 - 0.37 * np.clip(voice_env / 0.04, 0, 1)
+bed *= duck[:, None]
 out = mix_v + mix_fx + bed
 peak = np.abs(out).max(); print("peak", round(float(peak), 3))
 with wave.open(f"{L}/launch_mix_pre.wav", "wb") as w:
