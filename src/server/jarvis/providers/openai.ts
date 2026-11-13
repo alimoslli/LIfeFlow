@@ -129,7 +129,12 @@ export class OpenAIProvider implements ModelProvider {
     const small = effort === "low" && config.smallModel && !smallRefused.has(config.smallModel) ? config.smallModel : undefined;
     let model = small ?? config.model;
     const fixed = config.reasoningEffort && config.reasoningEffort !== "auto" ? config.reasoningEffort : undefined;
-    const reasoningEffort = fixed ?? effort;
+    let reasoningEffort = fixed ?? effort;
+    /** The main model takes over: it thinks at its own level, never the small model's "low" (COO review 4). */
+    const toMainModel = () => {
+      model = config.model;
+      if (!fixed && reasoningEffort === "low") reasoningEffort = "medium";
+    };
     let first = true;
 
     const bodyFor = (model: string): ResponseCreateParamsStreaming => {
@@ -154,7 +159,7 @@ export class OpenAIProvider implements ModelProvider {
       const body = bodyFor(model);
       const retention = config.cacheRetention && !noRetention.has(model) ? config.cacheRetention : undefined;
       // the small model's first request gets no retries and a short start: on any trouble the main model answers instead
-      const opts = first && model === small ? { signal, maxRetries: 0, timeout: SMALL_START_MS } : { signal };
+      const opts = first && model === small ? { signal: startSignal(), maxRetries: 0, timeout: SMALL_START_MS } : { signal };
       try {
         return await client.responses.create(retention ? { ...body, prompt_cache_retention: retention } : body, opts);
       } catch (e) {
@@ -163,6 +168,18 @@ export class OpenAIProvider implements ModelProvider {
         return client.responses.create(body, opts);
       }
     };
+    // The small model's first request also has to send its first event within SMALL_START_MS: a stream that opens and
+    // then says nothing is cut off, and the main model answers (COO review 4).
+    let starting: { ctl: AbortController; timer: ReturnType<typeof setTimeout> } | null = null;
+    const startSignal = () => {
+      const ctl = new AbortController();
+      starting = { ctl, timer: setTimeout(() => ctl.abort(new Error("The small model didn't start in time.")), SMALL_START_MS) };
+      return signal ? AbortSignal.any([signal, ctl.signal]) : ctl.signal;
+    };
+    const started = () => {
+      if (starting) clearTimeout(starting.timer);
+      starting = null;
+    };
     /** Reads one streamed response, passing text on as it comes; `said` turns true at the first word. */
     async function* read(stream: Awaited<ReturnType<typeof send>>, said: { any: boolean }) {
       let text = "";
@@ -170,6 +187,7 @@ export class OpenAIProvider implements ModelProvider {
       let usage: TokenUsage | undefined;
       let incomplete: "max_output_tokens" | "other" | undefined;
       for await (const event of stream) {
+        started();
         if (event.type === "response.output_text.delta") {
           text += event.delta;
           said.any = true;
@@ -201,7 +219,7 @@ export class OpenAIProvider implements ModelProvider {
         // the rest of the turn. The small model's reasoning items belong to it, so they are left out; its tool calls and
         // their results stay, so nothing is looked up or saved twice.
         if (opts?.mainModel && small && model === small) {
-          model = config.model;
+          toMainModel();
           // Its function_call and message items lose their ids too (call_id stays): with store=false, an item id from a
           // reasoning model ties the item to the reasoning item that came with it, and the API refuses a function_call
           // whose reasoning item is missing ("was provided without its required 'reasoning' item"). Not yet proven
@@ -217,6 +235,7 @@ export class OpenAIProvider implements ModelProvider {
         try {
           result = yield* read(await send(model), said);
         } catch (e) {
+          started();
           // Only on the small model's first step and before it said a word (later steps carry its own reasoning items):
           // a refusal (400/404) sets it aside for this run; a 5xx, a timeout or a broken stream is a bad moment, and the
           // main model answers this turn. Never after the user stopped it.
@@ -224,7 +243,7 @@ export class OpenAIProvider implements ModelProvider {
           const status = (e as { status?: number })?.status;
           if (status === 400 || status === 404) smallRefused.add(small);
           else if (status !== undefined && status < 500 && status !== 408 && status !== 429) throw e;
-          model = config.model;
+          toMainModel();
           result = yield* read(await send(model), said);
         }
         first = false;

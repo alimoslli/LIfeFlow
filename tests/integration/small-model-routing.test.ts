@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { closeDb } from "@/server/db/client";
 import { aiUsage, jarvisRuns, messages } from "@/server/db/schema";
 import { runJarvisTurn } from "@/server/jarvis/agent";
+import { groupOf } from "@/server/jarvis/tool-groups";
 import { OpenAIProvider } from "@/server/jarvis/providers/openai";
 import { seedEvalStudent } from "../fixtures/eval-student";
 import { EVAL_NOW } from "../fixtures/jarvis-eval";
@@ -14,19 +15,30 @@ import { EVAL_NOW } from "../fixtures/jarvis-eval";
  */
 afterAll(closeDb);
 
-function recording(models: string[], first?: { name: string; args: unknown }, smallFails?: number) {
+type Call = { name: string; args: unknown };
+function recording(models: string[], first?: Call | Call[], smallFails?: number, bodies?: { model: string; input: { type?: string; output?: string }[] }[]) {
+  const firstCalls = first ? (Array.isArray(first) ? first : [first]) : [];
   const fetchImpl = (async (_url: string, init: RequestInit) => {
-    const model = (JSON.parse(String(init.body)) as { model: string }).model;
+    const body = JSON.parse(String(init.body)) as { model: string; input: { type?: string; output?: string }[] };
+    const model = body.model;
     models.push(model);
+    bodies?.push(body);
     if (smallFails && model === "gpt-5.4-mini")
       return new Response(JSON.stringify({ error: { message: "The server is busy.", type: "server_error" } }), {
         status: smallFails,
         headers: { "content-type": "application/json" },
       });
-    const usage = { input_tokens: 1, output_tokens: 1, input_tokens_details: { cached_tokens: 0 }, output_tokens_details: { reasoning_tokens: 0 } };
+    const usage = { input_tokens: 1000, output_tokens: 100, input_tokens_details: { cached_tokens: 0 }, output_tokens_details: { reasoning_tokens: 0 } };
     const output =
-      first && models.length === 1
-        ? [{ type: "function_call", id: "f1", call_id: "c1", name: first.name, arguments: JSON.stringify(first.args), status: "completed" }]
+      firstCalls.length && models.length === 1
+        ? firstCalls.map((c, i) => ({
+            type: "function_call",
+            id: `f${i}`,
+            call_id: `c${i}`,
+            name: c.name,
+            arguments: JSON.stringify(c.args),
+            status: "completed",
+          }))
         : [{ type: "message", id: "m1", role: "assistant", status: "completed", content: [{ type: "output_text", text: "ok", annotations: [] }] }];
     const events = [
       { type: "response.output_text.delta", sequence_number: 0, item_id: "m1", output_index: 0, content_index: 0, delta: "ok", logprobs: [] },
@@ -63,6 +75,11 @@ const MONEY = [
   "How do we split the pizza?",
   "What's left this week?",
   "What's €15 for?",
+  // COO review 4
+  "What's the total?",
+  "What's my net?",
+  "What's my tab?",
+  "What's in my wallet?",
 ];
 
 describe("the small model gets plain lookups and never a money question", () => {
@@ -147,27 +164,86 @@ describe("the small model gets plain lookups and never a money question", () => 
     expect(r.model).toBe("gpt-5.5");
   });
 
-  it("a tool outside the turn's groups never runs: a money tool the small model makes up is refused, and the turn stays small", async () => {
+  it("a tool outside the turn's groups never runs, and the user sees nothing of it: only the model hears why", async () => {
     const { session, run } = await seedEvalStudent();
     const models: string[] = [];
-    const ended: { name?: string; ok?: boolean }[] = [];
+    const bodies: { model: string; input: { type?: string; output?: string }[] }[] = [];
+    const shown: { type: string; name?: string; summary?: string }[] = [];
     await runJarvisTurn({
       user: session,
       text: "What's due this week?",
-      provider: recording(models, { name: "money_overview", args: {} }),
-      emit: (e) => {
-        if (e.type === "tool_end") ended.push(e as { name?: string; ok?: boolean });
-      },
+      provider: recording(models, { name: "money_overview", args: {} }, undefined, bodies),
+      emit: (e) => shown.push(e as { type: string; name?: string }),
       now: EVAL_NOW,
     });
-    expect(ended).toEqual([expect.objectContaining({ name: "money_overview", ok: false })]);
-    const [row] = await run((s) =>
+    // no tool card, no tool row, nothing that names a tool or speaks to the model
+    expect(shown.filter((e) => e.type === "tool_start" || e.type === "tool_end")).toEqual([]);
+    expect(JSON.stringify(shown)).not.toMatch(/load_tools|isn't loaded/);
+    const rows = await run((s) =>
       s.tx
         .select()
         .from(messages)
         .where(and(eq(messages.userId, session.id), eq(messages.toolName, "money_overview"))),
     );
-    expect(JSON.stringify(row.toolResult)).toContain("isn't loaded for this answer");
+    expect(rows).toEqual([]);
+    // the model gets the refusal, and the turn stays small (nothing with money ran)
+    expect(bodies[1].input.find((i) => i.type === "function_call_output")?.output).toContain("isn't loaded for this answer");
     expect(models).toEqual(["gpt-5.4-mini", "gpt-5.4-mini"]);
+  });
+
+  it("each step is priced by the model that ran it, and the turn's cost is their sum", async () => {
+    const { session, run } = await seedEvalStudent();
+    const models: string[] = [];
+    const prices = { inputPerMTok: 5, cachedInputPerMTok: 0.5, outputPerMTok: 30, forModel: "gpt-5.5" };
+    const smallPrices = { inputPerMTok: 0.75, cachedInputPerMTok: 0.075, outputPerMTok: 4.5, forModel: "gpt-5.4-mini" };
+    await runJarvisTurn({
+      user: session,
+      text: "What's due this week?",
+      provider: recording(models, { name: "load_tools", args: { groups: ["money"] } }),
+      prices,
+      smallPrices,
+      emit: () => {},
+      now: EVAL_NOW,
+    });
+    expect(models).toEqual(["gpt-5.4-mini", "gpt-5.5"]);
+    // 1,000 in and 100 out each: the small step 750 + 450 = 1,200 micros, the main step 5,000 + 3,000 = 8,000
+    const small = 1000 * 0.75 + 100 * 4.5;
+    const main = 1000 * 5 + 100 * 30;
+    const [usage] = await run((s) => s.tx.select().from(aiUsage).where(eq(aiUsage.userId, session.id)));
+    expect(usage.costMicros).toBe(small + main);
+    const [r] = await run((s) => s.tx.select().from(jarvisRuns).where(eq(jarvisRuns.userId, session.id)));
+    expect(r.costMicros).toBe(small + main);
+    expect(r.model).toBe("gpt-5.5");
+  });
+
+  it("mail, notes, web and file tools can carry money: each moves the rest of the turn to the main model", async () => {
+    for (const tool of ["search_email", "read_email", "read_attachment", "web_search", "search_notes", "get_note"]) {
+      const { session } = await seedEvalStudent();
+      const models: string[] = [];
+      await runJarvisTurn({
+        user: session,
+        text: "What's due this week?",
+        provider: recording(models, [
+          { name: "load_tools", args: { groups: [groupOf(tool)] } },
+          { name: tool, args: {} },
+        ]),
+        emit: () => {},
+        now: EVAL_NOW,
+      });
+      expect(models, tool).toEqual(["gpt-5.4-mini", "gpt-5.5"]);
+    }
+  }, 60_000);
+
+  it('"autopaying tomorrow?" starts small and moves to the main model once the money comes back', async () => {
+    const { session } = await seedEvalStudent();
+    const models: string[] = [];
+    await runJarvisTurn({
+      user: session,
+      text: "Autopaying tomorrow?",
+      provider: recording(models, { name: "tonight", args: {} }),
+      emit: () => {},
+      now: EVAL_NOW,
+    });
+    expect(models).toEqual(["gpt-5.4-mini", "gpt-5.5"]);
   });
 });

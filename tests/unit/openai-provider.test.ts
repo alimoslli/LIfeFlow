@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { OpenAIProvider, toResponsesInput } from "@/server/jarvis/providers/openai";
+import { describe, expect, it, vi } from "vitest";
+import { OpenAIProvider, SMALL_START_MS, toResponsesInput } from "@/server/jarvis/providers/openai";
 import type { StepEvent } from "@/server/jarvis/providers/types";
 
 /** Builds a fake Responses API SSE stream. */
@@ -196,7 +196,7 @@ describe("OpenAI Responses provider", () => {
   });
 
   it("a small-model turn that loads money tools moves to the main model, without the small model's reasoning", async () => {
-    const requests: { model: string; input: { type?: string }[] }[] = [];
+    const requests: { model: string; input: { type?: string }[]; reasoning?: { effort?: string } }[] = [];
     const fakeFetch = (async (_url: string, init: RequestInit) => {
       requests.push(JSON.parse(String(init.body)));
       return requests.length === 1
@@ -216,6 +216,8 @@ describe("OpenAI Responses provider", () => {
     for await (const _ of turn.step([{ callId: "c1", output: '{"ok":true}' }], [], { mainModel: true })) void _;
     expect(requests.map((r) => r.model)).toEqual(["gpt-5.4-mini", "gpt-5.5"]);
     expect(turn.model).toBe("gpt-5.5");
+    // the main model thinks at its own level after the move, not the small model's (COO review 4)
+    expect(requests.map((r) => r.reasoning?.effort)).toEqual(["low", "medium"]);
     const second = requests[1].input.map((i) => i.type);
     expect(second).not.toContain("reasoning");
     expect(second).toEqual(expect.arrayContaining(["function_call", "function_call_output"]));
@@ -225,14 +227,20 @@ describe("OpenAI Responses provider", () => {
     expect(call.id).toBeUndefined();
   });
 
-  it("a broken stream or a timeout from the small model before any words: the main model answers, and the small one stays in use", async () => {
-    for (const trouble of ["broken", "timeout"] as const) {
+  it("a broken stream or a 503 from the small model before any words: the main model answers, and the small one stays in use", async () => {
+    for (const trouble of ["broken", "503"] as const) {
       const models: string[] = [];
+      const efforts: (string | undefined)[] = [];
       const fakeFetch = (async (_url: string, init: RequestInit) => {
         const body = JSON.parse(String(init.body));
         models.push(body.model);
-        if (body.model === "gpt-5.4-mini") {
-          if (trouble === "timeout") throw new DOMException("The operation timed out.", "TimeoutError");
+        efforts.push(body.reasoning?.effort);
+        if (body.model === "gpt-5.4-mini" && models.length === 1) {
+          if (trouble === "503")
+            return new Response(JSON.stringify({ error: { message: "busy", type: "server_error" } }), {
+              status: 503,
+              headers: { "content-type": "application/json" },
+            });
           return sse([{ type: "error", code: "server_error", message: "stream broke", param: null, sequence_number: 0 }]);
         }
         return sse([
@@ -247,10 +255,50 @@ describe("OpenAI Responses provider", () => {
       expect(events.at(-1), trouble).toMatchObject({ type: "step_done", text: "ok" });
       expect(turn.model, trouble).toBe("gpt-5.5");
       expect(models, trouble).toEqual(["gpt-5.4-mini", "gpt-5.5"]);
+      expect(efforts.slice(0, 2), trouble).toEqual(["low", "medium"]);
       // a bad moment doesn't set the small model aside: the next lookup tries it again
       const next = provider.startTurn({ system: "S", history: [{ type: "user", text: "hi" }], tools: [], effort: "low" });
       for await (const _ of next.step()) void _;
-      expect(models.at(-2), trouble).toBe("gpt-5.4-mini");
+      expect(models.at(-1), trouble).toBe("gpt-5.4-mini");
+    }
+  });
+
+  it("a small-model stream that opens and then says nothing is cut off after SMALL_START_MS, and the main model answers", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      const models: string[] = [];
+      const fakeFetch = (async (_url: string, init: RequestInit) => {
+        const body = JSON.parse(String(init.body));
+        models.push(body.model);
+        if (body.model === "gpt-5.4-mini") {
+          // headers arrive at once, then silence until the request is aborted
+          const signal = init.signal as AbortSignal | undefined;
+          const silent = new ReadableStream({
+            start(c) {
+              signal?.addEventListener("abort", () => c.error(signal.reason ?? new Error("aborted")));
+            },
+          });
+          return new Response(silent, { status: 200, headers: { "content-type": "text/event-stream" } });
+        }
+        return sse([
+          { type: "response.output_text.delta", delta: "ok", sequence_number: 1, item_id: "m", output_index: 0, content_index: 0, logprobs: [] },
+          completed([{ type: "message", id: "m", role: "assistant", status: "completed", content: [{ type: "output_text", text: "ok", annotations: [] }] }]),
+        ]);
+      }) as unknown as typeof fetch;
+      const provider = new OpenAIProvider({ apiKey: "sk-test", model: "gpt-5.5", smallModel: "gpt-5.4-mini", reasoningEffort: "auto", fetch: fakeFetch });
+      const turn = provider.startTurn({ system: "S", history: [{ type: "user", text: "what's due today?" }], tools: [], effort: "low" });
+      const events: StepEvent[] = [];
+      const done = (async () => {
+        for await (const e of turn.step()) events.push(e);
+      })();
+      await vi.advanceTimersByTimeAsync(SMALL_START_MS - 1);
+      expect(models).toEqual(["gpt-5.4-mini"]); // still waiting
+      await vi.advanceTimersByTimeAsync(2);
+      await done;
+      expect(models).toEqual(["gpt-5.4-mini", "gpt-5.5"]);
+      expect(events.at(-1)).toMatchObject({ type: "step_done", text: "ok" });
+    } finally {
+      vi.useRealTimers();
     }
   });
 

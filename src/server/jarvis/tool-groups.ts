@@ -185,6 +185,13 @@ export const MONEY_RESULT_TOOLS: ReadonlySet<string> = new Set([
   "goals_today",
   "log_goal_checkin",
   "list_milestones",
+  // text from mail, notes, the web and files can carry money too (COO review 4)
+  "search_email",
+  "read_email",
+  "read_attachment",
+  "web_search",
+  "search_notes",
+  "get_note",
 ]);
 
 const groupOfTool = new Map(Object.entries(GROUP_TOOLS).flatMap(([g, names]) => names.map((n) => [n, g as ToolGroup] as const)));

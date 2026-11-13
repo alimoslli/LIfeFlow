@@ -238,6 +238,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   let nextTools: ToolSpec[] | undefined;
   // a result with money in it is worded by the main model, never the small one (COO review 2)
   let moneySeen = false;
+  const stepCosts: (number | null)[] = [];
   let toolResults: { callId: string; output: string }[] | undefined;
   let finalMessageId: string | null = null;
   const tally = { steps: 0, toolCalls: 0, toolErrors: 0, confirmations: 0, toolNames: [] as string[], usage: null as TokenUsage | null };
@@ -310,7 +311,10 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
         hold = null;
         throw e;
       }
-      await hold.settle({ micros: priceTokens(turn.model ?? provider.model, stepUsage ?? null, input.prices, input.smallPrices, provider.model).costMicros });
+      // priced by the model that really ran this step (COO review 4); the turn's cost is the sum of its steps
+      const stepCost = priceTokens(turn.model ?? provider.model, stepUsage ?? null, input.prices, input.smallPrices, provider.model).costMicros;
+      stepCosts.push(stepCost);
+      await hold.settle({ micros: stepCost });
       hold = null;
       extraChars += text.length;
       if (cutOff) {
@@ -345,14 +349,19 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       nextTools = undefined;
       for (const call of calls) {
         await stopIfAsked();
-        emit({ type: "tool_start", callId: call.callId, name: call.name, label: describeToolCall(call.name) });
         // only the tools this turn was given run (COO review 3): a name the model made up, or one from a group it hasn't
-        // loaded, never runs, money included
+        // loaded, never runs, money included. The user sees nothing of it (review 4): the refusal goes only to the model.
         const given = toolSpecsFor(groups).some((t) => t.name === call.name);
-        const outcome = given ? await beforeDeadline(executeToolCall(call.name, call.arguments, ctx, call.callId)) : notLoaded(call.name);
+        if (!given) {
+          tally.toolErrors++;
+          toolResults.push({ callId: call.callId, output: serializeResult(notLoaded(call.name).result) });
+          continue;
+        }
+        emit({ type: "tool_start", callId: call.callId, name: call.name, label: describeToolCall(call.name) });
+        const outcome = await beforeDeadline(executeToolCall(call.name, call.arguments, ctx, call.callId));
         tally.toolCalls++;
         tally.toolNames.push(call.name);
-        if (given && MONEY_RESULT_TOOLS.has(call.name)) moneySeen = true;
+        if (MONEY_RESULT_TOOLS.has(call.name)) moneySeen = true;
         if (outcome.kind === "confirmation") tally.confirmations++;
         else if (!outcome.result.ok) tally.toolErrors++;
         let args: Record<string, unknown> = {};
@@ -427,7 +436,10 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   }
   let runId: string | null = null;
   const usedModel = turn.model ?? provider.model;
-  const priced = priceTokens(usedModel, tally.usage, input.prices, input.smallPrices, provider.model);
+  const whole = priceTokens(usedModel, tally.usage, input.prices, input.smallPrices, provider.model);
+  // A turn that moved between models is the sum of its own steps, each at its model's price; one unpriced step makes it unknown.
+  const stepTotal = stepCosts.length && stepCosts.every((c) => c != null) ? stepCosts.reduce<number>((a, c) => a + (c ?? 0), 0) : null;
+  const priced = stepCosts.length ? { costMicros: stepTotal, priceKey: stepTotal == null ? null : whole.priceKey } : whole;
   try {
     runId = await run((s) =>
       recordRun(s, {
@@ -490,13 +502,13 @@ export function friendlyProviderError(e: unknown, name: string = UNNAMED_ASSISTA
 /** Said when a step ran out of room before it could finish (the person is asked for less, in the skyling's voice). */
 export const TOO_BIG = "That was more than {name} could fit in one answer, so it stopped part way. Try asking for a smaller piece, or one thing at a time.";
 
-/** Saved and shown when a turn runs out of time (its deadline is a little before the platform's own limit). */
 /** A tool call outside the turn's groups: refused before anything runs, and the model is told how to get it. */
 const notLoaded = (name: string): ExecOutcome => ({
   kind: "result",
   result: { ok: false, error: `The tool "${name}" isn't loaded for this answer. Call load_tools with its group first, or answer with the tools you have.` },
 });
 
+/** Saved and shown when a turn runs out of time (its deadline is a little before the platform's own limit). */
 export const TOOK_TOO_LONG = "That took too long, so I stopped. Try again.";
 
 export type { ToolResultRecord };
