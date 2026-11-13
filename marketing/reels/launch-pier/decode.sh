@@ -1,0 +1,5 @@
+set -e
+ffmpeg -v error -y -i ../drive_nov13/IMG_4105.MOV -vf "fps=30,zscale=w=1080:h=1920:f=spline36,zscale=t=linear:npl=203,format=gbrpf32le,zscale=p=bt709,tonemap=mobius:param=0.3:desat=0,zscale=t=bt709:m=bt709:r=pc,format=rgb24,curves=r='0/0 0.2/0.27 0.5/0.6 1/1':g='0/0 0.2/0.27 0.5/0.59 1/1':b='0/0.01 0.2/0.29 0.5/0.6 1/1',hqdn3d=2:2:3:3" -q:v 2 fr/t/%04d.jpg
+ffmpeg -v error -y -i ../drive_nov13/IMG_4127.MOV -vf "fps=30,zscale=w=1080:h=1920:f=spline36,zscale=t=linear:npl=203,format=gbrpf32le,zscale=p=bt709,tonemap=mobius:param=0.3:desat=0,zscale=t=bt709:m=bt709:r=pc,format=rgb24,curves=r='0/0 0.2/0.22 0.5/0.53 1/1':g='0/0 0.2/0.22 0.5/0.53 1/1':b='0/0.01 0.2/0.235 0.5/0.54 1/1',hqdn3d=2:2:3:3" -q:v 2 fr/a/%04d.jpg
+ffmpeg -v error -y -ss 21.4 -i ../drive_nov13/IMG_4127.MOV -vf "zscale=w=1080:h=1920:f=spline36,zscale=t=linear:npl=203,format=gbrpf32le,zscale=p=bt709,tonemap=mobius:param=0.3:desat=0,zscale=t=bt709:m=bt709:r=pc,format=rgb24,curves=r='0/0 0.2/0.22 0.5/0.53 1/1':g='0/0 0.2/0.22 0.5/0.53 1/1':b='0/0.01 0.2/0.235 0.5/0.54 1/1',hqdn3d=2:2:3:3" -q:v 2 fr/aslow/%04d.jpg
+echo DONE
