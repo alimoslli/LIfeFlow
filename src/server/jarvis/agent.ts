@@ -10,7 +10,7 @@ import { listActiveMemories, touchMemories } from "../services/memory";
 import { createConversation, getConversation, loadHistory } from "./conversations";
 import { stopRequested } from "./stop";
 import { claimContinuation, turnStateOf, TURN_DEADLINE_MS } from "./turn-state";
-import { executeToolCall, serializeResult } from "./executor";
+import { executeToolCall, serializeResult, type ExecOutcome } from "./executor";
 import { selectMemories } from "./memory-retrieval";
 import { addUsage, errorKindOf, recordRun, type ModelPrices } from "./metrics";
 import { pickPrices, priceTokens } from "../services/ai-prices";
@@ -274,7 +274,9 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       let text = "";
       let calls: { callId: string; name: string; arguments: string }[] = [];
       // Set the step's estimated cost aside (and, on the first step, the message itself) before the model is called; refused work never reaches it.
-      const stepModel = turn.model ?? provider.model;
+      // a step that moves to the main model (money seen or loaded) is held at the main model's price (COO review 3)
+      const toMain = moneySeen || groups.has("money") || groups.has("money_edit");
+      const stepModel = toMain ? provider.model : (turn.model ?? provider.model);
       const { chars, attachments } = inputChars(system, history, extraChars);
       hold = await reserveAi(
         subject,
@@ -290,7 +292,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       let stepUsage: TokenUsage | undefined;
       let cutOff = false;
       try {
-        for await (const ev of turn.step(toolResults, nextTools, { mainModel: moneySeen || groups.has("money") || groups.has("money_edit") })) {
+        for await (const ev of turn.step(toolResults, nextTools, { mainModel: toMain })) {
           sawEvent = true;
           if (ev.type === "text_delta") emit({ type: "text", delta: ev.delta });
           else {
@@ -344,10 +346,13 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       for (const call of calls) {
         await stopIfAsked();
         emit({ type: "tool_start", callId: call.callId, name: call.name, label: describeToolCall(call.name) });
-        const outcome = await beforeDeadline(executeToolCall(call.name, call.arguments, ctx, call.callId));
+        // only the tools this turn was given run (COO review 3): a name the model made up, or one from a group it hasn't
+        // loaded, never runs, money included
+        const given = toolSpecsFor(groups).some((t) => t.name === call.name);
+        const outcome = given ? await beforeDeadline(executeToolCall(call.name, call.arguments, ctx, call.callId)) : notLoaded(call.name);
         tally.toolCalls++;
         tally.toolNames.push(call.name);
-        if (MONEY_RESULT_TOOLS.has(call.name)) moneySeen = true;
+        if (given && MONEY_RESULT_TOOLS.has(call.name)) moneySeen = true;
         if (outcome.kind === "confirmation") tally.confirmations++;
         else if (!outcome.result.ok) tally.toolErrors++;
         let args: Record<string, unknown> = {};
@@ -486,6 +491,12 @@ export function friendlyProviderError(e: unknown, name: string = UNNAMED_ASSISTA
 export const TOO_BIG = "That was more than {name} could fit in one answer, so it stopped part way. Try asking for a smaller piece, or one thing at a time.";
 
 /** Saved and shown when a turn runs out of time (its deadline is a little before the platform's own limit). */
+/** A tool call outside the turn's groups: refused before anything runs, and the model is told how to get it. */
+const notLoaded = (name: string): ExecOutcome => ({
+  kind: "result",
+  result: { ok: false, error: `The tool "${name}" isn't loaded for this answer. Call load_tools with its group first, or answer with the tools you have.` },
+});
+
 export const TOOK_TOO_LONG = "That took too long, so I stopped. Try again.";
 
 export type { ToolResultRecord };

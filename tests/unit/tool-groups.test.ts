@@ -173,6 +173,23 @@ describe("auto thinking level", () => {
       "Is my check in?",
       "Do I have dining dollars left?",
       "What's my net this month?",
+      // COO review 3: confirmed leaks
+      "What's my tab?",
+      "What's in my wallet?",
+      "What's the total?",
+      "What's my net?",
+      "What's my tuition?",
+      "What's my allowance?",
+      "What's my tax?",
+      "cuanto dinero tengo",
+      "What's my invoice due?",
+      "Did I overdraft?",
+      "What's in my 401k?",
+      "When does my stipend come?",
+      "How are my finances?",
+      "Do I have enough?",
+      "When is payday?",
+      "When is my payment?",
     ])
       expect(effort(q), q).toBe("medium");
     for (const q of [
@@ -202,7 +219,17 @@ describe("auto thinking level", () => {
 
   it("never sends a plan, said as a question, to the small model under a planning skill", () => {
     const planner = SKILLS.find((s) => s.name === "daily-planner")!;
-    for (const q of ["What's the plan for tomorrow?", "What do I do first?", "What is best to do now?", "What should I do tonight?", "What's next?"]) {
+    for (const q of [
+      "What's the plan for tomorrow?",
+      "What do I do first?",
+      "What is best to do now?",
+      "What should I do tonight?",
+      "What's next?",
+      "What's my focus today?",
+      "What order should I do my homework in?",
+      "What's my priority this week?",
+      "What do I tackle first tomorrow?",
+    ]) {
       expect(effort(q), q).not.toBe("low");
       expect(chooseEffort({ text: q, skills: [planner], hasFiles: false, coachMode: false }), q).not.toBe("low");
     }

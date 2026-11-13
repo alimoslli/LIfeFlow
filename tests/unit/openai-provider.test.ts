@@ -219,6 +219,10 @@ describe("OpenAI Responses provider", () => {
     const second = requests[1].input.map((i) => i.type);
     expect(second).not.toContain("reasoning");
     expect(second).toEqual(expect.arrayContaining(["function_call", "function_call_output"]));
+    // its function_call keeps call_id but loses the id that tied it to the small model's reasoning (COO review 3)
+    const call = requests[1].input.find((i) => i.type === "function_call") as { id?: string; call_id?: string };
+    expect(call.call_id).toBe("c1");
+    expect(call.id).toBeUndefined();
   });
 
   it("a broken stream or a timeout from the small model before any words: the main model answers, and the small one stays in use", async () => {

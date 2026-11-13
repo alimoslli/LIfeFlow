@@ -48,7 +48,7 @@ const MONEY_TOO =
  * is fine (COO): a word here only sends the turn to the main model.
  */
 const MONEY_MORE =
-  /\bleft\b|expens|\btotal|\bnet\b|payday|payment|invoice|electric|\butilit|allowance|stipend|tuition|bursar|\baid\b|scholarship|\btax|\bfines?\b|overdraft|\bdebit|\btab\b|wallet|\bfunds?\b|\bafford|\bcheap|expensive|\bworth\b|\bsplurge|\bowing\b|\breimburs|\bpaypal|cash ?app|apple pay|\bvenmo|\bpay ?pal|\binsurance|\bpremium|\bcopay|\bdeductible|\binterest\b|\bapr\b|\bstock|\binvest|crypto|bitcoin|\bdeal\b|discount|coupon|\bsale\b|\btip\b|\bgas money|\bmeal plan|dining dollars|\bswipes?\b|\bpaid\b|\bpayroll|\bcheck\b|cheque/;
+  /\bleft\b|financ|\benough\b|401 ?\(?k\)?|\broth\b|\bira\b|\b529\b|\bhsa\b|\bvenmo|expens|\btotal|\bnet\b|payday|payment|invoice|electric|\butilit|allowance|stipend|tuition|bursar|\baid\b|scholarship|\btax|\bfines?\b|overdraft|\bdebit|\btab\b|wallet|\bfunds?\b|\bafford|\bcheap|expensive|\bworth\b|\bsplurge|\bowing\b|\breimburs|\bpaypal|cash ?app|apple pay|\bvenmo|\bpay ?pal|\binsurance|\bpremium|\bcopay|\bdeductible|\binterest\b|\bapr\b|\bstock|\binvest|crypto|bitcoin|\bdeal\b|discount|coupon|\bsale\b|\btip\b|\bgas money|\bmeal plan|dining dollars|\bswipes?\b|\bpaid\b|\bpayroll|\bcheck\b|cheque/;
 const MONEY_ABROAD =
   /dinero|plata|cu[aá]nto (cuesta|es|tengo|gast)|gast[eéoó]|pagar|pago|cuenta|precio|sueldo|salario|ahorr|deuda|factura|renta\b|argent|combien|payer|facture|loyer|salaire|[ée]conomi|dette|geld|kosten|bezahl|rechnung|miete|gehalt|dinheiro|quanto|pagamento|conta\b|soldi|quanto costa|affitto|stipendio|مال|فلوس|كم|ريال|دولار|دينار|راتب|فاتورة|إيجار|पैसे|रुपये|钱|元|块|お金|円|돈|원|деньг|рубл|цена|zł|pieni[ąę]dz|para\b|lira|taka|naira|peso/;
 const AMOUNT =
@@ -68,6 +68,9 @@ const LOOKUP =
  * Low only on a positive signal (COO review 2, 2026-11-12): the question names classes and school, to-dos, shifts or the
  * calendar, and nothing in it is money or a plan. Anything else ("what's the total?", "hi") goes to medium.
  */
+/** Any planning word sends the turn to the main model before a lookup can match (COO review 3, 2026-11-12). */
+const PLANNING = /\bplan|\bfirst\b|\bbest\b|\bnext\b|priorit|\bshould\b|\border\b|\bfocus/;
+
 const ABOUT_THE_DAY =
   /\b(today|tonight|tomorrow|this (morning|afternoon|evening|week|weekend)|next week|weekend|(mon|tues|wednes|thurs|fri|satur|sun)day|morning|afternoon|evening|overdue|due|deadlines?|class(es)?|course|lecture|lab|exams?|quiz(zes)?|midterms?|finals?|tests?|homework|assignments?|essay|paper|project|readings?|syllabus|canvas|grades?|to-?dos?|tasks?|reminders?|errands?|shifts?|work(ing)?|job|schedule|calendar|events?|meetings?|appointments?|busy|free|hours|get done|finish(ed)?|remind me|add (a|an|it|this|that)|move (it|that|my)|done|(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*)\b|\b\d{1,2}\/\d{1,2}\b|\b(at|by) \d{1,2}(:\d{2})?\b|\bthe \d{1,2}(st|nd|rd|th)\b/;
 
@@ -82,7 +85,7 @@ export function chooseEffort(i: { text: string; skills: SkillFile[]; hasFiles: b
     MONEY_ABROAD.test(t) ||
     AMOUNT.test(t) ||
     i.skills.some((s) => MONEY_SKILLS.has(s.name));
-  if (i.coachMode || THINK.test(t)) return "medium";
+  if (i.coachMode || THINK.test(t) || PLANNING.test(t)) return "medium";
   if (money) return "medium";
   if (!ABOUT_THE_DAY.test(t)) return "medium";
   if (i.skills.some((s) => THINKING_SKILLS.has(s.name)) && !LOOKUP.test(t)) return "medium";

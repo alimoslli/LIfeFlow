@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { closeDb } from "@/server/db/client";
-import { aiUsage, jarvisRuns } from "@/server/db/schema";
+import { aiUsage, jarvisRuns, messages } from "@/server/db/schema";
 import { runJarvisTurn } from "@/server/jarvis/agent";
 import { OpenAIProvider } from "@/server/jarvis/providers/openai";
 import { seedEvalStudent } from "../fixtures/eval-student";
@@ -145,5 +145,29 @@ describe("the small model gets plain lookups and never a money question", () => 
     expect(usage[0].model).toBe("gpt-5.5");
     const [r] = await run((s) => s.tx.select().from(jarvisRuns).where(eq(jarvisRuns.userId, session.id)));
     expect(r.model).toBe("gpt-5.5");
+  });
+
+  it("a tool outside the turn's groups never runs: a money tool the small model makes up is refused, and the turn stays small", async () => {
+    const { session, run } = await seedEvalStudent();
+    const models: string[] = [];
+    const ended: { name?: string; ok?: boolean }[] = [];
+    await runJarvisTurn({
+      user: session,
+      text: "What's due this week?",
+      provider: recording(models, { name: "money_overview", args: {} }),
+      emit: (e) => {
+        if (e.type === "tool_end") ended.push(e as { name?: string; ok?: boolean });
+      },
+      now: EVAL_NOW,
+    });
+    expect(ended).toEqual([expect.objectContaining({ name: "money_overview", ok: false })]);
+    const [row] = await run((s) =>
+      s.tx
+        .select()
+        .from(messages)
+        .where(and(eq(messages.userId, session.id), eq(messages.toolName, "money_overview"))),
+    );
+    expect(JSON.stringify(row.toolResult)).toContain("isn't loaded for this answer");
+    expect(models).toEqual(["gpt-5.4-mini", "gpt-5.4-mini"]);
   });
 });

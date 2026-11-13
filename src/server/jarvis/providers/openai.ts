@@ -202,7 +202,15 @@ export class OpenAIProvider implements ModelProvider {
         // their results stay, so nothing is looked up or saved twice.
         if (opts?.mainModel && small && model === small) {
           model = config.model;
-          for (let k = input.length - 1; k >= 0; k--) if ((input[k] as { type?: string }).type === "reasoning") input.splice(k, 1);
+          // Its function_call and message items lose their ids too (call_id stays): with store=false, an item id from a
+          // reasoning model ties the item to the reasoning item that came with it, and the API refuses a function_call
+          // whose reasoning item is missing ("was provided without its required 'reasoning' item"). Not yet proven
+          // against the real API (COO review 3: no paid call for it).
+          for (let k = input.length - 1; k >= 0; k--) {
+            const item = input[k] as { type?: string; id?: string };
+            if (item.type === "reasoning") input.splice(k, 1);
+            else if ((item.type === "function_call" || item.type === "message") && item.id) delete item.id;
+          }
         }
         const said = { any: false };
         let result;

@@ -168,11 +168,12 @@ describe("Jarvis tool loop", () => {
       mallory.session,
       "x",
       callThenSummarize([
+        { name: "load_tools", args: { groups: ["tasks_more"] } },
         { name: "get_task", args: { id: task.id } },
         { name: "update_task", args: { id: task.id, title: "pwned" } },
       ]),
     );
-    const ends = r.events.filter((e) => e.type === "tool_end") as Extract<JarvisEvent, { type: "tool_end" }>[];
+    const ends = (r.events.filter((e) => e.type === "tool_end") as Extract<JarvisEvent, { type: "tool_end" }>[]).filter((e) => e.name !== "load_tools");
     expect(ends.map((e) => [e.ok, e.summary])).toEqual([
       [false, "Task not found"],
       [false, "Task not found"],
