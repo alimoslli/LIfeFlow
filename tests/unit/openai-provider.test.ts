@@ -292,11 +292,55 @@ describe("OpenAI Responses provider", () => {
         for await (const e of turn.step()) events.push(e);
       })();
       await vi.advanceTimersByTimeAsync(SMALL_START_MS - 1);
-      expect(models).toEqual(["gpt-5.4-mini"]); // still waiting
-      await vi.advanceTimersByTimeAsync(2);
+      expect(models).toEqual(["gpt-5.4-mini"]); // still waiting at 19,999 ms
+      await vi.advanceTimersByTimeAsync(1);
+      expect(models).toEqual(["gpt-5.4-mini", "gpt-5.5"]); // the main model is asked at exactly 20,000 ms
       await done;
       expect(models).toEqual(["gpt-5.4-mini", "gpt-5.5"]);
       expect(events.at(-1)).toMatchObject({ type: "step_done", text: "ok" });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("the start timer never outlives the request: cleared when the stream is closed early and when the answer finishes", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      const fakeFetch = (async (_url: string, init: RequestInit) => {
+        const signal = init.signal as AbortSignal | undefined;
+        const silent = new ReadableStream({
+          start(c) {
+            signal?.addEventListener("abort", () => c.error(signal.reason ?? new Error("aborted")));
+          },
+        });
+        return new Response(silent, { status: 200, headers: { "content-type": "text/event-stream" } });
+      }) as unknown as typeof fetch;
+      const provider = new OpenAIProvider({ apiKey: "sk-test", model: "gpt-5.5", smallModel: "gpt-5.4-mini", reasoningEffort: "auto", fetch: fakeFetch });
+      // the user stops the turn before the small model says anything: the stream is closed early
+      const stop = new AbortController();
+      const turn = provider.startTurn({ system: "S", history: [{ type: "user", text: "what's due today?" }], tools: [], effort: "low", signal: stop.signal });
+      const done = (async () => {
+        for await (const _ of turn.step()) void _;
+      })().catch((e: unknown) => e);
+      await vi.advanceTimersByTimeAsync(5_000);
+      expect(vi.getTimerCount()).toBeGreaterThan(0); // the start timer is waiting
+      stop.abort();
+      expect(await done).toBeTruthy(); // the step ends with the stop, and the main model is never asked
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+    // and a small model that answers leaves no timer behind
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      const ok = (async () =>
+        sse([
+          completed([{ type: "message", id: "m", role: "assistant", status: "completed", content: [{ type: "output_text", text: "ok", annotations: [] }] }]),
+        ])) as unknown as typeof fetch;
+      const provider = new OpenAIProvider({ apiKey: "sk-test", model: "gpt-5.5", smallModel: "gpt-5.4-mini", reasoningEffort: "auto", fetch: ok });
+      const turn = provider.startTurn({ system: "S", history: [{ type: "user", text: "what's due today?" }], tools: [], effort: "low" });
+      for await (const _ of turn.step()) void _;
+      expect(vi.getTimerCount()).toBe(0);
     } finally {
       vi.useRealTimers();
     }

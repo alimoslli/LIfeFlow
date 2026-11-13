@@ -182,6 +182,14 @@ export class OpenAIProvider implements ModelProvider {
     };
     /** Reads one streamed response, passing text on as it comes; `said` turns true at the first word. */
     async function* read(stream: Awaited<ReturnType<typeof send>>, said: { any: boolean }) {
+      try {
+        return yield* readAll(stream, said);
+      } finally {
+        // also when the consumer closes the stream early: no timer is left behind (COO review 5)
+        started();
+      }
+    }
+    async function* readAll(stream: Awaited<ReturnType<typeof send>>, said: { any: boolean }) {
       let text = "";
       let output: ResponseOutputItem[] | null = null;
       let usage: TokenUsage | undefined;

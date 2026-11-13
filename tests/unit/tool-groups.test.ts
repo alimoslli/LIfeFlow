@@ -239,7 +239,20 @@ describe("auto thinking level", () => {
     const handlesMoney = ALL_TOOLS.filter((t) => /cents|dollar|money|cash|balance|spend|\bpay|rate|price|amount|budget|bill/i.test(t.execute.toString()));
     expect(handlesMoney.length).toBeGreaterThan(40);
     for (const t of handlesMoney) expect(MONEY_RESULT_TOOLS.has(t.name), t.name).toBe(true);
-    for (const t of ["get_daily_briefing", "tonight", "life_load", "work_earnings"]) expect(MONEY_RESULT_TOOLS.has(t), t).toBe(true);
+    for (const t of [
+      "get_daily_briefing",
+      "tonight",
+      "life_load",
+      "work_earnings",
+      // text that can carry money (COO review 4 and 5)
+      "search_email",
+      "read_email",
+      "read_attachment",
+      "web_search",
+      "search_notes",
+      "get_note",
+    ])
+      expect(MONEY_RESULT_TOOLS.has(t), t).toBe(true);
   });
 
   it("thinks hardest for files and big plans", () => {

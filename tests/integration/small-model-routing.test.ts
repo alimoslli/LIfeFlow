@@ -16,7 +16,13 @@ import { EVAL_NOW } from "../fixtures/jarvis-eval";
 afterAll(closeDb);
 
 type Call = { name: string; args: unknown };
-function recording(models: string[], first?: Call | Call[], smallFails?: number, bodies?: { model: string; input: { type?: string; output?: string }[] }[]) {
+function recording(
+  models: string[],
+  first?: Call | Call[],
+  smallFails?: number,
+  bodies?: { model: string; input: { type?: string; output?: string }[] }[],
+  mainBreaks?: boolean,
+) {
   const firstCalls = first ? (Array.isArray(first) ? first : [first]) : [];
   const fetchImpl = (async (_url: string, init: RequestInit) => {
     const body = JSON.parse(String(init.body)) as { model: string; input: { type?: string; output?: string }[] };
@@ -28,6 +34,17 @@ function recording(models: string[], first?: Call | Call[], smallFails?: number,
         status: smallFails,
         headers: { "content-type": "application/json" },
       });
+    if (mainBreaks && model === "gpt-5.5") {
+      // it starts answering (and may have billed), then the stream breaks
+      const broken = [
+        { type: "response.output_text.delta", sequence_number: 0, item_id: "m1", output_index: 0, content_index: 0, delta: "Your", logprobs: [] },
+        { type: "error", sequence_number: 1, code: "server_error", message: "stream broke", param: null },
+      ];
+      return new Response(broken.map((e) => `event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join(""), {
+        status: 200,
+        headers: { "content-type": "text/event-stream" },
+      });
+    }
     const usage = { input_tokens: 1000, output_tokens: 100, input_tokens_details: { cached_tokens: 0 }, output_tokens_details: { reasoning_tokens: 0 } };
     const output =
       firstCalls.length && models.length === 1
@@ -214,6 +231,8 @@ describe("the small model gets plain lookups and never a money question", () => 
     const [r] = await run((s) => s.tx.select().from(jarvisRuns).where(eq(jarvisRuns.userId, session.id)));
     expect(r.costMicros).toBe(small + main);
     expect(r.model).toBe("gpt-5.5");
+    // the price key names both prices the sum came from (COO review 5)
+    expect(usage.priceKey).toBe("gpt-5.4-mini+gpt-5.5");
   });
 
   it("mail, notes, web and file tools can carry money: each moves the rest of the turn to the main model", async () => {
@@ -245,5 +264,27 @@ describe("the small model gets plain lookups and never a money question", () => 
       now: EVAL_NOW,
     });
     expect(models).toEqual(["gpt-5.4-mini", "gpt-5.5"]);
+  });
+
+  it("a step that fails after it started billing makes the turn's cost unknown, never a sum that leaves it out", async () => {
+    const { session, run } = await seedEvalStudent();
+    const models: string[] = [];
+    const prices = { inputPerMTok: 5, cachedInputPerMTok: 0.5, outputPerMTok: 30, forModel: "gpt-5.5" };
+    const smallPrices = { inputPerMTok: 0.75, cachedInputPerMTok: 0.075, outputPerMTok: 4.5, forModel: "gpt-5.4-mini" };
+    await runJarvisTurn({
+      user: session,
+      text: "What's due this week?",
+      provider: recording(models, { name: "load_tools", args: { groups: ["money"] } }, undefined, undefined, true),
+      prices,
+      smallPrices,
+      emit: () => {},
+      now: EVAL_NOW,
+    });
+    expect(models).toEqual(["gpt-5.4-mini", "gpt-5.5"]);
+    const [usage] = await run((s) => s.tx.select().from(aiUsage).where(eq(aiUsage.userId, session.id)));
+    expect(usage.costMicros).toBeNull();
+    expect(usage.priceKey).toBeNull();
+    const [r] = await run((s) => s.tx.select().from(jarvisRuns).where(eq(jarvisRuns.userId, session.id)));
+    expect(r.costMicros).toBeNull();
   });
 });

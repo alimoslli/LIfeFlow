@@ -239,6 +239,8 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   // a result with money in it is worded by the main model, never the small one (COO review 2)
   let moneySeen = false;
   const stepCosts: (number | null)[] = [];
+  /** Whose prices the steps used; a turn that moved between models names both ("gpt-5.4-mini+gpt-5.5"). */
+  const stepKeys = new Set<string>();
   let toolResults: { callId: string; output: string }[] | undefined;
   let finalMessageId: string | null = null;
   const tally = { steps: 0, toolCalls: 0, toolErrors: 0, confirmations: 0, toolNames: [] as string[], usage: null as TokenUsage | null };
@@ -307,13 +309,19 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       } catch (e) {
         // A provider that refused before doing any work billed nothing: give the hold back. Anything else may have been billed: its estimate counts.
         if (!sawEvent && providerRefusedBeforeWork(e)) await hold.release();
-        else await hold.settle({ micros: null });
+        else {
+          await hold.settle({ micros: null });
+          // it may have been billed and its cost is unknown, so the turn's cost is unknown too, never a sum without it (COO review 5)
+          stepCosts.push(null);
+        }
         hold = null;
         throw e;
       }
       // priced by the model that really ran this step (COO review 4); the turn's cost is the sum of its steps
-      const stepCost = priceTokens(turn.model ?? provider.model, stepUsage ?? null, input.prices, input.smallPrices, provider.model).costMicros;
+      const step$ = priceTokens(turn.model ?? provider.model, stepUsage ?? null, input.prices, input.smallPrices, provider.model);
+      const stepCost = step$.costMicros;
       stepCosts.push(stepCost);
+      if (step$.priceKey) stepKeys.add(step$.priceKey);
       await hold.settle({ micros: stepCost });
       hold = null;
       extraChars += text.length;
@@ -439,7 +447,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   const whole = priceTokens(usedModel, tally.usage, input.prices, input.smallPrices, provider.model);
   // A turn that moved between models is the sum of its own steps, each at its model's price; one unpriced step makes it unknown.
   const stepTotal = stepCosts.length && stepCosts.every((c) => c != null) ? stepCosts.reduce<number>((a, c) => a + (c ?? 0), 0) : null;
-  const priced = stepCosts.length ? { costMicros: stepTotal, priceKey: stepTotal == null ? null : whole.priceKey } : whole;
+  const priced = stepCosts.length ? { costMicros: stepTotal, priceKey: stepTotal == null ? null : [...stepKeys].join("+") || null } : whole;
   try {
     runId = await run((s) =>
       recordRun(s, {
