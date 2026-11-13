@@ -7,5 +7,5 @@
 
 Using Claude Code instead? Unzip the folder into `~/.claude/skills/` so the path is `~/.claude/skills/lifeflow-brand/SKILL.md`.
 
-Editing videos yourself (CapCut, Premiere)? Install the fonts in `assets/fonts`, use the logo videos in `assets/logo`
-(always end on `LifeFlow_Logo_Ending.mp4`), and follow `references/video.md` for captions and sound.
+Editing videos yourself (CapCut, Premiere)? Install the fonts in `assets/fonts` and use the files in `assets/` directly.
+The one-page overview is `assets/LifeFlow-brand-basics.png`.

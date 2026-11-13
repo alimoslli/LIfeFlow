@@ -15,7 +15,6 @@
 | Dawn peach | `#E39568` |
 | Soft white (text on dark, light backgrounds) | `#F3F5FA` |
 | Body text on dark | `#C9D5EE` |
-| Caption box | `#0B1A3A` at 94% |
 
 The app's real skies by time of day (top, middle, horizon):
 - Dawn: `#1A3561`, `#506E9C`, `#E39568`
@@ -28,9 +27,9 @@ The app's real skies by time of day (top, middle, horizon):
 - Both are free Google Fonts (`assets/fonts/`). Sentence case. No all-caps headlines, except small spaced-out labels.
 
 ## The logo and brand art
-- App icon: `assets/logo/lifeflow-app-icon.png` (and a transparent version). Keep it square with rounded corners and never recolor it.
+- App icon: `assets/logo/lifeflow-app-icon.png`. Keep it square with rounded corners and never recolor it.
 - Animated logo "Whoever's up": the skyling whose time it is peeks over the horizon, under that moment's real sky (`LifeFlow_Logo_Loop_WhoeversUp.mp4`).
-- Intro (3 s) and ending (3.5 s) logo videos, with their own sound.
+- Intro (3 s) and ending (3.5 s) logo videos, with their own sound. Lockups: `logo_lockup_white_text.png` (dark backgrounds), `logo_lockup_navy_text.png` (light backgrounds).
 - Wordmark: "LifeFlow" typed in Fraunces Bold next to the icon.
 
 ## Skylings (`assets/skylings/`)
@@ -41,8 +40,3 @@ Dreamy on dark or night backgrounds. The pixel style is the brand: never smooth,
 ## Pixel clouds (`assets/clouds/`)
 The app's own idea clouds (three shapes, day and night). Put short text inside them (a few words, Geist or Fraunces in
 navy), like the clouds on the app's Today screen. Stretch only the flat middle part, never the puffs.
-
-## Layout habits
-- Smooth and soft around the pixel art: rounded corners, soft glows, frosted glass panels, gradients.
-- Text on a frosted or navy rounded panel, never hard boxes with sharp corners.
-- One message per frame. Let the app screen breathe.
