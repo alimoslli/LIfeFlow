@@ -1,0 +1,84 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: "Fraunces"; src: url("fraunces-var.woff2") format("woff2"); font-weight: 100 900; }
+@font-face { font-family: "Geist"; src: url("geist-latin.woff2") format("woff2"); font-weight: 100 900; }
+html,body{margin:0;background:#000}canvas{display:block}
+</style></head>
+<body><canvas id="c" width="2400" height="700"></canvas>
+<script src="lf2.js"></script>
+<script>
+// A LifeFlow billboard (Ali, 2026-11-13): the sky of this moment, whoever's up peeking over the horizon, drawn by the app's own
+// code (skyAt, darkness, skylingAt, drawCompanion), the brand's horizon line, and the words in highlight boxes.
+const LF = window.LF, W = 2400, H = 700, cv = document.getElementById("c"), g = cv.getContext("2d");
+const RISE = 395, SET = 1010, HY = 590, LINE_H = 30;
+const rgb = (c, a = 1) => `rgba(${c.map(Math.round).join(",")},${a})`;
+const rng = (s) => () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+const STARS = (() => { const r = rng(11), out = []; while (out.length < 70) { const x = r() * W, y = r() * HY * 0.92; out.push([x, y, r() < 0.25 ? 3 : 2, r() * 6.28]); } return out; })();
+const icon = new Image(); icon.src = "icon.png";
+const sprite = document.createElement("canvas");
+function boxText(lines, x, y, size, { fill, ink, pad = 22, lh = 1.18, weight = 800, font = "Geist" }) {
+  g.font = `${weight} ${size}px ${font}`; g.textBaseline = "alphabetic";
+  let yy = y;
+  for (const l of lines) {
+    const w = g.measureText(l).width, h = size * lh;
+    g.fillStyle = fill; g.fillRect(x - pad, yy, w + 2 * pad, h);
+    g.fillStyle = ink; g.fillText(l, x, yy + size * 0.93);
+    yy += h;
+  }
+  return yy;
+}
+function draw(minute, { t = 0, up = 1 } = {}) {
+  const [top, mid, low] = LF.skyAt(minute, RISE, SET), dark = LF.darkness(minute, RISE, SET);
+  const sky = g.createLinearGradient(0, 0, 0, HY); sky.addColorStop(0, rgb(top)); sky.addColorStop(0.55, rgb(mid)); sky.addColorStop(1, rgb(low));
+  g.fillStyle = sky; g.fillRect(0, 0, W, HY);
+  if (dark > 0.25) for (const [x, y, s, ph] of STARS) { const tw = 0.6 + 0.4 * Math.sin(t * 2.2 + ph); g.fillStyle = `rgba(255,248,225,${(dark - 0.25) / 0.75 * tw})`; const q = s * 4; g.fillRect(Math.round(x / 4) * 4, Math.round(y / 4) * 4, q, q); }
+  const gr = g.createLinearGradient(0, HY, 0, H); gr.addColorStop(0, "#1b3263"); gr.addColorStop(1, "#0b1a3a"); g.fillStyle = gr; g.fillRect(0, HY, W, H - HY);
+  // the skyling, peeking over the horizon where the rabbit stood
+  const CX = 1420, P = 36, CUT = 15;
+  const gw = g.createRadialGradient(CX, HY, 0, CX, HY, 640);
+  const warm = [255, 215, 173], moon = [134, 168, 222], gc = warm.map((v, i) => v + (moon[i] - v) * dark);
+  gw.addColorStop(0, rgb(gc, 0.8 - 0.3 * dark)); gw.addColorStop(0.5, rgb(gc, 0.3 - 0.1 * dark)); gw.addColorStop(1, rgb(gc, 0));
+  g.save(); g.beginPath(); g.rect(0, 0, W, HY); g.clip(); g.fillStyle = gw; g.fillRect(0, 0, W, HY); g.restore();
+  const key = LF.skylingAt(((minute % 1440) + 1440) % 1440, RISE, SET), info = LF.COMPANIONS.find((c) => c.key === key);
+  const m = ((minute % 1440) + 1440) % 1440, night = !(m >= RISE && m < SET);
+  const floats = key === "moon" && night; // Dreamy floats like the real moon at night (the app's own rule on Today)
+  LF.drawCompanion(sprite, info, "idle", 0, night, false, floats, floats);
+  const lineTop = HY - LINE_H / 2, rise = (1 - up) * (CUT * P);
+  g.save(); g.beginPath(); g.rect(0, 0, W, lineTop); g.clip(); g.imageSmoothingEnabled = false;
+  if (floats) { const FP = 27; g.drawImage(sprite, Math.round(CX - 12 * FP), Math.round(lineTop - 34 - 21 * FP + rise), 24 * FP, 24 * FP); }
+  else g.drawImage(sprite, Math.round(CX - 12 * P), Math.round(lineTop + LINE_H * 0.15 - CUT * P + rise), 24 * P, 24 * P);
+  g.restore();
+  // the brand's horizon line
+  g.fillStyle = "#2f7cd2"; g.beginPath(); g.roundRect(40, lineTop, W - 80, LINE_H, LINE_H / 2); g.fill();
+  // the words
+  boxText(["Stop drowning in", "deadlines, shifts", "and bills."], 130, 120, 100, { fill: "#FFD27A", ink: "#142451" });
+  // the brand block
+  const bx = 1880;
+  boxText(["LET’S CLEAR", "YOUR SKY."], bx, 150, 58, { fill: "#F3F5FA", ink: "#142451", pad: 14, weight: 800 });
+  g.drawImage(icon, bx - 14, 330, 112, 112);
+  g.font = "600 84px Fraunces"; g.fillStyle = dark > 0.45 ? "#F3F5FA" : "#142451"; g.fillText("LifeFlow", bx + 116, 412);
+  return key;
+}
+
+// the digital version: the sky flows through the day and whoever's up pops over the horizon (the logo's timing)
+const CAST = [["dawn", 380], ["ray", 560], ["goldie", 960], ["star", 1120], ["moon", 1380]], SEG = 2;
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const ease = (k) => (k = clamp(k), k * k * (3 - 2 * k));
+const smoother = (k) => (k = clamp(k), k * k * k * (k * (k * 6 - 15) + 10));
+const back = (k) => { k = clamp(k); const s = 1.9; return 1 + (s + 1) * Math.pow(k - 1, 3) + s * Math.pow(k - 1, 2); };
+function minuteAt(t) {
+  const A = 0.3, B = 1.5, keys = [[0, CAST[0][1] - 20]];
+  CAST.forEach(([, m], i) => { keys.push([i * SEG + A, m]); keys.push([i * SEG + B, m + 8]); });
+  keys.push([99, CAST[CAST.length - 1][1] + 20]);
+  for (let i = 1; i < keys.length; i++) if (t <= keys[i][0]) { const [t0, m0] = keys[i - 1], [t1, m1] = keys[i]; return m0 + (m1 - m0) * smoother((t - t0) / (t1 - t0)); }
+  return CAST[CAST.length - 1][1];
+}
+window.drawT = (t) => {
+  const i = Math.min(CAST.length - 1, Math.floor(t / SEG)), u = t - i * SEG, last = i === CAST.length - 1;
+  const up = u < 0.55 ? back(u / 0.55) : (!last && u > 1.6) ? 1 - ease((u - 1.6) / 0.38) : 1;
+  return draw(Math.max(minuteAt(t), CAST[i][1] - 40), { t, up: Math.max(0, up) });
+};
+window.draw = draw;
+window.ready = Promise.all([document.fonts.load("800 100px Geist"), document.fonts.load("600 84px Fraunces"), new Promise((r) => (icon.complete ? r() : (icon.onload = r)))]);
+</script></body></html>
