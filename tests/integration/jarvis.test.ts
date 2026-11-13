@@ -71,7 +71,8 @@ describe("Jarvis tool loop", () => {
     expect(sent[1]).toContain("log_health");
     expect(starts[0].cacheKey).toMatch(/^lf-[0-9a-f]{24}$/);
     expect(starts[0].cacheKey).not.toContain(session.id);
-    expect(starts[0].effort).toBe("low");
+    // a money question is never "low", so it never reaches the small model (COO, 2026-11-12)
+    expect(starts[0].effort).toBe("medium");
 
     // The next message in the same chat keeps what it loaded; advice thinks harder.
     await runJarvisTurn({
