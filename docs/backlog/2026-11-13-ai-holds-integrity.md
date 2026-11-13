@@ -41,7 +41,7 @@ The seeded copy had 5 negative `held` and 3 negative `used` when the migration r
 
 ## Runs
 
-- Fresh database: all 70 migrations in journal order applied with no failure; both constraints exist; a second run of 0070 printed no error.
+- Fresh database: all 64 migrations in the journal, in order, applied with no failure; both constraints exist; a second run of 0070 printed no error.
 - Database with 0067 and orphans (the copy above): run 1 as in the table; run 2 changed nothing (0 rows differ in `ai_budgets` and `ai_holds`; both constraints present once).
 
 ## The foreign key with ON DELETE CASCADE and existing code paths
