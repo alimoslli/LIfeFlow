@@ -11,7 +11,7 @@ import { SettingsHeader } from "../settings-header";
 import { FREE_FEATURES, PAID_FEATURES, STANDARD_FEATURES, STUDENT_FEATURES } from "@/lib/plan-features";
 import { NOT_SCHOOL_MESSAGE } from "@/lib/school-domains";
 import { Input } from "@/components/ui/field";
-import { studentVerificationState } from "@/server/services/email-confirm";
+import { ADDRESS_FULL_MESSAGE, studentVerificationState } from "@/server/services/email-confirm";
 import { getDb } from "@/server/db/client";
 import { choosePlanAction, confirmStudentCodeAction, manageBillingAction, sendStudentCodeAction, upgradeAction } from "./actions";
 
@@ -24,6 +24,7 @@ const STUDENT_NOTES: Record<string, string> = {
   invalid: "That doesn't look like an email address.",
   unavailable: "Email codes aren't available yet.",
   too_many: "We've sent a few codes already. Use the newest one, or try again in an hour.",
+  address_full: ADDRESS_FULL_MESSAGE,
   failed: "We couldn't send the email just now. Try again in a minute.",
   wrong: "That code didn't match. Try again.",
   expired: "That code ran out. Send a new one.",

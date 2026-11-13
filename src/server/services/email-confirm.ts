@@ -5,8 +5,8 @@ import { keyedHash } from "../crypto";
 import type { Database } from "../db/client";
 import { emailConfirmations, studentVerifications, users } from "../db/schema";
 import { emailConfig, sendEmail, type EmailConfig } from "../integrations/email";
-import { rateLimit } from "../rate-limit";
-import { verifyEmail, type VerifyResult } from "./referrals";
+import { rateLimit, rateLimitCount } from "../rate-limit";
+import { referralEmailKey, verifyEmail, type VerifyResult } from "./referrals";
 import { lockQueue } from "./waitlist";
 
 /**
@@ -31,7 +31,7 @@ const same = (a: string, b: string) => {
   return x.length === y.length && timingSafeEqual(x, y);
 };
 
-export type SendResult = { ok: true; id: string } | { ok: false; reason: "already" | "unavailable" | "too_many" | "failed" | "no_user" };
+export type SendResult = { ok: true; id: string } | { ok: false; reason: "already" | "unavailable" | "too_many" | "address_full" | "failed" | "no_user" };
 export type SendEmailFn = (cfg: EmailConfig, msg: Parameters<typeof sendEmail>[1]) => Promise<{ id: string }>;
 
 /**
@@ -54,13 +54,9 @@ export async function sendConfirmCode(
   if (!u) return { ok: false, reason: "no_user" };
   if (u.verifiedAt) return { ok: false, reason: "already" };
   if (!(await rateLimit(db, `email-confirm:send:user:${userId}`, CONFIRM_SENDS_PER_HOUR, 3600)).allowed) return { ok: false, reason: "too_many" };
-  // A day's limit per address (keyed hash: the address is in no key, log or error) and a generous per-network one (a campus shares an address).
-  if (
-    !(await rateLimit(db, `email-confirm:send:addr:${keyedHash("student-verify-address", u.email.trim().toLowerCase())}`, STUDENT_SENDS_PER_ADDRESS_DAY, 86400))
-      .allowed
-  )
-    return { ok: false, reason: "too_many" };
-  if (deps.ip && !(await rateLimit(db, `email-confirm:send:ip:${deps.ip}`, STUDENT_SENDS_PER_IP_HOUR, 3600)).allowed) return { ok: false, reason: "too_many" };
+  // A day's limit per address (folded and keyed-hashed: the address is in no key, log or error). Only sends the provider accepted count.
+  const addrKey = addressKey(u.email);
+  if ((await rateLimitCount(db, addrKey, 86400)) >= STUDENT_SENDS_PER_ADDRESS_DAY) return { ok: false, reason: "address_full" };
   const code = deps.code?.() ?? String(randomInt(0, 1_000_000)).padStart(6, "0");
   const expiresAt = new Date((deps.now ?? Date.now()) + CONFIRM_CODE_TTL_MS);
   const row = { codeHash: codeHash(userId, code), expiresAt, attempts: 0, createdAt: new Date(deps.now ?? Date.now()) };
@@ -74,6 +70,7 @@ export async function sendConfirmCode(
       html: `<p>Your LifeFlow code is</p><p style="font-size:28px;font-weight:600;letter-spacing:4px">${code}</p><p>It works once, for 10 minutes. If you didn't ask for it, you can ignore this email.</p>`,
     });
     if (!sent.id) throw new Error("no id");
+    await rateLimit(db, addrKey, STUDENT_SENDS_PER_ADDRESS_DAY, 86400);
     await db
       .insert(emailConfirmations)
       .values({ userId, ...row })
@@ -143,8 +140,10 @@ export async function purgeExpiredConfirmCodes(db: Database): Promise<number> {
  * don't ask again, because no person is paying then.
  */
 /** A confirmed student code can start a checkout for this long, then a fresh one is needed. */
+export const ADDRESS_FULL_MESSAGE = "That address has had enough codes today. Try again tomorrow.";
 export const STUDENT_SENDS_PER_ADDRESS_DAY = 3;
-export const STUDENT_SENDS_PER_IP_HOUR = 30;
+/** The per-address counter's key: the address folded (no +tag, no Gmail dots) and keyed-hashed, so it is in no key, log or error. */
+const addressKey = (email: string) => `email-code:addr:${keyedHash("student-verify-address", referralEmailKey(email))}`;
 export const STUDENT_VERIFIED_MS = 30 * 60_000;
 const studentHash = (userId: string, code: string) => codeHash(userId, code, "student-verify-code");
 const ADDRESS = /^[^\s@<>"',;]{1,64}@[^\s@<>"',;]{1,190}\.[^\s@<>"',;]{2,}$/;
@@ -155,7 +154,8 @@ export const maskAddress = (email: string) => {
   return `${local.slice(0, 2)}***@${domain}`;
 };
 
-export type StudentSendResult = { ok: true; id: string } | { ok: false; reason: "invalid" | "not_school" | "unavailable" | "too_many" | "failed" };
+export type StudentSendResult =
+  { ok: true; id: string } | { ok: false; reason: "invalid" | "not_school" | "unavailable" | "too_many" | "address_full" | "failed" };
 
 export async function sendStudentCode(
   db: Database,
@@ -166,7 +166,6 @@ export async function sendStudentCode(
     config?: EmailConfig | null;
     now?: number;
     code?: () => string;
-    /** the caller's network address, for the per-network limit */ ip?: string;
   } = {},
 ): Promise<StudentSendResult> {
   const cfg = deps.config === undefined ? emailConfig() : deps.config;
@@ -176,11 +175,10 @@ export async function sendStudentCode(
   // Only the typed address counts, never the account's own email, and the check runs before anything is sent.
   if (!isSchoolAddress(email)) return { ok: false, reason: "not_school" };
   if (!(await rateLimit(db, `student-verify:send:user:${userId}`, CONFIRM_SENDS_PER_HOUR, 3600)).allowed) return { ok: false, reason: "too_many" };
-  // Beside the per-person limit: a day's limit per address (keyed hash, so the address is in no key, log or error) so nobody's inbox can
-  // be flooded through several accounts, and a generous per-network limit (a campus shares one address, so it is high on purpose).
-  if (!(await rateLimit(db, `student-verify:send:addr:${keyedHash("student-verify-address", email)}`, STUDENT_SENDS_PER_ADDRESS_DAY, 86400)).allowed)
-    return { ok: false, reason: "too_many" };
-  if (deps.ip && !(await rateLimit(db, `student-verify:send:ip:${deps.ip}`, STUDENT_SENDS_PER_IP_HOUR, 3600)).allowed) return { ok: false, reason: "too_many" };
+  // Beside the per-person limit: a day's limit per address so nobody's inbox can be flooded through several accounts. Only sends the
+  // provider accepted count. No per-network limit (owner's rule: a campus shares one, so it must not lock students out).
+  const addrKey = addressKey(email);
+  if ((await rateLimitCount(db, addrKey, 86400)) >= STUDENT_SENDS_PER_ADDRESS_DAY) return { ok: false, reason: "address_full" };
   const code = deps.code?.() ?? String(randomInt(0, 1_000_000)).padStart(6, "0");
   const now = deps.now ?? Date.now();
   const row = {
@@ -200,6 +198,7 @@ export async function sendStudentCode(
       html: `<p>Your LifeFlow student code is</p><p style="font-size:28px;font-weight:600;letter-spacing:4px">${code}</p><p>It works once, for 10 minutes. If you didn't ask for it, you can ignore this email.</p>`,
     });
     if (!sent.id) throw new Error("no id");
+    await rateLimit(db, addrKey, STUDENT_SENDS_PER_ADDRESS_DAY, 86400);
     await db
       .insert(studentVerifications)
       .values({ userId, ...row })

@@ -192,6 +192,8 @@ export const users = pgTable("users", {
   /** "pro" while a paid subscription is active (Stripe webhook keeps it in sync). */
   plan: text("plan").$type<"free" | "pro">().notNull().default("free"),
   stripeCustomerId: text("stripe_customer_id").unique(),
+  /** While in the future, a checkout this person started may still be open at Stripe, so no second one starts (plans.ts takeCheckoutSlot). */
+  openCheckoutUntil: timestamp("open_checkout_until", { withTimezone: true }),
   /** Random code in this person's invite link (/?invite=<code>). Made the first time they open Invite friends. */
   inviteCode: text("invite_code").unique(),
   /** Who invited this person, when they signed up from an invite link. */

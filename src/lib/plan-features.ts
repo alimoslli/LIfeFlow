@@ -1,3 +1,5 @@
+import { FREE_JARVIS_PER_DAY } from "@/server/billing";
+
 /**
  * What each plan card promises (owner, 2026-11-13: "the free has too many features that we can't afford; that's for the $5.99
  * student plan and the $9.99 normal plan"). The one list the plan page reads.
@@ -7,7 +9,7 @@
  * photos with the model) and anything we promise a paying student or person. A feature we couldn't tell the cost of goes here too
  * (see UNSURE) until the owner says.
  */
-export const FREE_MESSAGES_PER_DAY = 15;
+export const FREE_MESSAGES_PER_DAY = FREE_JARVIS_PER_DAY; // one constant: the chat limit in billing.ts
 
 export const FREE_FEATURES: readonly string[] = [
   `${FREE_MESSAGES_PER_DAY} messages with your skyling a day`,

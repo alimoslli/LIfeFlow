@@ -5,6 +5,7 @@ import { FREE_JARVIS_PER_DAY } from "@/server/billing";
 describe("what each plan card shows", () => {
   it("the free list keeps only the 15 messages and what costs nothing per use", () => {
     expect(FREE_MESSAGES_PER_DAY).toBe(FREE_JARVIS_PER_DAY);
+    expect(FREE_FEATURES[0]).toBe(`${FREE_JARVIS_PER_DAY} messages with your skyling a day`); // the number on the card is the chat limit
     expect(FREE_FEATURES).toEqual(["15 messages with your skyling a day", "Everything you add yourself: to-dos, calendar, shifts and notes"]);
     // no per-use cost item: nothing but the daily messages mentions the skyling's model, voice, texts, connections or reading files
     for (const f of FREE_FEATURES.filter((f) => !f.startsWith(`${FREE_MESSAGES_PER_DAY} messages`))) expect(f).not.toMatch(AI_COST_WORDS);

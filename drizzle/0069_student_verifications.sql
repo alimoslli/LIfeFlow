@@ -14,3 +14,6 @@ DO $$ BEGIN
 	ALTER TABLE "student_verifications" ADD CONSTRAINT "student_verifications_account_id_users_id_fk" FOREIGN KEY ("account_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
+
+--> statement-breakpoint
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "open_checkout_until" timestamp with time zone;

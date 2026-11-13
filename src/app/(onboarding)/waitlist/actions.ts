@@ -1,8 +1,8 @@
 "use server";
 
-import { clientIp, getAccountUser } from "@/server/auth/current-user";
+import { getAccountUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
-import { confirmEmailCode, sendConfirmCode } from "@/server/services/email-confirm";
+import { ADDRESS_FULL_MESSAGE, confirmEmailCode, sendConfirmCode } from "@/server/services/email-confirm";
 import { recordError } from "@/server/services/error-reports";
 import { maskEmail } from "@/server/auth/two-factor";
 
@@ -13,10 +13,11 @@ export async function sendEmailCode(_prev: ConfirmState, _fd?: FormData): Promis
   const user = await getAccountUser();
   if (!user) return { error: "Please sign in again.", at: Date.now() };
   const db = getDb();
-  const r = await sendConfirmCode(db, user.id, { ip: await clientIp() });
+  const r = await sendConfirmCode(db, user.id);
   if (r.ok) return { sentTo: maskEmail(user.email), at: Date.now() };
   if (r.reason === "already") return { confirmed: true, at: Date.now() };
   if (r.reason === "unavailable") return { error: "Email codes aren't available yet. Please try again later.", at: Date.now() };
+  if (r.reason === "address_full") return { error: ADDRESS_FULL_MESSAGE, at: Date.now() };
   if (r.reason === "too_many") return { error: "We've sent a few codes already. Use the newest one, or try again in an hour.", at: Date.now() };
   await recordError(db, { source: "server", route: "/waitlist", message: "email confirmation send failed" }).catch(() => {});
   return { error: "We couldn't send the email just now. Try again in a minute.", at: Date.now() };

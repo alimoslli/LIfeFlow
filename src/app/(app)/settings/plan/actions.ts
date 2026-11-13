@@ -1,13 +1,13 @@
 "use server";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { clientIp, requireUser } from "@/server/auth/current-user";
+import { requireUser } from "@/server/auth/current-user";
 import { billingConfig, checkoutUrl, legacyBilling, portalUrl } from "@/server/billing";
 import { getDb } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 import { HttpError } from "@/server/http";
 import { confirmStudentCode, sendStudentCode } from "@/server/services/email-confirm";
-import { audienceFor, paywallActive, startPlanCheckout } from "@/server/plans";
+import { audienceFor, guardLegacyUpgrade, paywallActive, releaseCheckoutSlot, startPlanCheckout } from "@/server/plans";
 
 /** Buys the plan named by the button (the price comes from our table, never the browser). Nothing happens while the switch is off. */
 export async function choosePlanAction(formData: FormData) {
@@ -27,7 +27,7 @@ export async function choosePlanAction(formData: FormData) {
 export async function sendStudentCodeAction(formData: FormData) {
   const u = await requireUser();
   if (!paywallActive() || audienceFor(u) !== "student") redirect("/settings");
-  const r = await sendStudentCode(getDb(), u.id, String(formData.get("email") ?? "").slice(0, 300), { ip: await clientIp() });
+  const r = await sendStudentCode(getDb(), u.id, String(formData.get("email") ?? "").slice(0, 300));
   redirect(`/settings/plan?student=${r.ok ? "sent" : r.reason}`);
 }
 
@@ -44,8 +44,23 @@ export async function upgradeAction() {
   const cfg = legacyBilling();
   const u = await requireUser();
   if (!cfg) redirect("/settings/plan");
-  const [row] = await getDb().select({ stripeCustomerId: users.stripeCustomerId }).from(users).where(eq(users.id, u.id));
-  redirect(await checkoutUrl(cfg, { id: u.id, email: u.email, stripeCustomerId: row?.stripeCustomerId ?? null }));
+  const db = getDb();
+  const [row] = await db.select({ stripeCustomerId: users.stripeCustomerId, plan: users.plan }).from(users).where(eq(users.id, u.id));
+  try {
+    await guardLegacyUpgrade(db, u.id, row?.plan);
+  } catch (e) {
+    if (e instanceof HttpError) redirect("/settings/plan?problem=1");
+    throw e;
+  }
+  let url: string;
+  try {
+    url = await checkoutUrl(cfg, { id: u.id, email: u.email, stripeCustomerId: row?.stripeCustomerId ?? null });
+  } catch (e) {
+    await releaseCheckoutSlot(db, u.id); // nothing was started, so the slot is free again
+    if (e instanceof HttpError) redirect("/settings/plan?problem=1");
+    throw e;
+  }
+  redirect(url);
 }
 
 export async function manageBillingAction() {

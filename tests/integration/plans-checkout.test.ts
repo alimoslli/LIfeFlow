@@ -1,13 +1,13 @@
 import { createHmac } from "node:crypto";
-import { eq, like, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
 import { POST } from "@/app/api/billing/webhook/route";
 import { applyStripeEvent } from "@/server/billing";
 import { closeDb, getDb } from "@/server/db/client";
 import { users } from "@/server/db/schema";
-import { plansConfig, startPlanCheckout, type PlanKey } from "@/server/plans";
-import { confirmStudentCode, sendConfirmCode, sendStudentCode, studentVerificationState } from "@/server/services/email-confirm";
-import { rateLimitBuckets, studentVerifications } from "@/server/db/schema";
+import { guardLegacyUpgrade, plansConfig, startPlanCheckout, type PlanKey } from "@/server/plans";
+import { ADDRESS_FULL_MESSAGE, confirmStudentCode, sendConfirmCode, sendStudentCode, studentVerificationState } from "@/server/services/email-confirm";
+import { studentVerifications } from "@/server/db/schema";
 import { makeUser } from "../helpers";
 
 afterAll(closeDb);
@@ -35,10 +35,7 @@ function fakeStripe() {
 }
 
 /** Frees the one-open-checkout slot so a test can start the person's next checkout. */
-const freeSlot = (u: { id: string }) =>
-  getDb()
-    .delete(rateLimitBuckets)
-    .where(like(rateLimitBuckets.key, `plan-checkout:${u.id}`));
+const freeSlot = (u: { id: string }) => getDb().update(users).set({ openCheckoutUntil: null }).where(eq(users.id, u.id));
 
 const as = async (lifeStage: "student" | "working") => {
   const { user } = await makeUser();
@@ -187,16 +184,44 @@ describe("the student price needs a confirmed student email", () => {
 });
 
 describe("one open checkout at a time", () => {
-  it("refuses a second checkout in a row without calling Stripe, and a failed start gives the slot back", async () => {
+  const broken = (async () => new Response("{}", { status: 500 })) as unknown as typeof fetch;
+  const until = async (id: string) => (await getDb().select({ t: users.openCheckoutUntil }).from(users).where(eq(users.id, id)))[0].t;
+
+  it("allows the first click, refuses a double-click without calling Stripe, and a failed start gives the slot back straight away", async () => {
     const stripe = fakeStripe();
     const u = await as("working");
     await startPlanCheckout(getDb(), u, "standard_openai", { cfg: CFG, fetchImpl: stripe.fetchImpl });
+    const held = await until(u.id);
     await expect(startPlanCheckout(getDb(), u, "standard_openai", { cfg: CFG, fetchImpl: stripe.fetchImpl })).rejects.toMatchObject({ status: 429 });
     expect(stripe.calls).toHaveLength(1);
+    expect(await until(u.id)).toEqual(held); // a refusal changes nothing
     const v = await as("working");
-    const broken = (async () => new Response("{}", { status: 500 })) as unknown as typeof fetch;
     await expect(startPlanCheckout(getDb(), v, "standard_openai", { cfg: CFG, fetchImpl: broken })).rejects.toMatchObject({ status: 502 });
+    expect(await until(v.id)).toBeNull();
     await startPlanCheckout(getDb(), v, "standard_openai", { cfg: CFG, fetchImpl: stripe.fetchImpl });
+    expect(stripe.calls).toHaveLength(2);
+  });
+
+  it("holds for 30 minutes from the start: refused at minute 29, allowed once the 30 are over", async () => {
+    const stripe = fakeStripe();
+    const u = await as("working");
+    await startPlanCheckout(getDb(), u, "standard_openai", { cfg: CFG, fetchImpl: stripe.fetchImpl });
+    const t = (await until(u.id))!.getTime();
+    expect(t - Date.now()).toBeGreaterThan(29 * 60_000);
+    expect(t - Date.now()).toBeLessThanOrEqual(30 * 60_000);
+    // minute 29: one minute of the hold is left
+    await getDb()
+      .update(users)
+      .set({ openCheckoutUntil: sql`now() + interval '1 minute'` })
+      .where(eq(users.id, u.id));
+    await expect(startPlanCheckout(getDb(), u, "standard_openai", { cfg: CFG, fetchImpl: stripe.fetchImpl })).rejects.toMatchObject({ status: 429 });
+    expect(stripe.calls).toHaveLength(1);
+    // minute 30: it has passed
+    await getDb()
+      .update(users)
+      .set({ openCheckoutUntil: sql`now() - interval '1 second'` })
+      .where(eq(users.id, u.id));
+    await startPlanCheckout(getDb(), u, "standard_openai", { cfg: CFG, fetchImpl: stripe.fetchImpl });
     expect(stripe.calls).toHaveLength(2);
   });
 });
@@ -254,38 +279,75 @@ describe("student code email limits", () => {
       expect(await sendStudentCode(getDb(), u.id, address, { ...mail, send })).toMatchObject({ ok: true });
     }
     const fourth = await as("student");
-    expect(await sendStudentCode(getDb(), fourth.id, address.toLowerCase(), { ...mail, send })).toEqual({ ok: false, reason: "too_many" });
+    expect(await sendStudentCode(getDb(), fourth.id, address.toLowerCase(), { ...mail, send })).toEqual({ ok: false, reason: "address_full" });
     expect(calls).toBe(3);
   });
-  it("refuses a send over the per-network limit", async () => {
+  it("folds +tags, so a+1 and a+2 share one per-address limit", async () => {
     const mail = { config: { apiKey: "k", from: "a@b.test" } as never };
-    const ip = `203.0.113.${Math.floor(Math.random() * 200)}-${Date.now()}`;
     let calls = 0;
     const send = (async () => (calls++, { id: "em" })) as never;
-    let last: unknown;
-    for (let i = 0; i < 31; i++) {
-      const u = await as("student");
-      last = await sendStudentCode(getDb(), u.id, `n${i}-${Date.now()}@school.edu`, { ...mail, send, ip });
+    const stamp = `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
+    const typed = [`a${stamp}+1@x.edu`, `a${stamp}+2@x.edu`, `A${stamp}@x.edu`];
+    for (const t of typed) expect(await sendStudentCode(getDb(), (await as("student")).id, t, { ...mail, send })).toMatchObject({ ok: true });
+    expect(await sendStudentCode(getDb(), (await as("student")).id, `a${stamp}+3@x.edu`, { ...mail, send })).toEqual({ ok: false, reason: "address_full" });
+    expect(calls).toBe(3);
+  });
+  it("uses its own message for the daily cap, and a failed send doesn't use up a count", async () => {
+    const mail = { config: { apiKey: "k", from: "a@b.test" } as never };
+    const failing = (async () => {
+      throw new Error("down");
+    }) as never;
+    let calls = 0;
+    const ok = (async () => (calls++, { id: "em" })) as never;
+    const address = `cap${Date.now()}${Math.floor(Math.random() * 1e6)}@school.edu`;
+    for (let i = 0; i < 5; i++)
+      expect(await sendStudentCode(getDb(), (await as("student")).id, address, { ...mail, send: failing })).toEqual({ ok: false, reason: "failed" });
+    for (let i = 0; i < 3; i++) expect(await sendStudentCode(getDb(), (await as("student")).id, address, { ...mail, send: ok })).toMatchObject({ ok: true });
+    expect(await sendStudentCode(getDb(), (await as("student")).id, address, { ...mail, send: ok })).toEqual({ ok: false, reason: "address_full" });
+    expect(calls).toBe(3);
+    expect(ADDRESS_FULL_MESSAGE).toBe("That address has had enough codes today. Try again tomorrow.");
+    expect(ADDRESS_FULL_MESSAGE).not.toMatch(/hour/);
+  });
+  it("has no per-network limit: 40 sends from one network across addresses are all sent", async () => {
+    const mail = { config: { apiKey: "k", from: "a@b.test" } as never };
+    let calls = 0;
+    const send = (async () => (calls++, { id: "em" })) as never;
+    for (let i = 0; i < 40; i++) {
+      const r = await sendStudentCode(getDb(), (await as("student")).id, `n${i}-${Date.now()}${Math.floor(Math.random() * 1e6)}@school.edu`, { ...mail, send });
+      expect(r).toMatchObject({ ok: true });
     }
-    expect(last).toEqual({ ok: false, reason: "too_many" });
-    expect(calls).toBe(30);
+    expect(calls).toBe(40);
   });
 });
 
 describe("account confirmation code limits", () => {
-  it("refuses the fourth send to one address in a day without calling the provider", async () => {
+  it("refuses the fourth send to one address in a day (+tags folded, across accounts) without calling the provider", async () => {
     const mail = { config: { apiKey: "k", from: "a@b.test" } as never };
     let calls = 0;
     const send = (async () => (calls++, { id: "em" })) as never;
-    const u = await as("student");
+    const stamp = `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
     const results = [];
-    for (let i = 0; i < 4; i++) {
-      // a different hour's allowance each time is not needed: the address limit is the day's 3, the person's hourly limit is 3 too
+    for (const typed of [`a${stamp}+1@x.edu`, `a${stamp}+2@x.edu`, `a${stamp}@x.edu`, `a${stamp}+4@x.edu`]) {
+      const u = await as("student");
+      await getDb().update(users).set({ email: typed }).where(eq(users.id, u.id));
       results.push(await sendConfirmCode(getDb(), u.id, { ...mail, send }));
     }
     expect(results.slice(0, 3).every((r) => r.ok)).toBe(true);
-    expect(results[3]).toEqual({ ok: false, reason: "too_many" });
+    expect(results[3]).toEqual({ ok: false, reason: "address_full" });
     expect(calls).toBe(3);
+  });
+});
+
+describe("the old single-price upgrade guard", () => {
+  it("refuses a Pro person with the fixed message, and takes the same checkout slot otherwise", async () => {
+    const u = await as("working");
+    await expect(guardLegacyUpgrade(getDb(), u.id, "pro")).rejects.toMatchObject({
+      status: 409,
+      message: "You already have a plan. Use Manage or cancel to change it.",
+    });
+    await guardLegacyUpgrade(getDb(), u.id, "free");
+    await expect(guardLegacyUpgrade(getDb(), u.id, "free")).rejects.toMatchObject({ status: 429 });
+    await expect(startPlanCheckout(getDb(), u, "standard_openai", { cfg: CFG, fetchImpl: fakeStripe().fetchImpl })).rejects.toMatchObject({ status: 429 });
   });
 });
 

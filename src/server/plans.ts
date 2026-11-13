@@ -1,9 +1,8 @@
 import type { SessionUser } from "./auth/sessions";
-import { and, eq, gt, isNotNull, isNull, sql } from "drizzle-orm";
-import { rateLimit } from "./rate-limit";
+import { and, eq, gt, isNotNull, isNull, lte, or, sql } from "drizzle-orm";
 import { checkoutUrl, paywallActive, plansBase, plansEnabled, type BillingConfig } from "./billing";
 import type { Database } from "./db/client";
-import { rateLimitBuckets, studentVerifications, users } from "./db/schema";
+import { studentVerifications, users } from "./db/schema";
 import { STUDENT_VERIFIED_MS } from "./services/email-confirm";
 import { HttpError } from "./http";
 
@@ -113,15 +112,14 @@ export async function startPlanCheckout(
   const priceId = priceIdFor(cfg, audienceFor(user), key);
   if (!priceId) throw new HttpError(400, "That plan isn't available.");
   const customer = { id: user.id, email: user.email, stripeCustomerId: row?.stripeCustomerId ?? null };
-  // One open checkout per person: a second one within 30 minutes is refused (an unpaid session is still open at Stripe, and two paid
-  // ones would be two subscriptions). A checkout that fails to start gives its slot back.
-  const slot = `plan-checkout:${user.id}`;
-  if (!(await rateLimit(db, slot, 1, CHECKOUT_OPEN_SECONDS)).allowed) throw new HttpError(429, CHECKOUT_ALREADY_OPEN);
+  // One open checkout per person: a second one within 30 minutes of the first is refused (an unpaid session is still open at Stripe,
+  // and two paid ones would be two subscriptions). A checkout that fails to start gives its slot back.
+  await takeCheckoutSlot(db, user.id);
   try {
     if (!key.startsWith("student_")) return await checkoutUrl(cfg, customer, opts.fetchImpl, priceId);
     return await studentCheckout(db, cfg, customer, user.id, priceId, opts.fetchImpl);
   } catch (e) {
-    await releaseCheckoutSlot(db, slot);
+    await releaseCheckoutSlot(db, user.id);
     throw e;
   }
 }
@@ -129,13 +127,27 @@ export async function startPlanCheckout(
 const CHECKOUT_OPEN_SECONDS = 30 * 60;
 export const CHECKOUT_ALREADY_OPEN = "A checkout is already open. Finish it, or try again in a few minutes.";
 
-async function releaseCheckoutSlot(db: Database, key: string) {
-  const windowMs = CHECKOUT_OPEN_SECONDS * 1000;
-  const windowStart = new Date(Math.floor(Date.now() / windowMs) * windowMs);
-  await db
-    .update(rateLimitBuckets)
-    .set({ count: sql`greatest(${rateLimitBuckets.count} - 1, 0)` })
-    .where(and(eq(rateLimitBuckets.key, key), eq(rateLimitBuckets.windowStart, windowStart)));
+/**
+ * Takes this person's checkout slot: one compare-and-set that sets the expiry to 30 minutes from now only if there is none or it has
+ * passed. A refused try changes nothing (so refusals never extend the slot). Throws 429 when the slot is held.
+ */
+export async function takeCheckoutSlot(db: Database, userId: string) {
+  const taken = await db
+    .update(users)
+    .set({ openCheckoutUntil: sql`now() + make_interval(secs => ${CHECKOUT_OPEN_SECONDS})` })
+    .where(and(eq(users.id, userId), or(isNull(users.openCheckoutUntil), lte(users.openCheckoutUntil, sql`now()`))))
+    .returning({ id: users.id });
+  if (taken.length === 0) throw new HttpError(429, CHECKOUT_ALREADY_OPEN);
+}
+
+export async function releaseCheckoutSlot(db: Database, userId: string) {
+  await db.update(users).set({ openCheckoutUntil: null }).where(eq(users.id, userId));
+}
+
+/** The old single-price upgrade's guard: never a second subscription for a Pro person, and the same one-open-checkout slot. */
+export async function guardLegacyUpgrade(db: Database, userId: string, plan: string | undefined) {
+  if (plan === "pro") throw new HttpError(409, ALREADY_ON_A_PLAN);
+  await takeCheckoutSlot(db, userId);
 }
 
 async function studentCheckout(
