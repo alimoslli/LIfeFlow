@@ -158,7 +158,7 @@ describe("first use of several keys", () => {
   });
 });
 
-describe("held can never go negative (migration 0069)", () => {
+describe("held can never go negative (migration 0070)", () => {
   it("reserves, settles, releases and repeats at the same moment: held matches the holds, never below zero, never past the limit", async () => {
     const k = key();
     const LIMIT = 10_000;
