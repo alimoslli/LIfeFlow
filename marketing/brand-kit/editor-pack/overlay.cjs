@@ -1,0 +1,10 @@
+const { chromium } = require("playwright"); const path = require("path"); const OUT = process.argv[2];
+(async () => { const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1500, height: 500 } });
+  await p.goto("file://" + path.join(__dirname, "overlay.html")); await p.evaluate(() => window.ready);
+  const shot = (f) => p.locator("#c").screenshot({ path: path.join(OUT, f), omitBackground: true });
+  await p.evaluate(() => window.lockup("#F3F5FA")); await shot("logo_lockup_white_text.png");
+  await p.evaluate(() => window.lockup("#142451")); await shot("logo_lockup_navy_text.png");
+  await p.evaluate(() => window.line("#FFFFFF")); await shot("lets_clear_your_sky_white.png");
+  await p.evaluate(() => window.line("#142451")); await shot("lets_clear_your_sky_navy.png");
+  await p.evaluate(() => window.box()); await shot("caption_box_blank.png");
+  await b.close(); console.log("ok"); })();

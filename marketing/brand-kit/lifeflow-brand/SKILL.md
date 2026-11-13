@@ -49,6 +49,21 @@ Read `references/video.md` before cutting anything. In short: vertical 1080 x 19
 (see `assets/examples/caption-style.jpg`); film each moment at the time of day it really happens, so the phone's sky
 matches the real sky; music about 10 dB under voices; master to -14 LUFS; end on the logo ending.
 
+## The files (always use these, never make your own versions)
+| Need | Use |
+|---|---|
+| Logo | `assets/logo/lifeflow-app-icon.png`, `assets/overlays/logo_lockup_white_text.png` or `_navy_text.png` |
+| Logo animation | `assets/logo/LifeFlow_Logo_Intro.mp4`, `LifeFlow_Logo_Ending.mp4` (end every video on this), `LifeFlow_Logo_Loop_WhoeversUp.mp4` |
+| A skyling standing still | `assets/skylings/<Name>.png` (night versions for Twinkle and Dreamy) |
+| A skyling moving | `assets/skylings_animated/<Name>_<pose>/` frames: idle, wave, celebrate, think. One frame every 0.18 s, looped |
+| The app's pixel clouds | `assets/clouds/` |
+| Captions | `assets/overlays/caption_box_blank.png` with Fraunces text, see `assets/examples/caption-style.jpg` |
+| End line | `assets/overlays/lets_clear_your_sky_white.png` / `_navy.png`, end card `end_card_lets_clear_your_sky.jpg` |
+| Sound effects | `assets/sfx/`: tap, typing, send, answer_lands, added_to_your_day, star_tick_it_off, sun_goal_reached, night_stars_twinkle, whoosh_scene_change, sky_turns, skylings_pop_up, logo_ending_sound |
+| Real app footage | Not in this skill (too big). It's in the **LifeFlow Editor Pack** (`LifeFlow_Editor_Pack.zip`, `app_footage/`), with green-screen skyling clips. Ask the person to upload the clips you need. |
+
+Scale pixel art (skylings, clouds) only in whole steps with no smoothing ("nearest neighbor").
+
 ## Before you hand anything over, check
 - [ ] Every word passes rules 1, 2, 9 and 12
 - [ ] Logo, skylings and screens are the real files or real captures

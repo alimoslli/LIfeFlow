@@ -1,0 +1,14 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face { font-family: "Fraunces"; src: url("fraunces-var.woff2") format("woff2"); font-weight: 100 900; }
+html,body{margin:0;background:transparent} canvas{display:block}</style></head><body><canvas id="c"></canvas>
+<script>
+const cv = document.getElementById("c"), g = cv.getContext("2d"), icon = new Image(); icon.src = "icon.png";
+window.lockup = (ink) => { cv.width = 1400; cv.height = 360; g.clearRect(0, 0, 1400, 360);
+  g.drawImage(icon, 20, 20, 320, 320); g.font = "700 210px Fraunces"; g.fillStyle = ink; g.textBaseline = "alphabetic"; g.fillText("LifeFlow", 380, 252); };
+window.line = (ink) => { cv.width = 1400; cv.height = 220; g.clearRect(0, 0, 1400, 220); g.font = "600 120px Fraunces"; g.textBaseline = "middle";
+  const parts = ["Let’s clear your ", "sky", "."]; let x = (1400 - g.measureText(parts.join("")).width) / 2;
+  for (const p of parts) { g.fillStyle = p === "sky" ? "#FFD27A" : ink; g.fillText(p, x, 110); x += g.measureText(p).width; } };
+window.box = () => { cv.width = 1060; cv.height = 300; g.clearRect(0, 0, 1060, 300); g.shadowColor = "rgba(0,0,0,0.35)"; g.shadowBlur = 40;
+  g.fillStyle = "rgba(11,26,58,0.94)"; g.beginPath(); g.roundRect(60, 60, 940, 180, 44); g.fill(); };
+window.ready = Promise.all([document.fonts.load("700 210px Fraunces"), new Promise((r) => (icon.complete ? r() : (icon.onload = r)))]);
+</script></body></html>
