@@ -85,6 +85,41 @@ describe("auto thinking level", () => {
     expect(effort("find me 2 hours to study before Thursday")).toBe("medium");
   });
 
+  // owner's yes, 2026-11-12: plain lookups go to the small model, money never does (the COO's rule after the paid try-out)
+  it("sends plain read-only lookups to the small model, even under a planning skill", () => {
+    for (const q of [
+      "What do I need to get done today?",
+      "Which day this week is going to be the hardest?",
+      "Do I have anything overdue?",
+      "What's due this week?",
+      "When is my BIO exam?",
+      "How many hours am I working this week?",
+      "Am I free Thursday afternoon?",
+    ])
+      expect(effort(q), q).toBe("low");
+  });
+
+  it("never sends a money question to the small model", () => {
+    for (const q of [
+      "Can I afford to spend $60 this weekend?",
+      "Where did my money go last month?",
+      "What subscriptions am I paying for?",
+      "When was the last time I Zelled Omar Mousselli?",
+      "Am I on track for my savings goal?",
+      "How many hours am I working this week and how much will I make?",
+      "What's my balance?",
+      "When is rent due?",
+      "What did I spend on groceries?",
+      "Do I have any bills this week?",
+      "What did I buy at Target?",
+      "How much is left in my checking?",
+      "How much is in my savings?",
+    ])
+      expect(effort(q), q).not.toBe("low");
+    // and a lookup that brings the money tools along is never low either, whatever its words
+    expect(chooseEffort({ text: "what's new?", skills: [], hasFiles: false, coachMode: false, moneyTools: true })).toBe("medium");
+  });
+
   it("thinks hardest for files and big plans", () => {
     expect(effort("add these", true)).toBe("high");
     expect(effort("make a study plan for the whole semester")).toBe("high");

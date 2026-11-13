@@ -222,7 +222,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   const last = history[history.length - 1];
   const hasFiles = last?.type === "user" && !!(last.images?.length || last.files?.length);
   const groups = new Set<ToolGroup>(selectToolGroups({ text: input.text, module: openedFrom, skills, history }));
-  const effort = chooseEffort({ text: input.text, skills, hasFiles, coachMode });
+  const effort = chooseEffort({ text: input.text, skills, hasFiles, coachMode, moneyTools: groups.has("money") || groups.has("money_edit") });
   // Short by default (owner, 2026-11-09); "detailed" tone gets medium, never an essay.
   const verbosity = user.preferences?.jarvisTone === "detailed" ? "medium" : "low";
   const turn = provider.startTurn({
