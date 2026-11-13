@@ -51,6 +51,14 @@ export default defineConfig({
         // The plans switch is off unless a run turns it on (E2E_PLANS=on: tests/e2e/plans.spec.ts, test-mode made-up Stripe keys, never reachable).
         PLANS_PAYWALL: process.env.E2E_PLANS === "on" ? "on" : "",
         PLANS_ALLOW_TEST_KEYS_IN_PRODUCTION: "yes", // the e2e server runs a production build with made-up test keys
+        ...(process.env.E2E_PLANS === "legacy"
+          ? {
+              STRIPE_SECRET_KEY: "sk_live_e2e_made_up",
+              STRIPE_WEBHOOK_SECRET: "whsec_e2e_made_up",
+              STRIPE_PRICE_ID: "price_e2e_legacy",
+              APP_URL: `http://localhost:${PORT}`,
+            }
+          : {}),
         ...(process.env.E2E_PLANS === "on"
           ? {
               STRIPE_SECRET_KEY: "sk_test_e2e_made_up",

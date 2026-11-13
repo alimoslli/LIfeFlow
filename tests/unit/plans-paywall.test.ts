@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { billingConfig, inTestingPhase, isPro, paywallActive } from "@/server/billing";
+import { billingConfig, checkoutUrl, inTestingPhase, isPro, legacyBilling, paywallActive } from "@/server/billing";
 import { planOptions, plansConfig, plansEnabled, priceIdFor } from "@/server/plans";
 
 const ENV = {
@@ -45,6 +45,32 @@ describe("switch off with Stripe plan prices set behaves as on main", () => {
   });
 });
 
+describe("the old single-price setup keeps its upgrade path", () => {
+  const LEGACY = {
+    STRIPE_SECRET_KEY: "sk_live_x",
+    STRIPE_WEBHOOK_SECRET: "wh",
+    STRIPE_PRICE_ID: "price_legacy",
+    APP_URL: "https://x.test",
+    PLANS_PAYWALL: "off",
+  };
+  it("with the switch off the legacy config is there, locks free users, and starts a checkout at the legacy price", async () => {
+    expect(paywallActive(LEGACY)).toBe(false);
+    const cfg = legacyBilling(LEGACY);
+    expect(cfg).not.toBeNull();
+    expect(isPro(free, billingConfig(LEGACY))).toBe(false);
+    let body = "";
+    const fetchImpl = (async (_u: unknown, init?: RequestInit) => {
+      body = String(init?.body);
+      return new Response(JSON.stringify({ url: "https://checkout.stripe.test/legacy" }), { status: 200 });
+    }) as unknown as typeof fetch;
+    expect(await checkoutUrl(cfg!, { id: "u", email: "a@b.test", stripeCustomerId: null }, fetchImpl)).toBe("https://checkout.stripe.test/legacy");
+    expect(new URLSearchParams(body).get("line_items[0][price]")).toBe("price_legacy");
+  });
+  it("plan prices alone are not the legacy setup", () => {
+    expect(legacyBilling({ ...ENV, PLANS_PAYWALL: "off" })).toBeNull();
+  });
+});
+
 describe("switch on with the same config locks the free user", () => {
   it("applies the lock and ends the testing limits", () => {
     const cfg = billingConfig(ENV);
@@ -85,8 +111,13 @@ describe("test keys in production", () => {
     expect(paywallActive({ ...ENV, VERCEL_ENV: "production" })).toBe(false);
     expect(billingConfig({ ...ENV, VERCEL_ENV: "production" })).toBeNull();
   });
-  it("work in preview or with the explicit override", () => {
-    expect(plansConfig({ ...ENV, VERCEL_ENV: "preview" })).not.toBeNull();
+  it("a preview deploy shares the production database, so it is refused too", () => {
+    expect(plansConfig({ ...ENV, VERCEL_ENV: "preview" })).toBeNull();
+    expect(paywallActive({ ...ENV, VERCEL_ENV: "preview" })).toBe(false);
+  });
+  it("work in development or with the explicit override", () => {
+    expect(plansConfig({ ...ENV, VERCEL_ENV: "development" })).not.toBeNull();
+    expect(plansConfig({ ...ENV, VERCEL_ENV: "preview", PLANS_ALLOW_TEST_KEYS_IN_PRODUCTION: "yes" })).not.toBeNull();
     expect(plansConfig({ ...ENV, VERCEL_ENV: "production", PLANS_ALLOW_TEST_KEYS_IN_PRODUCTION: "yes" })).not.toBeNull();
   });
 });

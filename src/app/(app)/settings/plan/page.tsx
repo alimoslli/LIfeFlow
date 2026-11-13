@@ -5,27 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/surface";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { requireUser } from "@/server/auth/current-user";
-import { FREE_JARVIS_PER_DAY, isPro } from "@/server/billing";
+import { isPro, legacyBilling } from "@/server/billing";
 import { audienceFor, paywallActive, planOptions } from "@/server/plans";
 import { SettingsHeader } from "../settings-header";
+import { FREE_FEATURES, PAID_FEATURES, STANDARD_FEATURES, STUDENT_FEATURES } from "@/lib/plan-features";
+import { NOT_SCHOOL_MESSAGE } from "@/lib/school-domains";
 import { Input } from "@/components/ui/field";
 import { studentVerificationState } from "@/server/services/email-confirm";
 import { getDb } from "@/server/db/client";
-import { choosePlanAction, confirmStudentCodeAction, manageBillingAction, sendStudentCodeAction } from "./actions";
+import { choosePlanAction, confirmStudentCodeAction, manageBillingAction, sendStudentCodeAction, upgradeAction } from "./actions";
 
 export const metadata: Metadata = { title: "Plan" };
-
-const INCLUDED = [
-  "More messages with your skyling",
-  "Bank and card sync",
-  "Gmail and Google Calendar",
-  "Text your skyling from your phone",
-  "Talk to your skyling by voice",
-];
 
 const STUDENT_NOTES: Record<string, string> = {
   sent: "Code sent. It works once, for 10 minutes.",
   verified: "Student email confirmed. Choose your plan below.",
+  not_school: NOT_SCHOOL_MESSAGE,
   invalid: "That doesn't look like an email address.",
   unavailable: "Email codes aren't available yet.",
   too_many: "We've sent a few codes already. Use the newest one, or try again in an hour.",
@@ -38,11 +33,12 @@ const STUDENT_NOTES: Record<string, string> = {
 
 /** The plan picker and paywall. Not there at all (a 404) while the plans switch is off. Payments and cancelling happen on Stripe's pages. */
 export default async function PlanPage({ searchParams }: { searchParams: Promise<{ upgraded?: string; need?: string; problem?: string; student?: string }> }) {
-  if (!paywallActive()) notFound();
+  const legacy = !paywallActive() && !!legacyBilling();
+  if (!paywallActive() && !legacy) notFound();
   const sp = await searchParams;
   const u = await requireUser();
   const pro = isPro(u);
-  const options = planOptions(audienceFor(u));
+  const options = legacy ? [] : planOptions(audienceFor(u));
   const student = options.some((o) => o.key.startsWith("student_")) && !pro ? await studentVerificationState(getDb(), u.id) : null;
   // Inside the App Store app, subscriptions must go through Apple, so the web checkout isn't offered there.
   const inApp = ((await headers()).get("user-agent") ?? "").includes("LifeFlowApp");
@@ -57,21 +53,16 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       )}
       {sp.student && STUDENT_NOTES[sp.student] && <p className="rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem]">{STUDENT_NOTES[sp.student]}</p>}
       {sp.need && !pro && <p className="rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem]">Connecting your accounts is part of a plan.</p>}
-      <Card className="p-5">
+      <Card className="p-5" data-testid="free-card">
         <p className="text-[0.8125rem] text-muted">Your plan</p>
         <p className="font-display text-[2.125rem] leading-tight font-medium">{pro ? "LifeFlow Pro" : "Free"}</p>
         <ul className="mt-4 flex flex-col gap-2 text-[0.9375rem]">
-          {INCLUDED.map((f) => (
+          {(pro ? PAID_FEATURES : FREE_FEATURES).map((f) => (
             <li key={f} className="flex items-center gap-2">
               <PixelIcon name="check" className={pro ? "h-4 w-4 text-success" : "h-4 w-4 text-muted"} /> {f}
             </li>
           ))}
         </ul>
-        {!pro && (
-          <p className="mt-4 text-[0.9375rem] text-text-2">
-            Free keeps everything you add yourself, plus {FREE_JARVIS_PER_DAY} messages with your skyling a day.
-          </p>
-        )}
         {pro && (
           <form action={manageBillingAction} className="mt-5">
             <Button type="submit" className="min-h-11 w-full">
@@ -80,7 +71,15 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           </form>
         )}
       </Card>
+      {legacy && !pro && !inApp && (
+        <form action={upgradeAction}>
+          <Button type="submit" className="min-h-11 w-full">
+            Upgrade to Pro
+          </Button>
+        </form>
+      )}
       {!pro &&
+        !legacy &&
         (inApp ? (
           <p className="text-[0.9375rem] text-text-2">Plans aren&apos;t available in the app yet.</p>
         ) : (
@@ -90,6 +89,13 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
                 <p className="font-display text-[1.375rem] leading-tight font-medium">{o.title}</p>
                 <p className="text-[0.9375rem] text-text-2">{o.blurb}</p>
                 <p className="text-[1.5rem] font-medium">{o.priceLabel}</p>
+                <ul className="flex flex-col gap-2 text-[0.9375rem]" data-testid={`features-${o.key.startsWith("student_") ? "student" : "standard"}`}>
+                  {(o.key.startsWith("student_") ? STUDENT_FEATURES : STANDARD_FEATURES).map((f) => (
+                    <li key={f} className="flex items-center gap-2">
+                      <PixelIcon name="check" className="h-4 w-4 text-success" /> {f}
+                    </li>
+                  ))}
+                </ul>
                 {o.key.startsWith("student_") && student?.step !== "verified" ? (
                   <div className="flex flex-col gap-3" data-testid="student-verify">
                     <p className="text-[0.9375rem] text-text-2">

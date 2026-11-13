@@ -1,13 +1,13 @@
 import { createHmac } from "node:crypto";
-import { eq, sql } from "drizzle-orm";
+import { eq, like, sql } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
 import { POST } from "@/app/api/billing/webhook/route";
 import { applyStripeEvent } from "@/server/billing";
 import { closeDb, getDb } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 import { plansConfig, startPlanCheckout, type PlanKey } from "@/server/plans";
-import { confirmStudentCode, sendStudentCode, studentVerificationState } from "@/server/services/email-confirm";
-import { studentVerifications } from "@/server/db/schema";
+import { confirmStudentCode, sendConfirmCode, sendStudentCode, studentVerificationState } from "@/server/services/email-confirm";
+import { rateLimitBuckets, studentVerifications } from "@/server/db/schema";
 import { makeUser } from "../helpers";
 
 afterAll(closeDb);
@@ -34,6 +34,12 @@ function fakeStripe() {
   return { calls, fetchImpl };
 }
 
+/** Frees the one-open-checkout slot so a test can start the person's next checkout. */
+const freeSlot = (u: { id: string }) =>
+  getDb()
+    .delete(rateLimitBuckets)
+    .where(like(rateLimitBuckets.key, `plan-checkout:${u.id}`));
+
 const as = async (lifeStage: "student" | "working") => {
   const { user } = await makeUser();
   return { id: user.id, email: user.email, preferences: { lifeStage } as never };
@@ -49,9 +55,7 @@ describe("plan checkout", () => {
       const u = await as(stage);
       const stripe = fakeStripe();
       if (stage === "student")
-        await getDb()
-          .insert(studentVerifications)
-          .values({ userId: u.id, email: "s@school.example", codeHash: "", expiresAt: new Date(), verifiedAt: new Date() });
+        await getDb().insert(studentVerifications).values({ userId: u.id, email: "s@school.edu", codeHash: "", expiresAt: new Date(), verifiedAt: new Date() });
       const url = await startPlanCheckout(getDb(), u, key, { cfg: CFG, fetchImpl: stripe.fetchImpl });
       expect(url).toBe("https://checkout.stripe.test/c/1");
       expect(stripe.calls[0].get("line_items[0][price]")).toBe(price);
@@ -83,6 +87,10 @@ describe("plan checkout", () => {
   });
 });
 
+let kidCount = 0;
+// every send uses a fresh address: the per-address limit is a day long and the test database keeps its counters between runs
+const uniqueKid = () => `kid${Date.now()}${Math.floor(Math.random() * 1e6)}x${kidCount++}@school.edu`;
+
 describe("the student price needs a confirmed student email", () => {
   const MAIL = { config: { apiKey: "k", from: "a@b.test" } as never };
   const sender = () => {
@@ -91,8 +99,9 @@ describe("the student price needs a confirmed student email", () => {
   };
   const verified = async (u: { id: string }, now = Date.now()) => {
     const s = sender();
-    expect(await sendStudentCode(getDb(), u.id, "kid@school.example", { ...MAIL, send: s.send, code: () => "123456", now })).toEqual({ ok: true, id: "em_1" });
-    expect(s.sent[0].to).toBe("kid@school.example");
+    const address = uniqueKid();
+    expect(await sendStudentCode(getDb(), u.id, address, { ...MAIL, send: s.send, code: () => "123456", now })).toEqual({ ok: true, id: "em_1" });
+    expect(s.sent[0].to).toBe(address);
     return confirmStudentCode(getDb(), u.id, "123456", now);
   };
 
@@ -107,7 +116,7 @@ describe("the student price needs a confirmed student email", () => {
     const stripe = fakeStripe();
     const u = await as("student");
     const s = sender();
-    await sendStudentCode(getDb(), u.id, "kid@school.example", { ...MAIL, send: s.send, code: () => "123456" });
+    await sendStudentCode(getDb(), u.id, uniqueKid(), { ...MAIL, send: s.send, code: () => "123456" });
     await expect(startPlanCheckout(getDb(), u, "student_openai", { cfg: CFG, fetchImpl: stripe.fetchImpl })).rejects.toMatchObject({ status: 403 });
     expect(await confirmStudentCode(getDb(), u.id, "000000")).toEqual({ ok: false, reason: "wrong" });
     await expect(startPlanCheckout(getDb(), u, "student_openai", { cfg: CFG, fetchImpl: stripe.fetchImpl })).rejects.toMatchObject({ status: 403 });
@@ -124,10 +133,13 @@ describe("the student price needs a confirmed student email", () => {
     const url = await startPlanCheckout(getDb(), u, "student_openai", { cfg: CFG, fetchImpl: stripe.fetchImpl });
     expect(url).toBe("https://checkout.stripe.test/c/1");
     expect(stripe.calls[0].get("metadata[student_verified_at]")).toMatch(/^\d{4}-/);
-    expect(JSON.stringify([...stripe.calls[0]])).not.toContain("school.example");
+    expect(JSON.stringify([...stripe.calls[0]])).not.toContain("school.edu");
+    await expect(startPlanCheckout(getDb(), u, "student_openai", { cfg: CFG, fetchImpl: stripe.fetchImpl })).rejects.toMatchObject({ status: 429 }); // one open checkout
+    await freeSlot(u);
     await expect(startPlanCheckout(getDb(), u, "student_openai", { cfg: CFG, fetchImpl: stripe.fetchImpl })).rejects.toMatchObject({ status: 403 });
     expect(stripe.calls).toHaveLength(1);
     // a new payment asks for a new code
+    await freeSlot(u);
     expect(await verified(u)).toEqual({ ok: true });
     await startPlanCheckout(getDb(), u, "student_openai", { cfg: CFG, fetchImpl: stripe.fetchImpl });
     expect(stripe.calls).toHaveLength(2);
@@ -138,6 +150,7 @@ describe("the student price needs a confirmed student email", () => {
     expect(await verified(u)).toEqual({ ok: true });
     const broken = (async () => new Response("{}", { status: 500 })) as unknown as typeof fetch;
     await expect(startPlanCheckout(getDb(), u, "student_openai", { cfg: CFG, fetchImpl: broken })).rejects.toMatchObject({ status: 502 });
+    // a failed start gives the open-checkout slot back too
     const stripe = fakeStripe();
     await startPlanCheckout(getDb(), u, "student_openai", { cfg: CFG, fetchImpl: stripe.fetchImpl });
     expect(stripe.calls).toHaveLength(1);
@@ -152,7 +165,7 @@ describe("the student price needs a confirmed student email", () => {
     const u = await as("working");
     await getDb()
       .insert(studentVerifications)
-      .values({ userId: u.id, email: "x@school.example", codeHash: "", expiresAt: new Date(Date.now() + 1e6), verifiedAt: new Date() });
+      .values({ userId: u.id, email: "x@school.edu", codeHash: "", expiresAt: new Date(Date.now() + 1e6), verifiedAt: new Date() });
     await expect(startPlanCheckout(getDb(), u, "student_openai", { cfg: CFG, fetchImpl: stripe.fetchImpl })).rejects.toMatchObject({ status: 400 });
     expect(stripe.calls).toHaveLength(0);
   });
@@ -160,16 +173,119 @@ describe("the student price needs a confirmed student email", () => {
   it("sends only with the provider's id, hides the address and rejects junk addresses", async () => {
     const u = await as("student");
     const noId = (async () => ({ id: "" })) as never;
-    expect(await sendStudentCode(getDb(), u.id, "kid@school.example", { ...MAIL, send: noId })).toEqual({ ok: false, reason: "failed" });
+    expect(await sendStudentCode(getDb(), u.id, uniqueKid(), { ...MAIL, send: noId })).toEqual({ ok: false, reason: "failed" });
     expect(await sendStudentCode(getDb(), u.id, "not an address", { ...MAIL, send: noId })).toEqual({ ok: false, reason: "invalid" });
-    expect(await sendStudentCode(getDb(), u.id, "kid@school.example", { config: null })).toEqual({ ok: false, reason: "unavailable" });
-    await sendStudentCode(getDb(), u.id, "kid@school.example", { ...MAIL, send: sender().send, code: () => "654321" });
+    expect(await sendStudentCode(getDb(), u.id, uniqueKid(), { config: null })).toEqual({ ok: false, reason: "unavailable" });
+    await sendStudentCode(getDb(), u.id, uniqueKid(), { ...MAIL, send: sender().send, code: () => "654321" });
     const st = await studentVerificationState(getDb(), u.id);
-    expect(st).toEqual({ step: "sent", masked: "ki***@school.example" });
+    expect(st).toEqual({ step: "sent", masked: "ki***@school.edu" });
     const [raw] = await getDb()
       .execute(sql`select email from student_verifications where account_id = ${u.id}`)
       .then((r) => r.rows);
-    expect(String((raw as { email: string }).email)).not.toContain("school.example"); // encrypted at rest
+    expect(String((raw as { email: string }).email)).not.toContain("school.edu"); // encrypted at rest
+  });
+});
+
+describe("one open checkout at a time", () => {
+  it("refuses a second checkout in a row without calling Stripe, and a failed start gives the slot back", async () => {
+    const stripe = fakeStripe();
+    const u = await as("working");
+    await startPlanCheckout(getDb(), u, "standard_openai", { cfg: CFG, fetchImpl: stripe.fetchImpl });
+    await expect(startPlanCheckout(getDb(), u, "standard_openai", { cfg: CFG, fetchImpl: stripe.fetchImpl })).rejects.toMatchObject({ status: 429 });
+    expect(stripe.calls).toHaveLength(1);
+    const v = await as("working");
+    const broken = (async () => new Response("{}", { status: 500 })) as unknown as typeof fetch;
+    await expect(startPlanCheckout(getDb(), v, "standard_openai", { cfg: CFG, fetchImpl: broken })).rejects.toMatchObject({ status: 502 });
+    await startPlanCheckout(getDb(), v, "standard_openai", { cfg: CFG, fetchImpl: stripe.fetchImpl });
+    expect(stripe.calls).toHaveLength(2);
+  });
+});
+
+describe("the restore after a failed student checkout", () => {
+  it("frees only the confirmation it spent, never a newer one", async () => {
+    const u = await as("student");
+    const db = getDb();
+    const t1 = new Date(Date.now() - 60_000);
+    const row = { userId: u.id, email: "s@school.edu", codeHash: "", expiresAt: new Date(Date.now() + 1e6) };
+    await db.insert(studentVerifications).values({ ...row, verifiedAt: t1 });
+    // while checkout A is at Stripe, a second confirmation arrives and a second checkout spends it
+    const t2 = new Date();
+    const failing = (async () => {
+      await db
+        .update(studentVerifications)
+        .set({ verifiedAt: t2, usedAt: new Date(t2.getTime() + 5) })
+        .where(eq(studentVerifications.userId, u.id));
+      return new Response("{}", { status: 500 });
+    }) as unknown as typeof fetch;
+    await expect(startPlanCheckout(db, u, "student_openai", { cfg: CFG, fetchImpl: failing })).rejects.toMatchObject({ status: 502 });
+    const [after] = await db.select().from(studentVerifications).where(eq(studentVerifications.userId, u.id));
+    expect(after.usedAt).not.toBeNull();
+    expect(after.verifiedAt?.getTime()).toBe(t2.getTime());
+  });
+});
+
+describe("only a school address gets a code", () => {
+  it("refuses gmail, lookalikes and spaces before any send, and accepts the school list", async () => {
+    const mail = { config: { apiKey: "k", from: "a@b.test" } as never };
+    const u = await as("student");
+    const sent: string[] = [];
+    const send = (async (_c: unknown, m: { to: string }) => (sent.push(m.to), { id: "em" })) as never;
+    const stamp = `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
+    for (const bad of ["kid@gmail.com", "kid@school.edu.evil.com", "kid @school.edu"])
+      expect(await sendStudentCode(getDb(), u.id, bad, { ...mail, send })).toMatchObject({ ok: false });
+    expect(sent).toHaveLength(0);
+    expect(await sendStudentCode(getDb(), u.id, "kid@gmail.com", { ...mail, send })).toEqual({ ok: false, reason: "not_school" });
+    for (const good of ["mit.edu", "unsw.edu.au", "ox.ac.uk", "mcgill.ca"].map((d) => `a${stamp}@${d}`)) {
+      const v = await as("student");
+      expect(await sendStudentCode(getDb(), v.id, good, { ...mail, send })).toMatchObject({ ok: true });
+    }
+    expect(sent).toEqual(["mit.edu", "unsw.edu.au", "ox.ac.uk", "mcgill.ca"].map((d) => `a${stamp}@${d}`));
+  });
+});
+
+describe("student code email limits", () => {
+  it("refuses the fourth send to one address in a day, across accounts, without calling the provider", async () => {
+    const mail = { config: { apiKey: "k", from: "a@b.test" } as never };
+    let calls = 0;
+    const send = (async () => (calls++, { id: "em" })) as never;
+    const address = `Flood${Date.now()}${Math.floor(Math.random() * 1e6)}@School.edu`;
+    for (let i = 0; i < 3; i++) {
+      const u = await as("student");
+      expect(await sendStudentCode(getDb(), u.id, address, { ...mail, send })).toMatchObject({ ok: true });
+    }
+    const fourth = await as("student");
+    expect(await sendStudentCode(getDb(), fourth.id, address.toLowerCase(), { ...mail, send })).toEqual({ ok: false, reason: "too_many" });
+    expect(calls).toBe(3);
+  });
+  it("refuses a send over the per-network limit", async () => {
+    const mail = { config: { apiKey: "k", from: "a@b.test" } as never };
+    const ip = `203.0.113.${Math.floor(Math.random() * 200)}-${Date.now()}`;
+    let calls = 0;
+    const send = (async () => (calls++, { id: "em" })) as never;
+    let last: unknown;
+    for (let i = 0; i < 31; i++) {
+      const u = await as("student");
+      last = await sendStudentCode(getDb(), u.id, `n${i}-${Date.now()}@school.edu`, { ...mail, send, ip });
+    }
+    expect(last).toEqual({ ok: false, reason: "too_many" });
+    expect(calls).toBe(30);
+  });
+});
+
+describe("account confirmation code limits", () => {
+  it("refuses the fourth send to one address in a day without calling the provider", async () => {
+    const mail = { config: { apiKey: "k", from: "a@b.test" } as never };
+    let calls = 0;
+    const send = (async () => (calls++, { id: "em" })) as never;
+    const u = await as("student");
+    const results = [];
+    for (let i = 0; i < 4; i++) {
+      // a different hour's allowance each time is not needed: the address limit is the day's 3, the person's hourly limit is 3 too
+      results.push(await sendConfirmCode(getDb(), u.id, { ...mail, send }));
+    }
+    expect(results.slice(0, 3).every((r) => r.ok)).toBe(true);
+    expect(results[3]).toEqual({ ok: false, reason: "too_many" });
+    expect(calls).toBe(3);
   });
 });
 

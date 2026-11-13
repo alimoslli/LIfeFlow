@@ -3,6 +3,7 @@ import { pool, signUp } from "./helpers";
 import path from "node:path";
 
 const ON = process.env.E2E_PLANS === "on";
+const LEGACY = process.env.E2E_PLANS === "legacy";
 const SHOTS = process.env.E2E_PLANS_SHOTS; // a folder: pictures for the owner, made only in a test environment
 
 async function as(page: import("@playwright/test").Page, stage: "student" | "working") {
@@ -11,7 +12,7 @@ async function as(page: import("@playwright/test").Page, stage: "student" | "wor
 }
 
 test.describe("plans: switch off (the default)", () => {
-  test.skip(ON, "the switch is on in this run");
+  test.skip(ON || LEGACY, "the switch is on, or the old single price is set, in this run");
 
   test("no plan page, no price and no Plan door anywhere", async ({ page }) => {
     await signUp(page);
@@ -36,6 +37,9 @@ test.describe("plans: switch on", () => {
     await expect(options).not.toContainText("$14.99");
     // the student price asks for a student email first: no Choose button until a code is confirmed
     await expect(page.getByTestId("student-verify")).toBeVisible();
+    await expect(page.getByTestId("free-card")).toContainText("Everything you add yourself");
+    await expect(page.getByTestId("free-card")).not.toContainText(/Bank|voice|Gmail|Canvas|documents/i);
+    await expect(page.getByTestId("features-student")).toContainText("Bank and card sync");
     await expect(page.getByRole("button", { name: /^Choose/ })).toHaveCount(0);
     await expect(page.locator("body")).toContainText("15 messages with your skyling a day");
     await expect(page.locator("body")).not.toContainText(/assistant|companion|jarvis/i);
@@ -48,6 +52,22 @@ test.describe("plans: switch on", () => {
     await page.goto("/settings/plan");
     await expect(page.getByTestId("plan-options")).toContainText("$14.99 a month");
     await expect(page.getByTestId("student-verify")).toHaveCount(0);
+    await expect(page.getByTestId("features-standard")).toContainText("Talk to your skyling by voice");
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `standard-${test.info().project.name}.png`), fullPage: true });
+  });
+});
+
+test.describe("plans: the old single price, switch off", () => {
+  test.skip(!LEGACY, "run with E2E_PLANS=legacy");
+
+  test("the plan page still offers the old upgrade, and no plan prices", async ({ page }) => {
+    await signUp(page);
+    const res = await page.goto("/settings/plan");
+    expect(res?.status()).toBe(200);
+    await expect(page.getByRole("button", { name: "Upgrade to Pro" })).toBeVisible();
+    await expect(page.getByTestId("plan-options")).toHaveCount(0);
+    await expect(page.locator("body")).not.toContainText(/\$\d+\.\d\d a month/);
+    await page.goto("/settings");
+    await expect(page.getByRole("link", { name: /^Plan$/ })).toHaveCount(1);
   });
 });

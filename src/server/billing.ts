@@ -33,7 +33,8 @@ export function plansBase(env: Env = process.env): BillingConfig | null {
   const priceId = (env.STRIPE_PRICE_STUDENT_OPENAI || env.STRIPE_PRICE_STANDARD_OPENAI || "").trim();
   const appUrl = env.APP_URL?.trim().replace(/\/$/, "");
   if (!secretKey || !webhookSecret || !priceId || !appUrl || !TEST_KEY.test(secretKey)) return null;
-  const production = env.VERCEL_ENV === "production" || env.NODE_ENV === "production";
+  // Previews share the production database, so any Vercel environment except development counts as production here.
+  const production = (!!env.VERCEL_ENV && env.VERCEL_ENV !== "development") || env.NODE_ENV === "production";
   if (production && env.PLANS_ALLOW_TEST_KEYS_IN_PRODUCTION !== "yes") return null;
   return { secretKey, webhookSecret, priceId, appUrl };
 }
@@ -41,14 +42,18 @@ export function plansBase(env: Env = process.env): BillingConfig | null {
 /** The one question: is the paywall live? Switch on and the plans' Stripe setup is good. Pages, the door and the lock all ask this. */
 export const paywallActive = (env: Env = process.env) => plansBase(env) !== null;
 
-/** Stripe is set up: the old single-price setup (STRIPE_PRICE_ID, as before) or the plans' setup while the paywall is live. */
-export function billingConfig(env: Env = process.env): BillingConfig | null {
+/** The old single-price setup alone (STRIPE_PRICE_ID, as before the plans). Its upgrade page stays reachable whatever the plans switch says. */
+export function legacyBilling(env: Env = process.env): BillingConfig | null {
   const secretKey = env.STRIPE_SECRET_KEY?.trim();
   const webhookSecret = env.STRIPE_WEBHOOK_SECRET?.trim();
   const priceId = env.STRIPE_PRICE_ID?.trim();
   const appUrl = env.APP_URL?.trim().replace(/\/$/, "");
-  if (secretKey && webhookSecret && priceId && appUrl) return { secretKey, webhookSecret, priceId, appUrl };
-  return plansBase(env);
+  return secretKey && webhookSecret && priceId && appUrl ? { secretKey, webhookSecret, priceId, appUrl } : null;
+}
+
+/** Stripe is set up: the old single-price setup (STRIPE_PRICE_ID, as before) or the plans' setup while the paywall is live. */
+export function billingConfig(env: Env = process.env): BillingConfig | null {
+  return legacyBilling(env) ?? plansBase(env);
 }
 
 export const FREE_JARVIS_PER_DAY = 15;

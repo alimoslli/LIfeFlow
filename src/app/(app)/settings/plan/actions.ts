@@ -1,8 +1,8 @@
 "use server";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { requireUser } from "@/server/auth/current-user";
-import { billingConfig, portalUrl } from "@/server/billing";
+import { clientIp, requireUser } from "@/server/auth/current-user";
+import { billingConfig, checkoutUrl, legacyBilling, portalUrl } from "@/server/billing";
 import { getDb } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 import { HttpError } from "@/server/http";
@@ -27,7 +27,7 @@ export async function choosePlanAction(formData: FormData) {
 export async function sendStudentCodeAction(formData: FormData) {
   const u = await requireUser();
   if (!paywallActive() || audienceFor(u) !== "student") redirect("/settings");
-  const r = await sendStudentCode(getDb(), u.id, String(formData.get("email") ?? "").slice(0, 300));
+  const r = await sendStudentCode(getDb(), u.id, String(formData.get("email") ?? "").slice(0, 300), { ip: await clientIp() });
   redirect(`/settings/plan?student=${r.ok ? "sent" : r.reason}`);
 }
 
@@ -37,6 +37,15 @@ export async function confirmStudentCodeAction(formData: FormData) {
   if (!paywallActive() || audienceFor(u) !== "student") redirect("/settings");
   const r = await confirmStudentCode(getDb(), u.id, String(formData.get("code") ?? "").slice(0, 20));
   redirect(`/settings/plan?student=${r.ok ? "verified" : r.reason}`);
+}
+
+/** The old single-price upgrade, kept for a setup that only has STRIPE_PRICE_ID (it works whatever the plans switch says). */
+export async function upgradeAction() {
+  const cfg = legacyBilling();
+  const u = await requireUser();
+  if (!cfg) redirect("/settings/plan");
+  const [row] = await getDb().select({ stripeCustomerId: users.stripeCustomerId }).from(users).where(eq(users.id, u.id));
+  redirect(await checkoutUrl(cfg, { id: u.id, email: u.email, stripeCustomerId: row?.stripeCustomerId ?? null }));
 }
 
 export async function manageBillingAction() {

@@ -1,6 +1,6 @@
 "use server";
 
-import { getAccountUser } from "@/server/auth/current-user";
+import { clientIp, getAccountUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
 import { confirmEmailCode, sendConfirmCode } from "@/server/services/email-confirm";
 import { recordError } from "@/server/services/error-reports";
@@ -13,7 +13,7 @@ export async function sendEmailCode(_prev: ConfirmState, _fd?: FormData): Promis
   const user = await getAccountUser();
   if (!user) return { error: "Please sign in again.", at: Date.now() };
   const db = getDb();
-  const r = await sendConfirmCode(db, user.id);
+  const r = await sendConfirmCode(db, user.id, { ip: await clientIp() });
   if (r.ok) return { sentTo: maskEmail(user.email), at: Date.now() };
   if (r.reason === "already") return { confirmed: true, at: Date.now() };
   if (r.reason === "unavailable") return { error: "Email codes aren't available yet. Please try again later.", at: Date.now() };

@@ -1,8 +1,9 @@
 import type { SessionUser } from "./auth/sessions";
-import { and, eq, gt, isNotNull, isNull } from "drizzle-orm";
+import { and, eq, gt, isNotNull, isNull, sql } from "drizzle-orm";
+import { rateLimit } from "./rate-limit";
 import { checkoutUrl, paywallActive, plansBase, plansEnabled, type BillingConfig } from "./billing";
 import type { Database } from "./db/client";
-import { studentVerifications, users } from "./db/schema";
+import { rateLimitBuckets, studentVerifications, users } from "./db/schema";
 import { STUDENT_VERIFIED_MS } from "./services/email-confirm";
 import { HttpError } from "./http";
 
@@ -112,7 +113,39 @@ export async function startPlanCheckout(
   const priceId = priceIdFor(cfg, audienceFor(user), key);
   if (!priceId) throw new HttpError(400, "That plan isn't available.");
   const customer = { id: user.id, email: user.email, stripeCustomerId: row?.stripeCustomerId ?? null };
-  if (!key.startsWith("student_")) return checkoutUrl(cfg, customer, opts.fetchImpl, priceId);
+  // One open checkout per person: a second one within 30 minutes is refused (an unpaid session is still open at Stripe, and two paid
+  // ones would be two subscriptions). A checkout that fails to start gives its slot back.
+  const slot = `plan-checkout:${user.id}`;
+  if (!(await rateLimit(db, slot, 1, CHECKOUT_OPEN_SECONDS)).allowed) throw new HttpError(429, CHECKOUT_ALREADY_OPEN);
+  try {
+    if (!key.startsWith("student_")) return await checkoutUrl(cfg, customer, opts.fetchImpl, priceId);
+    return await studentCheckout(db, cfg, customer, user.id, priceId, opts.fetchImpl);
+  } catch (e) {
+    await releaseCheckoutSlot(db, slot);
+    throw e;
+  }
+}
+
+const CHECKOUT_OPEN_SECONDS = 30 * 60;
+export const CHECKOUT_ALREADY_OPEN = "A checkout is already open. Finish it, or try again in a few minutes.";
+
+async function releaseCheckoutSlot(db: Database, key: string) {
+  const windowMs = CHECKOUT_OPEN_SECONDS * 1000;
+  const windowStart = new Date(Math.floor(Date.now() / windowMs) * windowMs);
+  await db
+    .update(rateLimitBuckets)
+    .set({ count: sql`greatest(${rateLimitBuckets.count} - 1, 0)` })
+    .where(and(eq(rateLimitBuckets.key, key), eq(rateLimitBuckets.windowStart, windowStart)));
+}
+
+async function studentCheckout(
+  db: Database,
+  cfg: PlansConfig,
+  customer: { id: string; email: string; stripeCustomerId: string | null },
+  userId: string,
+  priceId: string,
+  fetchImpl?: typeof fetch,
+) {
   // The student price needs a student address confirmed with a code, spent by this one checkout (so each student payment asks for a
   // fresh code). Stripe's automatic renewals don't ask again: no person is paying then, and the plan page says so.
   const now = new Date();
@@ -121,7 +154,7 @@ export async function startPlanCheckout(
     .set({ usedAt: now })
     .where(
       and(
-        eq(studentVerifications.userId, user.id),
+        eq(studentVerifications.userId, userId),
         isNotNull(studentVerifications.verifiedAt),
         isNull(studentVerifications.usedAt),
         gt(studentVerifications.verifiedAt, new Date(now.getTime() - STUDENT_VERIFIED_MS)),
@@ -132,13 +165,17 @@ export async function startPlanCheckout(
   try {
     // The confirmation's date travels with the checkout, so the payment is bound to the code that allowed it (never the address).
     const stamp = claimed.verifiedAt!.toISOString();
-    return await checkoutUrl(cfg, customer, opts.fetchImpl, priceId, {
+    return await checkoutUrl(cfg, customer, fetchImpl, priceId, {
       "metadata[student_verified_at]": stamp,
       "subscription_data[metadata][student_verified_at]": stamp,
     });
   } catch (e) {
-    // Nothing was started, so the confirmed code is not used up.
-    await db.update(studentVerifications).set({ usedAt: null }).where(eq(studentVerifications.userId, user.id));
+    // Nothing was started, so the confirmation this checkout spent is not used up. Only that one: a newer confirmation (another
+    // checkout's) has a different date and stays spent.
+    await db
+      .update(studentVerifications)
+      .set({ usedAt: null })
+      .where(and(eq(studentVerifications.userId, userId), eq(studentVerifications.verifiedAt, claimed.verifiedAt!), eq(studentVerifications.usedAt, now)));
     throw e;
   }
 }

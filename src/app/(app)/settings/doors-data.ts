@@ -1,3 +1,4 @@
+import { legacyBilling } from "@/server/billing";
 import { paywallActive } from "@/server/plans";
 import { assistantProfile, nameAtStart } from "@/lib/assistant";
 import { adminFor } from "@/server/auth/admin";
@@ -34,7 +35,7 @@ export async function settingsDoors(): Promise<SettingsDoors> {
     { href: "/jarvis/memory", icon: "idea", label: `What ${d.assistant} knows`, detail: "See it, fix it, forget it" },
     { href: "/settings/integrations", icon: "plug", label: "Connected", detail: d.connected ? `${d.connected} connected` : "Nothing yet" },
     { href: "/settings/security", icon: "lock", label: "Sign-in and locks", detail: "Face ID, passwords, two-step" },
-    ...(paywallActive() ? [{ href: "/settings/plan", icon: "star", label: "Plan" } satisfies Door] : []),
+    ...(paywallActive() || legacyBilling() ? [{ href: "/settings/plan", icon: "star", label: "Plan" } satisfies Door] : []),
     ...(smsConfig() ? [{ href: "/settings/text", icon: "chat", label: `Text ${d.assistant}` } satisfies Door] : []),
     { href: "/settings/data", icon: "shield", label: "Privacy and your data", detail: "Download, bring back or delete" },
     { href: "/settings/invite", icon: "gift", label: "Invite and feedback", detail: "Share your link, or tell us what to fix" },
