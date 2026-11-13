@@ -7,6 +7,7 @@ html,body{margin:0;background:#000}canvas{display:block}
 </style></head>
 <body><canvas id="c" width="2400" height="700"></canvas>
 <script src="lf2.js"></script>
+<script src="cloud.js"></script>
 <script>
 // A LifeFlow billboard (Ali, 2026-11-13): the sky of this moment, whoever's up peeking over the horizon, drawn by the app's own
 // code (skyAt, darkness, skylingAt, drawCompanion), the brand's horizon line, and the words in highlight boxes.
@@ -28,11 +29,28 @@ function gradText(text, x, y, size, c1, c2, font = "Fraunces", weight = 600, day
   g.save(); g.shadowColor = day ? "rgba(255,255,255,0.55)" : "rgba(5,12,35,0.55)"; g.shadowBlur = 24; g.shadowOffsetY = day ? 0 : 4; g.fillStyle = gr; g.fillText(text, x, y); g.restore();
   return w;
 }
+const CLOUDS = [0, 1, 2].map((i) => {
+  const st = window.LFC.cloudStyle(i), [T, R, B, Lf] = st["--cloud-slice"].split(" ").map(Number);
+  const load = (u) => new Promise((res) => { const im = new Image(); im.onload = () => { const c = document.createElement("canvas"); c.width = 48; c.height = 21; c.getContext("2d").drawImage(im, 0, 0); res(c); }; im.src = u.slice(5, -2); });
+  return { T, R, B, L: Lf, day: load(st["--cloud-day"]), night: load(st["--cloud-night"]) };
+});
+let CLOUD_TILES = null;
+const cloudsReady = Promise.all(CLOUDS.map(async (c) => ({ ...c, day: await c.day, night: await c.night }))).then((t) => (CLOUD_TILES = t));
+function pixelCloud(i, x, y, cw, ch, S, night) {
+  const c = CLOUD_TILES[i], t = night ? c.night : c.day, TW = 48, TH = 21;
+  const sx = [0, c.L, TW - c.R, TW], sy = [0, c.T, TH - c.B, TH];
+  const dx = [x, x + c.L * S, x + c.L * S + cw, x + c.L * S + cw + c.R * S], dy = [y, y + c.T * S, y + c.T * S + ch, y + c.T * S + ch + c.B * S];
+  g.save(); g.imageSmoothingEnabled = false;
+  for (let r = 0; r < 3; r++) for (let q = 0; q < 3; q++)
+    g.drawImage(t, sx[q], sy[r], sx[q + 1] - sx[q], sy[r + 1] - sy[r], Math.round(dx[q]), Math.round(dy[r]), Math.round(dx[q + 1]) - Math.round(dx[q]), Math.round(dy[r + 1]) - Math.round(dy[r]));
+  g.restore();
+  return { x: dx[1], y: dy[1], w: cw, h: ch, right: dx[3], bottom: dy[3] };
+}
 function draw(minute, { t = 0, up = 1 } = {}) {
   const [top, mid, low] = LF.skyAt(minute, RISE, SET), dark = LF.darkness(minute, RISE, SET);
   const m = ((minute % 1440) + 1440) % 1440, night = !(m >= RISE && m < SET);
   const key = LF.skylingAt(m, RISE, SET), info = LF.COMPANIONS.find((c) => c.key === key);
-  const CX = 1430, lineY = HY;
+  const CX = 1290, lineY = HY;
   // the sky: one smooth gradient, a soft band of light along the horizon
   const sky = g.createLinearGradient(0, 0, 0, HY); sky.addColorStop(0, rgb(top)); sky.addColorStop(0.6, rgb(mid)); sky.addColorStop(1, rgb(low));
   g.fillStyle = sky; g.fillRect(0, 0, W, HY);
@@ -54,7 +72,7 @@ function draw(minute, { t = 0, up = 1 } = {}) {
   g.fillStyle = water; g.fillRect(0, HY, W, H - HY);
   const floats = key === "moon" && night;
   LF.drawCompanion(sprite, info, "idle", 0, night, false, floats, floats);
-  const FP = floats ? 26 : 34, sy = floats ? lineY - 40 - 21 * FP : lineY - 15 * FP + 6, rise = (1 - up) * (floats ? 22 * FP : 15 * FP);
+  const FP = floats ? 24 : 24, sy = floats ? lineY - 40 - 21 * FP : lineY - 15 * FP + 6, rise = (1 - up) * (floats ? 22 * FP : 15 * FP);
   // reflection: soft, flipped, fading down into the water
   g.save(); g.beginPath(); g.rect(0, HY, W, H - HY); g.clip(); g.filter = "blur(7px)"; g.globalAlpha = 0.0; g.imageSmoothingEnabled = false;
   g.translate(0, 2 * lineY); g.scale(1, -1); g.drawImage(sprite, Math.round(CX - 12 * FP), Math.round(sy + rise), 24 * FP, 24 * FP); g.restore();
@@ -66,18 +84,19 @@ function draw(minute, { t = 0, up = 1 } = {}) {
   g.drawImage(sprite, Math.round(CX - 12 * FP), Math.round(sy + rise), 24 * FP, 24 * FP); g.restore();
   // the glowing glass horizon
   glowLine(lineY, "rgba(220,236,255,0.95)", "rgba(120,180,255,0.9)");
-  // the words: smooth serif, the second half in warm gold
-  const day = dark < 0.45; // by day the words turn deep navy and amber so they read on a bright sky
-  gradText("Stop drowning in", 130, 225, 108, day ? "#142451" : "#FFFFFF", day ? "#1E3A70" : "#E8F0FF", "Fraunces", 700, day);
-  gradText("deadlines, shifts", 130, 345, 108, day ? "#B4521A" : "#FFE6A8", day ? "#D9772B" : "#FFC266", "Fraunces", 700, day);
-  gradText("and bills.", 130, 465, 108, day ? "#B4521A" : "#FFE6A8", day ? "#D9772B" : "#FFC266", "Fraunces", 700, day);
-  // the brand on frosted glass
-  const bx = 1860, by = 175, bw = 450, bh = 290;
-  g.save(); g.fillStyle = dark < 0.45 ? "rgba(20,36,81,0.62)" : "rgba(255,255,255,0.12)"; g.strokeStyle = "rgba(255,255,255,0.28)"; g.lineWidth = 2;
-  g.shadowColor = "rgba(5,12,35,0.35)"; g.shadowBlur = 40; g.beginPath(); g.roundRect(bx, by, bw, bh, 48); g.fill(); g.shadowBlur = 0; g.stroke(); g.restore();
-  g.save(); g.beginPath(); g.roundRect(bx + 42, by + 48, 112, 112, 26); g.clip(); g.drawImage(icon, bx + 42, by + 48, 112, 112); g.restore();
-  g.font = "600 82px Fraunces"; g.fillStyle = "#F7F9FF"; g.fillText("LifeFlow", bx + 176, by + 132);
-  g.font = "500 40px Geist"; g.fillStyle = "rgba(240,245,255,0.92)"; g.fillText("Let’s clear your sky.", bx + 46, by + 238);
+  // the words: smooth serif, the second half warm
+  const day = dark < 0.45;
+  gradText("Stop drowning in", 120, 205, 96, day ? "#142451" : "#FFFFFF", day ? "#1E3A70" : "#E8F0FF", "Fraunces", 700, day);
+  gradText("deadlines, shifts", 120, 312, 96, day ? "#B4521A" : "#FFE6A8", day ? "#D9772B" : "#FFC266", "Fraunces", 700, day);
+  gradText("and bills.", 120, 419, 96, day ? "#B4521A" : "#FFE6A8", day ? "#D9772B" : "#FFC266", "Fraunces", 700, day);
+  g.font = "600 46px Geist"; g.fillStyle = day ? "#142451" : "#EEF3FF"; g.fillText("Let’s clear your sky.", 124, 520);
+  // the brand in one of the app's own pixel clouds, floating over the skyling
+  const S = 8, cw = 312, ch = 66;
+  const box = pixelCloud(0, 962, 30, cw, ch, S, !day);
+  g.save(); g.beginPath(); g.roundRect(box.x + 2, box.y + 3, 60, 60, 14); g.clip(); g.drawImage(icon, box.x + 2, box.y + 3, 60, 60); g.restore();
+  g.font = "700 58px Fraunces"; g.fillStyle = "#142451"; g.fillText("LifeFlow", box.x + 78, box.y + 53);
+  // a little plain cloud drifting on the far side
+  pixelCloud(2, 1930, 120, 90, 6, 8, !day);
   return key;
 }
 // the digital version: the sky flows through the day and whoever's up pops over the horizon (the logo's timing)
@@ -99,5 +118,5 @@ window.drawT = (t) => {
   return draw(Math.max(minuteAt(t), CAST[i][1] - 40), { t, up: Math.max(0, up) });
 };
 window.draw = draw;
-window.ready = Promise.all([document.fonts.load("500 40px Geist"), document.fonts.load("600 84px Fraunces"), new Promise((r) => (icon.complete ? r() : (icon.onload = r)))]);
+window.ready = Promise.all([cloudsReady, document.fonts.load("500 40px Geist"), document.fonts.load("600 84px Fraunces"), new Promise((r) => (icon.complete ? r() : (icon.onload = r)))]);
 </script></body></html>

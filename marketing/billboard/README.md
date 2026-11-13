@@ -20,3 +20,8 @@ real light measured on the old billboard: `composite2.py` fits a smooth floodlig
 the pixels that were plain white vinyl, multiplies in linear light, adds grain of the photo's own strength, and finishes
 with the phone's light sharpening and JPEG. The design is the bright daytime one with Ray (a light printed board reads as
 real at night, like the original). `composite2_seq.py` does the digital loop the same way.
+
+## v4 (2026-11-13): one picture, the brand in a pixel cloud
+Ali: "one good picture", the box on the right becomes a cloud "pixelated like the app". The cloud is the app's own idea
+cloud (`src/components/skylings/cloud-tile.ts`, bundled by `cloud-entry.ts` into `cloud.js` with esbuild), drawn crisp with
+the same nine-slice the app uses. Everything sits in the left 70% so it all shows in the close-up photo.
