@@ -117,3 +117,9 @@ Build: `fire_render2.py --segs wheel,arc_1,ask_tyler,health_1` (and `food,health
 | "with the ending you changed too much and now there's too much different color" | the puff over his mouth and its sparks are white and gold, no gold flash: a soft dissolve into the logo with the launch title style, "Get on the waitlist." ("waitlist." in gold) and lifeflowweb.com |
 
 Build: `fire_render2.py --range 0 570 v5r0.mp4` (and 570..1140, 1140..1708), `fire_end.py`, `fire_intro.py`, `fire_mix5.py`, `assemble5.py`.
+
+## v6 (Ali: "have the moon's notification be a small cloud saying something like Hey Ty, try out this high protein recipe after work today!")
+Dreamy (the moon) sends Tyler a small cloud in the app's own cloud style (the kit's `make_cloud` tiles, grown to two lines by
+`cloud_lines`): "Hey Ty, try out this high protein / recipe after work today!", after a little "!" over Dreamy. The owner's
+words; note that today the skyling suggests recipes when asked in chat, it doesn't send recipe ideas on its own yet.
+Only those seconds were re-rendered (`--range 1384 1468 v6patch_food.mp4`) and `assemble5.py` splices them in (`PATCHES`).

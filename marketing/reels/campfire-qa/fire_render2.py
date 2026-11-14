@@ -379,6 +379,30 @@ def notif_card():
     d.text((x0, 104), "Want to see where it went?", font=F_NB, fill=(70, 82, 108, 255))
     _card = im; return im
 
+import make_cloud as MC                                             # the kit's cloud (the app's idea-cloud tiles)
+_cl2 = {}
+def cloud_lines(lines, zoom=2.0, shape=2, night=True):
+    """the app's pixel cloud (kit make_cloud.py tiles), grown to hold more than one line; navy words, centred"""
+    key = (tuple(lines), zoom, shape, night)
+    if key in _cl2: return _cl2[key]
+    t_ = MC.TILES[f"tile-{shape}"]; T_, R_, B_, L_ = t_["top"], t_["right"], t_["bottom"], t_["left"]
+    tile = Image.open(os.path.join(MC.HERE, f"tile-{shape}-{'night' if night else 'day'}.png")).convert("RGBA")
+    font = ImageFont.truetype(os.path.join(MC.HERE, "Geist-SemiBold.ttf"), round(13 * zoom)); LH = 17
+    tw = max(font.getlength(l) for l in lines) / zoom; Wc = max(tw + 28, 2 * (L_ + R_)); Hc = 2 * T_ + 24 + LH * (len(lines) - 1) + 2 * B_
+    ow, oh = round(Wc * zoom), round(Hc * zoom); cl = Image.new("RGBA", (ow, oh), (0, 0, 0, 0))
+    sx = [0, L_, 48 - R_, 48]; sy = [0, T_, 21 - B_, 21]
+    dx = [0, round(2 * L_ * zoom), ow - round(2 * R_ * zoom), ow]; dy = [0, round(2 * T_ * zoom), oh - round(2 * B_ * zoom), oh]
+    for r in range(3):
+        for c in range(3):
+            w, h = dx[c + 1] - dx[c], dy[r + 1] - dy[r]
+            if w > 0 and h > 0: cl.alpha_composite(tile.crop((sx[c], sy[r], sx[c + 1], sy[r + 1])).resize((w, h), Image.NEAREST), (dx[c], dy[r]))
+    pad = round(6 * zoom); img = Image.new("RGBA", (ow, oh + pad), (0, 0, 0, 0))
+    sh_ = Image.new("RGBA", cl.size, (19, 33, 61, 0)); sh_.putalpha(cl.getchannel("A").point(lambda a: round(a * 0.12)))
+    img.alpha_composite(sh_, (0, round(4 * zoom))); img.alpha_composite(cl, (0, 0)); d = ImageDraw.Draw(img)
+    y0 = (oh - (len(lines) - 1) * LH * zoom) / 2 - 2 * zoom
+    for j, l in enumerate(lines): d.text((ow / 2, y0 + j * LH * zoom), l, font=font, fill=(19, 33, 61, 255), anchor="mm")
+    _cl2[key] = img; return img
+
 def icon_bubble(icons, px=5):
     """the app's pixel speech bubble holding only pictures (the app's 12 x 12 icons), the tail at the bottom right"""
     w = 4 + sum(i.shape[1] for i in icons) + 3 * (len(icons) - 1) + 4; h = 18; g = np.zeros((h + 4, w, 4), np.uint8)
@@ -666,9 +690,10 @@ def effects(seg, arr, t, c, T, m):
                 u = (t - 6.9) / 0.3; s_ = back(u) if u < 1 else 1
                 if t > 9.1: s_ *= 1 - in3(clamp((t - 9.1) / 0.25))
                 if s_ > 0.03:
-                    b, tip = icon_bubble([ICON["house"], bowl_frame(T)], max(3, int(round(6.4 * k))))
-                    bb = b.resize((max(1, int(b.width * s_)), max(1, int(b.height * s_))), Image.NEAREST)
-                    bx = clamp(X - tip * s_, 24, W - 24 - bb.width); paste(top, bb, int(bx), int(Y - 26 * px - bb.height - 4))
+                    b = cloud_lines(["Hey Ty, try out this high protein", "recipe after work today!"], 2.3)      # the owner's words (v6)
+                    bb = b.resize((max(1, int(b.width * s_)), max(1, int(b.height * s_))), Image.LANCZOS)
+                    fy = 6 * math.sin(T * 2.2); bx = clamp(X - bb.width * 0.62, 24, W - 24 - bb.width)
+                    paste(top, bb, int(bx), int(Y - 26 * px - bb.height - 14 + fy))
 
     if tag == "health":
         # "connect all your health data": a heartbeat drawn in light across the sky; the heart appears on the middle beat
