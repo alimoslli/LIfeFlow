@@ -28,6 +28,7 @@ vi.mock("next/server", async (orig) => ({ ...(await orig<typeof import("next/ser
 
 const { login, verifyLogin } = await import("@/app/(auth)/actions");
 const { DEVICE_COOKIE, rememberDevice } = await import("@/server/auth/remembered-devices");
+const { adminFor } = await import("@/server/auth/admin");
 const { CHALLENGE_COOKIE, beginTotpSetup, confirmTotpSetup, issueLoginEmailCode } = await import("@/server/auth/two-factor");
 const { closeDb, getDb } = await import("@/server/db/client");
 const { makeUser } = await import("../helpers");
@@ -91,6 +92,7 @@ describe("sign-in actions: remember this phone after an emailed code (owner, 202
   it("the admin account: an emailed code never remembers the phone, and a remembered phone never skips the code", async () => {
     const user = await twoStepUser("Ada Admin");
     process.env.ADMIN_EMAILS = user.email;
+    expect(await adminFor(db, user.id)).not.toBeNull(); // really the admin: listed, two-step on
     expect(await signInWithEmailCode(user.email)).toBe("/");
     expect(h.jar.get(DEVICE_COOKIE)).toBeUndefined();
     // even with a valid remembered-phone cookie for this account, the password step still asks for the code

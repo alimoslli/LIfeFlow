@@ -235,13 +235,17 @@ export async function changePassword(db: Database, userId: string, current: stri
   // A first password on a two-step account turns email codes off until a strong sign-in, so a stolen session plus the
   // inbox can't set a password and then reset two-step with an emailed code (security review, 2026-11-06).
   const firstPasswordOn2fa = !hasPassword(user.passwordHash) && !!user.totpEnabledAt;
-  await db
-    .update(users)
-    .set({ passwordHash: await hashPassword(next), ...(firstPasswordOn2fa ? { emailCodesBlockedAt: new Date() } : {}) })
-    .where(eq(users.id, userId));
-  await revokeRememberedDevices(db, userId);
-  // A sign-in left half done with the old password can't be finished after the change (security review, 2026-11-14, F1).
-  await db.delete(loginChallenges).where(eq(loginChallenges.userId, userId));
+  const passwordHash = await hashPassword(next);
+  // One transaction (security review, 2026-11-14): the new password, the remembered devices revoked and half-done
+  // sign-ins with the old password ended (F1) land together, or none of them does.
+  await db.transaction(async (tx) => {
+    await tx
+      .update(users)
+      .set({ passwordHash, ...(firstPasswordOn2fa ? { emailCodesBlockedAt: new Date() } : {}) })
+      .where(eq(users.id, userId));
+    await revokeRememberedDevices(tx as unknown as Database, userId);
+    await tx.delete(loginChallenges).where(eq(loginChallenges.userId, userId));
+  });
 }
 
 /** The typed confirmation every account deletion asks for (Settings and the lock screen read it the same way). */

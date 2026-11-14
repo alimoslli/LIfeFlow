@@ -62,25 +62,28 @@ export async function resetPassword(db: Database, token: string, password: strin
   if (!parsed.success) throw new ResetError(parsed.error.issues[0].message);
   const strength = checkPassword(password, [r.name, r.email]);
   if (!strength.ok) throw new ResetError(`Choose a stronger password. ${strength.message}`);
-  // Mark used first (only one request can win), then change the password.
-  const [won] = await db
-    .update(passwordResets)
-    .set({ usedAt: new Date() })
-    .where(and(eq(passwordResets.id, r.id), isNull(passwordResets.usedAt)))
-    .returning({ id: passwordResets.id });
-  if (!won) throw new ResetError("This link was already used. Ask for a new one.");
-  await db
-    .update(users)
-    .set({ passwordHash: await hashPassword(password), emailCodesBlockedAt: new Date() })
-    .where(eq(users.id, r.userId));
-  await db
-    .update(passwordResets)
-    .set({ usedAt: new Date() })
-    .where(and(eq(passwordResets.userId, r.userId), isNull(passwordResets.usedAt)));
-  await deleteUserSessions(db, r.userId);
-  await revokeRememberedDevices(db, r.userId);
-  // A sign-in left half done before the reset (its password step was the old password) can't be finished after it (F1).
-  await db.delete(loginChallenges).where(eq(loginChallenges.userId, r.userId));
+  // Hashing is slow, so it happens before the transaction, which then holds only the writes.
+  const passwordHash = await hashPassword(password);
+  // One transaction (security review, 2026-11-14): the link is used, the password changes, and every session, remembered
+  // device and half-done sign-in ends together, or nothing happens.
+  await db.transaction(async (tx) => {
+    // Mark used first (only one request can win), then change the password.
+    const [won] = await tx
+      .update(passwordResets)
+      .set({ usedAt: new Date() })
+      .where(and(eq(passwordResets.id, r.id), isNull(passwordResets.usedAt)))
+      .returning({ id: passwordResets.id });
+    if (!won) throw new ResetError("This link was already used. Ask for a new one.");
+    await tx.update(users).set({ passwordHash, emailCodesBlockedAt: new Date() }).where(eq(users.id, r.userId));
+    await tx
+      .update(passwordResets)
+      .set({ usedAt: new Date() })
+      .where(and(eq(passwordResets.userId, r.userId), isNull(passwordResets.usedAt)));
+    await deleteUserSessions(tx as unknown as Database, r.userId);
+    await revokeRememberedDevices(tx as unknown as Database, r.userId);
+    // A sign-in left half done before the reset (its password step was the old password) can't be finished after it (F1).
+    await tx.delete(loginChallenges).where(eq(loginChallenges.userId, r.userId));
+  });
   await withUser(r.userId, (s) => audit(s, "user", "auth.password_reset"), db);
   return r.userId;
 }
