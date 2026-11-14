@@ -90,3 +90,16 @@ Picture: `fire_render2.py` (imports `fire_render.py` for the decode, shots, matt
   - the v2 parts for the body;
   - `fire_intro.py`, `fire_end.py`, `fire_mix3.py`;
   - then `assemble3.py`, which joins hook + intro + body + ending in one encode and checks the frame count against `timeline3.json`.
+
+## v4 (Ali's notes on v3)
+| Note | Fix |
+|---|---|
+| "intro is too fast ... how they move" | `fire_intro.py` v2: every beat about 1.6x calmer, 5.35 s (the day rides for 2.1 s, the four land one by one, the name forms over 0.9 s and holds) |
+| "when Tyler says what his skyling suggested, show it ... from the skyling next to him as a notification" | Dreamy pings and a notification card comes out of it in the app's pixel style, on "remind me about home-cooked meals": DREAMY · NOW / "Food is running high" / "Want to see where it went?" (the app's real words for this note, `spending_pace` in `src/lib/jarvis-voice.ts`; no amounts) |
+| "the music is wrong and changed the whole vibe" | a new warm acoustic campfire track (ElevenLabs Music v2.5 via Higgsfield, 30 s, 4.36 credits, approved; `music_dl/`), its 6-bar section 3.39 to 20.65 s looped on the beat under the whole video, fading on the logo; about 8 dB under the voices, full in the intro |
+| "some of the cuts aren't right after Tyler asks what the characters are ... silenced frames" | measured: half a second of silence before "day" in his answer, and 0.46 s of dead air after "Tyler," in the next line. Both closed with a punch-in jump cut (`_split` in `fire_render2.py`); their effects keep the line's timing (`fx_tag`, `fx_t0`) |
+| "i don't like the cursive names" | the names are burned into the pixel letters by a fuse (bright head, sparks), glow, then lift off as embers (`FuseName`) |
+| "Tyler's last clip on health ... how long it is" | 10.6 s to 5.9 s: "So as of January next year, 2027, LifeFlow will actually be able to connect all your health data." (the pause after "2027," and the Apple Health half are cut); the heartbeat in light and the heart stay |
+| "my new voice ... not blending in ... maybe a bit low" | v3's echo halved its level. Now it is matched to his camera voice: a smooth EQ from the two spectra (within 9 dB), the same speech level plus 1.5 dB, two faint early reflections for the camera's distance (`match_line` in `fire_mix4.py`) |
+
+Build: `fire_render2.py --segs wheel,arc_1,ask_tyler,health_1` (and `food,health`, `tyler_name,ask_tyler_1`) renders only the changed pieces; `assemble4.py` takes the unchanged ones (clouds, question, the first part of the skylings answer, long_way) straight from the v2 render, adds hook3, the intro and end3, and checks every count against `timeline4.json`; `fire_mix4.py` is the sound. About 69.4 s.

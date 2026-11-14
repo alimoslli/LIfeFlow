@@ -38,6 +38,18 @@ SEGS[3]["shots"] = [(0, sh(AL, z=2.45)), (3.70, sh(AL, z=2.57)), (3.73, sh(TWO, 
 SEGS[10]["va"] = 10.6                                         # clip 11: sky until 13.75 s, its biggest flames at 14.2 .. 15.0 s
 VO_A, VO_B, VO_C, VO_D = dict(z=2.3, cx=1080, cy=1100), dict(z=2.42, cx=1080, cy=1010), dict(z=4.0, cx=900, cy=2625), dict(z=6.0, cx=885, cy=2575)
 WHIP0, WHIP1 = 3.2, 3.6
+# v4 (Ali: "some of the cuts aren't right ... the clip after has some silenced frames ... the health clip ... how long it is"):
+#   his skylings answer loses its half-second pause before "day" (a punch-in hides the jump), "Tyler, ... I think you should
+#   tell us" loses its 0.46 s of silence the same way, and Tyler's health line ends on "...connect all your health data"
+#   without its pause after "2027,". A piece carries fx_tag/fx_t0 so its effects continue the whole line's timing.
+def _split(tag, pieces):
+    i = next(j for j, s in enumerate(SEGS) if s["tag"] == tag); base = SEGS[i]; out, t0 = [], 0.0
+    for k, (a, b, shots) in enumerate(pieces):
+        d = dict(base); d.update(a=a, b=b, shots=shots, tag=tag if k == 0 else f"{tag}_{k}", fx_tag=tag, fx_t0=t0); out.append(d); t0 += b - a
+    SEGS[i:i + 1] = out
+_split("arc", [(1.10, 5.56, [(0, sh(WIDE, z=1.28)), (5.22, sh(WIDE, z=1.38, cy=1990))]), (5.98, 6.31, [(0, sh(WIDE, z=1.5, cx=1090, cy=2030)), (0.33, sh(WIDE, z=1.52, cx=1090, cy=2030))])])
+_split("ask_tyler", [(0.24, 0.54, [(0, sh(TWO, z=1.75)), (0.3, sh(TWO, z=1.76))]), (0.96, 5.02, [(0, sh(TWO, z=1.82, cx=1115)), (4.06, sh(TWO, z=1.96, cx=1250))])])
+_split("health", [(0.56, 3.56, [(0, sh(TY, z=2.5)), (3.0, sh(TY, z=2.6))]), (4.0, 6.88, [(0, sh(TY, z=2.7)), (2.88, sh(TY, z=2.82))])])
 o = 0
 for s in SEGS: s["out"] = o; s["nf"] = int(round((s["b"] - s["a"]) * FPS)); o += s["nf"]
 END_OUT = o - XF; N = END_OUT + END_HOLD + 1 + HOLD
@@ -309,6 +321,30 @@ DREAMY = (1712, 2600)                                             # Tyler's skyl
 def draw_skyling_px(img, a, px, X, Y, alpha=1.0, glow=None, anchor="center"):
     kk = max(1, int(round(px))); R.draw_skyling(img, a, kk, X, Y, px / kk, anchor=anchor, alpha=alpha, glow=glow)
 
+_card = None
+F_NT = ImageFont.truetype(f"{SP}/editorpack/fonts/Geist-SemiBold.ttf", 25); F_NH = ImageFont.truetype(f"{SP}/editorpack/fonts/Geist-Bold.ttf", 36)
+F_NB = ImageFont.truetype(f"{SP}/editorpack/fonts/Geist-Medium.ttf", 30)
+def notif_card():
+    """the skyling's notification, drawn in the app's pixel style (ink outline, stepped corners), with the app's real words
+    for this note (lib/jarvis-voice.ts spending_pace: headline and ask; no made-up amounts)"""
+    global _card
+    if _card is not None: return _card
+    px = 5; cw, ch = 132, 34; g = np.zeros((ch, cw, 4), np.uint8); ink = PAL["k"] + (255,); wh = (255, 252, 246, 245)
+    for y in range(ch):
+        for x in range(cw):
+            if (x in (0, cw - 1) and y in (0, 1, ch - 2, ch - 1)) or (y in (0, ch - 1) and x in (1, cw - 2)): continue
+            edge = x in (0, cw - 1) or y in (0, ch - 1) or (x in (1, cw - 2) and y in (1, ch - 2))
+            g[y, x] = ink if edge else wh
+    im = Image.fromarray(g).resize((cw * px, ch * px), Image.NEAREST)
+    sun = Image.fromarray(ICON["sun"]).resize((12 * 7, 12 * 7), Image.NEAREST)               # the app's pixel sun, on its sky tile
+    tile = Image.new("RGBA", (12 * 7 + 16, 12 * 7 + 16), (0, 0, 0, 0)); td = ImageDraw.Draw(tile)
+    td.rounded_rectangle([0, 0, tile.width - 1, tile.height - 1], 18, fill=(72, 127, 192, 255)); tile.alpha_composite(sun, (8, 8)); im.alpha_composite(tile, (22, (im.height - tile.height) // 2))
+    d = ImageDraw.Draw(im); x0 = 22 + tile.width + 22; ink3 = PAL["k"]
+    d.text((x0, 26), "DREAMY  ·  NOW", font=F_NT, fill=(120, 132, 156, 255))
+    d.text((x0, 58), "Food is running high", font=F_NH, fill=ink3 + (255,))
+    d.text((x0, 104), "Want to see where it went?", font=F_NB, fill=(70, 82, 108, 255))
+    _card = im; return im
+
 def bubble_img(icon, px):
     """the app's pixel speech bubble: ink outline, white, a tail at the bottom left, the icon inside"""
     w, h = 18, 16; g = np.zeros((h + 3, w, 4), np.uint8); ink = PAL["k"] + (255,); wh = (255, 255, 255, 255)
@@ -331,7 +367,40 @@ HOOK_Q = Embers(*(lambda tc: (tc, 30))(word_targets("?", 1530, 1818, 30)[0]), or
 HOOK_BURST = 3.12
 SHOW_LABEL = os.environ.get("CAMPFIRE_LABEL", "0") == "1"
 LABEL_CELLS = text_cells("CAMPFIRE Q&A")
-ALI = Sparkler("Ali Moslli", 150, "CEO & DEVELOPER"); TYLER = Sparkler("Tyler Kardy", 150, "CMO")
+class FuseName:
+    """the name in the pixel letters, burned in left to right by a fuse (a bright head spitting sparks), glowing, then
+    cooling and lifting off as embers; the role in small plain letters under it"""
+    def __init__(self, text, role, cs=10.5):
+        self.cells, self.wc = text_cells(text); self.role = role; self.cs = cs; r = np.random.default_rng(len(text))
+        self.ph = {c: r.uniform(0, 6.28) for c in self.cells}; self.v = {c: (r.normal(0, 1), r.uniform(0.6, 1.4)) for c in self.cells}
+    def draw(self, fx, top, X, Y, t, t0, dur=0.85, hold=1.25, k=1.0):
+        if t < t0: return
+        d = ImageDraw.Draw(fx); px = self.cs * k; x0 = X - self.wc * px / 2; y0 = Y - 3.5 * px; tf = t0 + dur + hold
+        head = t0 + dur * 1.0
+        for (q, r_) in self.cells:
+            tl = t0 + dur * q / max(1, self.wc)
+            if t < tl: continue
+            age = t - tl; h = 0.68 + 0.32 * math.exp(-age / 0.16) + 0.06 * math.sin(t * 9 + self.ph[(q, r_)])
+            x, y, a, sz = x0 + q * px, y0 + r_ * px, 1.0, px * 0.88
+            if t > tf:                                                     # it cools and lifts off as embers
+                v = t - tf - 0.25 * (q / max(1, self.wc)); vx, vs = self.v[(q, r_)]
+                if v > 0: x += 26 * vx * v * k; y -= 70 * vs * v * k; a = clamp(1 - v / 0.7); h -= 0.4 * clamp(v / 0.7); sz *= 1 - 0.5 * clamp(v / 0.7)
+            if a <= 0.01: continue
+            d.rectangle([x, y, x + sz, y + sz], fill=heat_col(h) + (int(255 * a),))
+            s2 = sz * 0.4; d.rectangle([x + sz * 0.3, y + sz * 0.3, x + sz * 0.3 + s2, y + sz * 0.3 + s2], fill=heat_col(h + 0.25) + (int(255 * a),))
+        if t < t0 + dur + 0.05:                                            # the fuse's head
+            hx = x0 + self.wc * px * clamp((t - t0) / dur); hy = Y + 2.5 * px * math.sin((t - t0) * 9)
+            g = glow_disc(int(4 * px), (255, 236, 200), 0.95); paste(fx, g, int(hx - g.width / 2), int(hy - g.height / 2))
+            rr = np.random.default_rng(int(t * 1000))
+            for _ in range(14):
+                ang = rr.uniform(0, 6.28); L = rr.uniform(0.6, 4.5) * px; x2, y2 = hx + L * math.cos(ang), hy + L * math.sin(ang) + 0.02 * L * L
+                d.line([hx + 0.3 * (x2 - hx), hy + 0.3 * (y2 - hy), x2, y2], fill=(255, 236, 190, int(rr.uniform(140, 255))), width=2)
+        if t0 + dur * 0.7 < t < tf + 0.5:                                  # the role, plain and small
+            a = clamp((t - t0 - dur * 0.7) / 0.3) * (1 - clamp((t - tf) / 0.5)); lay = ImageDraw.Draw(top)
+            sp = 4; wsum = sum(F_ROLE.getlength(ch) + sp for ch in self.role) - sp; x = X - wsum / 2; y = y0 + 7 * px + 18 + 8 * (1 - out3(a))
+            for ch in self.role:
+                lay.text((x + 2, y + 2), ch, font=F_ROLE, fill=(10, 8, 6, int(150 * a))); lay.text((x, y), ch, font=F_ROLE, fill=(255, 241, 214, int(240 * a))); x += F_ROLE.getlength(ch) + sp
+ALI = FuseName("ALI MOSLLI", "CEO & DEVELOPER"); TYLER = FuseName("TYLER KARDY", "CMO")
 WORDS = []
 for j, (txt, ic, ts, y) in enumerate([("7 CLASSES", "books", 4.55, 1255), ("WORK SHIFTS", "briefcase", 5.5, 1395), ("FINANCE", "cash", 6.6, 1535)]):
     tg, (ix, iy) = word_targets(txt, 1115, y, 12.5, ICON[ic], 11.5)
@@ -405,10 +474,10 @@ def effects(seg, arr, t, c, T, m):
                         for q, r in cells:
                             X2 = X - 2.5 * pp + q * pp; Y2 = Y + 12 * px / 2 + 14 + r * pp; d.rectangle([X2, Y2, X2 + pp - 1, Y2 + pp - 1], fill=heat_col(0.7) + (int(230 * v),))
         if t < 2.6:                                                     # Ali's name in sparkler light
-            X, Y = to_scr(c, 762, 1752); ALI.draw(fx, top, X, Y, t, 0.32, 0.95, 1.05, 5)
+            X, Y = to_scr(c, 762, 1752); ALI.draw(fx, top, X, Y, t, 0.3, 0.8, 1.05)
 
     if tag == "tyler_name":
-        X, Y = to_scr(c, 1462, 1765); TYLER.draw(fx, top, X, Y, t, 0.3, 0.95, 1.45, 7)
+        X, Y = to_scr(c, 1462, 1765); TYLER.draw(fx, top, X, Y, t, 0.3, 0.8, 1.55)
 
     if tag == "clouds":
         for wd in WORDS:
@@ -464,7 +533,7 @@ def effects(seg, arr, t, c, T, m):
         for j, (x, y, ph, br) in enumerate(STARS):                     # the stars are still out
             X, Y = to_scr(c, x, y); tw = 0.55 + 0.45 * math.sin(T * (2 + 2 * br) + ph)
             pixel_star(top, int(X), int(Y), 3 if br < 0.7 else 4, (0.35 + 0.5 * br) * tw * clamp((1.85 - t) / 0.5 + 0.3), (255, 244, 214))
-        ts = 1.95                                                       # "your skyling's": one falls like a shooting star to the rim by Tyler
+        ts = 1.53                                                       # "your skyling's": one falls like a shooting star to the rim by Tyler
         if t >= ts:
             u = clamp((t - ts) / 0.62); sx, sy = 560, 1180; ex, ey = DREAMY[0], DREAMY[1] - 95
             path = lambda uu: (sx + (ex - sx) * (in3(uu) * 0.35 + uu * 0.65), sy + (ey - sy) * (in3(uu) * 0.35 + uu * 0.65) - 120 * math.sin(math.pi * uu))
@@ -495,19 +564,29 @@ def effects(seg, arr, t, c, T, m):
             u = clamp((t - 2.95) / 2.1); x = 1440 + 520 * u + 40 * math.sin(u * 9); y = 2380 - 980 * u - 30 * math.sin(u * 14)
             X2, Y2 = to_scr(c, x, y); flap = 0.75 + 0.25 * math.cos(T * 22)
             put_icon(top, ICON["coinwings"], X2, Y2, 10 * k * (0.6 + 0.4 * out3(u * 4)), alpha=clamp(u * 6), rot=8 * math.sin(T * 6), sx=flap)
-        if tag == "food" and t >= 6.65:                                # "home-cooked meals": the bubble with the app's bowl
-            u = (t - 6.65) / 0.3; b = bubble_img(bowl_frame(T), max(2, int(round(5.8 * k))))
-            s = back(u) if u < 1 else 1
-            if t > 9.2: s *= 1 - in3(clamp((t - 9.2) / 0.25))
-            if s > 0.02:
-                bb = b.resize((max(1, int(b.width * s)), max(1, int(b.height * s))), Image.NEAREST)
-                paste(top, bb, int(X - 13 * px * 0.2 - bb.width * 0.25), int(Y - 26 * px - bb.height - 6))
+        if tag == "food" and t >= 6.7:                                # "remind me about home-cooked meals": Dreamy sends him a notification
+            ts = 6.8; u = (t - ts) / 0.42
+            if 6.7 <= t < 7.25:                                         # the ping off Dreamy
+                v = (t - 6.7) / 0.55
+                for rr_ in (0, 0.18):
+                    vv = clamp(v - rr_)
+                    if 0 < vv < 1:
+                        R_ = 30 + 160 * out3(vv); dd = ImageDraw.Draw(fx)
+                        dd.ellipse([X - R_, Y - 13 * px - R_, X + R_, Y - 13 * px + R_], outline=(255, 226, 170, int(220 * (1 - vv))), width=4)
+            if t >= ts:
+                card = notif_card(); e = out3(u) if u < 1 else 1; bk = back(u, 1.5) if u < 1 else 1
+                if t > 9.15: bk *= 1 - in3(clamp((t - 9.15) / 0.28)); e *= 1 - in3(clamp((t - 9.15) / 0.28))
+                cx_, cy_ = X - 13 * px, Y - 26 * px; tx_, ty_ = clamp(X - 250, 360, W - 360), Y - 26 * px - 125 + 6 * math.sin(T * 2.4)
+                Xc, Yc = cx_ + (tx_ - cx_) * e, cy_ + (ty_ - cy_) * e
+                if bk > 0.03:
+                    im = card.resize((max(1, int(card.width * bk * 1.12)), max(1, int(card.height * bk * 1.12))), Image.LANCZOS)
+                    paste(top, im, int(Xc - im.width / 2), int(Yc - im.height / 2))
 
     if tag == "health":
         # "connect all your health data": a heartbeat drawn in light across the sky; the heart appears on the middle beat
-        t0, dur = 4.85, 1.15
+        t0, dur = 4.3, 1.05
         if t >= t0:
-            fade = 1 - clamp((t - 6.4) / 0.6)
+            fade = 1 - clamp((t - 5.5) / 0.5)
             if fade > 0:
                 xr = 1030 + (1895 - 1030) * clamp((t - t0) / dur); sel = EKG_X <= xr
                 pts = [to_scr(c, x, y) for x, y in zip(EKG_X[sel], EKG_Y[sel])]
@@ -521,11 +600,10 @@ def effects(seg, arr, t, c, T, m):
         tp = t0 + dur * (1460 - 1030) / 865 - 0.02
         if t >= tp:
             beat = 1 + 0.14 * max(0.0, math.sin((t - tp) * 2 * math.pi / 0.85)) ** 6
-            mv = out3(clamp((t - 6.25) / 0.5)); hx = hx0 + (1300 - hx0) * mv
-            j_in = in3(clamp((t - 9.15) / 0.4)); hx += (sx0 - hx) * j_in        # "into LifeFlow": the heart goes into the sun
+            hx = hx0; j_in = 0.0
             u = (t - tp) / 0.3; X, Y = to_scr(c, hx, hy0); px = 8.5 * k * (back(u) if u < 1 else 1) * beat * (1 - 0.6 * j_in)
-            put_icon(top, ICON["heart"], X, Y, px, alpha=1 - clamp((t - 9.45) / 0.15), white=clamp(1 - (t - tp) / 0.25), glow=(255, 140, 170))
-            if t >= 6.45:                                               # the app's sun on the right, a light thread between them
+            put_icon(top, ICON["heart"], X, Y, px, white=clamp(1 - (t - tp) / 0.25), glow=(255, 140, 170))
+            if False:                                               # the app's sun on the right, a light thread between them
                 v = (t - 6.45) / 0.3; XS, YS = to_scr(c, sx0, sy0); flash = clamp(1 - abs(t - 9.55) / 0.3)
                 ps = 8.5 * k * (back(v) if v < 1 else 1) * (1 + 0.25 * flash)
                 put_icon(top, ICON["sun"], XS, YS, ps, white=clamp(1 - (t - 6.45) / 0.25) + 0.6 * flash, glow=(255, 214, 140))
@@ -547,6 +625,9 @@ def effects(seg, arr, t, c, T, m):
 
 # ---------------------------------------------------------------- captions: warm white, the spoken word lit like an ember
 CAPS2 = dict(CAPS); CAPS2[4] = [(0.4, 2.36, "You heard him, January 2027,"), (2.36, 4.0, "but you can get on the waitlist")]
+CAPS2[8] = [c for c in CAPS[8] if c[0] < 3.7] + [(3.71, 5.56, "that represent each different time of"), (5.98, 6.31, "day.")]   # v4 cuts
+CAPS2[3] = [(0.27, 0.54, "Tyler,"), (0.96, 2.18, "I think you should tell us")] + [c for c in CAPS[3] if c[0] >= 2.18]
+CAPS2[9] = [(0.6, 3.56, "So as of January next year, 2027,"), (4.0, 5.41, "LifeFlow will actually be able"), (5.41, 6.88, "to connect all your health data.")]
 F_C2 = ImageFont.truetype(f"{SP}/editorpack/fonts/Geist-Bold.ttf", 62); CAP_Y = 1500
 F.F_C = F_C2                                                      # pieces() splits lines with this font
 def caption2(img, n, ct, T):
@@ -612,7 +693,7 @@ def frame(i, rd, caps=True):
         c2 = crop_of(shot2(seg, t - 1 / FPS)); dy = abs((c[1] + c[3] / 2) - (c2[1] + c2[3] / 2)) * W / c[2]
         L = int(dy * 0.9) | 1
         if L > 3: kern = np.full((L, 1), 1 / L, np.float32); arr = cv2.filter2D(arr, -1, kern)
-    arr, fx, top = effects(seg, arr, t, c, T, m)
+    arr, fx, top = effects(dict(seg, tag=seg.get("fx_tag", seg["tag"])), arr, t + seg.get("fx_t0", 0.0), c, T, m)
     arr = light_comp(arr, fx)
     if seg["tag"] == "vo" and t > 3.35:                                # ... and flash gold, out of which the logo opens
         arr = gold(arr, smooth((t - 3.35) / 0.32))
@@ -639,6 +720,17 @@ if __name__ == "__main__":
     i0, i1 = N * part // parts, N * (part + 1) // parts
     out = f"{HERE}/campfire2_silent.mp4" if parts == 1 else f"{HERE}/v2part{part}.mp4"
     if args and args[0] == "--range": i0, i1, out = int(args[1]), int(args[2]), f"{HERE}/{args[3]}"
+    if args and args[0] == "--segs":                                   # v4: render only the pieces that changed, one file each
+        for tg in args[1].split(","):
+            sg = next(x for x in SEGS if x["tag"] == tg); a0, a1 = sg["out"], sg["out"] + sg["nf"]
+            enc = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
+                                    "-c:v", "libx264", "-preset", "slow", "-crf", "16", "-pix_fmt", "yuv420p", f"{HERE}/v4_{tg}.mp4"], stdin=subprocess.PIPE)
+            rd = reader_for(sg, 0); F._prev_m = None
+            for i in range(a0, a1):
+                enc.stdin.write(frame(i, rd, caps).tobytes())
+                if (i - a0) % 60 == 0: print(tg, i - a0, "/", a1 - a0, flush=True)
+            enc.stdin.close(); enc.wait(); rd.p.kill(); print(tg, "done", flush=True)
+        sys.exit()
     enc = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
                             "-c:v", "libx264", "-preset", "slow", "-crf", "16", "-pix_fmt", "yuv420p", "-movflags", "+faststart", out], stdin=subprocess.PIPE)
     k_now, rd = -1, None
