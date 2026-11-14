@@ -72,7 +72,25 @@ def icon_arr(name, rows=None):
         for x, ch in enumerate(r):
             if ch in PAL: a[y, x] = PAL[ch] + (255,)
     return a
-ICON = {n: icon_arr(n) for n in ["sun", "moon", "books", "briefcase", "cash", "bowl", "coinwings", "heart"]}
+ICON = {n: icon_arr(n) for n in ["sun", "moon", "books", "briefcase", "cash", "bowl", "coinwings", "heart", "bell", "house"]}
+_art_src = open(f"{APP}/components/pixel/art.ts").read()
+PAL16 = {k: tuple(int(v[i:i + 2], 16) for i in (1, 3, 5)) for k, v in re.findall(r'^\s*([a-zA-Z]):\s*"(#[0-9a-fA-F]{6})"', _art_src.split("export const COLOR")[0], re.M)}
+ROWS16 = {n: re.findall(r'"([^"]*)"', b) for n, b in re.findall(r'^\s{2}([a-zA-Z]+):\s*\[(.*?)\]', _art_src, re.M | re.S)}
+def icon16(name):
+    """an icon from the app's own 16 x 16 set; MONO ones (x = the text colour) get soft white with a navy rim"""
+    rows = ROWS16[name]; a = np.zeros((16, 16, 4), np.uint8); mono = np.zeros((16, 16), bool)
+    for y, r in enumerate(rows[:16]):
+        for x, ch in enumerate(r[:16]):
+            if ch in PAL16 and ch != "x": a[y, x] = PAL16[ch] + (255,)
+            elif ch == "x": mono[y, x] = True
+    if mono.any():
+        rim = np.zeros_like(mono)
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1): rim |= np.roll(np.roll(mono, dy, 0), dx, 1)
+        a[rim & ~mono] = (20, 36, 81, 255); a[mono] = (243, 245, 250, 255)
+    return a
+ICON16 = {n: icon16(n) for n in ["class", "shift", "money", "mail", "goal", "todo", "flag", "health"]}
+
 def bowl_frame(t):                                               # the steam drifts
     rows = list(ICON_ROWS["bowl"]); sh_ = int(t / 0.22) % 3 - 1
     for j in range(3): r = rows[j]; rows[j] = (r[-sh_:] + r[:-sh_]) if sh_ > 0 else ((r[-sh_:] + r[:-sh_]) if sh_ < 0 else r)
@@ -117,7 +135,7 @@ FONT5 = {
     "V": "#...#|#...#|#...#|#...#|#...#|.#.#.|..#..", "W": "#...#|#...#|#...#|#.#.#|#.#.#|#.#.#|.#.#.", "X": "#...#|#...#|.#.#.|..#..|.#.#.|#...#|#...#",
     "Y": "#...#|#...#|.#.#.|..#..|..#..|..#..|..#..", "Z": "#####|....#|...#.|..#..|.#...|#....|#####",
     "0": ".###.|#...#|#..##|#.#.#|##..#|#...#|.###.", "2": ".###.|#...#|....#|...#.|..#..|.#...|#####", "7": "#####|....#|...#.|..#..|.#...|.#...|.#...",
-    "&": ".##..|#..#.|#.#..|.#...|#.#.#|#..#.|.##.#", "?": ".###.|#...#|....#|...#.|..#..|.....|..#..",
+    "&": ".##..|#..#.|#.#..|.#...|#.#.#|#..#.|.##.#", "?": ".###.|#...#|....#|...#.|..#..|.....|..#..", "-": ".....|.....|.....|.###.|.....|.....|.....",
 }
 def text_cells(text):
     """lit cells (col, row) of a line of the pixel font, and its width in cells"""
@@ -138,6 +156,19 @@ def heat_col(h):
         if h <= b: u = (h - a) / (b - a); return tuple(int(ca[i] + (cb[i] - ca[i]) * u) for i in range(3))
     return stops[-1][1]
 
+NAVY3, SOFT3, GOLD3 = (20, 36, 81), (243, 245, 250), (255, 210, 122)
+def brand_col(h, gold=False):
+    """the launch video's colours for pixel letters: soft white (or gold), white-hot just after they land"""
+    base = GOLD3 if gold else SOFT3; h = clamp(h)
+    return tuple(int(base[i] + (255 - base[i]) * h) for i in range(3))
+def draw_cells(dtop, dfx, cells, gold=False):
+    """cells: (X, Y, size, alpha, hot). Outlines first (so neighbours merge into one navy rim), then the faces, then a glow."""
+    for X, Y, sz, a, hot in cells:
+        o = max(2.0, sz * 0.22); dtop.rectangle([X - sz / 2 - o, Y - sz / 2 - o, X + sz / 2 + o, Y + sz / 2 + o], fill=NAVY3 + (int(235 * a),))
+    for X, Y, sz, a, hot in cells:
+        dtop.rectangle([X - sz / 2, Y - sz / 2, X + sz / 2, Y + sz / 2], fill=brand_col(hot, gold) + (int(255 * a),))
+        if dfx: g = sz * 0.75; dfx.rectangle([X - g, Y - g, X + g, Y + g], fill=GOLD3 + (int(70 * a),))
+
 class Embers:
     """sparks that fly out of the fire to target cells, glow there, then leave (burst / converge / drift)"""
     def __init__(self, targets, cs, origin, t0, stagger=0.5, flight=(0.6, 1.0), spread=50, swirl=0.0, arc=160, seed=0):
@@ -156,9 +187,9 @@ class Embers:
         x = p["sx"] + (p["tx"] - p["sx"]) * e; y = p["sy"] + (p["ty"] - p["sy"]) * e - p["arc"] * math.sin(math.pi * u)
         if p["sw"]: a = p["ph"] + p["dr"] * 3.2 * math.pi * u; x += p["sw"] * (1 - u) * math.cos(a); y += p["sw"] * (1 - u) * 0.55 * math.sin(a)
         return x, y, u
-    def draw(self, d, t, c, exit=None, alpha=1.0, base_heat=0.62):
+    def draw(self, d, t, c, exit=None, alpha=1.0, base_heat=0.62, top=None, gold=False):
         """exit: None, ("burst", t_start), ("converge", t_start, (x, y), dur), ("drift", t_start)"""
-        k = W / c[2]; cs = self.cs * k
+        k = W / c[2]; cs = self.cs * k; landed = []
         for p in self.p:
             q = self.pos(p, t)
             if q is None: continue
@@ -183,9 +214,12 @@ class Embers:
                 elif exit[0] == "drift":
                     x += 60 * p["vx"] * v; y -= (90 + 40 * p["vy"]) * v; a *= clamp(1 - v / 0.9); h -= 0.35 * clamp(v / 0.9); size *= 1 - 0.4 * clamp(v / 0.9)
             if a <= 0.01: continue
-            X, Y = to_scr(c, x, y); col = heat_col(h); s2 = size * 0.42
+            X, Y = to_scr(c, x, y)
+            if top is not None: landed.append((X, Y, size * 0.92, a, clamp(math.exp(-age / 0.15) + 0.04 * math.sin(t * p["fl"] + p["fp"])))); continue
+            col = heat_col(h); s2 = size * 0.42
             d.rectangle([X - size / 2, Y - size / 2, X + size / 2, Y + size / 2], fill=col + (int(255 * a),))
             d.rectangle([X - s2 / 2, Y - s2 / 2, X + s2 / 2, Y + s2 / 2], fill=heat_col(h + 0.28) + (int(255 * a),))
+        if top is not None and landed: draw_cells(top, d, landed, gold)
 
 def word_targets(text, cx, cy, cs, icon=None, icon_px=None):
     cells, wc = text_cells(text); extra = (len(icon[0]) * icon_px / cs + 2) if icon is not None else 0
@@ -345,6 +379,45 @@ def notif_card():
     d.text((x0, 104), "Want to see where it went?", font=F_NB, fill=(70, 82, 108, 255))
     _card = im; return im
 
+def icon_bubble(icons, px=5):
+    """the app's pixel speech bubble holding only pictures (the app's 12 x 12 icons), the tail at the bottom right"""
+    w = 4 + sum(i.shape[1] for i in icons) + 3 * (len(icons) - 1) + 4; h = 18; g = np.zeros((h + 4, w, 4), np.uint8)
+    ink = PAL["k"] + (255,); wh = (255, 255, 255, 255)
+    for y in range(h):
+        for x in range(w):
+            if x in (0, w - 1) and y in (0, h - 1): continue
+            g[y, x] = ink if (x in (0, w - 1) or y in (0, h - 1) or (x in (1, w - 2) and y in (1, h - 2))) else wh
+    tx = w - 10
+    for j, (x0, x1) in enumerate([(tx, tx + 4), (tx + 1, tx + 4), (tx + 2, tx + 4), (tx + 3, tx + 4)]):
+        for x in range(x0, x1): g[h - 1 + j, x] = wh
+        g[h - 1 + j, x0 - 1] = ink; g[h - 1 + j, x1] = ink
+    g[h + 3, tx + 2:tx + 5] = ink; x = 4
+    for ic in icons:
+        sl = g[3:15, x:x + ic.shape[1]]; g[3:15, x:x + ic.shape[1]] = np.where(ic[..., 3:4] > 0, ic, sl); x += ic.shape[1] + 3
+    return Image.fromarray(g).resize((w * px, (h + 4) * px), Image.NEAREST), (tx + 2) * px
+
+def say_bubble(lines, icon=None, px=4):
+    """the app's pixel speech bubble (white, ink outline, stepped corners), an icon on the left, pixel words in ink; the tail
+    at the bottom right. Returns the image and the tail tip's x."""
+    widths = [text_cells(l)[1] for l in lines]; tw = max(widths); iw = 0 if icon is None else icon.shape[1] + 3
+    w = 4 + iw + tw + 4; h = max(8 * len(lines) + 4, 16 if icon is not None else 0); g = np.zeros((h + 4, w, 4), np.uint8)
+    ink = PAL["k"] + (255,); wh = (255, 255, 255, 255)
+    for y in range(h):
+        for x in range(w):
+            if x in (0, w - 1) and y in (0, h - 1): continue
+            g[y, x] = ink if (x in (0, w - 1) or y in (0, h - 1) or (x in (1, w - 2) and y in (1, h - 2))) else wh
+    tx = w - 10
+    for j, (x0, x1) in enumerate([(tx, tx + 4), (tx + 1, tx + 4), (tx + 2, tx + 4), (tx + 3, tx + 4)]):
+        for x in range(x0, x1): g[h - 1 + j, x] = wh
+        g[h - 1 + j, x0 - 1] = ink; g[h - 1 + j, x1] = ink
+    g[h + 3, tx + 2:tx + 5] = ink
+    if icon is not None: g[(h - 12) // 2:(h - 12) // 2 + 12, 3:15] = np.where(icon[..., 3:4] > 0, icon, g[(h - 12) // 2:(h - 12) // 2 + 12, 3:15])
+    oy0 = (h - 8 * len(lines) + 1) // 2
+    for li, l in enumerate(lines):
+        cells, lw = text_cells(l); ox = 4 + iw + (tw - lw) // 2
+        for q, r in cells: g[oy0 + 8 * li + r, ox + q] = ink
+    return Image.fromarray(g).resize((w * px, (h + 4) * px), Image.NEAREST), (tx + 2) * px
+
 def bubble_img(icon, px):
     """the app's pixel speech bubble: ink outline, white, a tail at the bottom left, the icon inside"""
     w, h = 18, 16; g = np.zeros((h + 3, w, 4), np.uint8); ink = PAL["k"] + (255,); wh = (255, 255, 255, 255)
@@ -375,7 +448,7 @@ class FuseName:
         self.ph = {c: r.uniform(0, 6.28) for c in self.cells}; self.v = {c: (r.normal(0, 1), r.uniform(0.6, 1.4)) for c in self.cells}
     def draw(self, fx, top, X, Y, t, t0, dur=0.85, hold=1.25, k=1.0):
         if t < t0: return
-        d = ImageDraw.Draw(fx); px = self.cs * k; x0 = X - self.wc * px / 2; y0 = Y - 3.5 * px; tf = t0 + dur + hold
+        d = ImageDraw.Draw(fx); px = self.cs * k; x0 = X - self.wc * px / 2; y0 = Y - 3.5 * px; tf = t0 + dur + hold; cells = []
         head = t0 + dur * 1.0
         for (q, r_) in self.cells:
             tl = t0 + dur * q / max(1, self.wc)
@@ -386,8 +459,8 @@ class FuseName:
                 v = t - tf - 0.25 * (q / max(1, self.wc)); vx, vs = self.v[(q, r_)]
                 if v > 0: x += 26 * vx * v * k; y -= 70 * vs * v * k; a = clamp(1 - v / 0.7); h -= 0.4 * clamp(v / 0.7); sz *= 1 - 0.5 * clamp(v / 0.7)
             if a <= 0.01: continue
-            d.rectangle([x, y, x + sz, y + sz], fill=heat_col(h) + (int(255 * a),))
-            s2 = sz * 0.4; d.rectangle([x + sz * 0.3, y + sz * 0.3, x + sz * 0.3 + s2, y + sz * 0.3 + s2], fill=heat_col(h + 0.25) + (int(255 * a),))
+            cells.append((x + sz / 2, y + sz / 2, sz, a, clamp(math.exp(-age / 0.15))))
+        if cells: draw_cells(ImageDraw.Draw(top), d, cells)
         if t < t0 + dur + 0.05:                                            # the fuse's head
             hx = x0 + self.wc * px * clamp((t - t0) / dur); hy = Y + 2.5 * px * math.sin((t - t0) * 9)
             g = glow_disc(int(4 * px), (255, 236, 200), 0.95); paste(fx, g, int(hx - g.width / 2), int(hy - g.height / 2))
@@ -402,10 +475,18 @@ class FuseName:
                 lay.text((x + 2, y + 2), ch, font=F_ROLE, fill=(10, 8, 6, int(150 * a))); lay.text((x, y), ch, font=F_ROLE, fill=(255, 241, 214, int(240 * a))); x += F_ROLE.getlength(ch) + sp
 ALI = FuseName("ALI MOSLLI", "CEO & DEVELOPER"); TYLER = FuseName("TYLER KARDY", "CMO")
 WORDS = []
-for j, (txt, ic, ts, y) in enumerate([("7 CLASSES", "books", 4.55, 1255), ("WORK SHIFTS", "briefcase", 5.5, 1395), ("FINANCE", "cash", 6.6, 1535)]):
-    tg, (ix, iy) = word_targets(txt, 1115, y, 12.5, ICON[ic], 11.5)
-    WORDS.append(dict(e=Embers(tg, 12.5, origin=(880, 2470), t0=ts - 0.55, stagger=0.45, flight=(0.5, 0.8), spread=90, swirl=40, arc=260, seed=20 + j), icon=ic, ix=ix, iy=iy, ts=ts))
+CONNECT = [("7 CLASSES", "class", 4.55, 0, 0), ("WORK SHIFTS", "shift", 5.5, 0, 1), ("FINANCE", "money", 6.6, 0, 2), ("MAIL", "mail", 6.98, 0, 3),
+           ("GOALS", "goal", 7.06, 1, 0), ("TO-DOS", "todo", 7.14, 1, 1), ("MILESTONES", "flag", 7.22, 1, 2), ("HEALTH", "health", 7.3, 1, 3)]
+CS_W = 7.0; ICON_PX = 4.3                                          # world px per letter cell and per icon pixel
+for j, (txt, ic, ts, col, row) in enumerate(CONNECT):
+    x_icon = 555 if col == 0 else 1150; y = 1252 + row * 105; cells, wc = text_cells(txt)
+    tg = [(x_icon + 45 + (q + 0.5) * CS_W, y + (r - 3) * CS_W) for q, r in cells]
+    spoken = j < 3
+    WORDS.append(dict(e=Embers(tg, CS_W, origin=(880, 2470), t0=ts - (0.55 if spoken else 0.42), stagger=0.4 if spoken else 0.25, flight=(0.45, 0.7) if spoken else (0.35, 0.5),
+                           spread=90, swirl=30, arc=240, seed=20 + j), icon=ic, ix=x_icon, iy=y, ts=ts))
 ONE_PLACE = (1115, 1330); ONE_T = 7.55
+_ws = [p for wd in WORDS for p in [(q["tx"], q["ty"]) for q in wd["e"].p]] + [(wd["ix"] - 36, wd["iy"]) for wd in WORDS]
+FRAME_BOX = (min(x for x, _ in _ws) - 34, max(x for x, _ in _ws) + 34, min(y for _, y in _ws) - 48, max(y for _, y in _ws) + 48)
 JAN = Embers(word_targets("JANUARY 2027", 1080, 1185, 11.5)[0], 11.5, origin=(1000, 2300), t0=0.2, stagger=0.6, flight=(0.7, 1.05), spread=260, swirl=60, arc=60, seed=40)
 END_L1, _ = word_targets("GET ON THE", 540, 1262, 11.0); END_L2, _ = word_targets("WAITLIST", 540, 1362, 11.0)
 END_TXT = Embers(END_L1 + END_L2, 11.0, origin=(540, 760), t0=0.3, stagger=0.5, flight=(0.45, 0.7), spread=8, swirl=0, arc=-120, seed=41)
@@ -422,7 +503,7 @@ EKG_X, EKG_Y = ekg_points()
 def effects(seg, arr, t, c, T, m):
     """returns (arr, fx layer, top layer); arr gets the sky work, fx the light, top the solid pieces"""
     tag = seg["tag"]; k = W / c[2]
-    fx = Image.new("RGBA", (W, H), (0, 0, 0, 0)); top = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(fx)
+    fx = Image.new("RGBA", (W, H), (0, 0, 0, 0)); top = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(fx); dt = ImageDraw.Draw(top)
     # ambient embers from the fire (no stars any more)
     boost = 1.6 if tag == "vo" else 1.0
     for e in F.EMBERS:
@@ -433,71 +514,84 @@ def effects(seg, arr, t, c, T, m):
         d.rectangle([X, Y, X + s - 1, Y + s - 1], fill=heat_col(0.55 + 0.4 * (1 - a / e["life"])) + (int(235 * min(1, al)),))
 
     if tag == "hook":
-        HOOK_Q.draw(d, t, c, exit=("burst", HOOK_BURST) if t >= HOOK_BURST else None, base_heat=0.66)
+        HOOK_Q.draw(d, t, c, exit=("burst", HOOK_BURST) if t >= HOOK_BURST else None, base_heat=0.66, top=dt, gold=True)
         if t < 3.3 and SHOW_LABEL:                                      # the series name, ember pixels at the top (v3: the intro carries it)
             a = clamp(t / 0.25) * clamp((3.3 - t) / 0.3); cells, wc = LABEL_CELLS; px = 7
             for q, r in cells:
                 h = 0.66 + 0.1 * math.sin(T * 7 + q * 1.7 + r)
                 X = 540 - wc * px / 2 + q * px; Y = 175 + r * px; d.rectangle([X, Y, X + px - 2, Y + px - 2], fill=heat_col(h) + (int(255 * a),))
     if tag == "wheel" and t < 0.5:                                      # the last of the "?" burst, carried across the cut
-        HOOK_Q.draw(d, BY["hook"]["nf"] / FPS + t, crop_of(shot2(BY["hook"], HOOK_BURST)), exit=("burst", HOOK_BURST), base_heat=0.66)
+        HOOK_Q.draw(d, BY["hook"]["nf"] / FPS + t, crop_of(shot2(BY["hook"], HOOK_BURST)), exit=("burst", HOOK_BURST), base_heat=0.66, top=dt, gold=True)
 
     if tag == "wheel":
-        # the sky turns through a whole day: night .. first light under the name, then dawn to night in the two-shot
-        if t < 2.6: minute = 300 + 100 * smooth(t / 2.6); al = 0.85 * clamp(t / 0.6)
-        elif t < 4.7: minute = 400 + 860 * smoothv(clamp((t - 2.75) / 1.85))
-        else: minute = 1260
-        al = 0.85 if t >= 2.6 else al
-        if t > 8.35: al *= clamp((8.93 - t) / 0.55)
-        above = sky_wash(arr, c, lambda xs: sky_cols(np.full_like(xs, float(minute))), al)
-        su = (minute - (RISE - 25)) / (SET - RISE + 50)
-        if 0 < su < 1 and t >= 2.6:
-            x = 520 + 1230 * su; y = roof(x) + 30 - 600 * math.sin(math.pi * su); sun_on(arr, above, c, x, y, 9.0)
-        if 4.0 <= t < 7.15:                                             # the moon comes up on the right
-            u = clamp((t - 4.0) / 1.2); x = 1500 - 120 * u; y = roof(1500) + 40 - 360 * out3(u); sun_on(arr, above, c, x, y, 8.0, clamp((7.15 - t) / 0.3), "moon")
-        if t >= 5.85:                                                   # "block times for study time": the books rise on the left, like a moon
-            u = clamp((t - 5.85) / 0.9); v = clamp((7.15 - t) / 0.3); x = 700; y = roof(700) + 60 - 360 * out3(u)
-            if above is not None and v > 0:
-                X, Y = to_scr(c, x, y); px = 11 * k
-                sky_sprite(arr, above, glow_disc(12 * px * 1.5, (255, 214, 140), 0.55 * v), X, Y); sky_sprite(arr, above, icon_img(ICON["books"], px, v), X, Y)
-        if t >= 7.05:                                                   # "overview a whole week": seven suns come up in a row, one a day
-            for j in range(7):
-                ts = 7.05 + j * 0.16
-                if t < ts: continue
-                u = clamp((t - ts) / 0.45); x = 600 + j * 150; y = roof(x) + 40 - (roof(x) - 1420 + 40) * back(u, 1.4)
-                v = clamp((8.75 - t) / 0.3)
-                if above is not None:
-                    X, Y = to_scr(c, x, y); px = 4.6 * k
-                    sky_sprite(arr, above, glow_disc(12 * px * 1.4, (255, 214, 140), 0.5 * v), X, Y); sky_sprite(arr, above, icon_img(ICON["sun"], px, v), X, Y)
-                    if u >= 1 and v > 0:
-                        cells, wc = text_cells("MTWTFSS"[j]); pp = 4
-                        for q, r in cells:
-                            X2 = X - 2.5 * pp + q * pp; Y2 = Y + 12 * px / 2 + 14 + r * pp; d.rectangle([X2, Y2, X2 + pp - 1, Y2 + pp - 1], fill=heat_col(0.7) + (int(230 * v),))
-        if t < 2.6:                                                     # Ali's name in sparkler light
+        if t < 2.75:                                                    # his name, burned in
             X, Y = to_scr(c, 762, 1752); ALI.draw(fx, top, X, Y, t, 0.3, 0.8, 1.05)
+        # "wake up to a notification from your skyling": Dawn, the morning's skyling, rings the app's bell beside him
+        if 0.7 <= t < 2.62:
+            u = clamp((t - 0.7) / 0.4); up = in3(clamp((t - 2.3) / 0.32))
+            X, Y = to_scr(c, 1035, 2010 - 30 * out3(u)); Y -= 900 * up; px = 5.6 * k
+            draw_skyling_px(top, pose_frame("Dawn", "wave" if t < 1.9 else "idle", T), px, X, Y, alpha=out3(u), glow=(255, 200, 170))
+            if t >= 0.95:
+                rv = t - 0.95; rot = 20 * math.sin(rv * 26) * math.exp(-rv * 1.4); bx, by = X + 10 * px, Y - 19 * px
+                put_icon(top, ICON["bell"], bx, by, 4.2 * k, alpha=clamp(rv / 0.12) * (1 - up), rot=rot, glow=GOLD3)
+                if rv < 1.2:
+                    for sgn in (-1, 1):
+                        for j_ in range(2):
+                            r_ = (30 + 14 * j_) * k / 1.25; a0 = 180 if sgn < 0 else 0
+                            dt.arc([bx - r_, by - r_, bx + r_, by + r_], a0 - 22, a0 + 22, fill=GOLD3 + (int(220 * (1 - rv / 1.2)),), width=4)
+        # "planning out your whole day and week": the day as a line across their sky, the app's icons as its stops
+        if t >= 2.7:
+            fade = clamp((8.93 - t) / 0.35) * clamp((7.2 - t) / 0.25)    # the day line hands over to the app's timeline
+            LY = 1470; LX0, LX1 = 540, 1520
+            wk = clamp((t - 7.05) / 0.5)                                # "a whole week": the day becomes one of seven
+            draw_t = clamp((t - 2.7) / 0.45)
+            P0 = to_scr(c, LX0, LY); P1 = to_scr(c, LX0 + (LX1 - LX0) * out3(draw_t), LY)
+            d.line([P0, P1], fill=SOFT3 + (int(235 * fade),), width=max(3, int(4 * k)))
+            stops = [("bell", 610, 3.0), ("books", 800, 3.3), ("briefcase", 990, 3.6), ("bowl", 1290, 3.9), ("moon", 1460, 4.2)]
+            for j_, (nm, x, ts) in enumerate(stops):
+                if t < ts: continue
+                u = (t - ts) / 0.3; s_ = back(u) if u < 1 else 1
+                if nm in ("books", "briefcase") and t >= 5.75: x += (-30 if nm == "books" else -60) * out3((t - 5.75) / 0.35)   # room is made
+                if nm == "bowl" and t >= 5.75: x += 50 * out3((t - 5.75) / 0.35)
+                X, Y = to_scr(c, x, LY); sc = 1 - 0.55 * wk
+                put_icon(top, ICON[nm], X, Y - 4 * k, 7.6 * k * s_ * sc, alpha=fade, glow=GOLD3)
+            if t >= 5.75:                                              # "block times for study time": a study block drops into the gap
+                u = (t - 5.75) / 0.4; X, Y = to_scr(c, 1140, LY); sc = 1 - 0.55 * wk
+                bw, bh = 190 * k * sc, 60 * k * sc; yy = Y - 260 * k * (1 - out3(u)) if u < 1 else Y
+                dt.rounded_rectangle([X - bw / 2 - 3, yy - bh / 2 - 3, X + bw / 2 + 3, yy + bh / 2 + 3], 10, fill=NAVY3 + (int(220 * fade),))
+                dt.rounded_rectangle([X - bw / 2, yy - bh / 2, X + bw / 2, yy + bh / 2], 8, fill=GOLD3 + (int(235 * fade),))
+                put_icon(top, ICON["books"], X, yy, 4.4 * k * sc, alpha=fade)
+                if 0 < u < 1.6: g = glow_disc(int(90 * k), GOLD3, 0.7 * (1 - u / 1.6)); paste(fx, g, int(X - g.width / 2), int(yy - g.height / 2))
+            if t >= 6.95:                                              # "overview a whole week": the app's own timeline runs through the week
+                v = clamp((t - 6.95) / 0.3) * clamp((8.93 - t) / 0.3); n_ = int(1 + 300 * smoothv(clamp((t - 6.95) / 1.95)))
+                tl = Image.open(R.TLINE[min(n_, len(R.TLINE) - 1)]).convert("RGBA"); tl = tl.resize((1000, int(760 * 1000 / 1080)), Image.LANCZOS)
+                if v < 1: tl.putalpha(tl.getchannel("A").point(lambda q: int(q * v)))
+                paste(top, tl, 40, int(30 + 40 * (1 - out3(clamp((t - 6.95) / 0.35)))))
 
     if tag == "tyler_name":
         X, Y = to_scr(c, 1462, 1765); TYLER.draw(fx, top, X, Y, t, 0.3, 0.8, 1.55)
 
     if tag == "clouds":
+        fade = 1 - clamp((t - 8.12) / 0.3)
         for wd in WORDS:
-            ex = ("converge", ONE_T, ONE_PLACE, 0.42) if t >= ONE_T else None
-            wd["e"].draw(d, t, c, exit=ex)
-            if t >= wd["ts"] - 0.05:                                  # the app's icon lights up with its word
-                u = clamp((t - wd["ts"] + 0.05) / 0.3); X, Y = to_scr(c, wd["ix"], wd["iy"]); px = 11.5 * k
-                if t >= ONE_T:
-                    w = in3(clamp((t - ONE_T) / 0.42)); X2, Y2 = to_scr(c, *ONE_PLACE); X += (X2 - X) * w; Y += (Y2 - Y) * w; px *= 1 - 0.7 * w; u *= 1 - w
-                put_icon(top, ICON[wd["icon"]], X, Y, px, alpha=out3(u), white=1 - clamp((t - wd["ts"]) / 0.35), glow=(255, 190, 110))
-        if t >= ONE_T + 0.38:                                          # "in one place": one pixel sun
-            u = (t - ONE_T - 0.38) / 0.3; X, Y = to_scr(c, *ONE_PLACE); px = 10.5 * k * (back(u) if u < 1 else 1)
-            g = glow_disc(260 * k, (255, 236, 190), clamp(1 - (t - ONE_T - 0.38) / 0.5)); paste(fx, g, int(X - g.width / 2), int(Y - g.height / 2))
-            put_icon(top, ICON["sun"], X, Y, px, white=clamp(1 - (t - ONE_T - 0.38) / 0.25), glow=(255, 214, 140))
+            wd["e"].draw(d, t, c, alpha=fade, top=dt)
+            if t >= wd["ts"] - 0.05:                                  # the app's own icon lights up with its word
+                u = clamp((t - wd["ts"] + 0.05) / 0.3); X, Y = to_scr(c, wd["ix"], wd["iy"]); px = ICON_PX * k * (back(u) if u < 1 else 1)
+                put_icon(top, ICON16[wd["icon"]], X, Y, px, alpha=out3(u) * fade, white=1 - clamp((t - wd["ts"]) / 0.3), glow=GOLD3)
+        if t >= ONE_T:                                                 # "in one place": a gold pixel frame draws itself around all three
+            u = out3((t - ONE_T) / 0.45); x0w, x1w, y0w, y1w = FRAME_BOX
+            pts = [(x0w, y0w), (x1w, y0w), (x1w, y1w), (x0w, y1w), (x0w, y0w)]; per = [math.dist(a_, b_) for a_, b_ in zip(pts, pts[1:])]; L = sum(per) * u
+            cs_ = 9 * k; acc = 0; cells = []
+            for (ax, ay), (bx, by), pl in zip(pts, pts[1:], per):
+                n = int(pl / 9)
+                for q in range(n):
+                    if acc + q * 9 > L: break
+                    X, Y = to_scr(c, ax + (bx - ax) * q / n, ay + (by - ay) * q / n); cells.append((X, Y, cs_ * 0.95, fade, 0.0))
+                acc += pl
+            draw_cells(dt, d, cells, gold=True)
+            if u < 1 and cells: hx, hy = cells[-1][:2]; g = glow_disc(int(40 * k), (255, 240, 210), 0.9); paste(fx, g, int(hx - g.width / 2), int(hy - g.height / 2))
 
     if tag == "question":
-        if t < 1.4:                                                    # the sun from "one place" settles into a star
-            X, Y = to_scr(c, *ONE_PLACE); u = clamp(t / 1.1)
-            put_icon(top, ICON["sun"], X, Y - 30 * u, 10.5 * k * (1 - 0.6 * u), alpha=1 - u, glow=(255, 214, 140))
-            pixel_star(top, int(X), int(Y - 30 * u), 5, 0.9 * clamp((t - 0.6) / 0.4) * clamp((1.4 - t) / 0.3))
         for j, (x, y, ph, br) in enumerate(STARS):                     # the stars come out while he asks
             ts = 1.2 + 4.2 * (j / len(STARS))
             if t < ts: continue
@@ -542,7 +636,7 @@ def effects(seg, arr, t, c, T, m):
                 uu = u - j * 0.012
                 if uu < 0: break
                 P = to_scr(c, *path(uu))
-                if prev is not None and fa > 0: d.line([prev, P], fill=heat_col(1 - j / 40) + (int(255 * fa * (1 - j / 30)),), width=max(2, int((9 - j * 0.28) * k)))
+                if prev is not None and fa > 0: d.line([prev, P], fill=brand_col(1 - j / 30, gold=True) + (int(255 * fa * (1 - j / 30)),), width=max(2, int((9 - j * 0.28) * k)))
                 prev = P
             if u < 1: Hx, Hy = to_scr(c, *path(u)); g = glow_disc(34, (255, 240, 210), 0.9); paste(fx, g, int(Hx - 34), int(Hy - 34))
             if t >= ts + 0.6:                                           # it lands as Tyler's skyling
@@ -564,23 +658,17 @@ def effects(seg, arr, t, c, T, m):
             u = clamp((t - 2.95) / 2.1); x = 1440 + 520 * u + 40 * math.sin(u * 9); y = 2380 - 980 * u - 30 * math.sin(u * 14)
             X2, Y2 = to_scr(c, x, y); flap = 0.75 + 0.25 * math.cos(T * 22)
             put_icon(top, ICON["coinwings"], X2, Y2, 10 * k * (0.6 + 0.4 * out3(u * 4)), alpha=clamp(u * 6), rot=8 * math.sin(T * 6), sx=flap)
-        if tag == "food" and t >= 6.7:                                # "remind me about home-cooked meals": Dreamy sends him a notification
-            ts = 6.8; u = (t - ts) / 0.42
-            if 6.7 <= t < 7.25:                                         # the ping off Dreamy
-                v = (t - 6.7) / 0.55
-                for rr_ in (0, 0.18):
-                    vv = clamp(v - rr_)
-                    if 0 < vv < 1:
-                        R_ = 30 + 160 * out3(vv); dd = ImageDraw.Draw(fx)
-                        dd.ellipse([X - R_, Y - 13 * px - R_, X + R_, Y - 13 * px + R_], outline=(255, 226, 170, int(220 * (1 - vv))), width=4)
-            if t >= ts:
-                card = notif_card(); e = out3(u) if u < 1 else 1; bk = back(u, 1.5) if u < 1 else 1
-                if t > 9.15: bk *= 1 - in3(clamp((t - 9.15) / 0.28)); e *= 1 - in3(clamp((t - 9.15) / 0.28))
-                cx_, cy_ = X - 13 * px, Y - 26 * px; tx_, ty_ = clamp(X - 250, 360, W - 360), Y - 26 * px - 125 + 6 * math.sin(T * 2.4)
-                Xc, Yc = cx_ + (tx_ - cx_) * e, cy_ + (ty_ - cy_) * e
-                if bk > 0.03:
-                    im = card.resize((max(1, int(card.width * bk * 1.12)), max(1, int(card.height * bk * 1.12))), Image.LANCZOS)
-                    paste(top, im, int(Xc - im.width / 2), int(Yc - im.height / 2))
+        if tag == "food" and t >= 6.7:                                # "remind me about home-cooked meals": Dreamy says so, in its bubble
+            if t < 7.0:                                                 # a little "!" pops over Dreamy first
+                v = clamp((t - 6.7) / 0.12); cells, wc_ = text_cells("!"); pp = 6 * k
+                draw_cells(dt, d, [(X + (q - 2) * pp, Y - 26 * px - 30 * k + (r - 3) * pp - 10 * out3(v), pp * 0.92, v * clamp((7.0 - t) / 0.08), 0.3) for q, r in cells], gold=True)
+            if t >= 6.9:
+                u = (t - 6.9) / 0.3; s_ = back(u) if u < 1 else 1
+                if t > 9.1: s_ *= 1 - in3(clamp((t - 9.1) / 0.25))
+                if s_ > 0.03:
+                    b, tip = icon_bubble([ICON["house"], bowl_frame(T)], max(3, int(round(6.4 * k))))
+                    bb = b.resize((max(1, int(b.width * s_)), max(1, int(b.height * s_))), Image.NEAREST)
+                    bx = clamp(X - tip * s_, 24, W - 24 - bb.width); paste(top, bb, int(bx), int(Y - 26 * px - bb.height - 4))
 
     if tag == "health":
         # "connect all your health data": a heartbeat drawn in light across the sky; the heart appears on the middle beat
@@ -629,7 +717,7 @@ CAPS2[8] = [c for c in CAPS[8] if c[0] < 3.7] + [(3.71, 5.56, "that represent ea
 CAPS2[3] = [(0.27, 0.54, "Tyler,"), (0.96, 2.18, "I think you should tell us")] + [c for c in CAPS[3] if c[0] >= 2.18]
 CAPS2[9] = [(0.6, 3.56, "So as of January next year, 2027,"), (4.0, 5.41, "LifeFlow will actually be able"), (5.41, 6.88, "to connect all your health data.")]
 F_C2 = ImageFont.truetype(f"{SP}/editorpack/fonts/Geist-Bold.ttf", 62); CAP_Y = 1500
-F.F_C = F_C2                                                      # pieces() splits lines with this font
+F.CAPS = CAPS2                                                    # v5: the launch video's captions (fire_render.caption), with the v4 cuts' words
 def caption2(img, n, ct, T):
     for a0, b0, text0 in CAPS2.get(n, []):
         if not (a0 <= ct < b0): continue
@@ -698,7 +786,7 @@ def frame(i, rd, caps=True):
     if seg["tag"] == "vo" and t > 3.35:                                # ... and flash gold, out of which the logo opens
         arr = gold(arr, smooth((t - 3.35) / 0.32))
     img = Image.fromarray(arr).convert("RGBA"); img.alpha_composite(top)
-    if caps and not (seg["tag"] == "vo" and t > 3.6): caption2(img, seg["n"], ct, T)
+    if caps and not (seg["tag"] == "vo" and t > 3.6): F.caption(img, seg["n"], ct)
     arr = np.array(img.convert("RGB"))
     return arr
 

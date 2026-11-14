@@ -103,3 +103,17 @@ Picture: `fire_render2.py` (imports `fire_render.py` for the decode, shots, matt
 | "my new voice ... not blending in ... maybe a bit low" | v3's echo halved its level. Now it is matched to his camera voice: a smooth EQ from the two spectra (within 9 dB), the same speech level plus 1.5 dB, two faint early reflections for the camera's distance (`match_line` in `fire_mix4.py`) |
 
 Build: `fire_render2.py --segs wheel,arc_1,ask_tyler,health_1` (and `food,health`, `tyler_name,ask_tyler_1`) renders only the changed pieces; `assemble4.py` takes the unchanged ones (clouds, question, the first part of the skylings answer, long_way) straight from the v2 render, adds hook3, the intro and end3, and checks every count against `timeline4.json`; `fire_mix4.py` is the sound. About 69.4 s.
+
+## v5 (Ali's notes on v4)
+| Note | Fix |
+|---|---|
+| "those orange texts ... aren't showing ... why are we even using those colours even for the subtitles, they don't look like the last video" | captions are the launch video's again (Fraunces Bold, soft white, the spoken word in gold, a navy edge; `fire_render.caption`). Every pixel letter (names, the "?", the connections, the intro's title) is soft white (gold for accents) with a navy rim and a soft gold glow (`draw_cells`), readable on any background |
+| "i also hate this music ... just use last video's music (the pier one)" | the launch score again, its last chord on the logo, about 7 dB under the voices and full in the intro (`fire_mix5.py`) |
+| "the sun that's collecting the 7 classes ... doesn't look good, maybe have it as a styling" | no sun: on "in one place" a gold pixel frame draws itself around everything |
+| "the one on top that shows the connections is a good idea but ... show all of the connections even the ones we don't talk about, like mail, goals, to dos, milestones, health" | eight connections with the app's own 16 x 16 icons (`components/pixel/art.ts`): 7 CLASSES, WORK SHIFTS, FINANCE land on his words, then MAIL, GOALS, TO-DOS, MILESTONES, HEALTH, two columns, all inside the frame |
+| "the animations for the first answer don't really make sense" | they now follow his words: "wake up to a notification from your skyling" = Dawn rings the app's bell beside him; "planning out your whole day" = the day as a line in their sky with the app's icons as its stops (bell, class, work, dinner, moon); "block times for study time" = a gold study block drops into a gap; "overview a whole week" = the app's real timeline (next row) |
+| "just show the timeline from the app for that week one" | the app's own Today timeline (the see-through capture in `whatsnew/cap/timeline2`, sample data) scrolls through the week in the sky above them |
+| "the notification ... looks very very bad and unlike our app" / "he doesn't say food is running high" | Dreamy's little "!" and the app's pixel speech bubble with the app's house and bowl icons (home-cooked meals, what Tyler says), no words |
+| "with the ending you changed too much and now there's too much different color" | the puff over his mouth and its sparks are white and gold, no gold flash: a soft dissolve into the logo with the launch title style, "Get on the waitlist." ("waitlist." in gold) and lifeflowweb.com |
+
+Build: `fire_render2.py --range 0 570 v5r0.mp4` (and 570..1140, 1140..1708), `fire_end.py`, `fire_intro.py`, `fire_mix5.py`, `assemble5.py`.

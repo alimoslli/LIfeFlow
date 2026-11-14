@@ -85,7 +85,7 @@ def effects_end(arr, t, c, T, m):
         # his words leave his mouth as a puff of pixel embers: solid over his lips (they never show), flame tongues rising off it
         cs = max(4, int(round(fw / 14))); rr = np.random.default_rng(int(t * FPS))
         rx, ry = fw * (0.34 + 0.05 * lv), fw * (0.2 + 0.03 * lv)
-        g = G.glow_disc(int(rx * 2.4), (255, 170, 80), (0.5 + 0.35 * lv) * (1 - gone)); paste(fx, g, int(X - g.width / 2), int(Y - g.height / 2))
+        g = G.glow_disc(int(rx * 2.4), G.GOLD3, (0.45 + 0.3 * lv) * (1 - gone)); paste(fx, g, int(X - g.width / 2), int(Y - g.height / 2))
         nx, ny = int(rx / cs) + 2, int(ry / cs) + 6
         for gy in range(-ny, int(ry / cs) + 2):
             for gx in range(-nx, nx + 1):
@@ -97,7 +97,7 @@ def effects_end(arr, t, c, T, m):
                 h = 0.97 - 0.4 * min(1, dd) + 0.12 * math.sin(T * 19 + gx * 1.7 + gy * 2.3) + 0.12 * lv - (0.25 if tongue else 0)
                 a = 1.0 if core else (0.75 if tongue else (1.12 - dd) / 0.27)
                 x0, y0 = X + gx * cs - cs / 2, Y + gy * cs - cs / 2 - (rr.uniform(0, cs) if tongue else 0)
-                dt.rectangle([x0, y0, x0 + cs - 1, y0 + cs - 1], fill=heat_col(h) + (int(255 * a * (1 - gone)),))
+                dt.rectangle([x0, y0, x0 + cs - 1, y0 + cs - 1], fill=G.brand_col(clamp((h - 0.5) / 0.5), gold=True) + (int(255 * a * (1 - gone)),))   # v5: the launch gold and white
     # the phrase on screen, and the bubble that carries it
     cur = [p for p in PHRASES if t >= p[0]]
     if cur and gone < 1:
@@ -116,16 +116,22 @@ def effects_end(arr, t, c, T, m):
             ph = (t * 2.4 + q / 24) % 1; e = ph
             x = X + (tipx - X) * e + 18 * math.sin(q * 2.3 + t * 9) * math.sin(math.pi * e); y = Y + (tipy - Y) * e - 30 * math.sin(math.pi * e)
             s2 = max(4, int(cs * 1.1 * (1 - 0.5 * e))); a = (0.55 + 0.45 * lv) * (1 - e * 0.4) * (1 - gone)
-            d.rectangle([x - s2 / 2, y - s2 / 2, x + s2 / 2, y + s2 / 2], fill=heat_col(0.9 - 0.3 * e) + (int(255 * a),))
+            d.rectangle([x - s2 / 2, y - s2 / 2, x + s2 / 2, y + s2 / 2], fill=G.brand_col(0.7 - 0.6 * e, gold=True) + (int(255 * a),))
     if 4.05 <= t < 4.45:                                                          # the bubble pops into sparks
         v = (t - 4.05) / 0.4; rr2 = np.random.default_rng(77)
         for q in range(40):
             ang = rr2.uniform(0, 6.28); sp = rr2.uniform(250, 700) * k / 0.6; x = X - 60 + math.cos(ang) * sp * v; y = Y - 160 + math.sin(ang) * sp * v + 300 * v * v
-            d.rectangle([x - 3, y - 3, x + 3, y + 3], fill=heat_col(0.85) + (int(255 * (1 - v)),))
+            d.rectangle([x - 3, y - 3, x + 3, y + 3], fill=G.GOLD3 + (int(255 * (1 - v)),))
     return arr, fx, top
 
+def end_card_img(j):
+    """the logo ending (held once its sun is up) with the launch video's title style: one line, its last word in gold"""
+    img = Image.fromarray(G.end_card(j)).convert("RGBA")
+    G.R4.title(img, j / FPS, [(0.3, [("Get on the ", G.SOFT), ("waitlist.", G.GOLD)], 1380)], sub=(0.75, "lifeflowweb.com", 1462))
+    return np.array(img.convert("RGB"))
 def frame_end(i, rd):
-    if i >= G.END_OUT: return G.end_img(i - G.END_OUT)
+    j = i - G.END_OUT
+    if i - VO["out"] >= VO["nf"]: return end_card_img(j)
     t = (i - VO["out"]) / FPS; T = i / FPS
     src = rd.next(); c = crop_of(shot(t)); x0, y0, w, h = c
     m768 = matte_full(src); m = matte_crop(m768, c)
@@ -134,9 +140,10 @@ def frame_end(i, rd):
     arr = grade(arr, m)
     arr, fx, top = effects_end(arr, t, c, T, m)
     arr = light_comp(arr, fx)
-    if t > 3.98: arr = gold(arr, smooth((t - 3.98) / 0.3))
-    img = Image.fromarray(arr).convert("RGBA"); img.alpha_composite(top)
-    return np.array(img.convert("RGB"))
+    img = Image.fromarray(arr).convert("RGBA"); img.alpha_composite(top); out = np.array(img.convert("RGB"))
+    if j >= 0:                                                                  # dissolve into the logo
+        u = smooth((j + 1) / G.XF); out = (out.astype(np.float32) * (1 - u) + end_card_img(j).astype(np.float32) * u).astype(np.uint8)
+    return out
 
 if __name__ == "__main__":
     args = sys.argv[1:]

@@ -228,17 +228,21 @@ def scene(t):
         if v2 > 0:
             y = 318 - 10 * out3(v2) + 2 * math.sin(t * 3); glow(L, 135, y, 40, (200, 215, 255), 0.28 * v2)
             put_sprite(sprites, skyling("Dreamy-night", "idle", t), 135, y, 1.8, alpha=out3(v2))
+        landed = []
         for p in TITLE_P:                                           # the fire throws the title
             if t < p["ts"]: continue
             w_ = (t - p["ts"]) / p["dur"]
             if w_ < 1:
                 e = 1 - (1 - w_) ** 2.2; x = p["sx"] + (p["tx"] - p["sx"]) * e + p["arc"] * math.sin(math.pi * w_); y = p["sy"] + (p["ty"] - p["sy"]) * e
                 d.rectangle([x, y, x + 1, y + 1], fill=heat_col(0.95) + (255,))
-            else:
-                age = t - p["ts"] - p["dur"]; h = 0.66 + 0.34 * math.exp(-age / 0.15) + 0.08 * math.sin(t * p["fl"] + p["fp"])
-                x0, y0 = p["tx"] - CELL / 2, p["ty"] - CELL / 2
-                d.rectangle([x0, y0, x0 + CELL - 1, y0 + CELL - 1], fill=heat_col(h) + (255,))
-                if CELL >= 3: d.point((x0 + 1, y0 + 1), fill=heat_col(h + 0.3) + (255,))
+            else:                                                    # v2: the launch video's letters (soft white, navy rim, gold glow)
+                age = t - p["ts"] - p["dur"]; landed.append((p["tx"] - CELL / 2, p["ty"] - CELL / 2, clamp(math.exp(-age / 0.15))))
+        if landed:
+            ds = ImageDraw.Draw(sprites)
+            for x0, y0, hot in landed: ds.rectangle([x0 - 1, y0 - 1, x0 + CELL, y0 + CELL], fill=(20, 36, 81, 235))
+            for x0, y0, hot in landed:
+                ds.rectangle([x0, y0, x0 + CELL - 1, y0 + CELL - 1], fill=tuple(int(v + (255 - v) * hot) for v in (243, 245, 250)) + (255,))
+                d.rectangle([x0 - 1, y0 - 1, x0 + CELL, y0 + CELL], fill=(255, 210, 122, 60))
         for q in range(26):                                         # sparks always rising from the fire
             ph = (t * 0.9 + q * 0.137) % 1; x = FIRE[0] + 10 * math.sin(q * 3.1 + ph * 6) * (0.4 + ph); y = FIRE[1] - 18 - 120 * ph
             d.point((x, y), fill=heat_col(0.9 - 0.6 * ph) + (int(255 * (1 - ph) * v),))
