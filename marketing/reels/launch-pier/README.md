@@ -9,7 +9,22 @@
 - No back pages and very few full-screen recordings.
 - Nothing from the old LifeFlow.
 
-Final: `LifeFlow_Launch_Pier_v7.mp4` (36.7 s) and the 15 s cut `LifeFlow_Launch_15s_v7.mp4` (14.2 s), plus covers `LifeFlow_Launch_Cover_9x16.jpg` / `_4x5.jpg`, 1080 x 1920, 30 fps, -14 LUFS. Footage is not committed.
+Final: `LifeFlow_Launch_Pier_v8.mp4` (36.7 s) and the 15 s cut `LifeFlow_Launch_15s_v8.mp4` (14.2 s), plus covers `LifeFlow_Launch_Cover_9x16.jpg` / `_4x5.jpg`, 1080 x 1920, 30 fps, -14 LUFS. Footage is not committed.
+
+## v8 (Ali: the title should stay into the logo; "I did not see any enhancements" in the captions or the lighting)
+- **The title stays.** "Your day, drawn as the sky." (and "LifeFlow · Early January 2027") is drawn on top of the dissolve and stays, untouched, as Ali's scene turns into the logo.
+  - The logo ending sits 250 px higher, with the bottom filled by its own stars mirrored, so the title is part of the final frame.
+  - lifeflowweb.com sits under it.
+- **Changes you can see.** v6's tweaks were too subtle to notice on a phone.
+  - **Captions:** in the title's style (Fraunces Bold 66, dark outline and shadow, no box). Words pop in as they're said, and the word being said is gold.
+  - **Grade:** a cinematic night grade on the footage only: curves with cool shadows and warm highlights, a little more colour, bloom on the lights, a soft vignette.
+  - **Faces:** a key light inside each person's matte (head and chest).
+  - **The app's colours** wash over Ali's head and shoulders while the wheel or timeline is behind him.
+  - **The skylings'** glow on the scene is about twice as strong.
+- **Supporting changes.**
+  - One matte set for all of IMG_4127 (`fr2/am`).
+  - `render5.py main|short`, with `--plain` for the v7 look as a before/after.
+  - The sound is unchanged from v7 (`mix4.py`, same timeline).
 
 ## v7 (Ali: the "Skylings" hook "is not even a hook"; he loves the cover's "Your day, drawn as the sky.")
 - **Hook.** IMG_4127 0.2 to 2.3 s: Ali sits silently before he speaks.
