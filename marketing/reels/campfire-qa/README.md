@@ -43,3 +43,50 @@ The health line stays because Ali's new line says "You heard **him**" (Tyler is 
   - the kit's pixel sounds go on every overlay beat;
   - the whole mix is set to -14 LUFS.
 - **Transcripts:** faster-whisper medium.en in the Higgsfield sandbox (`words.py`); cut points were checked on the audio level so every cut sits in silence.
+
+## v2: new effects (Ali, 2026-11-14: "why are they the same exact effects from last video")
+Same cut, grade, voices, score and fire bed. Every effect is new and made for a fire at night. Nothing is reused from the launch video:
+no wheel, no word clouds, no skylings popping in, and no "Your day, drawn as the sky." title. The date is on screen once, at the end.
+Picture: `fire_render2.py` (imports `fire_render.py` for the decode, shots, matte and grade). Sound: `fire_mix2.py`.
+
+| # | Line | v2 on screen |
+|---|---|---|
+| 1 | Tyler: "So what does it actually do for me...?" | "CAMPFIRE Q&A" in ember pixels; sparks swirl out of the fire into a glowing pixel "?" over him, which bursts on the cut to Ali |
+| 2 | Ali: "wake up... plan your whole day and week... study time... a whole week" | "Ali Moslli" written in the air like a sparkler (long-exposure trail, a spitting head, then smoke), "CEO & DEVELOPER" under it; the real sky above the roof turns through a whole day in the app's sky colours (`src/lib/sky.ts` keys), the app's pixel sun crosses and sets behind the roof, the moon comes up; the books icon rises for "study time"; "a whole week" = seven little suns coming up in a row, M T W ... |
+| 3 | Tyler: "So Ali, why did you build LifeFlow?" | "Tyler Kardy" in sparkler light, "CMO" |
+| 4 | Ali: "seven classes, my work shifts, personal finance... in one place" | cut to the two-shot; the fire throws sparks that land as ember letters with the app's own icons: 7 CLASSES (books), WORK SHIFTS (briefcase), FINANCE (cash). On "in one place" every spark is pulled into one pixel sun |
+| 5 | Tyler: "what's the little character on top?" | the sun settles into a star and the stars come out |
+| 6 | Ali: "the skylings... each different time of day" | the stars join into five constellations (each skyling's outline) that ignite into Dawn, Ray, Goldie, Twinkle and Dreamy; the sky behind them runs dawn to night, left to right, each one under its own time |
+| 7 | Ali: "Tyler... how your skyling's helping you" | a shooting star falls to the fire-pit rim by Tyler and lands as Dreamy |
+| 8 | Tyler's food story | Dreamy sits on the rim, lit by the fire; on "food after work" the app's coin with wings flies off; on "home-cooked meals" a pixel speech bubble with the app's bowl (its steam drifts); Dreamy cheers and floats off on "works a long way" |
+| 9 | Tyler: health and Apple Health | a heartbeat drawn in light across the sky, the app's heart on the middle beat; a light thread to the app's sun, and "into LifeFlow" the heart goes into it |
+| 10 | Ali's new line | the sky turns the app's night blue while sparks spell JANUARY 2027; the camera whips down into the fire's biggest flames (clip 11 at 14.2 s), they flash gold, and the logo opens out of the gold from its icon; its rising sun throws GET ON THE WAITLIST, then lifeflowweb.com |
+
+- Captions: warm white (Geist Bold), the spoken word lit ember-orange with a glow.
+- Every icon is the app's own 12 x 12 pixel art, read from `src/components/day-clock/pixel-icons.ts` at render time; the sky colours are the app's.
+- The sparkler names use Sacramento (SIL Open Font License, from google/fonts; download it to `fonts_dl/` next to the script).
+- Sound: a sparkler sizzle on the names, ember whooshes on the letters, the app's own sounds on its pieces, a heart-monitor beep on each drawn beat, a whip and a flame roar into the flash. Made in code; no credits.
+
+## v3 (Ali, 2026-11-14: keep my original last shot, cover my mouth; there's no music; an intro we can reuse)
+- **Order:** the hook (Tyler's question, the ember "?"), then **the intro**, then the body as in v2, then the new ending. About 72.7 s.
+  The hook stays in the first second (the playbook's rule), and the intro is the show's open right after it.
+- **The intro** (`fire_intro.py`, reusable: `python3 fire_intro.py "CAMPFIRE Q&A"` makes `intro.mp4`, 3.1 s with its own sound).
+  It is a pixel scene drawn in code, not the logo or a name card:
+  - the question's sparks gather into one spark that shoots up, and the sky opens around it;
+  - a whole day in a second: the sky runs dawn to night in the app's sky colours, ridden by the skyling of each moment (Dawn, Ray, Goldie, Twinkle, Dreamy), each handing over with a rising chime;
+  - at night a pixel campfire lights on a hill, four skylings land around it like shooting stars, and Dreamy floats above as the moon;
+  - the fire throws the show's name in ember letters;
+  - the camera falls into the fire, and the video opens out of the gold.
+  - Change the title for other talk videos.
+- **The ending** (`fire_end.py`): Ali's original last shot. It exists only in his rough edit (720p, same framing as the 4K camera; the 4K clips don't contain it), so it's scaled to the camera frame and run through the same shot, matte, grade and a sharpen.
+  - His re-recorded line plays over it.
+  - His words leave his mouth as a puff of pixel embers that covers his lips the whole time, tracked with the matte model's face-skin class (`fx/end/mouth_raw.json`), breathing with his voice.
+  - They stream into the app's pixel speech bubble: YOU HEARD HIM, / JANUARY 2027 / GET ON THE WAITLIST / RIGHT NOW!
+  - The bubble pops, the picture flashes gold, and the logo opens out of the gold; its sun throws GET ON THE WAITLIST and lifeflowweb.com.
+  - If Ali uploads the 4K original of that shot, swap it in (`RoughReader`).
+- **Music** (`fire_mix3.py`): the score was -15 dB and ducked again, so it was nearly inaudible. Now it plays from the first frame, about 6 to 8 dB under the voices and full in the intro (+3 dB). The whole mix is -14 LUFS.
+- **Build:**
+  - `fire_render2.py --range 0 104 hook3.mp4` (hook without the old label);
+  - the v2 parts for the body;
+  - `fire_intro.py`, `fire_end.py`, `fire_mix3.py`;
+  - then `assemble3.py`, which joins hook + intro + body + ending in one encode and checks the frame count against `timeline3.json`.
