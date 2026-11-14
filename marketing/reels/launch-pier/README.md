@@ -9,7 +9,19 @@
 - No back pages and very few full-screen recordings.
 - Nothing from the old LifeFlow.
 
-Final: `LifeFlow_Launch_Pier_v6.mp4` (37.1 s) and the 15 s cut `LifeFlow_Launch_15s.mp4` (13.6 s), plus covers `LifeFlow_Launch_Cover_9x16.jpg` / `_4x5.jpg`, 1080 x 1920, 30 fps, -14 LUFS. Footage is not committed.
+Final: `LifeFlow_Launch_Pier_v7.mp4` (36.7 s) and the 15 s cut `LifeFlow_Launch_15s_v7.mp4` (14.2 s), plus covers `LifeFlow_Launch_Cover_9x16.jpg` / `_4x5.jpg`, 1080 x 1920, 30 fps, -14 LUFS. Footage is not committed.
+
+## v7 (Ali: the "Skylings" hook "is not even a hook"; he loves the cover's "Your day, drawn as the sky.")
+- **Hook.** IMG_4127 0.2 to 2.3 s: Ali sits silently before he speaks.
+  - From the first frame, the wheel rises behind him and spins from Dawn to Dreamy.
+  - The cover-style title comes up under him: "What if your day / looked like **this?**".
+  - Then the whip to Tyler. A burst of the score (its 22.5 to 24.6 s) plays under it.
+- **Ending.** IMG_4126 "Be ready by January, 2027.": the cover comes alive.
+  - The wheel rises behind him and settles from Ray on Goldie.
+  - "Your day, / drawn as the **sky.**" comes up under him, then "LifeFlow · Early January 2027" with a few twinkles.
+  - It dissolves into the logo ending. No caption there: the title is the words.
+- **15 s cut:** the hook, then the answer, "showing all your classes, your work shifts, your schedules and all your finances" (the timeline), "with a very smart skyling by your side all day", then the ending and the logo.
+- **Scripts:** `render4.py main|short` (on top of `render3.py`) and `mix4.py main|short`.
 
 ## v6 (Ali: "enhance it more", "we have no hook")
 - **The hook (first 2 s, nothing new filmed).** Ali's "Skylings. Skylings." from the start of IMG_4126 (0.84 to 2.9 s).
