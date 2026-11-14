@@ -9,7 +9,7 @@ import { ServiceError } from "./errors";
 import { hashPassword, verifyPassword } from "../auth/password";
 import { revokeRememberedDevices } from "../auth/remembered-devices";
 import type { Database } from "../db/client";
-import { ownerInbox, users, type UserPreferences } from "../db/schema";
+import { loginChallenges, ownerInbox, users, type UserPreferences } from "../db/schema";
 import { withUser } from "../db/with-user";
 import { lockQueue } from "./waitlist";
 import { fingerprintAdminLogEmail, forgetFriend } from "./referrals";
@@ -240,6 +240,8 @@ export async function changePassword(db: Database, userId: string, current: stri
     .set({ passwordHash: await hashPassword(next), ...(firstPasswordOn2fa ? { emailCodesBlockedAt: new Date() } : {}) })
     .where(eq(users.id, userId));
   await revokeRememberedDevices(db, userId);
+  // A sign-in left half done with the old password can't be finished after the change (security review, 2026-11-14, F1).
+  await db.delete(loginChallenges).where(eq(loginChallenges.userId, userId));
 }
 
 /** The typed confirmation every account deletion asks for (Settings and the lock screen read it the same way). */

@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { Secret, TOTP } from "otpauth";
 import { closeDb, getDb } from "@/server/db/client";
-import { loginChallenges, users } from "@/server/db/schema";
+import { loginChallenges, passwordResets, users } from "@/server/db/schema";
 import {
   beginTotpSetup,
   beginTwoFactorRestart,
@@ -20,7 +20,8 @@ import {
   twoFactorStatus,
   verifySecondFactor,
 } from "@/server/auth/two-factor";
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
+import { resetPassword } from "@/server/auth/password-reset";
 import { createSession, validateSession } from "@/server/auth/sessions";
 import { changePassword } from "@/server/services/accounts";
 import { makeUser } from "../helpers";
@@ -214,6 +215,42 @@ describe("email me a code (owner, 2026-11-06)", () => {
     expect(await completeLoginChallenge(db, strong.token, code(secret, T0 + 2 * MIN), T0 + 2 * MIN)).toMatchObject({ ok: true, method: "totp" });
     const again = await createLoginChallenge(db, user.id, "password", T0 + 3 * MIN);
     expect((await issueLoginEmailCode(db, again.token, T0 + 3 * MIN)).ok).toBe(true);
+  });
+
+  // security review, 2026-11-14 (F1, F3): a code sent before a reset, or a sign-in opened before it, is worthless after it
+  it("an emailed code sent before emailed codes were blocked is refused once they are", async () => {
+    const { user, db } = await enabledUser();
+    const { token } = await createLoginChallenge(db, user.id, "password", T0);
+    const r = await issueLoginEmailCode(db, token, T0);
+    if (!r.ok) throw new Error(`not issued: ${r.reason}`);
+    await db
+      .update(users)
+      .set({ emailCodesBlockedAt: new Date(T0 + MIN) })
+      .where(eq(users.id, user.id));
+    expect(await completeLoginChallenge(db, token, r.code, T0 + 2 * MIN)).toEqual({ ok: false, reason: "wrong" });
+  });
+
+  it("a password reset ends every half-done sign-in, so an emailed code sent before it can't be used after it", async () => {
+    const { user, db } = await enabledUser();
+    const { token } = await createLoginChallenge(db, user.id, "password", T0);
+    const r = await issueLoginEmailCode(db, token, T0);
+    if (!r.ok) throw new Error(`not issued: ${r.reason}`);
+    const reset = randomBytes(32).toString("base64url");
+    await db.insert(passwordResets).values({ id: createHash("sha256").update(reset).digest("hex"), userId: user.id, expiresAt: new Date(Date.now() + 60_000) });
+    await resetPassword(db, reset, "a fresh long passphrase after reset 41");
+    expect(await db.select().from(loginChallenges).where(eq(loginChallenges.userId, user.id))).toEqual([]);
+    expect(await completeLoginChallenge(db, token, r.code, T0 + MIN)).toEqual({ ok: false, reason: "expired" });
+    // and a new sign-in after the reset can't get an emailed code at all
+    const after = await createLoginChallenge(db, user.id, "password", T0 + 2 * MIN);
+    expect(await issueLoginEmailCode(db, after.token, T0 + 2 * MIN)).toEqual({ ok: false, reason: "after_reset" });
+  });
+
+  it("a password change ends every half-done sign-in too", async () => {
+    const { user, db, secret } = await enabledUser();
+    const { token } = await createLoginChallenge(db, user.id, "password", T0);
+    await changePassword(db, user.id, "correct horse battery", "a brand new long passphrase 88");
+    expect(await db.select().from(loginChallenges).where(eq(loginChallenges.userId, user.id))).toEqual([]);
+    expect(await completeLoginChallenge(db, token, code(secret, T0 + MIN), T0 + MIN)).toEqual({ ok: false, reason: "expired" });
   });
 
   it("one code can never start two sessions, even when sent twice at the same moment", async () => {

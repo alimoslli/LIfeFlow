@@ -22,6 +22,7 @@ import { consumePendingAppleLink } from "@/server/auth/apple";
 import { passwordResetAvailable, requestPasswordReset, ResetError, resetPassword } from "@/server/auth/password-reset";
 import { recordInvite } from "@/server/services/invites";
 import { recordError } from "@/server/services/error-reports";
+import { emailSignInNotice } from "@/lib/sign-in-notice";
 
 export type AuthState = { error?: string; email?: string } | null;
 
@@ -93,7 +94,8 @@ export async function verifyLogin(_prev: VerifyState, fd: FormData): Promise<Ver
   await startSession(r.userId);
   // "Remember this phone for 30 days" (checked by default): the authenticator, a backup code or an emailed code earns it
   // (owner, 2026-11-14), never the admin account.
-  if (await shouldRememberDevice(db, r.userId, r.method, fd.get("remember") === "on")) {
+  const remember = await shouldRememberDevice(db, r.userId, r.method, fd.get("remember") === "on");
+  if (remember) {
     const d = await rememberDevice(db, r.userId, (await headers()).get("user-agent"));
     jar.set(DEVICE_COOKIE, d.value, {
       httpOnly: true,
@@ -106,7 +108,7 @@ export async function verifyLogin(_prev: VerifyState, fd: FormData): Promise<Ver
   }
   await consumePendingAppleLink(db, r.userId);
   await withUser(r.userId, (s) => audit(s, "user", "auth.login", undefined, { ip, secondFactor: r.method }));
-  if (r.method === "email") after(() => noticeEmailSignIn(r.userId));
+  if (r.method === "email") after(() => noticeEmailSignIn(r.userId, remember));
   redirect(safeNext(fd.get("next")));
 }
 
@@ -156,19 +158,14 @@ export async function sendLoginEmailCode(_prev: EmailCodeState): Promise<EmailCo
   return { sentTo: r.to };
 }
 
-/** Lets the person know an email code was used to sign in, so a sign-in they didn't make doesn't go unnoticed. */
-async function noticeEmailSignIn(userId: string) {
+/** Lets the person know an email code was used to sign in (wording in lib/sign-in-notice.ts). */
+async function noticeEmailSignIn(userId: string, remembered: boolean) {
   const cfg = emailConfig();
   if (!cfg) return;
   try {
     const [u] = await getDb().select({ email: users.email }).from(users).where(eq(users.id, userId));
     if (!u) return;
-    await sendEmail(cfg, {
-      to: u.email,
-      subject: "You signed in to LifeFlow with an email code",
-      text: "You just signed in to LifeFlow with a code we emailed you. If this wasn't you, change your password now.",
-      html: "<p>You just signed in to LifeFlow with a code we emailed you.</p><p>If this wasn't you, change your password now.</p>",
-    });
+    await sendEmail(cfg, { to: u.email, ...emailSignInNotice(remembered) });
   } catch {
     // A missed notice never blocks the sign-in.
   }

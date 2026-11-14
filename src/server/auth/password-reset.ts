@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { and, eq, gt, isNull } from "drizzle-orm";
 import { checkPassword } from "@/lib/password-strength";
 import type { Database } from "../db/client";
-import { passwordResets, users } from "../db/schema";
+import { loginChallenges, passwordResets, users } from "../db/schema";
 import { withUser } from "../db/with-user";
 import { emailConfig, sendEmail } from "../integrations/email";
 import { audit } from "../services/audit";
@@ -79,6 +79,8 @@ export async function resetPassword(db: Database, token: string, password: strin
     .where(and(eq(passwordResets.userId, r.userId), isNull(passwordResets.usedAt)));
   await deleteUserSessions(db, r.userId);
   await revokeRememberedDevices(db, r.userId);
+  // A sign-in left half done before the reset (its password step was the old password) can't be finished after it (F1).
+  await db.delete(loginChallenges).where(eq(loginChallenges.userId, r.userId));
   await withUser(r.userId, (s) => audit(s, "user", "auth.password_reset"), db);
   return r.userId;
 }
