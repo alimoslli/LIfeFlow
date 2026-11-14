@@ -135,7 +135,7 @@ FONT5 = {
     "V": "#...#|#...#|#...#|#...#|#...#|.#.#.|..#..", "W": "#...#|#...#|#...#|#.#.#|#.#.#|#.#.#|.#.#.", "X": "#...#|#...#|.#.#.|..#..|.#.#.|#...#|#...#",
     "Y": "#...#|#...#|.#.#.|..#..|..#..|..#..|..#..", "Z": "#####|....#|...#.|..#..|.#...|#....|#####",
     "0": ".###.|#...#|#..##|#.#.#|##..#|#...#|.###.", "2": ".###.|#...#|....#|...#.|..#..|.#...|#####", "7": "#####|....#|...#.|..#..|.#...|.#...|.#...",
-    "&": ".##..|#..#.|#.#..|.#...|#.#.#|#..#.|.##.#", "?": ".###.|#...#|....#|...#.|..#..|.....|..#..", "-": ".....|.....|.....|.###.|.....|.....|.....",
+    "&": ".##..|#..#.|#.#..|.#...|#.#.#|#..#.|.##.#", "?": ".###.|#...#|....#|...#.|..#..|.....|..#..", "-": ".....|.....|.....|.###.|.....|.....|.....", "!": "..#..|..#..|..#..|..#..|..#..|.....|..#..", ",": ".....|.....|.....|.....|..#..|..#..|.#...",
 }
 def text_cells(text):
     """lit cells (col, row) of a line of the pixel font, and its width in cells"""
@@ -388,7 +388,7 @@ def cloud_lines(lines, zoom=2.0, shape=2, night=True):
     t_ = MC.TILES[f"tile-{shape}"]; T_, R_, B_, L_ = t_["top"], t_["right"], t_["bottom"], t_["left"]
     tile = Image.open(os.path.join(MC.HERE, f"tile-{shape}-{'night' if night else 'day'}.png")).convert("RGBA")
     font = ImageFont.truetype(os.path.join(MC.HERE, "Geist-SemiBold.ttf"), round(13 * zoom)); LH = 17
-    tw = max(font.getlength(l) for l in lines) / zoom; Wc = max(tw + 28, 2 * (L_ + R_)); Hc = 2 * T_ + 24 + LH * (len(lines) - 1) + 2 * B_
+    tw = max(font.getlength(l) for l in lines) / zoom; Wc = max(tw + 60, 2 * (L_ + R_)); Hc = 2 * T_ + 24 + LH * (len(lines) - 1) + 2 * B_
     ow, oh = round(Wc * zoom), round(Hc * zoom); cl = Image.new("RGBA", (ow, oh), (0, 0, 0, 0))
     sx = [0, L_, 48 - R_, 48]; sy = [0, T_, 21 - B_, 21]
     dx = [0, round(2 * L_ * zoom), ow - round(2 * R_ * zoom), ow]; dy = [0, round(2 * T_ * zoom), oh - round(2 * B_ * zoom), oh]
@@ -692,7 +692,7 @@ def effects(seg, arr, t, c, T, m):
                 if s_ > 0.03:
                     b = cloud_lines(["Hey Ty, try out this high protein", "recipe after work today!"], 2.3)      # the owner's words (v6)
                     bb = b.resize((max(1, int(b.width * s_)), max(1, int(b.height * s_))), Image.LANCZOS)
-                    fy = 6 * math.sin(T * 2.2); bx = clamp(X - bb.width * 0.62, 24, W - 24 - bb.width)
+                    fy = 6 * math.sin(T * 2.2); bx = clamp(X - bb.width * 0.62, 70, W - 70 - bb.width)   # well clear of the screen edge
                     paste(top, bb, int(bx), int(Y - 26 * px - bb.height - 14 + fy))
 
     if tag == "health":

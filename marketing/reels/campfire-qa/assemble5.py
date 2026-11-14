@@ -17,15 +17,12 @@ def frames(path, skip=0, count=None):
     p.kill()
 def gold(arr, f): return (255 - (255 - arr.astype(np.float32)) * (1 - f * np.array([1.0, 0.86, 0.62], np.float32))).astype(np.uint8) if f > 0 else arr
 def smooth(v): v = max(0., min(1., v)); return v * v * (3 - 2 * v)
-PATCHES = [("v6patch_food.mp4", 1384, 1468)]                      # re-rendered stretches spliced over the parts (Dreamy's cloud)
+SOURCES = [("v5r0.mp4", 570), ("v5r1.mp4", 570), ("v5r2.mp4", 244), ("v6r2b0.mp4", 162), ("v6r2b1.mp4", 162)]   # frames 0 .. 1707 in order
 def body():
-    pt = {}
-    for path, a, b in PATCHES:
-        for j, f in enumerate(frames(f"{HERE}/{path}")): pt[a + j] = f
-        assert len([k for k in pt if a <= k < b]) == b - a, (path, len(pt))
-    i = 0
-    for path in ("v5r0.mp4", "v5r1.mp4", "v5r2.mp4"):
-        for f in frames(f"{HERE}/{path}"): yield pt.get(i, f); i += 1
+    for path, cnt in SOURCES:
+        got = 0
+        for f in frames(f"{HERE}/{path}", 0, cnt): yield f; got += 1
+        assert got == cnt, (path, got, cnt)
 enc = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", "30", "-i", "-",
                         "-c:v", "libx264", "-preset", "slow", "-crf", "16", "-pix_fmt", "yuv420p", "-movflags", "+faststart", f"{HERE}/campfire6_silent.mp4"], stdin=subprocess.PIPE)
 n = dict(hook=0, intro=0, body=0, end=0); i = 0

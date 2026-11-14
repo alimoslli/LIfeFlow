@@ -122,4 +122,4 @@ Build: `fire_render2.py --range 0 570 v5r0.mp4` (and 570..1140, 1140..1708), `fi
 Dreamy (the moon) sends Tyler a small cloud in the app's own cloud style (the kit's `make_cloud` tiles, grown to two lines by
 `cloud_lines`): "Hey Ty, try out this high protein / recipe after work today!", after a little "!" over Dreamy. The owner's
 words; note that today the skyling suggests recipes when asked in chat, it doesn't send recipe ideas on its own yet.
-Only those seconds were re-rendered (`--range 1384 1468 v6patch_food.mp4`) and `assemble5.py` splices them in (`PATCHES`).
+The cloud has room round its words and sits 70 px from the screen edge (Ali: "the text is almost touching the side"). Built from the v5 parts plus `--range 1384 1546 v6r2b0.mp4` and `--range 1546 1708 v6r2b1.mp4`; `assemble5.py` (`SOURCES`) checks every count. Final: `LifeFlow_Campfire_QA_v6.mp4`, 69.4 s, -14 LUFS.
