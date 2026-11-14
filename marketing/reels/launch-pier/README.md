@@ -9,7 +9,17 @@
 - No back pages and very few full-screen recordings.
 - Nothing from the old LifeFlow.
 
-Final: `LifeFlow_Launch_Pier_v8.mp4` (36.7 s) and the 15 s cut `LifeFlow_Launch_15s_v8.mp4` (14.2 s), plus covers `LifeFlow_Launch_Cover_9x16.jpg` / `_4x5.jpg`, 1080 x 1920, 30 fps, -14 LUFS. Footage is not committed.
+Final: `LifeFlow_Launch_Pier_v9.mp4` (34.2 s) and the 15 s cut `LifeFlow_Launch_15s_v9.mp4` (12.7 s), plus covers `LifeFlow_Launch_Cover_9x16.jpg` / `_4x5.jpg`, 1080 x 1920, 30 fps, -14 LUFS. Footage is not committed.
+
+## v9 (Ali: the hook "doesn't work with me being the background, but I like the animations"; the logo frame "got too busy, too much text"; the 15 s should open on Tyler's clip with the hook)
+- **The hook is on Tyler's opening.** There's no separate clip of Ali any more.
+  - From the first frame, the wheel rises behind Tyler on the bridge line (y 960, Tyler's matte keeps him in front) and spins from morning to night.
+  - "What if your day / looked like **this?**" sits under him, and his first captions are hidden.
+  - At 1.95 s the wheel flips away fast, and Dreamy (its night skyling) detaches at the same spot and floats into Tyler's sky.
+  - His name cloud follows at 2.25 s, then the logo and the date as before.
+- **A calm last frame.** The logo ending stops at frame 18, when its sun is up and before its own text. Only "Your day, drawn as the sky." and "LifeFlow · Early January 2027" stay with it: no website line, no "Let's clear your sky.", no shift.
+- **The 15 s cut** opens on Tyler's "Hey guys, how's it going?" (0 to 1.5 s) with the same hook, then whips to Ali's "showing all your classes...".
+- **Scripts:** `render6.py main|short` (on top of `render5.py`) and `mix5.py main|short`.
 
 ## v8 (Ali: the title should stay into the logo; "I did not see any enhancements" in the captions or the lighting)
 - **The title stays.** "Your day, drawn as the sky." (and "LifeFlow · Early January 2027") is drawn on top of the dissolve and stays, untouched, as Ali's scene turns into the logo.
