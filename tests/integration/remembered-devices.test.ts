@@ -3,11 +3,13 @@ import { Secret, TOTP } from "otpauth";
 import { afterAll, describe, expect, it } from "vitest";
 import { adminFor } from "@/server/auth/admin";
 import { skipsSecondStep } from "@/server/auth/oauth";
-import { DEVICE_TTL_MS, isRememberedDevice, rememberDevice } from "@/server/auth/remembered-devices";
+import { createHash, randomBytes } from "node:crypto";
+import { resetPassword } from "@/server/auth/password-reset";
+import { DEVICE_TTL_MS, isRememberedDevice, rememberDevice, shouldRememberDevice } from "@/server/auth/remembered-devices";
 import { createSession, sessionSkippedSecondStep } from "@/server/auth/sessions";
 import { beginTotpSetup, beginTwoFactorRestart, confirmTotpSetup, disableTwoFactor, finishTwoFactorRestart } from "@/server/auth/two-factor";
 import { closeDb, getDb } from "@/server/db/client";
-import { rememberedDevices, users } from "@/server/db/schema";
+import { passwordResets, rememberedDevices, users } from "@/server/db/schema";
 import { changePassword } from "@/server/services/accounts";
 import { setSuspended, signOutEverywhere } from "@/server/services/admin";
 import { makeUser } from "../helpers";
@@ -51,6 +53,17 @@ describe("remembered devices", () => {
     expect(await isRememberedDevice(db, user.id, d.value, NOW + DEVICE_TTL_MS + 1000)).toBe(false);
     await db.delete(rememberedDevices).where(eq(rememberedDevices.userId, user.id));
     expect(await isRememberedDevice(db, user.id, d.value, NOW)).toBe(false);
+  });
+
+  it("a password reset revokes every remembered device, one earned with an emailed code included", async () => {
+    const { user } = await twoStepUser();
+    expect(await shouldRememberDevice(db, user.id, "email", true, {})).toBe(true);
+    const d = await rememberDevice(db, user.id);
+    const token = randomBytes(32).toString("base64url");
+    await db.insert(passwordResets).values({ id: createHash("sha256").update(token).digest("hex"), userId: user.id, expiresAt: new Date(Date.now() + 60_000) });
+    await resetPassword(db, token, "a fresh long passphrase after reset 41");
+    expect(await isRememberedDevice(db, user.id, d.value)).toBe(false);
+    expect(await count(user.id)).toBe(0);
   });
 
   it("a password change revokes every remembered device", async () => {
@@ -112,5 +125,21 @@ describe("sessions that skipped the second step", () => {
     expect(await skipsSecondStep(db, "google", user.id, false)).toBe(false);
     process.env.ADMIN_EMAILS = [process.env.ADMIN_EMAILS, user.email].filter(Boolean).join(",");
     expect(await skipsSecondStep(db, "google", user.id, true)).toBe(false);
+  });
+});
+
+// owner, 2026-11-14 (choice A): an emailed code earns the 30 days for a normal account; the admin account never
+describe("remember this phone after an emailed code", () => {
+  it("a normal account is remembered after an emailed code, only when the box is ticked", async () => {
+    const { user } = await twoStepUser();
+    expect(await shouldRememberDevice(db, user.id, "email", true, {})).toBe(true);
+    expect(await shouldRememberDevice(db, user.id, "email", false, {})).toBe(false);
+  });
+
+  it("the admin account is never remembered on the email path, nor on any other", async () => {
+    const { user } = await twoStepUser();
+    const env = { ADMIN_EMAILS: user.email };
+    expect(await adminFor(db, user.id, env)).not.toBeNull(); // really the admin: two-step on, listed
+    for (const method of ["email", "totp", "recovery"] as const) expect(await shouldRememberDevice(db, user.id, method, true, env), method).toBe(false);
   });
 });

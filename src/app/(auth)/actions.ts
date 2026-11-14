@@ -3,7 +3,7 @@ import { provisionalName } from "@/lib/provisional-name";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
-import { DEVICE_COOKIE, DEVICE_TTL_MS, earnsRememberedDevice, isRememberedDevice, rememberDevice } from "@/server/auth/remembered-devices";
+import { DEVICE_COOKIE, DEVICE_TTL_MS, isRememberedDevice, rememberDevice, shouldRememberDevice } from "@/server/auth/remembered-devices";
 import { adminFor } from "@/server/auth/admin";
 import { CHALLENGE_COOKIE, completeLoginChallenge, createLoginChallenge, issueLoginEmailCode } from "@/server/auth/two-factor";
 import { emailConfig, sendEmail } from "@/server/integrations/email";
@@ -22,6 +22,7 @@ import { consumePendingAppleLink } from "@/server/auth/apple";
 import { passwordResetAvailable, requestPasswordReset, ResetError, resetPassword } from "@/server/auth/password-reset";
 import { recordInvite } from "@/server/services/invites";
 import { recordError } from "@/server/services/error-reports";
+import { emailSignInNotice } from "@/lib/sign-in-notice";
 
 export type AuthState = { error?: string; email?: string } | null;
 
@@ -91,8 +92,10 @@ export async function verifyLogin(_prev: VerifyState, fd: FormData): Promise<Ver
   }
   jar.delete(CHALLENGE_COOKIE);
   await startSession(r.userId);
-  // "Remember this phone for 30 days" (checked by default). Only the authenticator or a backup code earns it, never an emailed code, and never the admin account.
-  if (fd.get("remember") === "on" && earnsRememberedDevice(r.method) && !(await adminFor(db, r.userId))) {
+  // "Remember this phone for 30 days" (checked by default): the authenticator, a backup code or an emailed code earns it
+  // (owner, 2026-11-14), never the admin account.
+  const remember = await shouldRememberDevice(db, r.userId, r.method, fd.get("remember") === "on");
+  if (remember) {
     const d = await rememberDevice(db, r.userId, (await headers()).get("user-agent"));
     jar.set(DEVICE_COOKIE, d.value, {
       httpOnly: true,
@@ -105,7 +108,7 @@ export async function verifyLogin(_prev: VerifyState, fd: FormData): Promise<Ver
   }
   await consumePendingAppleLink(db, r.userId);
   await withUser(r.userId, (s) => audit(s, "user", "auth.login", undefined, { ip, secondFactor: r.method }));
-  if (r.method === "email") after(() => noticeEmailSignIn(r.userId));
+  if (r.method === "email") after(() => noticeEmailSignIn(r.userId, remember));
   redirect(safeNext(fd.get("next")));
 }
 
@@ -155,19 +158,14 @@ export async function sendLoginEmailCode(_prev: EmailCodeState): Promise<EmailCo
   return { sentTo: r.to };
 }
 
-/** Lets the person know an email code was used to sign in, so a sign-in they didn't make doesn't go unnoticed. */
-async function noticeEmailSignIn(userId: string) {
+/** Lets the person know an email code was used to sign in (wording in lib/sign-in-notice.ts). */
+async function noticeEmailSignIn(userId: string, remembered: boolean) {
   const cfg = emailConfig();
   if (!cfg) return;
   try {
     const [u] = await getDb().select({ email: users.email }).from(users).where(eq(users.id, userId));
     if (!u) return;
-    await sendEmail(cfg, {
-      to: u.email,
-      subject: "You signed in to LifeFlow with an email code",
-      text: "You just signed in to LifeFlow with a code we emailed you. If this wasn't you, change your password now.",
-      html: "<p>You just signed in to LifeFlow with a code we emailed you.</p><p>If this wasn't you, change your password now.</p>",
-    });
+    await sendEmail(cfg, { to: u.email, ...emailSignInNotice(remembered) });
   } catch {
     // A missed notice never blocks the sign-in.
   }
