@@ -9,7 +9,22 @@
 - No back pages and very few full-screen recordings.
 - Nothing from the old LifeFlow.
 
-Final: `LifeFlow_Launch_Pier_v5.mp4`, 35.0 s, 1080 x 1920, 30 fps, -14 LUFS. Footage is not committed.
+Final: `LifeFlow_Launch_Pier_v6.mp4` (37.1 s) and the 15 s cut `LifeFlow_Launch_15s.mp4` (13.6 s), plus covers `LifeFlow_Launch_Cover_9x16.jpg` / `_4x5.jpg`, 1080 x 1920, 30 fps, -14 LUFS. Footage is not committed.
+
+## v6 (Ali: "enhance it more", "we have no hook")
+- **The hook (first 2 s, nothing new filmed).** Ali's "Skylings. Skylings." from the start of IMG_4126 (0.84 to 2.9 s).
+  - On the first "Skylings", all five pop into the sky around his head.
+  - On the second, the wheel rises behind him (person matte) and spins from morning to night while they fly into it.
+  - Then the whip down to Tyler. The 15 s cut keeps the hook without the wheel (they celebrate instead), since the wheel follows right after.
+- **Cinematic picture.** `decode2.sh` re-made every frame from the 120 fps originals: each frame blends three neighbouring frames (1-2-1), which gives film-like motion and roughly half the grain, then a light denoise and sharpen. Tyler's face and upper body are lifted a little (gamma 0.78, inside his matte, top part only).
+- **Light from the app.** The wheel and timeline add a faint edge light on Ali's hair and collar, from what they add as light. A first, stronger try looked like a grey cap and was dropped. Every skyling spills a faint wide glow on the scene.
+- **Captions** light up word by word (said: full, still to come: dim) and sit at y 1420, clear of Instagram's own text.
+- **Extras.**
+  - `LifeFlow_Launch_15s.mp4`: hook, "in a simple, easy sky that goes by with your day" (the wheel), "with a very smart skyling by your side all day", "Be ready by January, 2027.", the logo. It skips "manage", and its music is the score's last 15 s.
+  - Covers from the golden-hour wheel frame, titled "Your day, drawn as the sky." with "LifeFlow · Early January 2027".
+- **Scripts.**
+  - `render3.py main|short` (builds on `render.py`, writes `timeline_<cut>.json`), then `mix3.py main|short` (cues follow each clip's own time, so they move with the cut), then mux.
+  - The mattes (`matte.py`) and tracks (`track.py`, now with `track_k` for all of IMG_4126) come from the fr2 frames.
 
 ## v5 (Ali: "not black")
 - **No black anywhere.** Ali's last 12 frames (23.33 to 23.73 s, as he leans forward to get up) dissolve straight into the logo ending.
