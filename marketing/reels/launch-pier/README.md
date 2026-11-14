@@ -9,7 +9,7 @@
 - No back pages and very few full-screen recordings.
 - Nothing from the old LifeFlow.
 
-Final: `LifeFlow_Launch_Pier_v9.mp4` (34.2 s) and the 15 s cut `LifeFlow_Launch_15s_v9.mp4` (12.7 s), plus covers `LifeFlow_Launch_Cover_9x16.jpg` / `_4x5.jpg`, 1080 x 1920, 30 fps, -14 LUFS. Footage is not committed.
+Final: `LifeFlow_Launch_Pier_v9.mp4` (34.2 s) and the 15 s cut `LifeFlow_Launch_15s_v10.mp4` (14.97 s), plus covers `LifeFlow_Launch_Cover_9x16.jpg` / `_4x5.jpg`, 1080 x 1920, 30 fps, -14 LUFS. Footage is not committed.
 
 ## v9 (Ali: the hook "doesn't work with me being the background, but I like the animations"; the logo frame "got too busy, too much text"; the 15 s should open on Tyler's clip with the hook)
 - **The hook is on Tyler's opening.** There's no separate clip of Ali any more.
@@ -18,7 +18,7 @@ Final: `LifeFlow_Launch_Pier_v9.mp4` (34.2 s) and the 15 s cut `LifeFlow_Launch_
   - At 1.95 s the wheel flips away fast, and Dreamy (its night skyling) detaches at the same spot and floats into Tyler's sky.
   - His name cloud follows at 2.25 s, then the logo and the date as before.
 - **A calm last frame.** The logo ending stops at frame 18, when its sun is up and before its own text. Only "Your day, drawn as the sky." and "LifeFlow · Early January 2027" stay with it: no website line, no "Let's clear your sky.", no shift.
-- **The 15 s cut** opens on Tyler's "Hey guys, how's it going?" (0 to 1.5 s) with the same hook, then whips to Ali's "showing all your classes...".
+- **The 15 s cut** opens on Tyler with the same hook. v10 (Ali: "make Tyler's part a bit longer... make sure he says his name"): Tyler runs to 4.55 s, through "My name is Tyler Kardy. I run the marketing here for LifeFlow." (the cut sits in the gap before "today"). His name cloud and the logo show. Then Ali's "showing all your classes..." through "Be ready by January, 2027.", and the logo frame holds 1 s.
 - **Scripts:** `render6.py main|short` (on top of `render5.py`) and `mix5.py main|short`.
 
 ## v8 (Ali: the title should stay into the logo; "I did not see any enhancements" in the captions or the lighting)

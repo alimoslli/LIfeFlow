@@ -18,8 +18,9 @@ from render3 import clamp, smooth, back, out3, in3, smoothv, W, H, FPS, L, SP, G
 R3.CUTS.update({
     "main": dict(segs=[("t", 0, 352, 1.0), ("a", 57, 513, 1.0), ("a", 585, 672, 1.06), ("k", 659, 712, 1.0)],
                  trans=["whip", "cut", "cut"], hook_wheel=False, hold=72),
-    "short": dict(segs=[("t", 0, 45, 1.0), ("a", 378, 513, 1.0), ("a", 585, 672, 1.06), ("k", 659, 712, 1.0)],
-                  trans=["whip", "cut", "cut"], hook_wheel=False, hold=54),
+    # Tyler through "My name is Tyler Kardy. I run the marketing here for LifeFlow." (cut in the gap at 4.55 s), then Ali
+    "short": dict(segs=[("t", 0, 137, 1.0), ("a", 378, 513, 1.0), ("a", 585, 672, 1.06), ("k", 659, 712, 1.0)],
+                  trans=["whip", "cut", "cut"], hook_wheel=False, hold=30),
 })
 END_HOLD = 18                    # the logo ending's frame with its sun fully up, before "Let's clear your sky." appears
 def build(cut):
