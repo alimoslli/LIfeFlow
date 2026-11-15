@@ -1,6 +1,6 @@
 import { and, asc, eq } from "drizzle-orm";
 import { categories } from "../../db/schema";
-import type { UserScope } from "../../db/with-user";
+import { once, type UserScope } from "../../db/with-user";
 
 type Seed = { name: string; kind: "expense" | "income" | "transfer"; color: string; children?: string[] };
 
@@ -85,9 +85,11 @@ export async function ensureDefaultCategories(scope: UserScope) {
   return true;
 }
 
-export async function listCategories(scope: UserScope) {
-  await ensureDefaultCategories(scope);
-  return scope.tx.select().from(categories).where(eq(categories.userId, scope.userId)).orderBy(asc(categories.name));
+export function listCategories(scope: UserScope) {
+  return once(scope, "categories", async () => {
+    await ensureDefaultCategories(scope);
+    return scope.tx.select().from(categories).where(eq(categories.userId, scope.userId)).orderBy(asc(categories.name));
+  });
 }
 
 /** "Food and dining!" → "food dining"; plurals and "&"/"and" don't matter. */

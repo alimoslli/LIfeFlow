@@ -8,7 +8,7 @@ import { ServiceError } from "../services/errors";
 import { getTool } from "./registry";
 import type { ToolContext } from "./tool";
 
-export const MAX_TOOL_RESULT_CHARS = 24_000;
+export { MAX_TOOL_RESULT_CHARS, serializeResult } from "./serialize-result";
 const CONFIRM_TTL_MS = 30 * 60_000;
 
 export type ExecOutcome =
@@ -25,12 +25,6 @@ function errorMessage(e: unknown): string {
   if (e instanceof ZodError) return `Invalid arguments: ${e.issues.map((i) => `${i.path.join(".") || "(root)"} ${i.message}`).join("; ")}`;
   if (e instanceof ServiceError) return e.message;
   return TOOL_FAILED;
-}
-
-/** Serializes a result for the model, truncating oversized payloads. */
-export function serializeResult(r: ToolResultRecord): string {
-  const s = JSON.stringify(r);
-  return s.length <= MAX_TOOL_RESULT_CHARS ? s : JSON.stringify({ ...r, data: undefined, truncated: true, preview: s.slice(0, MAX_TOOL_RESULT_CHARS) });
 }
 
 /**

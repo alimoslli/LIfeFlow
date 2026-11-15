@@ -1,5 +1,5 @@
 import { mkdirSync } from "node:fs";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { pool, queryAsUser, signUp, fillBirthday } from "./helpers";
 
 // Setup in the app (owner, 2026-11-12): the new account lands on the real Today and the skyling walks them through it.
@@ -289,5 +289,133 @@ test("on a laptop the same setup sits beside the wheel", async ({ browser }) => 
     await page.waitForTimeout(700);
     await page.screenshot({ path: `${SHOTS}/laptop-1-meet-the-skylings-note.png` });
   }
+  await ctx.close();
+});
+
+/** The button is on screen, nothing lies over it, and its note touches neither the week's tiles nor the chat bar. */
+async function reachable(page: Page, button: Locator) {
+  await expect(button).toBeVisible();
+  await page.waitForTimeout(900); // the wheel's own motion settles
+  const r = await button.evaluate((b) => {
+    const box = b.getBoundingClientRect();
+    const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+    const note = b.closest("section")!.getBoundingClientRect();
+    const shown = (e: Element) => {
+      for (let x: Element | null = e; x; x = x.parentElement) {
+        const cs = getComputedStyle(x);
+        if (cs.display === "none" || cs.visibility === "hidden" || Number(cs.opacity) < 0.5) return false;
+      }
+      const s = e.getBoundingClientRect();
+      return s.width > 0 && s.height > 0;
+    };
+    const touches = (sel: string) =>
+      [...document.querySelectorAll(sel)].filter(shown).some((e) => {
+        const x = e.getBoundingClientRect();
+        return x.left < note.right && note.left < x.right && x.top < note.bottom && note.top < x.bottom;
+      });
+    return {
+      inView: box.top >= 0 && box.bottom <= window.innerHeight && box.left >= 0 && box.right <= window.innerWidth,
+      uncovered: !!top && (b.contains(top) || top.contains(b)),
+      tiles: touches(".dc-tile"),
+      bar: touches(".dc-dock"),
+    };
+  });
+  expect(r).toEqual({ inView: true, uncovered: true, tiles: false, bar: false });
+}
+
+// A phone's browser leaves a short window (an iPhone 13 in Safari: 390 x 664). The note used to get three lines there, with
+// its one button out of view; and opened into the week, the week's tiles lay over it.
+test("a phone browser's short window: every step's button is in view and uncovered; picking a skyling can wait", async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 664 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  const email = await signUp(page, "Maya Chen", { onboarding: "stay", ai: false });
+  await page.goto("/setup");
+  await page.waitForURL((u) => u.pathname === "/");
+  const n = note(page);
+  await expect(n.getByTestId("setup-step")).toHaveText("Step 1 of 3");
+  await reachable(page, n.getByRole("button", { name: "Meet the skylings" }));
+  // the pick is the one part that isn't needed: it can wait, and the skyling stays the app's own (Ray)
+  await n.getByRole("button", { name: "Pick later" }).click();
+  await expect(n.getByTestId("setup-step")).toHaveText("Step 2 of 3");
+  await expect(n.getByText("I'm Ray.", { exact: false })).toBeVisible();
+  await reachable(page, n.getByRole("button", { name: "About you" }));
+  await n.getByRole("button", { name: "About you" }).click();
+  const about = page.getByRole("dialog", { name: "About you" });
+  await about.getByLabel("What should I call you?").fill("Maya");
+  await about.getByRole("radio", { name: /^Classes/ }).click();
+  await fillBirthday(about, "2005-04-12");
+  await about.getByRole("button", { name: "Continue" }).click();
+  await expect(n.getByTestId("setup-step")).toHaveText("Step 3 of 3");
+  await reachable(page, n.getByRole("button", { name: "Pick the first one" }));
+  await n.getByRole("button", { name: "Pick the first one" }).click();
+  const sheet = page.getByRole("dialog", { name: "Your first connection" });
+  await sheet.getByRole("button", { name: "Connect Canvas" }).click();
+  await sheet.getByLabel("Calendar Feed link").fill(FEED);
+  await sheet.getByRole("button", { name: "Connect Canvas" }).click();
+  // the week is open with its tiles under it, and the note sits below them with its button
+  await expect(page.locator(".dc-today[data-setup=landed]")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "timeline");
+  await expect(n.getByTestId("setup-step")).toHaveCount(0); // the three things are done
+  await reachable(page, n.getByRole("button", { name: "Show me how to read it" }));
+  await n.getByRole("button", { name: "Show me how to read it" }).click();
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "clock");
+  await reachable(page, n.getByRole("button", { name: "Go to my sky" }));
+  // opened again while learning: the hint says how to fold it back, and the finish is still there
+  await page.getByRole("button", { name: /^Today\. Now / }).click();
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "timeline");
+  await expect(n.getByTestId("setup-words")).toContainText("Pull the line down");
+  await reachable(page, n.getByRole("button", { name: "Go to my sky" }));
+  await n.getByRole("button", { name: "Go to my sky" }).click();
+  await expect(page.locator(".dc-today[data-setup]")).toHaveCount(0);
+  const [row] = await queryAsUser<{ o: string; c: string | null }>(
+    email,
+    "select preferences->>'onboarding' as o, preferences->>'companion' as c from users where email = $1",
+    [email],
+  );
+  expect(row).toEqual({ o: "done", c: null });
+  await ctx.close();
+});
+
+// On a laptop the note lives beside the wheel, and that panel steps aside while the day is open as a line. After the first
+// connection the week opens, and the one way forward used to disappear with it.
+test("on a laptop the note waits under the open week: the next step never disappears", async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  await signUp(page, "Maya Chen", { onboarding: "stay", ai: false });
+  await page.goto("/setup");
+  await page.waitForURL((u) => u.pathname === "/");
+  const wide = page.getByTestId("setup-note-wide");
+  const under = page.getByTestId("setup-note-open");
+  await expect(under).toBeHidden(); // folded: only the note beside the wheel
+  await wide.getByRole("button", { name: "Pick later" }).click();
+  await wide.getByRole("button", { name: "About you" }).click();
+  const about = page.getByRole("dialog", { name: "About you" });
+  // by keyboard: Enter in the name box does nothing until everything needed is filled in, then it continues
+  await about.getByLabel("What should I call you?").fill("Maya");
+  await about.getByLabel("What should I call you?").press("Enter");
+  await expect(about).toBeVisible();
+  await about.getByRole("radio", { name: /^Classes/ }).click();
+  await fillBirthday(about, "2005-04-12");
+  await about.getByLabel("What should I call you?").press("Enter");
+  await expect(about).toBeHidden();
+  await wide.getByRole("button", { name: "Pick the first one" }).click();
+  const sheet = page.getByRole("dialog", { name: "Your first connection" });
+  await sheet.getByRole("button", { name: "Connect Canvas" }).click();
+  await sheet.getByLabel("Calendar Feed link").fill(FEED);
+  await sheet.getByLabel("Calendar Feed link").press("Enter");
+  await expect(page.locator(".dc-today[data-setup=landed]")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "timeline");
+  await reachable(page, under.getByRole("button", { name: "Show me how to read it" }));
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/laptop-2-the-week-lands.png` });
+  await under.getByRole("button", { name: "Show me how to read it" }).click();
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "clock");
+  await expect(under).toBeHidden();
+  await reachable(page, wide.getByRole("button", { name: "Go to my sky" }));
+  await page.getByRole("button", { name: /^Today\. Now / }).click();
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "timeline");
+  await reachable(page, under.getByRole("button", { name: "Go to my sky" }));
+  await under.getByRole("button", { name: "Go to my sky" }).click();
+  await expect(page.locator(".dc-today[data-setup]")).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Maya");
   await ctx.close();
 });

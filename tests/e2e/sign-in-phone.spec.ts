@@ -100,3 +100,24 @@ test("forgot password and Sign in with Apple say plainly when they aren't set up
   await page.goto("/reset-password");
   await expect(page.getByRole("heading", { name: "This link isn't complete." })).toBeVisible();
 });
+
+// Signing up with an email that already has an account: the form says so and gives the way in, with the email filled in.
+test("sign-up with an email that already has an account offers signing in with it", async ({ page }) => {
+  const email = await signUp(page);
+  await page.context().clearCookies();
+  await pool.query("delete from rate_limit_buckets where key like 'signup:ip:%'");
+  await page.goto("/signup");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill("correct horse battery");
+  await page.getByRole("button", { name: "Create account" }).click();
+  const alert = page.getByRole("alert").filter({ hasText: "already exists" });
+  await expect(alert).toBeVisible();
+  const link = alert.getByRole("link", { name: "Sign in with it" });
+  expect(Math.round((await link.boundingBox())!.height)).toBeGreaterThanOrEqual(44);
+  await link.click();
+  await page.waitForURL(/\/login\?email=/);
+  await expect(page.getByLabel("Email")).toHaveValue(email);
+  await page.getByLabel("Password").fill("correct horse battery");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.waitForURL((u) => u.pathname === "/");
+});

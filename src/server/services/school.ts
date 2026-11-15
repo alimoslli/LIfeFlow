@@ -4,7 +4,7 @@ import { courseGrade } from "@/lib/grades";
 import { DATE_RE, TIME_RE, addDaysStr, localDateOf, localToInstant, startOfLocalDay, todayIn, weekStart } from "@/lib/dates";
 import { normalizeText } from "@/lib/utils";
 import { assignments, courseMaterials, courses, type DataSource } from "../db/schema";
-import type { UserScope } from "../db/with-user";
+import { once, type UserScope } from "../db/with-user";
 import { assertOwned, notFound, ServiceError } from "./errors";
 import { parsePatch } from "./patch";
 import { awardStar, takeBack } from "./sky-home";
@@ -264,13 +264,16 @@ export async function listAssignments(scope: UserScope, tz: string, opts: { view
   if (view === "upcoming") conds.push(open, gte(assignments.dueAt, now));
   if (view === "overdue") conds.push(open, lt(assignments.dueAt, now));
   if (view === "completed") conds.push(eq(assignments.status, "done"));
-  const rows = await scope.tx
-    .select({ assignment: assignments, course: { id: courses.id, name: courses.name, code: courses.code, color: courses.color } })
-    .from(assignments)
-    .innerJoin(courses, eq(courses.id, assignments.courseId))
-    .where(and(...conds))
-    .orderBy(view === "completed" ? desc(assignments.completedAt) : sql`${assignments.dueAt} asc nulls last`, asc(assignments.title))
-    .limit(opts.limit ?? 300);
+  const read = () =>
+    scope.tx
+      .select({ assignment: assignments, course: { id: courses.id, name: courses.name, code: courses.code, color: courses.color } })
+      .from(assignments)
+      .innerJoin(courses, eq(courses.id, assignments.courseId))
+      .where(and(...conds))
+      .orderBy(view === "completed" ? desc(assignments.completedAt) : sql`${assignments.dueAt} asc nulls last`, asc(assignments.title))
+      .limit(opts.limit ?? 300);
+  // "all" doesn't depend on the time: the agenda, the day clock and the briefing each ask for it, and share one read
+  const rows = await (view === "all" && !opts.courseId ? once(scope, `assignments:all:${opts.limit ?? 300}`, read) : read());
   return rows.map((r) => ({ ...r.assignment, course: r.course }));
 }
 

@@ -3,7 +3,7 @@ import { and, asc, eq, max, ne } from "drizzle-orm";
 import { z } from "zod";
 import { DATE_RE, addDaysStr, daysBetween, monthEnd, monthStart } from "@/lib/dates";
 import { budgets, categories, financialAccounts, financialGoals, integrations, recurringItems } from "../../db/schema";
-import type { UserScope } from "../../db/with-user";
+import { once, type UserScope } from "../../db/with-user";
 import { assertOwned, notFound } from "../errors";
 import { listCategories } from "./categories";
 import { rollupToParents } from "./cashflow";
@@ -51,7 +51,10 @@ export async function deleteBudget(scope: UserScope, id: string) {
 }
 
 /** Budget vs. actual for a month. Budgets on a parent category include its subcategories. */
-export async function budgetStatus(scope: UserScope, month: string) {
+export function budgetStatus(scope: UserScope, month: string) {
+  return once(scope, `budgetStatus:${monthStart(month)}`, () => readBudgetStatus(scope, month));
+}
+async function readBudgetStatus(scope: UserScope, month: string) {
   const m = monthStart(month);
   const [rows, cats, spentById] = await series(
     () =>
@@ -230,7 +233,9 @@ export async function deleteRecurring(scope: UserScope, id: string) {
 }
 
 export async function listRecurring(scope: UserScope, opts: { includeInactive?: boolean } = {}) {
-  const rows = await scope.tx.select().from(recurringItems).where(eq(recurringItems.userId, scope.userId)).orderBy(asc(recurringItems.nextDueDate));
+  const rows = await once(scope, "recurring", () =>
+    scope.tx.select().from(recurringItems).where(eq(recurringItems.userId, scope.userId)).orderBy(asc(recurringItems.nextDueDate)),
+  );
   return opts.includeInactive ? rows : rows.filter((r) => r.status === "active");
 }
 
@@ -361,7 +366,10 @@ export function seriesForItem(item: TrackedItem, all: RecurringCandidate[]): Rec
  * series out of the suggestions, but only active ones (`trackedActive`) turn a series into a bill. Only
  * series at `MIN_CONFIDENCE` or more are suggested.
  */
-export async function bankSeries(scope: UserScope, today: string) {
+export function bankSeries(scope: UserScope, today: string) {
+  return once(scope, `bankSeries:${today}`, () => detectBankSeries(scope, today));
+}
+async function detectBankSeries(scope: UserScope, today: string) {
   const [txns, existing, synced] = await series(
     () => queryAllTransactions(scope, { from: addDaysStr(today, -400), to: today }),
     () => listRecurring(scope, { includeInactive: true }),

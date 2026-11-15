@@ -25,6 +25,8 @@ export const signupSchema = z.object({
 });
 
 export class AuthError extends Error {}
+/** Sign-up with an email that already has an account: the form offers signing in with it instead. */
+export class AccountExistsError extends AuthError {}
 
 export function isValidTimeZone(tz: string) {
   try {
@@ -38,7 +40,7 @@ export function isValidTimeZone(tz: string) {
 export async function registerUser(db: Database, input: z.input<typeof signupSchema>, opts: { accountKind?: "standard" | "demo" } = {}) {
   const data = signupSchema.parse(input);
   const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, data.email));
-  if (existing.length) throw new AuthError("An account with that email already exists.");
+  if (existing.length) throw new AccountExistsError("An account with that email already exists.");
   const [user] = await db
     .insert(users)
     .values({
