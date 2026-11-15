@@ -153,6 +153,23 @@ describe("accounts that stopped opening the app", () => {
     expect(synced(active.item.id)).toBe(true);
   });
 
+  it("a bank's 'sign in again' notice is acted on at once for an idle account too (only new data waits)", async () => {
+    const idle = await account(30, 1);
+    mocks.owner = { userId: idle.user.id, integrationId: idle.item.id };
+    const res = await webhook(
+      new Request("https://lifeflow.test/api/integrations/plaid/webhook", {
+        method: "POST",
+        body: JSON.stringify({ webhook_type: "ITEM", webhook_code: "ERROR", item_id: "i", error: { display_message: "Sign in to your bank again." } }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    const [row] = await idle.run((s) =>
+      s.tx.select({ status: integrations.status, lastError: integrations.lastError }).from(integrations).where(eq(integrations.id, idle.item.id)),
+    );
+    expect(row.status).toBe("error");
+    expect(row.lastError).toBe("Sign in to your bank again.");
+  });
+
   it("the morning look files nothing from Gmail for an idle account (a paid read per email), and files as before otherwise", async () => {
     const morning = new Date("2026-11-10T14:00:00Z"); // 9 AM in New York
     const prefs = { gmailFiling: true } as Parameters<typeof runDueSlot>[2];

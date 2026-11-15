@@ -7,11 +7,15 @@ import type { UserScope } from "../db/with-user";
  * Accounts that stopped opening the app (owner, 2026-11-15: "pause after 7 days and refresh every 3 days"). After 7 days
  * without the app being opened, the background work that costs money waits: no paid AI on their behalf (the morning Gmail
  * filing), and their connections sync every 3 days instead of every half hour. Nothing is lost and nothing is asked of
- * them: the moment they open the app they are seen again, and the next run is back to normal. Notifications are not
- * paused; they are how the skyling brings people back.
+ * them: once they open the app they are seen again, so their connections sync on the next sync run and Gmail filing is
+ * back on the next morning run. Notifications are not paused; they are how the skyling brings people back.
  *
- * "Opened" is the newest `sessions.last_seen_at` (stamped every 10 minutes of use), or when the account was made if it has
- * no session left.
+ * Follow-up, not handled here: a connection that keeps failing never updates `last_synced_at`, so it is tried on every
+ * run even for an idle account (as it was before this rule).
+ *
+ * "Opened" is the newest `sessions.last_seen_at` (stamped every 10 minutes of use with the app's cookie session), or when
+ * the account was made if it has no session left. The doors without a session (Apple Health, text messages, forwarded
+ * email) don't count: someone who only texts their skyling is treated as idle after 7 days.
  */
 export const IDLE_AFTER_DAYS = 7;
 export const IDLE_SYNC_EVERY_DAYS = 3;
