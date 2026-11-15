@@ -332,6 +332,9 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
 
   /* ---------- haptics: native vibration where it exists, the iOS 18 switch tap where it doesn't ---------- */
   function haptic(ms: number) {
+    // only once the person has touched the page: before that the browser blocks it and logs an error (the wheel opening
+    // by itself on load did, on every visit)
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
     try {
       if (navigator.vibrate && navigator.vibrate(ms)) return;
     } catch {

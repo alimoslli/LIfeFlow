@@ -42,7 +42,8 @@ export default async function LoginPage({
       apple={!!appleConfig()}
       google={!!googleSignInConfig()}
       notice={notice}
-      email={link === "apple" || link === "google" ? email?.slice(0, 254) : undefined}
+      // linking Apple or Google, or coming from sign-up with an email that already has an account: the email is filled in
+      email={email?.slice(0, 254)}
     />
   );
 }
