@@ -12,10 +12,10 @@ describe("copy that claims only what's true (audit A20)", () => {
     expect(chat).not.toMatch(/take off your plate|I know your/);
   });
 
-  it("the welcome never says it is connecting or reading anything it isn't", () => {
-    // the demo day is gone (owner, 2026-11-09); the welcome only shows what the person really added
-    const welcome = src("app/(onboarding)/welcome/onboarding.tsx");
-    expect(welcome).not.toMatch(/Connecting your|Reading your/);
+  it("setup never says it is connecting or reading anything it isn't", () => {
+    // the demo day is gone (owner, 2026-11-09); setup only shows what the person really added (it happens on Today now)
+    const setup = src("app/(app)/_today/setup-today.tsx");
+    expect(setup).not.toMatch(/Connecting your|Reading your/);
   });
 });
 

@@ -14,7 +14,6 @@ test.use({
 });
 
 const SHOTS = process.env.SETUP_SHOTS; // set to a folder to write the pictures for the owner
-const OLD = SHOTS ? `${SHOTS}/old` : null;
 async function shot(page: Page, name: string, dir = SHOTS) {
   if (!dir) return;
   mkdirSync(dir, { recursive: true });
@@ -42,7 +41,7 @@ async function schedulePicture(page: Page) {
 /** Sign-up, then the setup inside the app: the first steps up to "pick the first connection". */
 async function toConnect(page: Page, opts: { shots?: boolean } = {}) {
   const email = await signUp(page, "Maya Chen", { onboarding: "stay", ai: false });
-  await page.goto("/setup");
+  await page.goto("/");
   await page.waitForURL((u) => u.pathname === "/");
   // the real Today: the same sky and the same chat bar, with the skyling's note where its note always sits
   await expect(page.getByTestId("day-clock")).toBeVisible();
@@ -159,7 +158,7 @@ test("a picture of a class schedule: read, checked with one tap, and it lands on
   expect((await queryAsUser<{ name: string }>(email, "select name from courses")).map((c) => c.name)).toEqual(["BIO 110"]);
 });
 
-test("a plain sign-up lands in the in-app setup by default, and /welcome only forwards there", async ({ page }) => {
+test("a plain sign-up lands in setup on Today, and /welcome only forwards there", async ({ page }) => {
   await signUp(page, "Dana Default", { onboarding: "app", ai: false });
   await page.waitForURL((u) => u.pathname === "/");
   await expect(page.locator(".dc-today[data-setup=meet]")).toBeVisible();
@@ -170,7 +169,7 @@ test("a plain sign-up lands in the in-app setup by default, and /welcome only fo
 
 test("under 13 locks setup in the app exactly as before", async ({ page }) => {
   const email = await signUp(page, "Kid Example", { onboarding: "stay", ai: false });
-  await page.goto("/setup");
+  await page.goto("/");
   await page.waitForURL((u) => u.pathname === "/");
   await note(page).getByRole("button", { name: "Meet the skylings" }).click();
   await page.getByRole("dialog", { name: "Meet the skylings" }).getByRole("radio", { name: /^Ray/ }).click();
@@ -205,27 +204,6 @@ test("setup can't be finished without a connection: no finish, no skip, still in
   await expect(page.locator(".dc-today[data-setup=connect]")).toBeVisible();
   const [row] = await queryAsUser<{ o: string }>(email, "select preferences->>'onboarding' as o from users where email = $1", [email]);
   expect(row.o).toBe("pending");
-});
-
-test("the old welcome is still there to compare", async ({ page }) => {
-  test.skip(!OLD, "pictures only");
-  await signUp(page, "Maya Chen", { onboarding: "stay", ai: false });
-  await page.goto("/setup?old=1");
-  await page.waitForURL("**/welcome");
-  await shot(page, "old-1-meet-the-skylings", OLD!);
-  await page.getByRole("radio", { name: /^Ray/ }).click();
-  await shot(page, "old-2-picked", OLD!);
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByLabel("What should I call you?").fill("Maya");
-  await page.getByRole("radio", { name: /^Both/ }).click();
-  await fillBirthday(page, "2005-04-12");
-  await shot(page, "old-3-about-you", OLD!);
-  await page.getByRole("button", { name: "Connect my sky" }).click();
-  await expect(page.getByRole("heading", { name: "Connect your sky" })).toBeVisible();
-  await shot(page, "old-4-connect-your-sky", OLD!);
-  await page.getByRole("button", { name: "I'll connect later" }).click();
-  await expect(page.getByRole("heading", { name: "Read your sky" })).toBeVisible();
-  await shot(page, "old-5-read-your-sky", OLD!);
 });
 
 test("nothing to connect: tell the skyling the week in a message; only what is really saved moves setup on", async ({ page }) => {
@@ -279,7 +257,7 @@ test("on a laptop the same setup sits beside the wheel", async ({ browser }) => 
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   await signUp(page, "Maya Chen", { onboarding: "stay", ai: false });
-  await page.goto("/setup");
+  await page.goto("/");
   await page.waitForURL((u) => u.pathname === "/");
   const wide = page.getByTestId("setup-note-wide");
   await expect(wide.getByRole("button", { name: "Meet the skylings" })).toBeVisible();
@@ -329,7 +307,7 @@ test("a phone browser's short window: every step's button is in view and uncover
   const ctx = await browser.newContext({ viewport: { width: 390, height: 664 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
   const email = await signUp(page, "Maya Chen", { onboarding: "stay", ai: false });
-  await page.goto("/setup");
+  await page.goto("/");
   await page.waitForURL((u) => u.pathname === "/");
   const n = note(page);
   await expect(n.getByTestId("setup-step")).toHaveText("Step 1 of 3");
@@ -382,7 +360,7 @@ test("on a laptop the note waits under the open week: the next step never disapp
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   await signUp(page, "Maya Chen", { onboarding: "stay", ai: false });
-  await page.goto("/setup");
+  await page.goto("/");
   await page.waitForURL((u) => u.pathname === "/");
   const wide = page.getByTestId("setup-note-wide");
   const under = page.getByTestId("setup-note-open");

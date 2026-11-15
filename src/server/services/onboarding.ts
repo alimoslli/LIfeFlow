@@ -11,95 +11,7 @@ import type { Database } from "../db/client";
 import { withUser, type UserScope } from "../db/with-user";
 import { assistantSchema } from "./accounts";
 import { lockQueue } from "./waitlist";
-import { createManualAccount } from "./finance/accounts";
 import { deleteUserBudgets } from "./ai-budget";
-import { createMemory } from "./memory";
-import { createCourse } from "./school";
-import { createEmployer, fillRegularShifts, workScheduleSchema } from "./work";
-
-/**
- * First-run setup. Everything the user entered is saved in one transaction
- * through the regular services, so a failed step leaves nothing half-done.
- */
-export const onboardingSchema = z.object({
-  lifeStage: z.enum(["student", "working", "both", "life"]).optional(),
-  courses: z.array(z.string().trim().min(1).max(200)).max(12).default([]),
-  job: z
-    .object({
-      name: z.string().trim().min(1).max(200),
-      /** Dollars per hour; optional. */
-      hourlyRate: z.number().min(0).max(10_000).optional(),
-      /** Regular hours, e.g. full-time Mon–Fri 08:00–17:00. Left out when shifts change week to week. */
-      schedule: workScheduleSchema.optional(),
-    })
-    .optional(),
-  checking: z
-    .object({
-      name: z.string().trim().min(1).max(120).default("Checking"),
-      /** Current balance in dollars, as the user sees it in their bank app. */
-      balance: z.number().min(-10_000_000).max(10_000_000),
-    })
-    .optional(),
-  studyTime: z.enum(["morning", "afternoon", "evening", "night"]).optional(),
-  jarvisTone: z.enum(["concise", "balanced", "detailed"]).optional(),
-  /** Something the user wants Jarvis to know; saved as a confirmed memory. */
-  aboutMe: z.string().trim().max(500).optional(),
-  /** Their assistant's name and personality, chosen in "Make it yours". */
-  assistant: z
-    .object({
-      name: assistantSchema.shape.name.optional(),
-      style: z.enum(["coach", "friend", "direct"]),
-      companion: z.enum([...COMPANION_KEYS, SKY_CHOICE]).optional(),
-    })
-    .optional(),
-});
-
-export type OnboardingInput = z.input<typeof onboardingSchema>;
-
-export async function completeOnboarding(scope: UserScope, input: OnboardingInput, tz = "UTC") {
-  const d = onboardingSchema.parse(input);
-  const seen = new Set<string>();
-  let courses = 0;
-  for (const name of d.courses) {
-    if (seen.has(name.toLowerCase())) continue;
-    seen.add(name.toLowerCase());
-    await createCourse(scope, { name });
-    courses++;
-  }
-  if (d.job) {
-    await createEmployer(scope, {
-      name: d.job.name,
-      payType: "hourly",
-      hourlyRateCents: d.job.hourlyRate == null ? null : Math.round(d.job.hourlyRate * 100),
-      schedule: d.job.schedule ?? null,
-    });
-    if (d.job.schedule) await fillRegularShifts(scope, tz, todayIn(tz));
-  }
-  if (d.checking) {
-    await createManualAccount(scope, {
-      name: d.checking.name,
-      type: "depository",
-      subtype: "checking",
-      currentBalanceCents: Math.round(d.checking.balance * 100),
-    });
-  }
-  if (d.aboutMe && d.aboutMe.length >= 3) {
-    await createMemory(scope, { content: d.aboutMe, category: "fact" }, "user");
-  }
-  await finishOnboarding(
-    scope,
-    {
-      lifeStage: d.lifeStage,
-      studyTime: d.studyTime,
-      jarvisTone: d.jarvisTone,
-      assistantName: d.assistant?.name,
-      assistantStyle: d.assistant?.style,
-      companion: d.assistant?.companion,
-    },
-    tz,
-  );
-  return { courses, job: !!d.job, checking: !!d.checking, memory: !!d.aboutMe && d.aboutMe.length >= 3 };
-}
 
 /**
  * The welcome saves as it goes (owner, 2026-11-09: their classes come from connecting their school calendar, so the
@@ -392,15 +304,9 @@ export async function saveBirthday(
   return { blocked: false };
 }
 
-/** The name they want to be called, asked on the first screen after sign-up. */
-export async function setDisplayName(scope: UserScope, name: string) {
-  const clean = z.string().trim().min(1, "Enter a name").max(80).parse(name).replace(/\s+/g, " ");
-  await scope.tx.update(users).set({ name: clean }).where(eq(users.id, scope.userId));
-}
-
 /**
- * Marks setup finished (also used by "Skip setup"). No tour follows (owner's program, item 7: the first minute ends on
- * their own sky; the welcome teaches what the tour did). "Replay the tour" in Settings still sets it to pending.
+ * Marks setup finished. No tour follows (owner's program, item 7: the first minute ends on their own sky; setup teaches
+ * what the tour did). "Replay the tour" in Settings still sets it to pending.
  */
 export async function finishOnboarding(
   scope: UserScope,

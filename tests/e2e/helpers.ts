@@ -3,8 +3,8 @@ import { Pool } from "pg";
 
 export const pool = new Pool({ connectionString: process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" });
 
-/** Where sign-up lands: setup on Today (the default) or, through /welcome, the old screens. */
-export const afterSignUp = (u: URL) => u.pathname === "/" || u.pathname === "/welcome";
+/** Where sign-up lands: Today, where a new account sets up. */
+export const afterSignUp = (u: URL) => u.pathname === "/";
 
 /**
  * Tests that aren't about setup skip it directly: the account's setup is marked done (the birthday is on the account already).
@@ -22,12 +22,11 @@ export async function giveSomething(email: string) {
   await queryAsUser(email, "insert into courses (user_id, name) select id, 'BIO 110' from users where email = $1", [email]);
 }
 
+/** `onboarding: "stay"` (or "app") leaves the account in setup on Today; by default setup is skipped. */
 export async function signUp(page: Page, name = "Jordan Lee", opts: { onboarding?: "skip" | "stay" | "app"; ai?: boolean } = {}) {
   const email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@example.com`;
   // Every test signs up from the same IP; reset only the sign-up limiter so the suite can grow past its 10/hour cap.
   await pool.query("delete from rate_limit_buckets where key like 'signup:ip:%'");
-  // the old welcome screens, for the tests that are about them (setup in the app is the default)
-  if (opts.onboarding === "stay") await page.context().addCookies([{ name: "lf_setup", value: "old", url: "http://localhost:3100" }]);
   await page.goto("/signup");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("correct horse battery");
@@ -46,6 +45,80 @@ export async function signUp(page: Page, name = "Jordan Lee", opts: { onboarding
   await expect(page.getByRole("dialog", { name: "Welcome to LifeFlow" })).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(name.split(" ")[0]);
   return email;
+}
+
+/** The one button with this name that is on screen (setup's note is in the page once per screen size). */
+export const shown = (page: Page, name: string | RegExp) => page.getByRole("button", { name }).filter({ visible: true }).first();
+
+/** Setup on Today, step 1: pick a skyling in its sheet, or leave it for later (it stays Ray). */
+export async function setupSkyling(page: Page, pick?: { skyling: string; name?: string }) {
+  if (!pick) return shown(page, "Pick later").click();
+  await shown(page, "Meet the skylings").click();
+  const sheet = page.getByRole("dialog", { name: "Meet the skylings" });
+  await sheet.getByRole("radio", { name: new RegExp(`^${pick.skyling}`) }).click();
+  if (pick.name) await sheet.getByLabel("Skyling's name").fill(pick.name);
+  await sheet.getByRole("button", { name: "This one" }).click();
+  await expect(sheet).toBeHidden();
+}
+
+/** Setup on Today, step 2: the About you sheet, filled in. Returns the sheet (still open if `stop` is set, to look at it). */
+export async function setupAbout(page: Page, who: { name: string; birthday: string; week: "Classes" | "Work" | "Both" | "Neither" }, stop = false) {
+  await shown(page, "About you").click();
+  const sheet = page.getByRole("dialog", { name: "About you" });
+  await sheet.getByLabel("What should I call you?").fill(who.name);
+  await fillBirthday(sheet, who.birthday);
+  await sheet.getByRole("radio", { name: new RegExp(`^${who.week}`) }).click();
+  if (!stop) await sheet.getByRole("button", { name: "Continue" }).click();
+  return sheet;
+}
+
+/** Setup on Today, the end: one real class on the account (the server's rule), the week lands, then "Go to my sky". */
+export async function setupFinish(page: Page, email: string) {
+  await giveSomething(email);
+  await page.reload();
+  await expect(page.locator(".dc-today[data-setup=landed]")).toBeVisible();
+  await shown(page, "Show me how to read it").click();
+  await shown(page, "Go to my sky").click();
+  await expect(page.locator(".dc-today[data-setup]")).toHaveCount(0);
+}
+
+/**
+ * Walks setup on Today from the first note to the finished Today, calling `look` at every step (the note, each sheet, the
+ * week landing, reading it), for the specs that check every screen the same way (tap targets, overlap, fit).
+ */
+export async function walkSetup(page: Page, email: string, look: (step: string) => Promise<void>) {
+  await look("setup/first note");
+  await shown(page, "Meet the skylings").click();
+  const meet = page.getByRole("dialog", { name: "Meet the skylings" });
+  await meet.getByRole("radio", { name: /^Ray/ }).click();
+  await look("setup/the skylings");
+  await meet.getByRole("button", { name: "This one" }).click();
+  await expect(meet).toBeHidden();
+  const about = await setupAbout(page, { name: "Tara", birthday: "2004-03-15", week: "Both" }, true);
+  await look("setup/about you");
+  await about.getByRole("button", { name: "Continue" }).click();
+  await expect(about).toBeHidden();
+  await shown(page, "Pick the first one").click();
+  const ways = page.getByRole("dialog", { name: "Your first connection" });
+  await look("setup/ways to connect");
+  await ways.getByRole("button", { name: "Add a picture of your schedule" }).click();
+  await look("setup/a picture");
+  await ways.getByRole("button", { name: "All the ways" }).click();
+  await ways.getByRole("button", { name: "Connect Canvas" }).click();
+  await look("setup/canvas");
+  await ways.getByRole("button", { name: "All the ways" }).click();
+  await ways.getByText("Nothing here works for me").click();
+  await look("setup/tell your week");
+  await page.keyboard.press("Escape");
+  await expect(ways).toBeHidden();
+  await giveSomething(email);
+  await page.reload();
+  await expect(page.locator(".dc-today[data-setup=landed]")).toBeVisible();
+  await look("setup/the week lands");
+  await shown(page, "Show me how to read it").click();
+  await look("setup/read your sky");
+  await shown(page, "Go to my sky").click();
+  await expect(page.locator(".dc-today[data-setup]")).toHaveCount(0);
 }
 
 /** The chat's message box. Until the user names their skyling it goes by its own name, Ray by default (owner, 2026-11-10). */

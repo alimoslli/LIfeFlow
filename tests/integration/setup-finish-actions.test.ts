@@ -9,8 +9,8 @@ import { saveWelcomeProgress } from "@/server/services/onboarding";
 import { setUpSchedule } from "@/server/services/schedule-setup";
 import { TZ, makeUser } from "../helpers";
 
-// Every action that can finish setup is called directly here (the browser can call any of them whenever it likes): none of them
-// finishes without one real thing on the sky.
+// The one action that finishes setup is called directly here (the browser can call it whenever it likes): it never finishes
+// without one real thing on the sky.
 const h = vi.hoisted(() => ({ user: null as SessionUser | null }));
 vi.mock("@/server/auth/current-user", async () => {
   const { withUser } = await import("@/server/db/with-user");
@@ -22,7 +22,6 @@ vi.mock("@/server/auth/current-user", async () => {
   };
 });
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
-const welcome = await import("@/app/(onboarding)/welcome/actions");
 const today = await import("@/app/(app)/_today/setup-actions");
 
 afterAll(closeDb);
@@ -48,28 +47,17 @@ async function pending() {
   return { run, state };
 }
 
-describe("finishing setup needs one real thing on the sky, on every path", () => {
-  it("skipOnboardingAction called directly with nothing saved refuses", async () => {
+describe("finishing setup needs one real thing on the sky", () => {
+  it("called directly with nothing saved, it refuses and the account stays in setup", async () => {
     const { state } = await pending();
-    expect(await welcome.skipOnboardingAction()).toMatchObject({ ok: false, error: FIRST_CONNECTION_NEEDED });
-    expect(await state()).toBe("pending");
-  });
-
-  it("completeOnboardingAction with nothing real refuses and keeps nothing; the new action refuses too", async () => {
-    const { state } = await pending();
-    expect(await welcome.completeOnboardingAction({ lifeStage: "life" })).toMatchObject({ ok: false, error: FIRST_CONNECTION_NEEDED });
     expect(await today.finishSetupAction()).toMatchObject({ ok: false, error: FIRST_CONNECTION_NEEDED });
     expect(await state()).toBe("pending");
   });
 
-  it("all of them finish once something real is saved", async () => {
+  it("it finishes once something real is saved", async () => {
     const a = await pending();
     await a.run((s) => setUpSchedule(s, TZ, { classes: [{ name: "BIO 110", days: [1], startTime: "10:00", endTime: "10:50" }] }));
-    expect(await welcome.skipOnboardingAction()).toMatchObject({ ok: true });
-    expect(await a.state()).toBe("done");
-    const b = await pending();
-    await b.run((s) => setUpSchedule(s, TZ, { classes: [{ name: "BIO 110", days: [1], startTime: "10:00", endTime: "10:50" }] }));
     expect(await today.finishSetupAction()).toMatchObject({ ok: true });
-    expect(await b.state()).toBe("done");
+    expect(await a.state()).toBe("done");
   });
 });

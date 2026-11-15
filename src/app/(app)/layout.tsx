@@ -3,8 +3,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/shell/app-shell";
 import { assistantProfile } from "@/lib/assistant";
 import { lifeAreas } from "@/lib/life";
-import { cookies, headers } from "next/headers";
-import { inAppSetup, SETUP_COOKIE } from "@/lib/setup-mode";
+import { headers } from "next/headers";
 import { requireUser, waitingNow } from "@/server/auth/current-user";
 import { withUser } from "@/server/db/with-user";
 import { unreadCount } from "@/server/services/proactive/engine";
@@ -19,8 +18,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const user = await requireUser({ account: true });
   const path = (await headers()).get("x-lf-path") ?? "";
   if (user.preferences?.onboarding === "pending") {
-    // setup happens on Today itself (owner, 2026-11-12), so the rest of the app waits; or the old welcome screens
-    if (!inAppSetup((await cookies()).get(SETUP_COOKIE)?.value)) redirect("/welcome");
+    // setup happens on Today itself (owner, 2026-11-12), so the rest of the app waits
     if (path && path !== "/") redirect("/");
   }
   // On the waitlist (the owner's switch on, setup done): only their account, security and privacy pages; the rest waits.

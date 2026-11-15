@@ -93,7 +93,6 @@ test("after setup, someone waiting lands on their place in line; the app stays c
   await pool.query("update app_access set waitlist_on = true");
   // Setup still runs first (the birthday is checked there); skipping it lands on the waitlist, not the app.
   await pool.query(`update users set preferences = preferences || '{"birthDate":"2000-01-15"}'::jsonb where email = $1`, [email]);
-  await page.goto("/welcome");
   await skipSetup(page);
   await page.waitForURL((u) => u.pathname === "/waitlist");
   await expect(page.getByTestId("wl-place")).toHaveText("#1");

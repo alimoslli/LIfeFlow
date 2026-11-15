@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { expect, test, type Page } from "@playwright/test";
-import { signUp, fillBirthday, giveSomething } from "./helpers";
+import { signUp, walkSetup } from "./helpers";
 
 /**
  * No two visible controls overlap, and no field sticks out of its container, on the phone sizes we support.
@@ -237,24 +237,12 @@ for (const size of SIZES)
       }
       await context.addCookies([{ name: "lf_text", value: text, url: baseURL! }]);
 
-      // Onboarding, every step.
+      // Setup on Today, every step and every sheet.
       const email = await signUp(page, "Olive Overlap", { onboarding: "stay" });
       await context.addCookies([{ name: "lf_text", value: text, url: baseURL! }]);
       await page.reload();
-      await check("welcome/skyling");
-      await page.getByRole("button", { name: "Continue" }).click();
-      await page.getByLabel("What should I call you?").fill("Tara");
-      await fillBirthday(page, "2004-03-15");
-      await page.getByRole("radio", { name: /Both/ }).click();
-      await check("welcome/about");
-      await page.getByRole("button", { name: "Connect my sky" }).click();
-      await check("welcome/connect");
-      await page.getByRole("button", { name: "I'll connect later" }).click();
-      await check("welcome/learn");
-      await giveSomething(email);
-      await page.getByRole("button", { name: "Skip setup" }).click();
-      await page.waitForURL((u) => u.pathname === "/");
-      // no tour after the welcome (item 7); the replayed one is checked the same way
+      await walkSetup(page, email, check);
+      // no tour after setup (item 7); the replayed one is checked the same way
       await page.goto("/settings");
       await page.getByRole("button", { name: "Replay the tour" }).click();
       await page.waitForURL((u) => u.pathname === "/");

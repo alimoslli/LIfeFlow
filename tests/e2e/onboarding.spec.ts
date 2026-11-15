@@ -1,82 +1,33 @@
 import { expect, test } from "@playwright/test";
-import { pool, queryAsUser, signUp, fillBirthday, giveSomething } from "./helpers";
+import { pool, queryAsUser, signUp, fillBirthday, setupAbout, setupFinish, setupSkyling, shown } from "./helpers";
 
-test("a new user meets the skylings, tells theirs about themselves, sees how to connect their sky, learns it by doing, then the tour", async ({ page }) => {
+test("a new user sets up on Today on a laptop, comes back from Google with what happened, finishes with no tour, and can replay it", async ({ page }) => {
   const email = await signUp(page, "Maya Chen", { onboarding: "stay" });
-  // 1. The skylings come first (research 2026-11-09): picking one brings its name and its tone; a name of their own wins
-  // and keeps the look and tone. Each step says what it changes.
-  await expect(page.getByRole("heading", { name: "Meet the skylings" })).toBeVisible();
-  await expect(page.getByText("Changes who sits on top of your sky")).toBeVisible();
-  expect(Math.round((await page.getByLabel("Skyling's name").boundingBox())!.height)).toBeGreaterThanOrEqual(44);
-  await page.getByRole("radio", { name: /^Ray/ }).click();
-  await expect(page.getByLabel("Skyling's name")).toHaveValue("Ray");
-  await expect(page.getByText("Talks like a coach.", { exact: false })).toBeVisible();
-  await page.getByLabel("Skyling's name").fill("Nova");
-  await expect(page.getByText("Nova:", { exact: false })).toBeVisible();
-  await expect(page.getByRole("radio", { name: /^Ray/ })).toHaveAttribute("aria-checked", "true");
-  await page.getByRole("button", { name: "Continue" }).click();
-
-  // 2. About you: Nova says hi and gets to know them (sign-up took only email and password).
-  await expect(page.getByRole("heading", { name: /^Hi/ })).toBeVisible();
-  await expect(page.getByText("I'm Nova.", { exact: false })).toBeVisible();
-  expect(Math.round((await page.getByLabel("What should I call you?").boundingBox())!.height)).toBeGreaterThanOrEqual(44); // 43.99997 is 44 px
-  await page.getByLabel("What should I call you?").fill("Maya");
-  await expect(page.getByRole("heading", { name: "Hi Maya." })).toBeVisible();
-  // no plan or price line in setup: people come in from the waitlist (owner, 2026-11-11)
-  await expect(page.getByText(/free while we're testing/)).toHaveCount(0);
-  const go = page.getByRole("button", { name: "Connect my sky" });
-  await page.getByRole("radio", { name: /^Both/ }).click();
-  await expect(go).toBeDisabled(); // the birthday is asked for, neutrally (the age rule is the server's)
-  await expect(page.getByText("Private to your account.", { exact: true })).toBeVisible();
-  await fillBirthday(page, "2005-04-12");
-  await go.click();
-
-  // 3. Connect your sky: their real sky, opened into the week, and one tap each for Canvas, Google and Outlook.
-  await expect(page.getByRole("heading", { name: "Connect your sky" })).toBeVisible();
   const clock = page.getByTestId("day-clock");
-  await expect(clock).toHaveAttribute("data-state", "timeline");
-  // a student starts with Canvas, whose Calendar Feed link is pasted right here
-  await page.getByRole("button", { name: "Connect Canvas" }).click();
-  await expect(page.getByText("Tap Calendar Feed (bottom right) and copy the link.")).toBeVisible();
-  await expect(page.getByLabel("Calendar Feed link")).toBeVisible();
-  // Google and Outlook go out and come back to this step, or say plainly that they aren't available yet
-  // every connection is offered right here (owner, 2026-11-11), the work shifts too since they have a job, and the bank
-  for (const name of ["Google", "Outlook and Teams", "Work shifts", "Your bank"]) {
-    const card = page.getByText(name, { exact: true });
-    await expect(card).toBeVisible();
-  }
-  await expect(page.getByRole("button", { name: "Add a photo of your work schedule" })).toBeVisible();
-  const google = page.getByRole("link", { name: "Connect Google" });
+  await expect(clock).toBeVisible();
+  // 1. the skyling, named
+  await setupSkyling(page, { skyling: "Ray", name: "Nova" });
+  // 2. about them
+  await setupAbout(page, { name: "Maya", birthday: "2005-04-12", week: "Both" });
+  await expect(page.locator(".dc-today[data-setup=connect]")).toBeVisible();
+  // 3. the first connection: every way is listed, and Google leaves from the fixed start address
+  await shown(page, "Pick the first one").click();
+  const ways = page.getByRole("dialog", { name: "Your first connection" });
+  for (const way of ["photo", "canvas", "google", "outlook", "bank"]) await expect(ways.locator(`[data-way=${way}]`)).toBeVisible();
+  const google = ways.getByRole("link", { name: "Connect Google" });
   if (await google.count()) await expect(google).toHaveAttribute("href", "/api/integrations/google/start?from=welcome");
-  // Coming back from Google (its callback lands here): the same step, a plain line about what happened, and
-  // everything chosen before is still there (the skyling and the birthday).
+  // Coming back from Google (its callback lands on /welcome, which sends on to Today): the same step, a plain line about
+  // what happened, and everything chosen before is still there.
   await page.goto("/welcome?connected=google&result=missing_scopes");
-  await expect(page.getByRole("heading", { name: "Connect your sky" })).toBeVisible();
-  await expect(page.getByText("Google Calendar needs calendar access to fill your sky.", { exact: false })).toBeVisible();
-  await page.getByRole("button", { name: "Back" }).click();
-  await expect(page.getByLabel("Birthday year")).toHaveValue("2005");
-  await expect(page.getByLabel("Birthday month")).toHaveValue("4");
-  await expect(page.getByLabel("Birthday day")).toHaveValue("12");
-  await page.getByRole("button", { name: "Connect my sky" }).click();
-  await page.getByRole("button", { name: "I'll connect later" }).click();
+  await page.waitForURL((u) => u.pathname === "/" && u.searchParams.get("result") === "missing_scopes");
+  await expect(page.locator(".dc-today[data-setup=connect]")).toBeVisible();
+  await expect(page.getByTestId("setup-note-wide").getByText("Google needs calendar access to fill your sky.", { exact: false })).toBeVisible();
+  // finishing needs one real thing on the sky (owner, 2026-11-12), so the account gets a class; then the week lands and it ends
+  await setupFinish(page, email);
 
-  // 4. Read your sky: folded back to the wheel, and opening it is ticked off when they do it.
-  await expect(page.getByRole("heading", { name: "Read your sky" })).toBeVisible();
-  await expect(clock).toHaveAttribute("data-state", "clock");
-  await page.getByRole("button", { name: /^Today\. Now / }).click();
-  await expect(clock).toHaveAttribute("data-state", "timeline");
-  await expect(page.getByText("Open it (done)")).toBeAttached();
-  await page.keyboard.press("Escape");
-  await expect(clock).toHaveAttribute("data-state", "clock");
-  await expect(page.getByText("Fold it back (done)")).toBeAttached();
-  // finishing needs one real thing on the sky (owner, 2026-11-12), so the account has a class
-  await giveSomething(email);
-  await page.getByRole("button", { name: "Go to my sky" }).click();
-
-  // Today, and no tour after the welcome (owner's program, item 7: the welcome taught what the tour did).
-  await page.waitForURL((u) => u.pathname === "/");
+  // Today, and no tour after setup (owner's program, item 7: setup taught what the tour did).
   const tour = page.getByRole("dialog", { name: "Welcome to LifeFlow" });
-  await expect(page.getByTestId("day-clock")).toBeVisible();
+  await expect(clock).toBeVisible();
   await expect(tour).toHaveCount(0);
   // Settings can still replay it.
   await page.goto("/settings");
@@ -94,24 +45,17 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
   await expect(page.getByRole("dialog", { name: "Nova" })).toHaveCount(0);
   await expect(clouds.first()).toBeVisible();
 
-  // Saved: their skyling and about them (birthday). No school or workplace is typed in setup any more (owner,
-  // 2026-11-11): connecting fills those in, so nothing is made up here.
+  // Saved: their skyling and about them. No school or workplace is typed in setup (owner, 2026-11-11).
   const [prefs] = await queryAsUser<{
     p: { lifeStage?: string; assistantName?: string; assistantStyle?: string; companion?: string; birthDate?: string; school?: string };
   }>(email, "select preferences as p from users where email = $1", [email]);
-  expect(prefs.p).toMatchObject({
-    lifeStage: "both",
-    assistantName: "Nova",
-    assistantStyle: "coach",
-    companion: "ray",
-    birthDate: "2005-04-12",
-  });
+  expect(prefs.p).toMatchObject({ lifeStage: "both", assistantName: "Nova", assistantStyle: "coach", companion: "ray", birthDate: "2005-04-12" });
   expect(prefs.p.school).toBeUndefined();
   expect(await queryAsUser(email, "select name from employers")).toEqual([]);
-  // The name typed in the welcome was saved (the test's sign-up had set "Maya Chen").
+  // The name typed in setup was saved (the test's sign-up had set "Maya Chen").
   expect(await queryAsUser(email, "select name from users where email = $1", [email])).toEqual([{ name: "Maya" }]);
 
-  // The tour doesn't come back, and setup isn't shown again.
+  // The tour doesn't come back, setup isn't shown again, and /welcome only sends a finished account to Today.
   await expect
     .poll(async () => (await queryAsUser<{ p: { tour?: string } }>(email, "select preferences as p from users where email = $1", [email]))[0]?.p.tour)
     .toBe("done");
@@ -120,6 +64,7 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.goto("/welcome");
   await page.waitForURL((u) => u.pathname === "/");
+  await expect(page.locator(".dc-today[data-setup]")).toHaveCount(0);
 });
 
 test("the opening splash shows once per session and never blocks the page", async ({ page }) => {
@@ -145,15 +90,9 @@ test("reduced motion: never a splash, even when requested", async ({ page }) => 
 
 test("the app follows what fills your week: tabs and pills adapt", async ({ page }) => {
   const email = await signUp(page, "Sam Ortiz", { onboarding: "stay" });
-  await page.getByRole("button", { name: "Continue" }).click(); // picking a skyling is optional
-  await page.getByLabel("What should I call you?").fill("Sam");
-  await fillBirthday(page, "2001-09-30");
-  await page.getByRole("radio", { name: /^Work/ }).click();
-  await page.getByRole("button", { name: "Connect my sky" }).click();
-  await page.getByRole("button", { name: "I'll connect later" }).click();
-  await giveSomething(email); // finishing needs one real thing on the sky
-  await page.getByRole("button", { name: "Go to my sky" }).click();
-  await page.waitForURL((u) => u.pathname === "/");
+  await setupSkyling(page); // picking a skyling can wait
+  await setupAbout(page, { name: "Sam", birthday: "2001-09-30", week: "Work" });
+  await setupFinish(page, email); // finishing needs one real thing on the sky
 
   const tab = (name: string) => page.getByRole("navigation", { name: "Main" }).getByRole("link", { name, exact: true }).filter({ visible: true });
   const pill = (name: string) => page.getByRole("navigation", { name: "Today sections" }).getByRole("link", { name });
@@ -177,23 +116,6 @@ test("the app follows what fills your week: tabs and pills adapt", async ({ page
   await expect(tab("School")).toHaveCount(0);
   await expect(pill("Work")).toHaveCount(0);
   await expect(tab("Money")).not.toHaveCount(0);
-});
-
-test("setup needs a birthday: Skip goes to About you first", async ({ page }) => {
-  const email = await signUp(page, "Lee Park", { onboarding: "stay" });
-  await page.getByRole("button", { name: "Skip setup" }).click();
-  await expect(page.getByRole("heading", { name: /^Hi/ })).toBeVisible();
-  await expect(page.getByText("Add your birthday to finish setting up.")).toBeVisible();
-  await page.getByLabel("What should I call you?").fill("Lee");
-  await fillBirthday(page, "2002-02-02");
-  await page.getByRole("radio", { name: /^Neither/ }).click();
-  await page.getByRole("button", { name: "Connect my sky" }).click();
-  // skipping with nothing on the sky is refused; with one real thing it goes through
-  await page.getByRole("button", { name: "Skip setup" }).click();
-  await expect(page.getByText("Connect one thing first", { exact: false })).toBeVisible();
-  await giveSomething(email);
-  await page.getByRole("button", { name: "Skip setup" }).click();
-  await page.waitForURL((u) => u.pathname === "/");
 });
 
 test("a finished account answering under 13 on Today is locked the same way (owner, 2026-11-10)", async ({ page }) => {
@@ -245,11 +167,8 @@ test("a finished account answering under 13 on Today is locked the same way (own
 
 test("under 13: one calm line, the welcome stays locked, and an older year later doesn't get through", async ({ page }) => {
   const email = await signUp(page, "Kai Young", { onboarding: "stay" });
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByLabel("What should I call you?").fill("Kai");
-  await fillBirthday(page, `${new Date().getFullYear() - 9}-03-03`);
-  await page.getByRole("radio", { name: /^Classes/ }).click();
-  await page.getByRole("button", { name: "Connect my sky" }).click();
+  await setupSkyling(page);
+  await setupAbout(page, { name: "Kai", birthday: `${new Date().getFullYear() - 9}-03-03`, week: "Classes" });
   await expect(page.getByRole("heading", { name: "LifeFlow is for people 13 and older." })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
   await expect(page.getByLabel("Your birthday")).toHaveCount(0);

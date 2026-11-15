@@ -1,43 +1,17 @@
 "use server";
 import { ZodError } from "zod";
 import { redirect, unstable_rethrow } from "next/navigation";
-import type { ClockData } from "@/lib/day-clock";
 import { plainValidation } from "@/lib/validation-message";
 import { mutate, type ActionState } from "@/server/actions";
 import { endSession, requireUserForWelcome, withCurrentUser } from "@/server/auth/current-user";
 import { audit } from "@/server/services/audit";
-import { dayClockData } from "@/server/services/day-clock";
 import { ServiceError } from "@/server/services/errors";
 import { AGE_LINE } from "@/lib/birthday";
-import { afterAgeLock, completeOnboarding, saveWelcomeProgress, setDisplayName, setTourState, type OnboardingInput } from "@/server/services/onboarding";
-import { finishSetup, requireFirstConnection } from "@/server/services/setup-first";
+import { afterAgeLock, saveWelcomeProgress, setTourState } from "@/server/services/onboarding";
 import { after } from "next/server";
 import { getDb } from "@/server/db/client";
 import { AuthError, deleteLockedAccount } from "@/server/services/accounts";
 
-/** The person's sky as it is now (no money on it), for "Connect your sky" after Canvas connects; or why it couldn't load. */
-export type SkyResult = { ok: true; clock: ClockData } | { ok: false; error: string };
-
-async function onSky(name: string, save?: (s: Parameters<Parameters<typeof withCurrentUser>[0]>[0], tz: string) => Promise<unknown>): Promise<SkyResult> {
-  try {
-    return await withCurrentUser(async (s, u) => {
-      const tz = u.timezone || "UTC";
-      if (save) {
-        await save(s, tz);
-        await audit(s, "user", name);
-      }
-      return { ok: true as const, clock: await dayClockData(s, tz, new Date(), { money: false }) };
-    });
-  } catch (e) {
-    unstable_rethrow(e);
-    const error = e instanceof ZodError ? plainValidation(e.issues) : e instanceof ServiceError ? e.message : "That didn't save. Try again.";
-    return { ok: false, error };
-  }
-}
-
-export async function skyNowAction(): Promise<SkyResult> {
-  return onSky("onboarding.sky");
-}
 /**
  * Keeps the skyling and "about you" on the account, so connecting (which leaves the page) can come back to them. Under
  * 13, the account's welcome is locked and the same calm line comes back (the lock is committed, so it isn't thrown).
@@ -59,30 +33,9 @@ export async function saveWelcomeAction(input: Parameters<typeof saveWelcomeProg
   }
 }
 
-export async function completeOnboardingAction(input: OnboardingInput): Promise<ActionState> {
-  return mutate("onboarding.completed", async (s, u) => {
-    await completeOnboarding(s, input, u.timezone);
-    // one real thing on their sky first (in the same save: if there is none, nothing here is kept)
-    await requireFirstConnection(s);
-  });
-}
-
-export async function skipOnboardingAction(): Promise<ActionState> {
-  // skipping still needs a birthday and one real thing on the sky; the server checks both, whoever calls this
-  return mutate("onboarding.skipped", async (s, u) => {
-    await finishSetup(s, u.timezone || "UTC");
-  });
-}
-
 export async function setTourAction(state: "pending" | "done"): Promise<ActionState> {
   return mutate(`tour.${state}`, async (s) => {
     await setTourState(s, state);
-  });
-}
-
-export async function setNameAction(name: string): Promise<ActionState> {
-  return mutate("onboarding.name", async (s) => {
-    await setDisplayName(s, name);
   });
 }
 

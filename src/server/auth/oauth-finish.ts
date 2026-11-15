@@ -21,7 +21,7 @@ export async function finishOAuth(outcome: OAuthOutcome, o: { provider: OAuthPro
       return go(`/login?link=${o.provider}&email=${encodeURIComponent(outcome.email)}`);
     case "created":
       await startSession(outcome.userId);
-      return go("/welcome");
+      return go("/"); // a new account sets up on Today itself
     case "signed-in": {
       // Google already verified the person (owner, 2026-11-10), so no code of ours; Apple keeps the second step.
       // A Google session is marked as having skipped it, and the admin account keeps the code.
