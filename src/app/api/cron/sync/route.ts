@@ -12,6 +12,7 @@ import { microsoftNeedsReauth, syncMicrosoftConnection } from "@/server/integrat
 import { plaidNeedsReauth, syncConnection } from "@/server/integrations/plaid";
 import { markCanvasError, syncCanvas, withCanvasLock } from "@/server/integrations/canvas";
 import { retryLockClosing } from "@/server/services/onboarding";
+import { idleSyncDue, isIdle, lastSeenByUser } from "@/server/services/idle";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -38,17 +39,31 @@ export async function GET(req: Request) {
 
 async function runSync() {
   const rows = await getDb()
-    .select({ userId: connectionRegistry.userId, integrationId: connectionRegistry.integrationId, provider: connectionRegistry.provider, tz: users.timezone })
+    .select({
+      userId: connectionRegistry.userId,
+      integrationId: connectionRegistry.integrationId,
+      provider: connectionRegistry.provider,
+      tz: users.timezone,
+      createdAt: users.createdAt,
+    })
     .from(connectionRegistry)
     // an account locked under 13 never syncs (its connections are being closed, below)
     .innerJoin(users, and(eq(users.id, connectionRegistry.userId), sql`not (${users.preferences} ? 'ageBlockedAt')`))
     // nothing syncs for someone on the waitlist until they're let in
     .where(await openToApp(getDb()));
+  // accounts that haven't opened the app in 7 days sync every 3 days, not every run (owner, 2026-11-15; services/idle.ts)
+  const seen = await lastSeenByUser(getDb());
+  const now = new Date();
   let ok = 0;
   let failed = 0;
   let skipped = 0;
+  let resting = 0;
   for (const r of rows) {
     try {
+      if (isIdle(seen.get(r.userId), r.createdAt, now) && !(await withUser(r.userId, (s) => idleSyncDue(s, r.integrationId, now)))) {
+        resting++;
+        continue;
+      }
       if (r.provider === "plaid") {
         // A connection waiting for the user to sign in again can't sync; skip it (no failed record every run) until Reconnect.
         if (await plaidNeedsReauth(r.userId, r.integrationId)) {
@@ -94,5 +109,5 @@ async function runSync() {
   }
   // bank and Google links of accounts locked under 13 that didn't close at the provider the first time
   const closing = await retryLockClosing(getDb()).catch(() => 0);
-  return { synced: ok, failed, skipped, closing };
+  return { synced: ok, failed, skipped, resting, closing };
 }
