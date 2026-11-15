@@ -13,7 +13,7 @@ vi.mock("@/server/integrations/web-search", async (orig) => ({
 
 import { closeDb } from "@/server/db/client";
 import { createRecurring } from "@/server/services/finance/planning";
-import { DETECTORS } from "@/server/services/proactive/detectors";
+import { DETECTORS, RUNS } from "@/server/services/proactive/detectors";
 import { makeUser, TZ } from "../helpers";
 
 afterAll(closeDb);
@@ -38,6 +38,10 @@ describe("the monthly cheaper-bill check", () => {
     expect(searches.n).toBe(1);
     await run((s) => DETECTORS.savingsCheck(ctx(s, "2026-12-01")));
     expect(searches.n).toBe(2);
+  });
+
+  it("is not part of any scheduled run while no page shows what it finds (owner, 2026-11-15)", () => {
+    expect(Object.values(RUNS).flat()).not.toContain("savingsCheck");
   });
 
   it("searches nothing for an account with no comparable bill", async () => {
