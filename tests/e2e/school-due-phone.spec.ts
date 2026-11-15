@@ -20,7 +20,9 @@ test("School shows what's due under the classes; the old Due link lands on it", 
   await page.getByRole("button", { name: "Add assignment" }).first().click();
   const add = page.getByRole("dialog", { name: "Add an assignment" });
   await add.getByLabel("Title").fill("Lab report 3");
-  const soon = new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10);
+  // due today: still open, and inside "This week" on every day of the week (two days out fell into next week when the suite
+  // ran on a Saturday or Sunday, and the test failed on those days only)
+  const soon = new Date().toISOString().slice(0, 10);
   await add.getByLabel("Due date").fill(soon);
   await add.getByRole("button", { name: "Add assignment" }).click();
   await expect(add).toBeHidden();

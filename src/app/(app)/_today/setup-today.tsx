@@ -30,6 +30,7 @@ import { AskBar } from "./day-plan";
 import { TodayOwner, TodayReplyCard, useTodayChat } from "./today-chat";
 import { finishSetupAction, saveSchedulePhotoAction } from "./setup-actions";
 import type { ScheduleProposal } from "@/server/services/schedule-photo";
+import "./setup-today.css";
 
 /**
  * Setup on the real Today (owner, 2026-11-12: "setup happens inside the real app"; "the skyling takes the new person through
@@ -180,14 +181,21 @@ export function SetupToday({
     switch (step) {
       case "meet":
         return {
+          at: "Step 1 of 3",
           text: "Hi, I'm one of the skylings who live in this sky. One of us will sit on top of yours. Want to meet us?",
           button: "Meet the skylings",
           go: () => open("meet"),
+          // picking one is the only part that isn't needed: without a pick it's Ray, and Settings has the others
+          later: () => {
+            setError(null);
+            setStep("about");
+          },
         };
       case "about":
-        return { text: `I'm ${who}. What should I call you, and when's your birthday?`, button: "About you", go: () => open("about") };
+        return { at: "Step 2 of 3", text: `I'm ${who}. What should I call you, and when's your birthday?`, button: "About you", go: () => open("about") };
       case "connect":
         return {
+          at: "Step 3 of 3",
           text: back
             ? `${back.provider === "google" ? "Google" : "Outlook"} ${BACK_TEXT[back.result] ?? "didn't connect."}`
             : `Hi ${first}. I need one thing on your sky before we start: something real from your week. A picture of your schedule is the quickest.`,
@@ -212,10 +220,23 @@ export function SetupToday({
       <Learn who={who} glyph={drawn} onFinish={finish} busy={busy} error={error} />
     ) : (
       note && (
-        <SkylingNote glyph={drawn} who={who} text={note.text} error={step === "meet" || step === "about" ? null : error}>
-          <SkyButton onClick={note.go} skyling={drawn ?? "dawn"} size="sm" className="self-start">
-            {note.button}
-          </SkyButton>
+        <SkylingNote
+          glyph={drawn}
+          who={who}
+          at={"at" in note ? note.at : undefined}
+          text={note.text}
+          error={step === "meet" || step === "about" ? null : error}
+        >
+          <div className="flex flex-wrap items-center gap-x-1 gap-y-2">
+            <SkyButton onClick={note.go} skyling={drawn ?? "dawn"} size="sm">
+              {note.button}
+            </SkyButton>
+            {"later" in note && (
+              <button type="button" onClick={note.later} className="min-h-11 rounded-full px-3 text-sm font-medium text-muted hover:text-text">
+                Pick later
+              </button>
+            )}
+          </div>
         </SkylingNote>
       )
     );
@@ -234,12 +255,23 @@ export function SetupToday({
             <AskBar name={who} chips={false} />
           </div>
         </DayClock>
+        {/* a laptop or tablet: while the day is open as a line the wheel's side panel steps aside, so the note (and its one
+            button) waits under the week instead; CSS shows it only then (setup-today.css) */}
+        <div className="dc-setup-under" data-testid="setup-note-open">
+          {cloud}
+        </div>
       </section>
       <div className="dc-middle md:hidden" data-testid="setup-note">
         {cloud}
       </div>
       <div className="dc-dock md:hidden">
         <AskBar name={who} chips={false} answer={false} />
+      </div>
+      {/* a tablet (and a laptop whose sky isn't the full one): the chat bar under the sky, as on the finished Today */}
+      <div className="dc-after-dock mx-auto flex w-full max-w-[640px] flex-col gap-4 max-md:hidden">
+        <div className={mode === "full" ? "dc-ask-below" : undefined}>
+          <AskBar name={who} chips={false} />
+        </div>
       </div>
 
       <Sheet open={sheet === "meet"} onClose={() => setSheet(null)} title="Meet the skylings">
@@ -274,6 +306,10 @@ export function SetupToday({
               aria-label="What should I call you?"
               value={yourName}
               onChange={(e) => setYourName(e.target.value)}
+              // a keyboard's Enter continues, once everything needed is filled in
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !busy && cleanYou && stage && birthDate && !birthProblem) void saveAbout();
+              }}
               maxLength={80}
               autoComplete="given-name"
               className="min-h-11"
@@ -355,12 +391,15 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 function SkylingNote({
   glyph,
   who,
+  at,
   text,
   error,
   children,
 }: {
   glyph: CompanionKey | null;
   who: string;
+  /** Where they are in the three things setup asks for ("Step 2 of 3"); nothing once those are done. */
+  at?: string;
   text: string;
   error: string | null;
   children?: ReactNode;
@@ -368,11 +407,14 @@ function SkylingNote({
   return (
     <section
       aria-label={`From ${who}`}
-      className="lf-reply flex items-start gap-3 rounded-[1.5rem] bg-surface px-4 py-3 shadow-soft ring-1 ring-border/60 max-md:h-full max-md:overflow-y-auto"
+      className="lf-reply flex items-start gap-3 rounded-[1.5rem] bg-surface px-4 py-3 shadow-soft ring-1 ring-border/60 max-md:max-h-full max-md:overflow-y-auto"
     >
       <CompanionGlyph companion={glyph} night={ownsNight(glyph)} pose="celebrate" frame={3} className="lf-breathe mt-0.5 h-12 w-12 shrink-0" />
       <div className="flex min-w-0 flex-1 flex-col gap-2.5">
-        <p className="text-xs font-medium text-muted">{who}</p>
+        <p className="flex items-baseline justify-between gap-3 text-xs font-medium text-muted">
+          <span>{who}</span>
+          {at && <span data-testid="setup-step">{at}</span>}
+        </p>
         <p data-testid="setup-words" className="text-[0.9375rem] leading-snug [overflow-wrap:anywhere]">
           {text}
         </p>
@@ -469,6 +511,9 @@ function MeetSheet({
           maxLength={24}
           placeholder="your skyling"
           aria-label="Skyling's name"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !busy && companion && nameOk) onDone();
+          }}
           autoCapitalize="words"
           autoComplete="off"
           className="min-h-11 text-[1rem]"
@@ -662,6 +707,9 @@ function CanvasWay({ onConnected }: { onConnected: (message: string | null, at: 
         onChange={(e) => setFeed(e.target.value)}
         placeholder="https://…/feeds/calendars/user_….ics"
         aria-label="Calendar Feed link"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !busy && feed.trim()) void connect();
+        }}
         autoCapitalize="none"
         autoCorrect="off"
         className="min-h-11"
@@ -857,12 +905,14 @@ function PhotoWay({ who, aiOn, onAllowed, onSaved }: { who: string; aiOn: boolea
  */
 function Learn({ who, glyph, onFinish, busy, error }: { who: string; glyph: CompanionKey | null; onFinish: () => void; busy: boolean; error: string | null }) {
   const [done, setDone] = useState({ turn: false, open: false, fold: false });
+  const [isOpen, setIsOpen] = useState(false);
   useEffect(() => {
     const dc = document.querySelector<HTMLElement>("[data-testid=day-clock]");
     if (!dc) return;
     let opened = false;
     const watch = new MutationObserver(() => {
       const s = dc.dataset.state;
+      setIsOpen(s === "timeline");
       if (s === "timeline") {
         opened = true;
         setDone((d) => ({ ...d, open: true }));
@@ -899,14 +949,22 @@ function Learn({ who, glyph, onFinish, busy, error }: { who: string; glyph: Comp
     ["open", "Open it", "Tap the sky. It pours into a line of your week."],
     ["fold", "Fold it back", "Pull the line down, or tap Back to now."],
   ];
-  const next = rows.find(([k]) => !done[k]);
+  // the hint is the next thing they can do from where the wheel is: opened, that's folding it back (turning waits)
+  const next = isOpen ? rows.find(([k]) => k === "fold" && !done.fold) : rows.find(([k]) => !done[k] && k !== "fold");
+  const all = done.turn && done.open && done.fold;
   return (
     <section
       aria-label="Read your sky"
-      className="lf-reply flex flex-col gap-2 rounded-[1.5rem] bg-surface px-4 py-3 shadow-soft ring-1 ring-border/60 max-md:h-full max-md:overflow-y-auto"
+      className="lf-reply flex flex-col gap-2 rounded-[1.5rem] bg-surface px-4 py-3 shadow-soft ring-1 ring-border/60 max-md:max-h-full max-md:overflow-y-auto"
     >
       <p data-testid="setup-words" className="text-[0.9375rem] leading-snug">
-        {next ? `${nameAtStart(who)}: ${next[2]}` : "That's all there is to it. It's yours now."}
+        {all
+          ? "That's all there is to it. It's yours now."
+          : next
+            ? `${nameAtStart(who)}: ${next[2]}`
+            : isOpen
+              ? "This is your week as a line. Tap any stop to open it."
+              : "Try the rest, or go straight to your sky."}
       </p>
       <ol className="flex flex-wrap gap-1.5" aria-label="Read your sky">
         {rows.map(([k, t]) => (

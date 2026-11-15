@@ -1,7 +1,7 @@
 import { and, asc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { financialAccounts, type AccountType } from "../../db/schema";
-import type { UserScope } from "../../db/with-user";
+import { once, type UserScope } from "../../db/with-user";
 import { notFound } from "../errors";
 
 export const ACCOUNT_TYPES = ["depository", "credit", "loan", "investment", "cash", "other"] as const;
@@ -103,11 +103,13 @@ export async function listTurnedOffAccounts(scope: UserScope) {
 }
 
 export async function listAccounts(scope: UserScope, opts: { types?: AccountType[] } = {}) {
-  const rows = await scope.tx
-    .select()
-    .from(financialAccounts)
-    .where(and(eq(financialAccounts.userId, scope.userId), isNull(financialAccounts.archivedAt)))
-    .orderBy(asc(financialAccounts.type), asc(financialAccounts.name));
+  const rows = await once(scope, "accounts", () =>
+    scope.tx
+      .select()
+      .from(financialAccounts)
+      .where(and(eq(financialAccounts.userId, scope.userId), isNull(financialAccounts.archivedAt)))
+      .orderBy(asc(financialAccounts.type), asc(financialAccounts.name)),
+  );
   return opts.types ? rows.filter((r) => opts.types!.includes(r.type)) : rows;
 }
 

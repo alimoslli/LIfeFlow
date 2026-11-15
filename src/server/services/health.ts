@@ -4,7 +4,7 @@ import { z } from "zod";
 import { addDaysStr, DATE_RE, todayIn, type DateStr } from "@/lib/dates";
 import type { Database } from "../db/client";
 import { healthSamples, healthTokens, users, type HealthMetric } from "../db/schema";
-import type { UserScope } from "../db/with-user";
+import { once, type UserScope } from "../db/with-user";
 import { ServiceError } from "./errors";
 
 /**
@@ -153,7 +153,10 @@ export async function ingestHealth({ tx, userId }: UserScope, input: unknown, tz
 }
 
 /** Per metric: the latest value, the average over the window, and the daily series. */
-export async function healthSummary({ tx, userId }: UserScope, tz: string, days = 7, now = new Date()) {
+export function healthSummary(scope: UserScope, tz: string, days = 7, now = new Date()) {
+  return once(scope, `healthSummary:${tz}:${days}:${todayIn(tz, now)}`, () => readHealthSummary(scope, tz, days, now));
+}
+async function readHealthSummary({ tx, userId }: UserScope, tz: string, days: number, now: Date) {
   const today = todayIn(tz, now);
   const from = addDaysStr(today, -(days - 1));
   const rows = await tx

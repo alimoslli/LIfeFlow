@@ -234,7 +234,11 @@ export async function completeLoginChallenge(db: Database, token: string, code: 
     return { ok: false, reason: "locked" };
   }
   const typed = code.replace(/\s/g, "");
+  // An emailed code is refused once emailed codes are blocked (a password reset since the code was sent), even if it was
+  // sent before the block (security review, 2026-11-14, F1).
+  const [owner] = await db.select({ blocked: users.emailCodesBlockedAt }).from(users).where(eq(users.id, c.userId));
   const emailOk =
+    !owner?.blocked &&
     !!c.emailCodeHash &&
     !!c.emailCodeExpiresAt &&
     c.emailCodeExpiresAt.getTime() >= now &&

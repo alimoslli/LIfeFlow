@@ -9,7 +9,7 @@ import { ServiceError } from "./errors";
 import { hashPassword, verifyPassword } from "../auth/password";
 import { revokeRememberedDevices } from "../auth/remembered-devices";
 import type { Database } from "../db/client";
-import { ownerInbox, users, type UserPreferences } from "../db/schema";
+import { loginChallenges, ownerInbox, users, type UserPreferences } from "../db/schema";
 import { withUser } from "../db/with-user";
 import { lockQueue } from "./waitlist";
 import { fingerprintAdminLogEmail, forgetFriend } from "./referrals";
@@ -25,6 +25,8 @@ export const signupSchema = z.object({
 });
 
 export class AuthError extends Error {}
+/** Sign-up with an email that already has an account: the form offers signing in with it instead. */
+export class AccountExistsError extends AuthError {}
 
 export function isValidTimeZone(tz: string) {
   try {
@@ -38,7 +40,7 @@ export function isValidTimeZone(tz: string) {
 export async function registerUser(db: Database, input: z.input<typeof signupSchema>, opts: { accountKind?: "standard" | "demo" } = {}) {
   const data = signupSchema.parse(input);
   const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, data.email));
-  if (existing.length) throw new AuthError("An account with that email already exists.");
+  if (existing.length) throw new AccountExistsError("An account with that email already exists.");
   const [user] = await db
     .insert(users)
     .values({
@@ -235,11 +237,17 @@ export async function changePassword(db: Database, userId: string, current: stri
   // A first password on a two-step account turns email codes off until a strong sign-in, so a stolen session plus the
   // inbox can't set a password and then reset two-step with an emailed code (security review, 2026-11-06).
   const firstPasswordOn2fa = !hasPassword(user.passwordHash) && !!user.totpEnabledAt;
-  await db
-    .update(users)
-    .set({ passwordHash: await hashPassword(next), ...(firstPasswordOn2fa ? { emailCodesBlockedAt: new Date() } : {}) })
-    .where(eq(users.id, userId));
-  await revokeRememberedDevices(db, userId);
+  const passwordHash = await hashPassword(next);
+  // One transaction (security review, 2026-11-14): the new password, the remembered devices revoked and half-done
+  // sign-ins with the old password ended (F1) land together, or none of them does.
+  await db.transaction(async (tx) => {
+    await tx
+      .update(users)
+      .set({ passwordHash, ...(firstPasswordOn2fa ? { emailCodesBlockedAt: new Date() } : {}) })
+      .where(eq(users.id, userId));
+    await revokeRememberedDevices(tx as unknown as Database, userId);
+    await tx.delete(loginChallenges).where(eq(loginChallenges.userId, userId));
+  });
 }
 
 /** The typed confirmation every account deletion asks for (Settings and the lock screen read it the same way). */

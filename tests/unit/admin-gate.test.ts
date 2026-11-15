@@ -33,6 +33,7 @@ describe("admin gate", () => {
         "src/app/(app)/settings/doors-data.ts",
         "src/server/auth/admin.ts",
         "src/server/auth/oauth.ts",
+        "src/server/auth/remembered-devices.ts", // the admin is never remembered (shouldRememberDevice)
         "src/server/auth/require-admin.ts",
         "src/server/services/ai-gate.ts",
       ].sort(),
@@ -41,9 +42,15 @@ describe("admin gate", () => {
 });
 
 describe("remember this phone", () => {
-  it("an emailed code never earns it; the authenticator and a backup code do", () => {
-    expect(earnsRememberedDevice("email")).toBe(false);
-    expect(earnsRememberedDevice("totp")).toBe(true);
-    expect(earnsRememberedDevice("recovery")).toBe(true);
+  // owner, 2026-11-14 (choice A): an emailed code earns it like the authenticator and a backup code; the admin never does
+  it("the authenticator, a backup code and an emailed code earn it for a normal account", () => {
+    expect(earnsRememberedDevice("email", { admin: false })).toBe(true);
+    expect(earnsRememberedDevice("totp", { admin: false })).toBe(true);
+    expect(earnsRememberedDevice("recovery", { admin: false })).toBe(true);
+  });
+  it("the admin account never earns it, whatever the method", () => {
+    expect(earnsRememberedDevice("email", { admin: true })).toBe(false);
+    expect(earnsRememberedDevice("totp", { admin: true })).toBe(false);
+    expect(earnsRememberedDevice("recovery", { admin: true })).toBe(false);
   });
 });

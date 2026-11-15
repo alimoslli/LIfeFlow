@@ -26,8 +26,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // On the waitlist (the owner's switch on, setup done): only their account, security and privacy pages; the rest waits.
   // The pages' own data calls refuse them too; this only sends them to their place in line.
   if ((await waitingNow(user)) && !ACCOUNT_PAGES.some((p) => path === p || path.startsWith(`${p}/`))) redirect("/waitlist");
-  const unread = await withUser(user.id, (s) => unreadCount(s)).catch(() => 0);
-  const announcement = await activeAnnouncement(getDb());
+  // two reads on their own connections (neither is inside the other's transaction): asked together, not one after the other
+  const [unread, announcement] = await Promise.all([withUser(user.id, (s) => unreadCount(s)).catch(() => 0), activeAnnouncement(getDb())]);
   const renderedAt = currentInstant().getTime();
   return (
     <AppShell

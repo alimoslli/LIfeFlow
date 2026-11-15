@@ -3,7 +3,7 @@ import type { Response as OpenAIResponse } from "openai/resources/responses/resp
 import { env } from "../env";
 import { toUsage } from "../jarvis/providers/openai";
 import { priceSearch } from "../services/ai-prices";
-import { searchEstimate } from "../services/ai-estimates";
+import { searchEstimate, STEP_OUTPUT_TOKEN_CAP } from "../services/ai-estimates";
 import { AiRefusedError, providerRefusedBeforeWork, reserveAi, subjectFor } from "../services/ai-gate";
 import { recordAiQuiet, type AiContext } from "../services/ai-usage";
 
@@ -95,6 +95,8 @@ export async function searchWeb(
       tool_choice: "required",
       include: ["web_search_call.action.sources"],
       store: false,
+      // a hard bound on what one call can write (thinking included), as chat steps have: without it a runaway answer is billed in full
+      max_output_tokens: STEP_OUTPUT_TOKEN_CAP,
       ...(opts.json && { text: { format: { type: "json_schema", name: opts.json.name, schema: opts.json.schema, strict: true } } }),
     });
   } catch (e) {
