@@ -2,6 +2,7 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { and, eq, lt } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { rememberedDevices } from "../db/schema";
+import { adminFor } from "./admin";
 
 /**
  * "Remember this phone for 30 days" (owner, 2026-11-10, ADR 0009 addendum). After the second step, the browser gets a
@@ -50,5 +51,22 @@ export async function revokeRememberedDevices(db: Database, userId: string) {
   await db.delete(rememberedDevices).where(eq(rememberedDevices.userId, userId));
 }
 
-/** Only the authenticator or a backup code earns the 30 days; an emailed code never does (QA review, 2026-11-10). */
-export const earnsRememberedDevice = (method: "totp" | "recovery" | "email") => method !== "email";
+/**
+ * Who earns the 30 days after a correct second step (owner, 2026-11-14, choice A): the authenticator, a backup code and an
+ * emailed code alike, for normal accounts. The admin account never does, whatever the method: it types the code or uses a
+ * passkey every time. (Before this, an emailed code never earned it: QA review, 2026-11-10.)
+ */
+export const earnsRememberedDevice = (method: "totp" | "recovery" | "email", account: { admin: boolean }) =>
+  !account.admin && (method === "totp" || method === "recovery" || method === "email");
+
+/** The verify step's one decision: the box was ticked, the method earns it, and the account isn't the admin. */
+export async function shouldRememberDevice(
+  db: Database,
+  userId: string,
+  method: "totp" | "recovery" | "email",
+  ticked: boolean,
+  env: Record<string, string | undefined> = process.env,
+) {
+  if (!ticked) return false;
+  return earnsRememberedDevice(method, { admin: !!(await adminFor(db, userId, env)) });
+}

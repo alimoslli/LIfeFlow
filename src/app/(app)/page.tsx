@@ -16,7 +16,7 @@ import { assistantProfile } from "@/lib/assistant";
 import { greetingIn } from "@/lib/dates";
 import { requireUser, withCurrentUser } from "@/server/auth/current-user";
 import { moneyLocked } from "@/server/auth/money-lock";
-import { withUser } from "@/server/db/with-user";
+import { readOnce, withUser } from "@/server/db/with-user";
 import { series } from "@/server/db/series";
 import { runDueSlot, runProactive } from "@/server/services/proactive/engine";
 import { getBriefing } from "@/server/briefing";
@@ -100,6 +100,9 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const { clock, sky, review, assistantName, setup, hello, clouds, userId } = await withCurrentUser(async (scope, user) => {
     const tz = user.timezone ?? "UTC";
     // Money (bills due, spent today) joins the clock only while the Money lock is open.
+    // Today only reads here, and its parts ask for the same rows (bills, categories, 13 months of transactions) again and
+    // again: each is read once for this render.
+    readOnce(scope);
     const clock = await dayClockData(scope, tz, new Date(), { money: !locked });
     const { snapshot } = await getBriefing(scope, user);
     const [integrationList, banks] = await series(

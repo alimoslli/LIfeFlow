@@ -16,7 +16,7 @@ import {
   startOfLocalDay,
   weekStart,
 } from "@/lib/dates";
-import { gmailMessages, jarvisMessages, tasks, type JarvisTopic, type ProactiveAction } from "../../db/schema";
+import { gmailMessages, jarvisMessages, notificationLog, tasks, type JarvisTopic, type ProactiveAction } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { listAccounts } from "../finance/accounts";
 import { balancesOf } from "../finance/overview";
@@ -710,6 +710,15 @@ const savingsCheck: Detector = async ({ scope, today }) => {
   const recent = new Set(rows.filter((r) => r.searchedAt.getTime() > Date.now() - 30 * 86_400_000).map((r) => r.recurringId));
   const bill = bills.filter((b) => !recent.has(b.id)).sort((a, b) => b.monthlyCents - a.monthlyCents)[0];
   if (!bill) return [];
+  // One search a month, whatever it finds. A search that found nothing cheaper saves no row, so the 30-day check above
+  // never saw it, and the same bill was searched again every morning through the 7th (a paid search each time). The month
+  // is claimed before the search; a search that fails is not tried again until next month (it may already have been paid for).
+  const [claimed] = await scope.tx
+    .insert(notificationLog)
+    .values({ userId: scope.userId, key: `savings_check:${today.slice(0, 7)}`, title: "Bill price check" })
+    .onConflictDoNothing()
+    .returning({ id: notificationLog.id });
+  if (!claimed) return [];
   const found = await findSavings(scope, { recurringId: bill.id }).catch(() => null);
   const best = found?.saved.sort((a, b) => b.yearlySavingsCents - a.yearlySavingsCents)[0];
   if (!best) return [];

@@ -55,7 +55,20 @@ export function AuthForm({
           {notice.text}
         </p>
       )}
-      <FormError message={state?.error} />
+      {state?.existing && state.email ? (
+        // an email that already has an account: say so, with the way in right there (the email goes along)
+        <p role="alert" className="rounded-2xl bg-danger-soft px-4 py-2.5 text-sm text-danger">
+          {state.error}{" "}
+          <Link
+            href={`/login?email=${encodeURIComponent(state.email.trim())}`}
+            className="inline-flex min-h-11 items-center font-medium underline underline-offset-2"
+          >
+            Sign in with it
+          </Link>
+        </p>
+      ) : (
+        <FormError message={state?.error} />
+      )}
       <SignInOptions mode={mode} apple={apple} google={google} next={next} invite={invite} />
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-text-2">Email</span>

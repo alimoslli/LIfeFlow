@@ -5,7 +5,7 @@ import { env } from "../../env";
 import { toUsage } from "../../jarvis/providers/openai";
 import { priceFromSettings } from "../ai-prices";
 import { recordAiQuiet, type AiContext } from "../ai-usage";
-import { documentEstimate } from "../ai-estimates";
+import { documentEstimate, STEP_OUTPUT_TOKEN_CAP } from "../ai-estimates";
 import { AiRefusedError, providerRefusedBeforeWork, reserveAi, subjectFor } from "../ai-gate";
 import { nameAtStart } from "@/lib/assistant";
 import { monthOpensOn } from "../ai-limits";
@@ -137,6 +137,8 @@ export async function extractDocument(input: ExtractInput, ctx: AiContext, llm =
       instructions: INSTRUCTIONS,
       input: [{ role: "user", content }],
       store: false,
+      // a hard bound on what one call can write (thinking included), as chat steps have: without it a runaway answer is billed in full
+      max_output_tokens: STEP_OUTPUT_TOKEN_CAP,
       text: { format: { type: "json_schema", name: "inbox_extract", schema: SCHEMA, strict: true } },
     });
   } catch (e) {

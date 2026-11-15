@@ -1,0 +1,72 @@
+/* Setup on Today: where the skyling's note sits, so its words and its one button are always in view.
+   The wheel's own rules are in components/day-clock/day-clock.css; these only apply while `data-setup` is on the page. */
+
+/* A laptop or tablet. Folded, the note is beside (or under) the wheel, inside it. Opened into the week, that panel steps
+   aside, and the note waits under the week's tiles instead, where "Pin something" sits once setup is done:
+   52 px to the window, the window (44% of the sky, 236 to 300 px, as engine.ts lays it out), 12 + 50 for the tiles, 12 more. */
+.dc-setup-under {
+  display: none;
+}
+@media (min-width: 768px) {
+  .dc-today[data-setup] > section {
+    position: relative;
+  }
+  .dc-today[data-setup]:has(.dc:is([data-state="moving"], [data-state="timeline"])) .dc-setup-under {
+    display: flex;
+    justify-content: center;
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    top: calc(52px + clamp(236px, 44%, 300px) + 74px);
+    z-index: 9;
+    animation: lf-setup-under 0.3s ease 0.2s both;
+  }
+  .dc-setup-under > * {
+    width: min(100%, 30rem);
+  }
+}
+@keyframes lf-setup-under {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dc-today[data-setup] .dc-setup-under {
+    animation: none !important;
+  }
+}
+
+/* A phone. Setup has no top bar and no tabs, so the note takes all the room between the sky and the chat bar (a phone
+   browser's short window used to leave it three lines, with its one button out of view). The sky's height is the one
+   day-clock.css gives a phone; 128 px = the gap under the sky (20), the chat bar with the skyling on it (96) and 12 above it. */
+@media (max-width: 767px) {
+  .dc-today[data-setup] {
+    --setup-sky: clamp(260px, calc(100svh - 300px - var(--mid)), 720px);
+    --setup-mid: calc(100svh - var(--setup-sky) - 128px);
+    /* opened into the week, the tiles reach 342 px down a short sky (52 + the 236 px window + 12 + 50 + 12, less the gap):
+       the note starts below them */
+    --setup-shift: max(0px, calc(342px - var(--setup-sky)));
+  }
+  .dc-today[data-setup] .dc-middle {
+    height: calc(var(--setup-mid) - var(--bar-grow, 0px));
+  }
+  .dc-today[data-setup]:has(.dc:is([data-state="moving"], [data-state="timeline"])) .dc-middle {
+    margin-top: var(--setup-shift);
+    height: calc(var(--setup-mid) - var(--setup-shift) - var(--bar-grow, 0px));
+  }
+}
+/* a stop's card opens in the same place: the note waits behind it until the card is closed */
+.dc-today[data-setup]:has(.dc-detail:not(:empty)) :is(.dc-middle, .dc-setup-under) {
+  visibility: hidden;
+}
+/* a very short phone window (an iPhone SE in the browser): the week's tiles step aside so the note keeps its room; if the
+   words still don't fit, the note scrolls inside itself */
+@media (max-width: 767px) and (max-height: 600px) {
+  .dc-today[data-setup] {
+    --setup-shift: max(0px, calc(280px - var(--setup-sky)));
+  }
+  .dc-today[data-setup] .dc-tiles {
+    display: none;
+  }
+}

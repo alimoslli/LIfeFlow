@@ -2,7 +2,7 @@ import { z } from "zod";
 import { DATE_RE, TIME_RE } from "@/lib/dates";
 import { nameAtStart } from "@/lib/assistant";
 import { monthOpensOn } from "./ai-limits";
-import { documentEstimate } from "./ai-estimates";
+import { documentEstimate, STEP_OUTPUT_TOKEN_CAP } from "./ai-estimates";
 import { AiRefusedError, providerRefusedBeforeWork, reserveAi, subjectFor } from "./ai-gate";
 import { priceFromSettings } from "./ai-prices";
 import { recordAiQuiet, type AiContext } from "./ai-usage";
@@ -131,6 +131,8 @@ export async function readSchedulePhoto(
         },
       ],
       store: false,
+      // a hard bound on what one call can write (thinking included), as chat steps have: without it a runaway answer is billed in full
+      max_output_tokens: STEP_OUTPUT_TOKEN_CAP,
       text: { format: { type: "json_schema", name: "schedule_read", schema: SCHEMA, strict: true } },
     });
   } catch (e) {
