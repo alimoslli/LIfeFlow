@@ -390,15 +390,19 @@ test("on a laptop the note waits under the open week: the next step never disapp
   await wide.getByRole("button", { name: "Pick later" }).click();
   await wide.getByRole("button", { name: "About you" }).click();
   const about = page.getByRole("dialog", { name: "About you" });
+  // by keyboard: Enter in the name box does nothing until everything needed is filled in, then it continues
   await about.getByLabel("What should I call you?").fill("Maya");
+  await about.getByLabel("What should I call you?").press("Enter");
+  await expect(about).toBeVisible();
   await about.getByRole("radio", { name: /^Classes/ }).click();
   await fillBirthday(about, "2005-04-12");
-  await about.getByRole("button", { name: "Continue" }).click();
+  await about.getByLabel("What should I call you?").press("Enter");
+  await expect(about).toBeHidden();
   await wide.getByRole("button", { name: "Pick the first one" }).click();
   const sheet = page.getByRole("dialog", { name: "Your first connection" });
   await sheet.getByRole("button", { name: "Connect Canvas" }).click();
   await sheet.getByLabel("Calendar Feed link").fill(FEED);
-  await sheet.getByRole("button", { name: "Connect Canvas" }).click();
+  await sheet.getByLabel("Calendar Feed link").press("Enter");
   await expect(page.locator(".dc-today[data-setup=landed]")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "timeline");
   await reachable(page, under.getByRole("button", { name: "Show me how to read it" }));

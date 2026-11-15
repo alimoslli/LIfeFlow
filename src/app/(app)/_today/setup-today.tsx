@@ -306,6 +306,10 @@ export function SetupToday({
               aria-label="What should I call you?"
               value={yourName}
               onChange={(e) => setYourName(e.target.value)}
+              // a keyboard's Enter continues, once everything needed is filled in
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !busy && cleanYou && stage && birthDate && !birthProblem) void saveAbout();
+              }}
               maxLength={80}
               autoComplete="given-name"
               className="min-h-11"
@@ -507,6 +511,9 @@ function MeetSheet({
           maxLength={24}
           placeholder="your skyling"
           aria-label="Skyling's name"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !busy && companion && nameOk) onDone();
+          }}
           autoCapitalize="words"
           autoComplete="off"
           className="min-h-11 text-[1rem]"
@@ -700,6 +707,9 @@ function CanvasWay({ onConnected }: { onConnected: (message: string | null, at: 
         onChange={(e) => setFeed(e.target.value)}
         placeholder="https://…/feeds/calendars/user_….ics"
         aria-label="Calendar Feed link"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !busy && feed.trim()) void connect();
+        }}
         autoCapitalize="none"
         autoCorrect="off"
         className="min-h-11"
