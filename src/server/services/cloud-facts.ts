@@ -1,7 +1,7 @@
 import { and, eq, gt, isNull, lte, ne } from "drizzle-orm";
 import { todayIn } from "@/lib/dates";
 import { CLOUDS, type CloudFacts, type CloudKey } from "@/lib/idea-clouds";
-import type { UserScope } from "../db/with-user";
+import { once, type UserScope } from "../db/with-user";
 import {
   assignments,
   courses,
@@ -20,7 +20,11 @@ import { listEventsInRange } from "./calendar";
 const one = <T>(rows: T[]) => rows.length > 0;
 
 /** What the idea clouds may say for this person, from their own records only (lib/idea-clouds says why). */
-export async function cloudFacts(scope: UserScope, tz: string, prefs: UserPreferences | undefined, now = new Date()): Promise<CloudFacts> {
+export function cloudFacts(scope: UserScope, tz: string, prefs: UserPreferences | undefined, now = new Date()): Promise<CloudFacts> {
+  // the clouds and the insights both start from these, at the same moment: one read for the two
+  return once(scope, `cloudFacts:${tz}:${now.getTime()}`, () => readCloudFacts(scope, tz, prefs, now));
+}
+async function readCloudFacts(scope: UserScope, tz: string, prefs: UserPreferences | undefined, now: Date): Promise<CloudFacts> {
   const today = todayIn(tz, now);
   const week = new Date(now.getTime() + 7 * 86_400_000);
   const open = and(eq(assignments.userId, scope.userId), isNull(assignments.completedAt), ne(assignments.status, "done"));

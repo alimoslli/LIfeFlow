@@ -3,6 +3,7 @@ import { attachments, conversations, messages, pendingActions, type JarvisModule
 import type { UserScope } from "../db/with-user";
 import { notFound } from "../services/errors";
 import type { ChatItem } from "./providers/types";
+import { serializeResult } from "./serialize-result";
 
 export async function createConversation(scope: UserScope, module?: JarvisModule | null, title = "New conversation", id?: string) {
   const [row] = await scope.tx
@@ -110,7 +111,13 @@ export async function loadHistory(scope: UserScope, conversationId: string): Pro
       if (m.content) items.push({ type: "assistant", text: m.content });
     } else if (m.role === "tool" && m.toolCallId && m.toolName) {
       items.push({ type: "tool_call", callId: m.toolCallId, name: m.toolName, arguments: JSON.stringify(m.toolArgs ?? {}) });
-      items.push({ type: "tool_result", callId: m.toolCallId, output: JSON.stringify(m.toolResult ?? { ok: false, error: "no result" }) });
+      // the same cap as when the result was first sent (the full result is what's stored): a 60,000-character file read
+      // used to go back to the model whole on every later turn of the chat, though the model only ever saw 24,000 of it
+      items.push({
+        type: "tool_result",
+        callId: m.toolCallId,
+        output: m.toolResult ? serializeResult(m.toolResult) : JSON.stringify({ ok: false, error: "no result" }),
+      });
     }
   }
   return items;
