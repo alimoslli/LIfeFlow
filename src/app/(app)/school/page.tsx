@@ -157,7 +157,7 @@ export default async function SchoolPage({ searchParams }: { searchParams: Promi
           </div>
           <section id="due" aria-label="Due" className="scroll-mt-24">
             <h2 className="mb-2 font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Due</h2>
-            <DueList view={view} list={d.due} tz={d.tz} hasCourses />
+            <DueList view={view} list={d.due} tz={d.tz} hasCourses open={d.all.length} />
           </section>
         </>
       )}
