@@ -70,8 +70,9 @@ export function SwipeRow({
         toast(r?.error ?? "Couldn't delete.", { tone: "danger" });
         if (w) gsap.set(w, { clearProps: "height,opacity" });
         settle(0);
+        router.refresh(); // nothing was deleted: show the list as the server has it
       }
-      router.refresh();
+      // a delete that worked has already brought the refreshed list back with its answer (the action revalidates)
       return;
     }
     if (kind === "complete" && onComplete) {
@@ -80,7 +81,8 @@ export function SwipeRow({
       if (!done) celebrate(wrap.current?.getBoundingClientRect(), "small");
       const r = await onComplete();
       toast(r?.ok ? (r.message ?? "Done.") : (r?.error ?? "Couldn't update."), { tone: r?.ok ? "success" : "danger" });
-      router.refresh();
+      // a save that worked has already brought the refreshed list back with its answer; only a failed one asks again
+      if (!r?.ok) router.refresh();
     }
   };
 

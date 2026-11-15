@@ -95,8 +95,12 @@ export function DayClock({
           hop(root.querySelector(".dc-now-who"));
           sky.cheer();
           toast(r.message ?? `Done: ${it.title}.`, { tone: "success" });
-        } else toast(r?.error ?? "That didn't save. Try again.", { tone: "danger" });
-        router.refresh();
+          // The save's own answer carries the refreshed page (the action revalidates), so the line updates from it. Asking
+          // again here drew Today twice and fetched every tab twice for one tick (205 database statements, measured).
+        } else {
+          toast(r?.error ?? "That didn't save. Try again.", { tone: "danger" });
+          router.refresh(); // nothing was saved: put the line back as the server has it
+        }
       },
       onEdit: async (it) => {
         const b = await blockForEditAction(it.id);
@@ -186,19 +190,15 @@ export function DayClock({
       {/* Outside Today: its no-select gesture area mustn't reach the sheets' inputs (iOS Safari). */}
       <BlockSheet
         block={editing}
-        onClose={() => {
-          setEditing(null);
-          router.refresh();
-        }}
+        // the editor's saves bring the refreshed page back themselves; closing it needs nothing more
+        onClose={() => setEditing(null)}
       />
       <PinSheet
         at={pinAt}
         today={data.today}
         onClose={() => setPinAt(null)}
-        onSaved={() => {
-          setPinAt(null);
-          router.refresh();
-        }}
+        // the pin's save brings the refreshed page back itself
+        onSaved={() => setPinAt(null)}
       />
     </>
   );
