@@ -980,8 +980,23 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.dc-detail.dc-d-tight .dc-d-s {
-  margin-top: 2px;
+.dc-detail.dc-d-tight {
+  padding: 8px 14px;
+}
+.dc-detail.dc-d-tight .dc-d-k {
+  display: none;
+}
+.dc-detail.dc-d-tight .dc-d-ic {
+  width: 36px;
+  height: 36px;
+}
+.dc-detail.dc-d-tight .dc-d-w {
+  font-size: 0.85rem;
+  line-height: 1.3;
+  margin-top: 0;
+}
+.dc-detail.dc-d-tight .dc-d-acts {
+  margin-top: 4px;
 }
 /* a stack's card: one row per thing, each a full-width 44 px tap */
 .dc-d-list {

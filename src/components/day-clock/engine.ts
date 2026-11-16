@@ -960,12 +960,18 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   }
   /** "Up next" is only for the very next thing (test student p4020: the 3:30 shoot said it while the 1 PM class came first). */
   function isNextUp(it: ClockItem) {
-    const next = DATED.filter((x) => !x.allDay && !x.done && x.start > S.now && x.origin !== "milestone" && x.origin !== "day").sort((a, b) => a.start - b.start)[0];
+    const next = DATED.filter((x) => !x.allDay && !x.done && x.start > S.now && x.origin !== "milestone" && x.origin !== "day").sort(
+      (a, b) => a.start - b.start,
+    )[0];
     return !!next && next.start === it.start;
   }
   function showDetail() {
     const stack = S.sel?.startsWith("stack:") ? TM.nodes.find((n) => n.id === S.sel) : undefined;
     if (stack?.group) return showStack(stack, stack.group);
+    if (S.sel?.startsWith("pile:")) {
+      const g = pileIds.map((id) => ITEMS.find((x) => x.id === id)).filter((x): x is ClockItem => !!x);
+      if (g.length > 1) return showStack({ id: S.sel, it: g[0], group: g, t: t0(g[0]), past: false, x: 0, el: null }, g);
+    }
     const it = S.sel ? ITEMS.find((x) => x.id === S.sel) : undefined;
     if (!it) {
       detail.innerHTML = "";
@@ -1032,8 +1038,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     let room = placeCard(detail.offsetHeight);
     if (detail.offsetHeight > room) {
       detail.classList.add("dc-d-tight");
+      // the time and the place share one line, and the kicker steps aside
       const s2 = detail.querySelector<HTMLElement>(".dc-d-s");
-      if (s2) s2.textContent = place;
+      if (s2) s2.textContent = "";
+      const w2 = detail.querySelector<HTMLElement>(".dc-d-w");
+      if (w2 && place) w2.textContent = `${when} · ${place}`;
       room = placeCard(detail.offsetHeight);
     }
     detail.style.maxHeight = detail.offsetHeight > room ? `${Math.floor(room)}px` : "";
@@ -1110,9 +1119,15 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     markSel();
     const ids = pendingPile;
     pendingPile = null;
-    const n = ids && TM.nodes.find((x) => (x.group ?? [x.it]).some((it) => ids.includes(it.id)));
-    if (n) select(n.id);
+    if (!ids?.length) return;
+    // the pile on the closed sky groups by where its tiles sit, the line by time, so the line may not have the same stack:
+    // the card lists exactly what the pile held (test student p4020: a "+2" opened one to-do's card instead)
+    const n = TM.nodes.find((x) => x.group && ids.every((id) => x.group!.some((it) => it.id === id)));
+    if (n) return select(n.id);
+    pileIds = ids;
+    select(`pile:${ids.join(",")}`);
   }
+  let pileIds: string[] = [];
   function animateTo(target: number, ms: number, ease: (t: number) => number, done?: () => void) {
     const from = S.p;
     const start = performance.now();
