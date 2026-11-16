@@ -211,9 +211,12 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
         </details>
       </section>
 
-      <section className="animate-rise" style={{ animationDelay: "120ms" }} aria-label="Pay that came in">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Pay that came in</h2>
+      {/* the paycheck list, one tap deeper (owner, 2026-11-16, item 4 of the Today list); the last one is in the window above */}
+      <details className="animate-rise" style={{ animationDelay: "120ms" }} aria-label="Pay that came in" data-testid="work-pay">
+        <summary className="flex min-h-11 cursor-pointer items-center px-1 text-sm font-medium text-text-2">
+          Pay that came in{d.paychecks.length ? ` · ${d.paychecks.length}` : ""}
+        </summary>
+        <div className="mt-2 mb-3 flex justify-end">
           <PaycheckDialog action={addPaycheckAction} employers={jobs} today={today} />
         </div>
         {d.paychecks.length === 0 ? (
@@ -235,7 +238,7 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
             ))}
           </ul>
         )}
-      </section>
+      </details>
 
       {/* the job itself (pay rate, usual hours, another job), one tap deeper */}
       <details className="animate-rise" style={{ animationDelay: "160ms" }}>

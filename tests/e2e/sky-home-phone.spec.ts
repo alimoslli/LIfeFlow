@@ -26,9 +26,10 @@ test("the skyling's cloud: a goal reached is a sun (and plays the sun), a to-do 
   });
   const email = await signUp(page, "Cloud Cleo");
 
-  // a new cloud: nothing on it yet, and the counts say so
+  // a new cloud: nothing on it yet, and the counts (one tap deeper, in the sheet) say so
   await page.goto("/jarvis");
-  await expect(page.getByRole("button", { name: "0 stars and 0 suns so far. Open Ray's cloud" })).toBeVisible();
+  await page.getByRole("button", { name: "Open Ray's cloud" }).click();
+  await expect(page.getByRole("dialog", { name: "Ray's cloud" })).toContainText("0 stars and 0 suns so far.");
 
   // a goal reached: the sun plays, and a sun lands on the cloud (the balloon)
   await page.goto("/goals");
@@ -52,12 +53,14 @@ test("the skyling's cloud: a goal reached is a sun (and plays the sun), a to-do 
 
   // the skyling's page: its cloud with the balloon, and the sheet with what comes next
   await page.goto("/jarvis");
-  const counts = page.getByRole("button", { name: "1 star and 2 suns so far. Open Ray's cloud" });
+  const counts = page.getByRole("button", { name: "Open Ray's cloud" });
   await expect(counts).toBeVisible();
+  await expect(counts).not.toContainText(/\d/);
   await expect(page.getByTestId("sky-home").locator("svg[data-has]")).toHaveAttribute("data-has", "balloon");
   await counts.click();
   const sheet = page.getByRole("dialog", { name: "Ray's cloud" });
   await expect(sheet).toBeVisible();
+  await expect(sheet).toContainText("1 star and 2 suns so far.");
   await expect(sheet.getByRole("region", { name: "Stars" })).toContainText("Next: star lights at 5");
   await expect(sheet.getByRole("region", { name: "Suns" })).toContainText("Next: cloud house at 3");
   await expect(sheet.getByRole("region", { name: "Suns" }).getByRole("listitem").first()).toContainText("On the cloud");
