@@ -19,6 +19,8 @@ type Tile = { it: ClockItem; icon: "work" | "class" | "due"; name: string; time:
 export type DayClockOptions = {
   /** Draws Today and the pour (sky.ts), on every change and every frame of opening and closing. */
   sky: (state: SkyState) => void;
+  /** The ids of the things in a "+N" pile on the closed sky under a point on the screen, if there is one (sky.ts). */
+  pileAt?: (x: number, y: number) => string[] | null;
   /** "Open" on a card: go to the page that owns the item. */
   onOpen: (href: string) => void;
   /** "Done" on a to-do's or an assignment's card (`at`: where its button was, for the celebration). */
@@ -956,6 +958,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     }
     return top - root.getBoundingClientRect().top;
   }
+  /** "Up next" is only for the very next thing (test student p4020: the 3:30 shoot said it while the 1 PM class came first). */
+  function isNextUp(it: ClockItem) {
+    const next = DATED.filter((x) => !x.allDay && !x.done && x.start > S.now && x.origin !== "milestone" && x.origin !== "day").sort((a, b) => a.start - b.start)[0];
+    return !!next && next.start === it.start;
+  }
   function showDetail() {
     const stack = S.sel?.startsWith("stack:") ? TM.nodes.find((n) => n.id === S.sel) : undefined;
     if (stack?.group) return showStack(stack, stack.group);
@@ -974,7 +981,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const t = t0(it);
     let kick = it.when ?? dayLong(dayOf(t));
     if (it.someday) kick = "Someday";
-    else if (dayOf(t) === 0 && !it.allDay) kick = it.end != null && t <= S.now && it.end > S.now ? "Now" : t > S.now ? "Up next" : "Earlier today";
+    else if (dayOf(t) === 0 && !it.allDay)
+      kick = it.end != null && t <= S.now && it.end > S.now ? "Now" : t > S.now ? (isNextUp(it) ? "Up next" : "Later today") : "Earlier today";
     else if (dayOf(t) > 0 && S.day === 0) kick += dayOf(t) === 1 ? " · tomorrow" : ` · in ${dayOf(t)} days`;
     const when = it.someday
       ? "No day yet. Pin it to a day when you know."
@@ -985,7 +993,9 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
             ? "You kept it"
             : `You said you'd do it by ${fmt(it.start)}`
           : it.done
-            ? `Done at ${fmt(it.start)}`
+            ? it.atDue
+              ? `Due ${fmt(it.start)} · done`
+              : `Done at ${fmt(it.start)}`
             : it.origin === "milestone"
               ? agoOf(-dayOf(t))
               : it.origin === "goal" || it.origin === "money_goal"
@@ -1004,6 +1014,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
                           ? `${fmt(it.start)} – ${fmt(it.end)}`
                           : `Due ${fmt(it.start)}`;
     const sub = [it.subtitle, it.source].filter(Boolean).join(" · ");
+    const place = it.subtitle ?? "";
     const canDo = (it.origin === "task" || it.origin === "reminder" || it.origin === "assignment") && !!it.ref && !it.done;
     const inPlace = it.origin === "event" || it.origin === "shift" || it.origin === "assignment";
     const onPage = it.origin === "task" || it.origin === "reminder" || it.origin === "goal" || it.origin === "milestone";
@@ -1014,8 +1025,17 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     detail.innerHTML = `<div class="dc-d-ic" aria-hidden="true">${iconHtml(it.icon)}</div><div class="dc-d-body"><div class="dc-d-k">${esc(kick)}</div><div class="dc-d-t">${esc(
       it.title,
     )}</div><div class="dc-d-w">${esc(when)}</div><div class="dc-d-s">${esc(sub)}</div><div class="dc-d-acts">${acts}</div></div>`;
-    // one stop's card that would still reach the bar scrolls inside the room it has, its buttons last
-    const room = placeCard(detail.offsetHeight);
+    // one stop's card that would still reach the bar first tightens (a one-line title, the place without where it came
+    // from), so its time, place and buttons stay in view on a short phone (test student p4020, 2026-11-16: the place and
+    // the buttons were scrolled away under a two-line title); only then does it scroll inside the room it has
+    detail.classList.remove("dc-d-tight");
+    let room = placeCard(detail.offsetHeight);
+    if (detail.offsetHeight > room) {
+      detail.classList.add("dc-d-tight");
+      const s2 = detail.querySelector<HTMLElement>(".dc-d-s");
+      if (s2) s2.textContent = place;
+      room = placeCard(detail.offsetHeight);
+    }
     detail.style.maxHeight = detail.offsetHeight > room ? `${Math.floor(room)}px` : "";
     detail.querySelector(".dc-d-open")?.addEventListener("click", () => opts.onOpen(it.href));
     detail.querySelector(".dc-d-edit")?.addEventListener("click", () => opts.onEdit(it));
@@ -1080,6 +1100,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   const setState = (st: "clock" | "moving" | "timeline") => {
     root.dataset.state = st;
   };
+  let pendingPile: string[] | null = null;
   function finishOpen() {
     S.open = true;
     drawStrip();
@@ -1087,6 +1108,10 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     G.wrapSl = null;
     setInteractive(true);
     markSel();
+    const ids = pendingPile;
+    pendingPile = null;
+    const n = ids && TM.nodes.find((x) => (x.group ?? [x.it]).some((it) => ids.includes(it.id)));
+    if (n) select(n.id);
   }
   function animateTo(target: number, ms: number, ease: (t: number) => number, done?: () => void) {
     const from = S.p;
@@ -1288,7 +1313,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     hit.classList.remove("dc-grabbing");
     if (!d.moved) {
       if (d.caught) afterSpin();
-      else if (!cancelled) open();
+      else if (!cancelled) {
+        // a "+N" pile opens the line with its list showing (COO, 2026-11-16: the pile hid the pitch and couldn't be tapped)
+        pendingPile = opts.pileAt?.(e.clientX, e.clientY) ?? null;
+        open();
+      }
       return;
     }
     const last = d.samples[d.samples.length - 1];

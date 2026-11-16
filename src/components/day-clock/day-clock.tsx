@@ -82,6 +82,7 @@ export function DayClock({
     const sky = createSky(root, reduced);
     engine.current = createDayClock(root, first.current, {
       sky: sky.draw,
+      pileAt: sky.pileAt,
       onOpen: (href) => !isExample && router.push(href),
       onNewDay: () => !isExample && router.refresh(),
       onPin: ({ start }) => !isExample && setPinAt(start),

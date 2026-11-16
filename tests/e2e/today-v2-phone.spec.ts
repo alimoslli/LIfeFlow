@@ -120,3 +120,77 @@ test("on the open line, tapping a day picks that day, even a short one (two test
     await expect(day, `day ${i}`).toHaveAttribute("aria-current", "date");
   }
 });
+
+async function busyAt(page: import("@playwright/test").Page, name: string, hour: number, minute = 0) {
+  const email = await signUp(page, name);
+  execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/dev/seed-clock-look.ts", email, "--busy"], {
+    env: { ...process.env, DATABASE_URL: process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" },
+  });
+  const { rows } = await pool.query<{ timezone: string }>("select timezone from users where email = $1", [email.toLowerCase()]);
+  await page.clock.setFixedTime(localInstant(rows[0].timezone, hour, minute));
+  return { email, tz: rows[0].timezone };
+}
+
+test("at night the sky says nothing about sunset (COO, 2026-11-16)", async ({ page }) => {
+  await busyAt(page, "Nell Night", 21, 30);
+  await page.goto("/");
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
+  await expect(page.locator("[data-dc=dome] text.dc-rim-t", { hasText: "Sunset" })).toHaveCount(0);
+});
+
+test("only the very next thing's card says Up next; a later one says Later today", async ({ page }) => {
+  await busyAt(page, "Una Next", 13, 0);
+  await page.goto("/");
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
+  await page.getByRole("button", { name: /^Today\. Now / }).click();
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "timeline");
+  const stops = page.locator(".dc-node.dc-future").filter({ visible: true });
+  const n = Math.min(await stops.count(), 6);
+  let upNext = 0;
+  for (let i = 0; i < n; i++) {
+    await stops.nth(i).click({ force: true });
+    const kick = page.locator(".dc-detail .dc-d-k");
+    if (!(await kick.isVisible())) continue;
+    if ((await kick.innerText()).trim().toLowerCase() === "up next") upNext++;
+  }
+  expect(upNext).toBeLessThanOrEqual(1);
+});
+
+test("a stop's card on a short phone keeps its time, place and buttons in view", async ({ page }) => {
+  const { email, tz } = await busyAt(page, "Theo Card", 13, 0);
+  const at = localInstant(tz, 15, 0);
+  await queryAsUser(
+    email,
+    `insert into calendar_events (user_id, title, kind, location, starts_at, ends_at) values (${me}, 'Brand shoot: Northside Coffee Roasters and their new spring menu', 'work', 'Northside Coffee, 2210 N Clark St', $1, $2)`,
+    [at, new Date(at.getTime() + 3 * 3_600_000)],
+  );
+  await page.goto("/");
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
+  await page.getByRole("button", { name: /^Today\. Now / }).click();
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "timeline");
+  await page.locator(".dc-node", { hasText: "Brand shoot" }).first().click({ force: true });
+  const card = page.locator(".dc-detail");
+  await expect(card).toContainText("2210 N Clark");
+  const [c, open] = [await card.boundingBox(), await card.locator(".dc-d-open").boundingBox()];
+  expect(open!.y + open!.height).toBeLessThanOrEqual(c!.y + c!.height + 0.5);
+  expect(await card.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(1);
+});
+
+test("a +N pile on the closed sky opens the line with what's in it", async ({ page }) => {
+  const { email, tz } = await busyAt(page, "Pia Pile", 13, 0);
+  const at = localInstant(tz, 14, 15);
+  for (const title of ["Pitch rehearsal", "Call with Lumen Events"])
+    await queryAsUser(email, `insert into calendar_events (user_id, title, kind, starts_at, ends_at) values (${me}, $1, 'work', $2, $3)`, [
+      title,
+      at,
+      new Date(at.getTime() + 3_600_000),
+    ]);
+  await page.goto("/");
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
+  const badge = page.locator("[data-dc=dome] .dc-badge").first();
+  await expect(badge).toBeAttached();
+  const b = (await badge.boundingBox())!;
+  await page.mouse.click(b.x + b.width / 2 - 14, b.y + b.height / 2 + 10);
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "timeline");
+  await expect(page.locator(".dc-detail .dc-d-list")).toBeVisible();
+});

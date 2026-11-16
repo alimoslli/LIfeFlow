@@ -972,6 +972,17 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
 .dc-d-s:empty {
   display: none;
 }
+/* a card short of room on a phone: one line of title, so the time, the place and the buttons stay in view */
+.dc-detail.dc-d-tight .dc-d-t {
+  font-size: 1.1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.dc-detail.dc-d-tight .dc-d-s {
+  margin-top: 2px;
+}
 /* a stack's card: one row per thing, each a full-width 44 px tap */
 .dc-d-list {
   display: flex;

@@ -283,7 +283,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   const whoQ = root.querySelector<HTMLCanvasElement>("[data-dc=who]");
   const bgQ = root.querySelector<HTMLElement>("[data-dc=skybg]");
   const wordsQ = root.querySelector<HTMLElement>("[data-dc=words]");
-  if (!svgQ || !whoQ || !bgQ || !wordsQ) return { draw: () => {}, visit: () => {}, cheer: () => {}, destroy: () => {} };
+  if (!svgQ || !whoQ || !bgQ || !wordsQ) return { draw: () => {}, pileAt: () => null, visit: () => {}, cheer: () => {}, destroy: () => {} };
   const [svg, who, bg, words]: [SVGSVGElement, HTMLCanvasElement, HTMLElement, HTMLElement] = [svgQ, whoQ, bgQ, wordsQ];
   const stars = bg.querySelector<SVGSVGElement>("[data-dc=stars]");
   // Today has no countdown on the water and no "N stars" line (owner, 2026-11-16, item 3 of the Today list); the
@@ -363,6 +363,8 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   let last: SkyState | null = null;
   let sun: { key: string; rise: number; set: number } | null = null;
   let night = false;
+  /** The "+N" piles drawn on the closed sky, in the sky's own pixels, for `pileAt`. */
+  let piles: { x: number; y: number; w: number; h: number; ids: string[] }[] = [];
   let pose: Pose = "idle";
   let step = 0;
   // what the skyling's day looks like right now (set by draw), so the timer can pick its pose without redrawing the sky
@@ -852,6 +854,8 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         [d * DAY + set, "Sunset"],
       ] as const) {
         if (t < h.a || t > h.b) continue;
+        // at night nothing about sunset (COO, 2026-11-16: "Sunset about 4:45 PM" still showed at 9 PM)
+        if (night && name === "Sunset") continue;
         const [x, y] = wheelAt(t);
         el("circle", { cx: x.toFixed(1), cy: y.toFixed(1), r: 4, class: "dc-rim-sun", opacity: up(t).toFixed(3) }, marks);
         mark(t, `${name} about ${fmt(Math.round(mod(t) / 5) * 5)}`);
@@ -884,6 +888,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     layer.insertBefore(stemG, pathG);
     const topG = el("g", {}, layer);
     const shown: Tile[] = [];
+    piles = [];
     for (const tl of tileOf.values()) {
       const head = tl.of ?? tl;
       const n = stopOf.get(tl.it.id);
@@ -913,6 +918,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         });
       const [bx, by] = [x + w / 2 - 2, y - hh / 2 + 2];
       if (tl.count) {
+        if (!k) piles.push({ x, y, w, h: hh, ids: [...tileOf.values()].filter((o) => (o.of ?? o) === head).map((o) => o.it.id) });
         el("circle", { cx: bx.toFixed(1), cy: by.toFixed(1), r: 8.5, class: "dc-badge" }, tg);
         txt(tg, bx, by + 3.6, `+${tl.count}`, { class: "dc-badge-t" });
       } else if (late) {
@@ -1100,6 +1106,13 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   });
   return {
     draw,
+    /** The ids in the "+N" pile under a point on the screen (with a thumb's slop), or null. */
+    pileAt(cx: number, cy: number) {
+      const r = svg.getBoundingClientRect();
+      const [x, y] = [cx - r.left, cy - r.top];
+      const hit = piles.find((p) => Math.abs(x - p.x) <= p.w / 2 + 12 && Math.abs(y - p.y) <= p.h / 2 + 12);
+      return hit ? hit.ids : null;
+    },
     /** Diagnostics (?debug=1): a visitor now. */
     visit: (kind?: VisitorKind) => visitors?.visit(kind),
     cheer,
