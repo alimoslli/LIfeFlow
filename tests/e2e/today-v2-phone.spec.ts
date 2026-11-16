@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
 import { localInstant, pool, queryAsUser, signUp } from "./helpers";
 
@@ -99,4 +100,23 @@ test("School fits a phone: a class with long meeting times never widens the page
   await expect(page.getByText("PHYS 406")).toBeVisible();
   const wide = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(wide).toBeLessThanOrEqual(0);
+});
+
+test("on the open line, tapping a day picks that day, even a short one (two test students tapped Fri and got Sat)", async ({ page }) => {
+  const email = await signUp(page, "Dana Days");
+  execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/dev/seed-clock-look.ts", email, "--busy"], {
+    env: { ...process.env, DATABASE_URL: process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" },
+  });
+  await page.goto("/");
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
+  await page.getByRole("button", { name: /^Today\. Now / }).click();
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "timeline");
+  const days = page.locator("[data-dc=days] button[data-d]");
+  const n = await days.count();
+  for (let i = 1; i < n; i++) {
+    const day = days.nth(i);
+    await day.click();
+    await page.waitForTimeout(1500);
+    await expect(day, `day ${i}`).toHaveAttribute("aria-current", "date");
+  }
 });

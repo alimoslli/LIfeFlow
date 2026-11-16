@@ -764,9 +764,13 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       x = (first ? first.x : xAt(d * 1440 + 480)) - VW() * 0.22;
     }
     S.sel = null;
+    // the tapped day stays picked while the line scrolls to it: the scroll below reads the day at the window's middle,
+    // which on a short day (a Friday with no classes) is already the next one (two test students tapped Fri and got Sat)
+    goingTo = { d, until: performance.now() + 1200 };
     trackWrap.scrollTo({ left: clamp(x, 0, TM.total - VW()), behavior: reduce ? "auto" : "smooth" });
     setDay(d);
   }
+  let goingTo: { d: number; until: number } | null = null;
   function setDay(d: number) {
     if (d === S.day && chips.childElementCount) return;
     S.day = d;
@@ -1528,6 +1532,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
           drawStrip();
         }
         const d = x >= TM.somedayX ? SOMEDAY : dayOf(tAt(x));
+        if (goingTo && performance.now() < goingTo.until) return;
+        goingTo = null;
         if (d !== S.day) {
           // the card stays while its node is still on screen (a tap near the edge scrolls it in)
           const sel = nodeOf(S.sel);
