@@ -9,8 +9,8 @@ HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); _a 
 import fire_render as F
 sys.argv = _a
 W, H, SW, SH, FPS = F.W, F.H, F.SW, F.SH, 30
-CLIP, T_BODY, NF = 7, 1.82, 160
-PUSH0, RAMP = 122, 26                                              # the push-in starts here; time speeds up over the last RAMP frames
+CLIP, T_BODY, NF = 7, 1.82, 128
+PUSH0, RAMP = 96, 24                                              # the push-in starts here; time speeds up over the last RAMP frames
 def smooth5(u): u = min(1., max(0., u)); return u * u * u * (u * (u * 6 - 15) + 10)
 START = dict(z=1.12, cx=1080, cy=SH / 1.12 / 2); HOLD = dict(z=1.20, cx=1080, cy=1672); END = dict(F.AL, z=2.5)   # the hold pushes gently toward the title (it stays put on screen)
 def cam(i):

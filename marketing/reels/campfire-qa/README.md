@@ -148,3 +148,14 @@ The pixel-scene intro (`fire_intro.py`) is replaced by a show open made on the r
 Build: `open2_plate.py` (stage 1: the slow-motion plate and the camera, `open2/plate.mp4` + crops), `open2_compose.py`
 (stage 2: sky, lockup, title, skylings, sound; writes `intro_silent.mp4` and `intro.wav`; `"Title |Gold part"` as an argument
 makes the open for another talk video shot the same way), `fire_mix8.py`, `assemble8.py`.
+
+## v9 (Ali: "change the font of the text Campfire Q&A", "don't make that intro longer, it's already long")
+- **Title font:** Geist Bold capitals, lightly tracked (the app's own interface font; the kit's second face), soft white with
+  "Q&A" in gold. Was Fraunces Bold. `open2_compose.py` takes other faces through `OPEN2_FONT` (a JSON spec); a sheet with
+  four options (the wordmark's own cut of Fraunces, Newsreader, Geist capitals, Bricolage Grotesque) went to Ali.
+  Found on the way: the LifeFlow wordmark is Fraunces at its display size (optical size 144, weight 700).
+- **Shorter open:** 128 frames (4.27 s, was 5.33 s). One skyling lands every 0.4 s (was 0.5 s) and the day runs a little
+  faster; nothing else moves faster. `timeline8.json` is v7's with everything after the open moved 32 frames earlier.
+  Checked against v7: the sound lines up to 0 ms at three points and the body frames are identical. 57.5 s.
+
+Build: `open2_plate.py`, `open2_compose.py`, `fire_mix8.py`, `assemble8.py` (all read `timeline8.json`).

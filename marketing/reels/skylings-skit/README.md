@@ -99,3 +99,18 @@ Ali rejected the Kokoro voices, then a first casting made by pitch-shifting them
 2. `python3 voices3.py <chatterbox_dir>` (reads `picks.json`; writes `vo/<key>.wav` and word timings).
 3. `python3 skit3_compose.py` (`--preview 3.0,9.5` for stills; `python3 sheet.py 1,2,3 out.jpg` for a contact sheet).
 The footage, the reference clips and the model files are not in the repo.
+
+## v4 (Ali: "a lot of the time when Tyler is speaking the camera isn't at him", "you take the cam from the skylings to Tyler or us when we didn't even say anything")
+The rule from now on: **the camera is on whoever is speaking, and never cuts to a person who is saying nothing.** 42.3 s.
+Same files (`v3/skit3_compose.py`, `v3/plates3.py`; v3's cut is in the git history). Final: `LifeFlow_Skylings_Skit_v4.mp4`.
+- **The open:** Tyler is on camera for his whole question. First his single (new plate `q_single`, clip 6 from 1.68 s) with
+  the five on the rim in front of him, facing each other until they hear "the little..." and look up; then the two-shot.
+  v3 played the first half of his question over a close-up of the skylings.
+- **The clipped "And" is gone:** the audio now starts in the gap after it (1.68 s, was 1.58 s), so the film opens on "What".
+- **No silent cutaways:** Tyler listening (between Goldie and Twinkle) and Ali's silent smile (after "Just?") are out.
+- **"Just" lands where it is said:** in Ali's shot the five give him the look on the word "just", so the joke starts while
+  he is the one on camera.
+- **One closing shot:** the stare, Ray's "Just?" (the music stops), a beat, they turn back to us, Dawn "Pick one of us.",
+  Dreamy "Or let the sky pick." v3 cut away to Ali in the middle of this.
+- Checked by transcribing the final mix: every line reads back as written except the one-word "Just?" (heard as "Cast";
+  it is captioned and has the "?" over Ray). Ali heard v3's and did not flag it.

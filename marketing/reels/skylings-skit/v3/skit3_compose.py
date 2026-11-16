@@ -1,4 +1,5 @@
-"""The skylings skit, v3 (Fable's cut). Same footage, same skylings (the app's own pixel art), free voices; what's new:
+"""The skylings skit, v4 (v3 with the camera on whoever is speaking: Tyler is on screen for his whole question, no silent
+cutaways, and "Just?" runs straight into "Pick one of us." in one shot). v3 (Fable's cut). Same footage, same skylings (the app's own pixel art), free voices; what's new:
   - cold open low on the fire-pit rim: the five warming themselves, noticing they're being talked about
   - each close-up is lit by the real fire (a rim light that flickers with the plate, a cast shadow, light wrap), with a soft
     haze of that skyling's own hour behind it (the app's sky colours) and a deeper macro focus
@@ -28,7 +29,7 @@ CAST = {  # kit name, key, its hour (minutes, for the app's sky), label, glow
 ORDER = ["dawn", "ray", "goldie", "twinkle", "dreamy"]
 def feet_y(x): return float(np.interp(x, [500, 700, 900, 1100, 1300, 1500, 1700, 1800], [2722, 2724, 2722, 2714, 2700, 2672, 2630, 2600]))   # on the rim's top
 WIDE_X = [560, 760, 960, 1160, 1360]; LINE_X = [700, 850, 1000, 1150, 1300]
-TWO_X = [795, 955, 1115, 1275, 1435]; AL_X = [460, 610, 760, 910, 1060]   # where they stand in the two-shot and under Ali (all five in frame)
+TWO_X = [795, 955, 1115, 1275, 1435]; AL_X = [460, 610, 760, 910, 1060]; TY_X = [1160, 1310, 1460, 1610, 1760]   # where they stand in the two-shot and under Ali (all five in frame)
 PX_WIDE, PX_LINE, PX_MACRO = 5.4, 6.2, 10.6                           # source px per art pixel (close-ups cheat a little bigger)
 
 # ---------------------------------------------------------------- voices (vo/<key>.wav + .json: dur, words [(word, start, end)])
@@ -48,27 +49,21 @@ def mouth_open(key, t):                                              # syllable-
 # ---------------------------------------------------------------- the cut
 LEAD, TAIL = 0.26, 0.24
 REAL_WORDS = {  # the real lines, word by word (clip time), from the transcript
-    6: [("What", 1.60, 1.84), ("exactly", 1.84, 2.22), ("is", 2.22, 2.6), ("the", 3.02, 3.28), ("little,", 3.28, 3.60), ("like,", 3.60, 3.86), ("character", 3.86, 4.34), ("kind", 4.34, 4.62),
+    6: [("What", 1.70, 1.84), ("exactly", 1.84, 2.22), ("is", 2.22, 2.6), ("the", 3.02, 3.28), ("little,", 3.28, 3.60), ("like,", 3.60, 3.86), ("character", 3.86, 4.34), ("kind", 4.34, 4.62),
         ("of", 4.62, 4.74), ("thing", 4.74, 4.92), ("on", 4.92, 5.10), ("top?", 5.10, 5.40)],
     8: [("Oh,", 1.24, 1.5), ("the", 1.52, 1.62), ("skylings.", 1.62, 2.12), ("Those", 2.30, 2.40), ("are", 2.40, 2.52), ("just", 2.52, 2.68), ("five", 2.68, 2.90), ("different", 2.90, 3.22),
         ("characters", 3.22, 3.54), ("that", 3.54, 3.78), ("represent", 3.78, 4.20), ("each", 4.20, 4.58), ("different", 4.58, 4.94), ("time", 4.94, 5.16), ("of", 5.16, 5.30), ("day.", 5.98, 6.28)]}
 SHOTS = []
 def add(**k): SHOTS.append(k)
-add(id="open", plate=("skit3", "open_line"), dur=2.28, kind="line_open", real=(6, 1.58, 3.86))
+add(id="open", plate=("skit3", "q_single"), dur=2.18, kind="wide", real=(6, 1.68, 3.86), look=1, cap_y=1600, xs=TY_X, notice=1.40)   # Tyler asks, on camera; they hear "the little..."
 add(id="q", plate=("skit", "q_tyler"), p0=88, dur=1.56, kind="wide", real=(6, 3.86, 5.42), look=1, cap_y=1560, xs=TWO_X)
 add(id="oh", plate=("skit", "a_oh"), dur=1.16, kind="wide", real=(8, 1.10, 2.26), look=-1, hop="dawn", cap_y=1250, xs=AL_X)
-for key, plate in [("dawn", ("skit", "m_dawn")), ("ray", ("skit3", "m_ray2")), ("goldie", ("skit", "m_goldie"))]:
+for key, plate in [("dawn", ("skit", "m_dawn")), ("ray", ("skit3", "m_ray2")), ("goldie", ("skit", "m_goldie")), ("twinkle", ("skit", "m_twinkle")), ("dreamy", ("skit", "m_dreamy"))]:
     add(id=key, plate=plate, dur=round(LEAD + vdur(key) + TAIL, 2), kind="macro", who=key)
-add(id="tyler", plate=("skit", "r_tyler"), dur=0.95, kind="plain")
-for key, plate in [("twinkle", ("skit", "m_twinkle")), ("dreamy", ("skit", "m_dreamy"))]:
-    add(id=key, plate=plate, dur=round(LEAD + vdur(key) + TAIL, 2), kind="macro", who=key)
-add(id="dead", plate=("skit", "a_dead"), dur=3.33, kind="wide", real=(8, 2.23, 5.56), look=-1, cap_y=1250, xs=AL_X)
-add(id="day", plate=("skit", "a_day"), dur=0.33, kind="wide", real=(8, 5.98, 6.31), look=-1, cap_y=1250, xs=AL_X)
-JUST_AT = 0.78
-add(id="just", plate=("skit3", "just_line"), dur=round(JUST_AT + vdur("just") + 0.5, 2), kind="line_just")
-add(id="react", plate=("skit3", "a_react"), dur=0.95, kind="plain")
-PICK_A = 0.3; PICK_B = round(PICK_A + vdur("pick") + 0.3, 2)
-add(id="pick", plate=("skit3", "just_line"), p0=72, dur=round(PICK_B + vdur("sky") + 0.45, 2), kind="line_pick")
+add(id="dead", plate=("skit", "a_dead"), dur=3.33, kind="wide", real=(8, 2.23, 5.56), look=-1, cap_y=1250, xs=AL_X, stare=0.42)        # they hear "just"
+add(id="day", plate=("skit", "a_day"), dur=0.33, kind="wide", real=(8, 5.98, 6.31), look=-1, cap_y=1250, xs=AL_X, stare=-1)
+JUST_AT = 0.42; TURN = round(JUST_AT + vdur("just") + 0.42, 2); PICK_A = round(TURN + 0.34, 2); PICK_B = round(PICK_A + vdur("pick") + 0.3, 2)
+add(id="line", plate=("skit3", "just_line"), dur=round(PICK_B + vdur("sky") + 0.45, 2), kind="line_end")   # one shot: the stare, "Just?", a beat, they turn back, "Pick one of us." "Or let the sky pick."
 add(id="sky", plate=("skit", "end_sky"), dur=2.4, kind="sky")
 XF, END_LEN = 10, 2.6
 o = 0
@@ -243,8 +238,17 @@ def frame(i, caps=True):
         a = arr.astype(np.float32); yf = to_scr(c, 960, 2722)[1]; fl = flicker(arr, yf)
         for j, key in enumerate(ORDER):
             xs = s.get("xs", WIDE_X); X, Y = to_scr(c, xs[j], feet_y(xs[j])); px = PX_WIDE * kk; lift = 0; pose = None
+            flip = s.get("look", 1) < 0
             if s.get("hop") == key and t > s["dur"] - 0.42: lift = 46 * kk * math.sin(math.pi * clamp((t - (s["dur"] - 0.42)) / 0.42)); pose = "wave"
-            put_skyling(a, face(key, T, pose=pose, ph=j * 0.37), X, Y, px, flip=(s.get("look", 1) < 0), lift=lift, fl=fl, glow=CAST[key][3])
+            if "notice" in s:                                               # warming themselves, facing each other, until they hear they're being talked about
+                tn = s["notice"] + 0.09 * j
+                if t < tn: flip = (j % 2 == 0)
+                else: lift = 12 * kk * math.sin(math.pi * clamp((t - tn) / 0.24))
+            if "stare" in s:                                                # "just" five characters: the look
+                tn = s["stare"] + 0.05 * j
+                if t >= tn: pose = "skeptic"; lift = 9 * kk * math.sin(math.pi * clamp((t - tn) / 0.2))
+            if key == "dreamy" and "notice" in s: lift += 5 + 4 * math.sin(T * 1.6)
+            put_skyling(a, face(key, T, pose=pose, ph=j * 0.37), X, Y, px, flip=flip, lift=lift, fl=fl, glow=CAST[key][3])
         words = real_words(s)
     elif kind == "macro":
         key = s["who"]; nm, minute, label, glow = CAST[key]; cx = c[0] + c[2] / 2; X, Yf = to_scr(c, cx, feet_y(cx)); px = PX_MACRO * kk
@@ -261,32 +265,24 @@ def frame(i, caps=True):
         name_at = meta.get("name_at", 0.2)
         name_tag(top, key, X, Yf - 26 * px, tl - name_at)
         words = [(w, ws + LEAD, we + LEAD) for w, ws, we in wv]
-    elif kind in ("line_open", "line_just", "line_pick"):
+    elif kind == "line_end":
         Yf0 = to_scr(c, 1000, 2722)[1]; fl = flicker(arr, Yf0); a = lens(arr, Yf0, 0.9)
         say = None
         for j, key in enumerate(ORDER):
-            X, Y = to_scr(c, LINE_X[j], feet_y(LINE_X[j])); px = PX_LINE * kk; flip = False; pose = None; lift = 0; tk = None; tl = 0; sxy = (1, 1)
-            if kind == "line_open":                                         # they notice they're being talked about: one by one they look over
-                tn = 1.02 + 0.08 * j
-                if t >= tn: flip = False; lift = 10 * kk * math.sin(math.pi * clamp((t - tn) / 0.22))
-                else: flip = (j % 2 == 0)                                   # until then they face each other, warming up
-                if key == "dreamy": lift += 6 + 5 * math.sin(T * 1.6)
-            if kind == "line_just":
-                tn = 0.16 + 0.05 * j
-                if t >= tn: flip = True; pose = "skeptic"; lift = 6 * kk * math.sin(math.pi * clamp((t - tn) / 0.18))
-                if key == "ray" and JUST_AT <= t < JUST_AT + vdur("just"): sxy = (1.06, 1.06); say = ("just", t - JUST_AT)
-            if kind == "line_pick":
-                if key == "dawn" and PICK_A <= t < PICK_A + vdur("pick"): tk, tl = "pick", t - PICK_A; pose = "wave" if t - PICK_A < 0.5 else None; say = ("pick", t - PICK_A)
-                if key == "dreamy" and PICK_B <= t < PICK_B + vdur("sky"): tk, tl = "sky", t - PICK_B; say = ("sky", t - PICK_B)
-                if key == "dreamy": lift += 6 + 5 * math.sin(T * 1.6)
-                if t > s["dur"] - 0.36: pose = "celebrate"; lift += 30 * kk * math.sin(math.pi * clamp((t - (s["dur"] - 0.36)) / 0.36))
+            X, Y = to_scr(c, LINE_X[j], feet_y(LINE_X[j])); px = PX_LINE * kk; flip = True; pose = "skeptic"; lift = 0; tk = None; tl = 0; sc = 1.0
+            tn = TURN + 0.05 * j                                            # the stare holds through "Just?" and a beat, then they turn back to us
+            if t >= tn: flip = False; pose = None; lift = 9 * kk * math.sin(math.pi * clamp((t - tn) / 0.2))
+            if key == "ray" and JUST_AT <= t < JUST_AT + vdur("just"): sc = 1.07; say = ("just", t - JUST_AT)
+            if key == "dawn" and PICK_A <= t < PICK_A + vdur("pick"): tk, tl = "pick", t - PICK_A; pose = "wave" if t - PICK_A < 0.5 else None; say = ("pick", t - PICK_A)
+            if key == "dreamy" and PICK_B <= t < PICK_B + vdur("sky"): tk, tl = "sky", t - PICK_B; say = ("sky", t - PICK_B)
+            if key == "dreamy": lift += 6 + 5 * math.sin(T * 1.6)
+            if t > s["dur"] - 0.36: pose = "celebrate"; lift += 30 * kk * math.sin(math.pi * clamp((t - (s["dur"] - 0.36)) / 0.36))
             e = venv(tk, tl) if tk else 0
-            put_skyling(a, face(key, T, tk, tl, pose, ph=j * 0.31), X, Y, px * sxy[0], flip=flip, sx=1 + 0.03 * e, sy=1 - 0.04 * e, lift=lift + 4 * e, fl=fl, glow=CAST[key][3])
-            if kind == "line_just" and key == "ray" and t >= JUST_AT - 0.05:   # a little "?" over Ray
-                u = clamp((t - JUST_AT + 0.05) / 0.2); cells, wc = G.text_cells("?"); pp = 9 * (back(u) if u < 1 else 1)
-                G.draw_cells(ImageDraw.Draw(top), None, [(X + (q - 2) * pp, Y - 26 * px - 66 + (r - 3) * pp, pp * 0.92, u, 0.0) for q, r in cells], gold=True)
-        if kind == "line_open": words = real_words(s)
-        elif say: words = [(w, ws + (t - say[1]), we + (t - say[1])) for w, ws, we in vmeta(say[0])["words"]]
+            put_skyling(a, face(key, T, tk, tl, pose, ph=j * 0.31), X, Y, px * sc, flip=flip, sx=1 + 0.03 * e, sy=1 - 0.04 * e, lift=lift + 4 * e, fl=fl, glow=CAST[key][3])
+            if key == "ray" and JUST_AT - 0.05 <= t < TURN + 0.1:           # a little "?" over Ray
+                u = clamp((t - JUST_AT + 0.05) / 0.2); v = 1 - clamp((t - TURN + 0.1) / 0.2); cells, wc = G.text_cells("?"); pp = 9 * (back(u) if u < 1 else 1)
+                G.draw_cells(ImageDraw.Draw(top), None, [(X + (q - 2) * pp, Y - 26 * px - 66 + (r - 3) * pp, pp * 0.92, u * v, 0.0) for q, r in cells], gold=True)
+        if say: words = [(w, ws + (t - say[1]), we + (t - say[1])) for w, ws, we in vmeta(say[0])["words"]]
     if kind != "plain" or True:
         a = np.clip(a + _grain.normal(0, 2.0, (H, W, 1)).astype(np.float32), 0, 255)       # a little grain binds the pixels to the footage
     img = Image.fromarray(a.astype(np.uint8)).convert("RGBA"); img.alpha_composite(top)
@@ -317,10 +313,10 @@ def mix():
         if "real" in s:
             n, a, b = s["real"]
             if n not in raw: raw[n] = load(f"{FIRE}/wav/c{n}.wav", VOICE)
-            put(voice, raw[n][int(a * SR): int(b * SR)], s["out"] / FPS, 0, 0.012, 0.03)
+            put(voice, raw[n][int(a * SR): int(b * SR)], s["out"] / FPS, 0, 0.03 if s["out"] == 0 else 0.012, 0.03)
         if s["kind"] == "macro": put(voice, load(f"{HERE}/vo/{s['who']}.wav", AIR), s["out"] / FPS + LEAD, 0.5)
-    put(voice, load(f"{HERE}/vo/just.wav", AIR), BY["just"]["out"] / FPS + JUST_AT, 2.5)
-    put(voice, load(f"{HERE}/vo/pick.wav", AIR), BY["pick"]["out"] / FPS + PICK_A, 0.5); put(voice, load(f"{HERE}/vo/sky.wav", AIR), BY["pick"]["out"] / FPS + PICK_B, 0.5)
+    LT = BY["line"]["out"] / FPS
+    put(voice, load(f"{HERE}/vo/just.wav", AIR), LT + JUST_AT, 2.5); put(voice, load(f"{HERE}/vo/pick.wav", AIR), LT + PICK_A, 0.5); put(voice, load(f"{HERE}/vo/sky.wav", AIR), LT + PICK_B, 0.5)
     rng = np.random.default_rng(5)                                          # the fire under everything
     br = np.cumsum(rng.normal(0, 1, NS)).astype(np.float32); br -= np.convolve(br, np.ones(4800) / 4800, mode="same"); br /= np.abs(br).max() + 1e-9
     crk = np.zeros(NS, np.float32)
@@ -339,17 +335,19 @@ def mix():
     mus = arrange(g_); off = E - 0.3 - (len(mus) / SR - 6.0); put(bed, mus, off, -7.5, 0.0, 0.6)
     bed[: int(0.5 * SR)] *= np.linspace(0.25, 1, int(0.5 * SR))[:, None]
     e = np.convolve(np.abs(voice[:, 0]), np.ones(9600) / 9600, mode="same"); bed *= (1 - 0.6 * np.clip(e / 0.035, 0, 1))[:, None]
-    t0 = BY["just"]["out"] / FPS + 0.05; t1 = BY["pick"]["out"] / FPS + 0.1; g = np.ones(NS, np.float32)     # the music stops for the beat
+    t0 = LT - 0.02; t1 = LT + PICK_A - 0.2; g = np.ones(NS, np.float32)                                        # the music stops for "Just?" and comes back as they turn to us
     i0, i1 = int(t0 * SR), int(t1 * SR); g[i0:i1] = 0; r_ = int(0.12 * SR); g[i0:i0 + r_] = np.linspace(1, 0, r_); r2 = int(0.5 * SR); g[i1:i1 + r2] = np.linspace(0, 1, r2); bed *= g[:, None]
     sfx = f"{SP}/editorpack/sfx"; S_ = lambda n: load(f"{sfx}/{n}.wav"); pop = S_("skylings_pop_up")[: int(0.11 * SR)]; tap = S_("tap")
     for s in SHOTS:
         t = s["out"] / FPS
         if s["kind"] == "macro": put(fx, pop, t + 0.02, -10); put(fx, tap, t + 0.3, -16)
         if s.get("hop"): put(fx, tap, t + s["dur"] - 0.4, -10)
-        if s["kind"] == "line_open":
-            for j in range(5): put(fx, tap, t + 1.02 + 0.08 * j, -15)
-        if s["kind"] == "line_just":
-            for j in range(5): put(fx, tap, t + 0.16 + 0.05 * j, -13)
+        if "notice" in s:
+            for j in range(5): put(fx, tap, t + s["notice"] + 0.09 * j, -15)
+        if s.get("stare", -1) > 0:
+            for j in range(5): put(fx, tap, t + s["stare"] + 0.05 * j, -14)
+        if s["kind"] == "line_end":
+            for j in range(5): put(fx, tap, t + TURN + 0.05 * j, -14)
         if s["kind"] == "sky":
             put(fx, S_("sky_turns"), t + 0.35, -6); put(fx, S_("night_stars_twinkle"), t + 1.8, -12)
             for j in range(5): put(fx, pop, t + 0.4 + 1.6 * (j / 4.2), -13)
@@ -372,5 +370,5 @@ if __name__ == "__main__":
     for i in range(N): enc.stdin.write(frame(i).tobytes())
     enc.stdin.close(); enc.wait()
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", f"{HERE}/skit3_silent.mp4", "-i", f"{HERE}/skit3_mix.wav", "-c:v", "copy", "-c:a", "aac", "-b:a", "256k", "-shortest",
-                    "-movflags", "+faststart", f"{HERE}/LifeFlow_Skylings_Skit_v3.mp4"], check=True)
-    print("skit v3", N, "frames", round(N / FPS, 2), "s")
+                    "-movflags", "+faststart", f"{HERE}/LifeFlow_Skylings_Skit_v4.mp4"], check=True)
+    print("skit v4", N, "frames", round(N / FPS, 2), "s")

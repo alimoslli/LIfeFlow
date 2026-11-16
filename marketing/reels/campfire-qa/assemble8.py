@@ -4,7 +4,7 @@ the hook (frame 104), the ending (end3.mp4), one encode, then the v5 mix. Every 
 import json, subprocess, os
 import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); W, H = 1080, 1920; FS = W * H * 3
-TL = json.load(open(f"{HERE}/timeline7.json")); INTRO = TL["intro"]["nf"]; HOOK = TL["intro"]["out"]; BODY_END = TL["segs"][-1]["out"] - INTRO
+TL = json.load(open(f"{HERE}/timeline8.json")); INTRO = TL["intro"]["nf"]; HOOK = TL["intro"]["out"]; BODY_END = TL["segs"][-1]["out"] - INTRO
 def frames(path, skip=0, count=None):
     p = subprocess.Popen(["ffmpeg", "-v", "error", "-i", path, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE); n = 0; k = 0
     while True:
@@ -39,7 +39,7 @@ enc.stdin.close(); enc.wait()
 print(n, "total", sum(n.values()), "expected", TL["n"])
 assert n["hook"] == HOOK and n["intro"] == INTRO and n["body"] == BODY_END - HOOK and sum(n.values()) == TL["n"], n
 subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", f"{HERE}/campfire8_silent.mp4", "-i", f"{HERE}/campfire8_mix.wav", "-c:v", "copy", "-c:a", "aac", "-b:a", "256k",
-                "-shortest", "-movflags", "+faststart", f"{HERE}/LifeFlow_Campfire_QA_v8.mp4"], check=True)
-subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", f"{HERE}/LifeFlow_Campfire_QA_v8.mp4", "-c:v", "libx264", "-preset", "slow", "-crf", "20", "-pix_fmt", "yuv420p",
-                "-c:a", "copy", "-movflags", "+faststart", f"{HERE}/LifeFlow_Campfire_QA_v8_send.mp4"], check=True)
+                "-shortest", "-movflags", "+faststart", f"{HERE}/LifeFlow_Campfire_QA_v9.mp4"], check=True)
+subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", f"{HERE}/LifeFlow_Campfire_QA_v9.mp4", "-c:v", "libx264", "-preset", "slow", "-crf", "20", "-pix_fmt", "yuv420p",
+                "-c:a", "copy", "-movflags", "+faststart", f"{HERE}/LifeFlow_Campfire_QA_v9_send.mp4"], check=True)
 print("done")

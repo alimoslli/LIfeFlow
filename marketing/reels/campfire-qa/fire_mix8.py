@@ -10,7 +10,7 @@ lands on the logo, and the kit's pixel sounds on every overlay beat."""
 import json, subprocess, wave, os
 import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); SP = os.path.dirname(HERE)
-TL = json.load(open(f"{HERE}/timeline7.json")); SR = 48000; N = int(SR * TL["n"] / 30); E = TL["end_out"] / 30
+TL = json.load(open(f"{HERE}/timeline8.json")); SR = 48000; N = int(SR * TL["n"] / 30); E = TL["end_out"] / 30
 def load(path, filt=None):
     cmd = ["ffmpeg", "-v", "error", "-i", path] + (["-af", filt] if filt else []) + ["-ac", "2", "-ar", str(SR), "-f", "s16le", "-"]
     return (np.frombuffer(subprocess.run(cmd, capture_output=True, check=True).stdout, np.int16).reshape(-1, 2) / 32768.).astype(np.float32)

@@ -24,9 +24,9 @@ SOFT, GOLD, INK = G.SOFT3, G.GOLD3, (8, 14, 34)
 # ---------------------------------------------------------------- the day in the sky, and who lands when
 CAST = [("Dawn", 398, (255, 200, 170)), ("Ray", 700, (255, 226, 160)), ("Goldie", 1035, (255, 205, 130)), ("Twinkle-night", 1130, (200, 215, 255)), ("Dreamy-night", 1300, (200, 215, 255))]
 EDGE, RAMP = -2.0, 8.0
-POP = [1.05, 1.55, 2.05, 2.55, 3.05]                                  # one every half second: calm
-def minute(t): return float(np.interp(t, [0.0, 0.7] + POP + [3.4], [330, 345] + [c[1] for c in CAST] + [1320]))
-def wash_alpha(t): return 0.84 * smooth(clamp((t - 0.25) / 0.6)) * (1 - smooth(clamp((t - PUSH_T) / 0.75)))
+POP = [0.92, 1.32, 1.72, 2.12, 2.52]                                  # v2b: the open is 4.27 s (was 5.33): one every 0.4 s
+def minute(t): return float(np.interp(t, [0.0, 0.6] + POP + [2.85], [330, 345] + [c[1] for c in CAST] + [1320]))
+def wash_alpha(t): return 0.84 * smooth(clamp((t - 0.2) / 0.5)) * (1 - smooth(clamp((t - PUSH_T) / 0.7)))
 def lum(c): return (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255
 def daylight(m):
     top, mid, hor = G.sky_cols(np.array([float(m)]))[0]; return clamp((lum(mid) - 0.16) / 0.42), hor
@@ -36,9 +36,22 @@ CS = 2; CW, CH = W * CS, 900 * CS
 def warp_of(c):
     """canvas px -> screen px for the shot c (the overlay is fixed in the scene, so it moves with the camera)"""
     a = S0[2] / (CS * c[2]); return np.float32([[a, 0, (S0[0] - c[0]) * W / c[2]], [0, a, (S0[1] - c[1]) * W / c[2]]])
-F_T = ImageFont.truetype(FONT, 114 * CS)
-TW_ = [F_T.getlength(s) for s in TITLE]; TX0 = CW / 2 - sum(TW_) / 2; TBASE = 572 * CS              # the title's baseline (canvas px)
-_tm = Image.new("L", (CW, CH), 0); ImageDraw.Draw(_tm).text((TX0, TBASE), "".join(TITLE), font=F_T, fill=255, anchor="ls"); TMASK = np.asarray(_tm) > 128
+TFONT = dict(path=f"{SP}/editorpack/fonts/Geist-Bold.ttf", size=100, axes=None, stroke=2.5, caps=True, track=0.035, fit=850)   # v2b (Ali: "change the font"): the app's own interface font, in capitals
+def make_font(spec):
+    f = ImageFont.truetype(spec["path"], int(spec["size"] * CS))
+    if spec.get("axes"):
+        names = {"Optical Size": "opsz", "Optical size": "opsz", "Weight": "wght", "Softness": "SOFT", "Wonky": "WONK", "Width": "wdth"}
+        f.set_variation_by_axes([spec["axes"].get(names.get(a["name"].decode() if isinstance(a["name"], bytes) else a["name"], ""), a["default"]) for a in f.get_variation_axes()])
+    return f
+if os.environ.get("OPEN2_FONT"): TFONT.update(json.loads(os.environ["OPEN2_FONT"]))            # to try other faces: a JSON spec
+F_T = make_font(TFONT)
+if TFONT["caps"]: TITLE = [x.upper() for x in TITLE]
+def tlen(txt): return sum(F_T.getlength(ch) for ch in txt) + TFONT.get("track", 0) * TFONT["size"] * CS * len(txt)
+def tdraw(d, x, y, txt, **kw):
+    for ch in txt: d.text((x, y), ch, font=F_T, anchor="ls", **kw); x += F_T.getlength(ch) + TFONT.get("track", 0) * TFONT["size"] * CS
+if TFONT.get("fit"): TFONT["size"] = TFONT["size"] * TFONT["fit"] * CS / tlen("".join(TITLE)); F_T = make_font(TFONT)
+TW_ = [tlen(s) for s in TITLE]; TX0 = CW / 2 - sum(TW_) / 2; TBASE = 572 * CS              # the title's baseline (canvas px)
+_tm = Image.new("L", (CW, CH), 0); tdraw(ImageDraw.Draw(_tm), TX0, TBASE, "".join(TITLE), fill=255); TMASK = np.asarray(_tm) > 128
 LOCK = Image.open(f"{KIT}/logo/logo_lockup_white_text.png").convert("RGBA"); LOCK = LOCK.crop(LOCK.getbbox()); LOCK = LOCK.resize((int(430 * CS), int(430 * CS * LOCK.height / LOCK.width)), Image.LANCZOS)
 LOCK_Y = 186 * CS
 PXS = 5.6 * CS                                                        # canvas px per art pixel
@@ -62,20 +75,20 @@ def put_art(cv, art, cx, feet, px, sx=1.0, sy=1.0, alpha=1.0):
     cv.alpha_composite(im, (int(cx - w / 2), int(feet - h * 0.962)))
 def overlay(t):
     cv = Image.new("RGBA", (CW, CH), (0, 0, 0, 0)); d = ImageDraw.Draw(cv); m = minute(t); day, _ = daylight(m)
-    night = (1 - day) * smooth(clamp((t - 2.7) / 0.9))                # the app's stars come out when the day is done
+    night = (1 - day) * smooth(clamp((t - 2.3) / 0.7))                # the app's stars come out when the day is done
     if night > 0.02:
         for (x, y, ph, br, sz) in STARS:
             a = night * br * (0.55 + 0.45 * math.sin(t * 5.2 + ph)); s = sz * CS * 1.5
             d.rectangle([x - s, y - s, x + s, y + s], fill=(255, 246, 222, int(235 * a)))
             if sz == 2: d.rectangle([x - 3 * s, y - s / 2, x + 3 * s, y + s / 2], fill=(255, 246, 222, int(120 * a))); d.rectangle([x - s / 2, y - 3 * s, x + s / 2, y + 3 * s], fill=(255, 246, 222, int(120 * a)))
     txt = Image.new("RGBA", (CW, CH), (0, 0, 0, 0)); dt = ImageDraw.Draw(txt)
-    u = clamp((t - 0.12) / 0.55)                                       # LifeFlow first
+    u = clamp((t - 0.08) / 0.5)                                        # LifeFlow first
     if u > 0:
         lk = LOCK.copy(); lk.putalpha(lk.getchannel("A").point(lambda v: int(v * out3(u)))); txt.alpha_composite(lk, (int(CW / 2 - LOCK.width / 2), int(LOCK_Y + 22 * CS * (1 - out3(u)))))
     x = TX0
     for k, (s, col) in enumerate(zip(TITLE, (SOFT, GOLD))):           # then the title, a word at a time, rising like the launch titles
-        u = clamp((t - 0.42 - 0.2 * k) / 0.5)
-        if u > 0: dt.text((x, TBASE + 26 * CS * (1 - out3(u))), s, font=F_T, fill=col + (int(255 * out3(u)),), anchor="ls", stroke_width=3 * CS, stroke_fill=INK + (int(215 * out3(u)),))
+        u = clamp((t - 0.32 - 0.18 * k) / 0.48)
+        if u > 0: tdraw(dt, x, TBASE + 26 * CS * (1 - out3(u)), s, fill=col + (int(255 * out3(u)),), stroke_width=int(TFONT["stroke"] * CS), stroke_fill=INK + (int(215 * out3(u)),))
         x += TW_[k]
     cv.alpha_composite(shadow_of(txt, 16 * CS, 1.5)); cv.alpha_composite(txt)
     for j, (nm, hour, glow) in enumerate(CAST):                       # each one lands in its own hour
@@ -148,11 +161,11 @@ def sound():
     sfx = f"{SP}/editorpack/sfx"
     L = int(0.9 * SR); tt = np.arange(L) / SR                                                     # time slows: a soft falling breath
     put(norm(band(R2.normal(0, 1, L), 180, 2400) * np.exp(-tt / 0.32) * np.minimum(1, tt / 0.03)), 0.0, -17)
-    put(load(f"{sfx}/sky_turns.wav"), 0.72, -9)                                                    # the sky starts to turn
+    put(load(f"{sfx}/sky_turns.wav"), 0.62, -9)                                                    # the sky starts to turn
     for k, f0 in enumerate([523.25, 659.25, 783.99, 1046.5, 1318.5]):                              # a chime as each one lands (rising)
         Lc = int(0.7 * SR); tc = np.arange(Lc) / SR; tone = (np.sin(2 * np.pi * f0 * tc) + 0.3 * np.sin(4 * np.pi * f0 * tc) + 0.08 * np.sin(6 * np.pi * f0 * tc)) * np.exp(-tc / 0.2) * np.minimum(1, tc / 0.004)
         put(norm(tone), POP[k] + 0.24, -17); put(load(f"{sfx}/skylings_pop_up.wav")[: int(0.11 * SR)], POP[k] + 0.02, -15)
-    put(load(f"{sfx}/night_stars_twinkle.wav"), 3.15, -14)
+    put(load(f"{sfx}/night_stars_twinkle.wav"), 2.62, -14)
     Lw = int(1.15 * SR); tw = np.linspace(0, 1, Lw)                                               # the push-in: air, rising to the cut
     put(norm(band(R2.normal(0, 1, Lw), 140, 3200) * tw ** 2.2 * np.minimum(1, (1 - tw) / 0.04)), DUR - 1.15, -15)
     Lb = int(0.8 * SR); tb = np.arange(Lb) / SR; put(norm(np.sin(2 * np.pi * (64 * tb - 14 * tb * tb)) * np.exp(-tb / 0.2)), DUR - 0.03, -10)   # it lands on Ali's first frame
