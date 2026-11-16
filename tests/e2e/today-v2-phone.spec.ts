@@ -33,11 +33,13 @@ test("by day, tonight's night shift is on the sky with its time", async ({ page 
   await page.clock.setFixedTime(localInstant(TZ, 13, 0));
   await page.goto("/");
   await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
-  const words = page.locator(".dc-w-after");
-  await expect(words).toBeVisible();
-  await expect(words).toContainText("Tonight");
-  await expect(words).toContainText("Fulfillment Center");
-  await expect(words).toContainText("10 PM");
+  // on the wheel, where the night rises (a phone shows no words under the sky; its note says the same)
+  const mark = page.locator("[data-dc=dome] text.dc-rim-t", { hasText: "Tonight:" });
+  await expect(mark).toHaveCount(1);
+  await expect(mark).toHaveText("Tonight: Work 10 PM");
+  await expect(mark).toContainText("10 PM");
+  await expect(page.locator('[data-testid="assistant-line"]:visible')).toHaveText("Next: Fulfillment Center shift at 10:00 PM");
+  await page.screenshot({ path: "/tmp/claude-0/-home-user/f5e405f4-f20d-592b-8f29-de312d5a4ef1/scratchpad/night.png" });
 });
 
 test("client work sits under Work by its tag, a delivery as due", async ({ page }) => {

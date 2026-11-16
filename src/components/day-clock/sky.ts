@@ -858,6 +858,19 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       const t = d * DAY;
       if (t > h.a + 20 && t < h.b - 20) mark(t, dayWord(t, data));
     }
+    // tonight's shift, still under the day's horizon, is marked where the night rises (owner, 2026-11-16, item 7 of the
+    // Today list: the test user's 10 PM shift was nowhere on the day's sky); once it's in view it is a stop like any other
+    if (follow && !night) {
+      const m = mod(now);
+      const edge = now - m + set;
+      const sh = timed.find((x) => x.origin === "shift" && x.start > h.b && x.start >= edge && x.start < edge + 600);
+      if (sh) {
+        const t = view + 290;
+        const [x, y] = wheelAt(t);
+        el("circle", { cx: x.toFixed(1), cy: y.toFixed(1), r: 4, class: "dc-rim-sun", opacity: up(t).toFixed(3) }, marks);
+        mark(t, `Tonight: ${sh.title} ${fmt(sh.start)}`);
+      }
+    }
     if (!follow && inHalf(now)) {
       const [x, y] = wheelAt(now);
       el("circle", { cx: x.toFixed(1), cy: y.toFixed(1), r: 5.5, class: "dc-rim-now", opacity: up(now).toFixed(3) }, marks);
