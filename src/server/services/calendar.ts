@@ -330,7 +330,11 @@ export async function getAgenda(
     }
   }
   if (include.has("shift")) {
-    for (const s of await listShifts(scope, tz, from, to)) {
+    // a shift that started the evening before and runs past midnight is part of this day too (an overnight shift ending
+    // at 6:30 AM): without it the morning looked free, and the skyling offered "Fri 9 AM" to someone asleep after it
+    const dayStart = startOfLocalDay(from, tz);
+    const shifts = (await listShifts(scope, tz, addDaysStr(from, -1), to)).filter((s) => s.startsAt >= dayStart || (s.endsAt && s.endsAt > dayStart));
+    for (const s of shifts) {
       items.push({
         key: `shift:${s.id}`,
         origin: "shift",
@@ -413,10 +417,26 @@ export function findConflicts(items: AgendaItem[]) {
   return conflicts;
 }
 
-/** Free gaps (minutes >= minMinutes) on a local day between dayStart and dayEnd (HH:mm). */
-/** Open blocks on a day between busy items. With `notBefore` (now), nothing earlier is offered; it starts on the next quarter hour. */
+/**
+ * Sleep after an overnight shift is not free time (COO, 2026-11-16, from the test user: "Block Fri 9 AM" was offered to
+ * a student asleep after a shift ending at 6:30 AM). A shift that crosses midnight, or ends before 10 AM, is followed by
+ * `SLEEP_AFTER_NIGHT_SHIFT_HOURS` of rest. A fixed gap until a learned sleep model exists (none is stored today).
+ */
+export const SLEEP_AFTER_NIGHT_SHIFT_HOURS = 8;
+function restAfterNightShifts<T extends Pick<AgendaItem, "blocksTime" | "startsAt" | "endsAt"> & { origin?: AgendaItem["origin"] }>(items: T[], tz: string) {
+  const rest: Pick<AgendaItem, "blocksTime" | "startsAt" | "endsAt">[] = [];
+  for (const i of items) {
+    if (i.origin !== "shift" || !i.endsAt) continue;
+    const overnight = localDateOf(i.startsAt, tz) !== localDateOf(i.endsAt, tz) || localTimeOf(i.endsAt, tz) < "10:00";
+    if (overnight) rest.push({ blocksTime: true, startsAt: i.endsAt, endsAt: new Date(i.endsAt.getTime() + SLEEP_AFTER_NIGHT_SHIFT_HOURS * 3_600_000) });
+  }
+  return rest;
+}
+
+/** Open blocks on a day between busy items (minutes >= minMinutes, between dayStart and dayEnd, HH:mm). With `notBefore`
+ * (now), nothing earlier is offered; it starts on the next quarter hour. The rest after an overnight shift counts as busy. */
 export function freeSlots(
-  items: Pick<AgendaItem, "blocksTime" | "startsAt" | "endsAt">[],
+  items: (Pick<AgendaItem, "blocksTime" | "startsAt" | "endsAt"> & { origin?: AgendaItem["origin"] })[],
   date: string,
   tz: string,
   dayStart = "08:00",
@@ -427,7 +447,7 @@ export function freeSlots(
   const quarter = 15 * 60_000;
   const start = Math.max(localToInstant(date, dayStart, tz).getTime(), notBefore ? Math.ceil(notBefore.getTime() / quarter) * quarter : 0);
   const end = localToInstant(date, dayEnd, tz).getTime();
-  const busy = items
+  const busy = [...items, ...restAfterNightShifts(items, tz)]
     .filter((i) => i.blocksTime && i.endsAt)
     .map((i) => [Math.max(start, i.startsAt.getTime()), Math.min(end, i.endsAt!.getTime())] as const)
     .filter(([s, e]) => e > s)
