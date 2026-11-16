@@ -636,7 +636,8 @@ textarea, .log {
       G.stats.bumps++;
       Sound.bump();
       const inside = nc >= 0 && nc < N && nr >= 0 && nr < N;
-      if (inside && tell("bump")) text(cx(nc), cy(nr) - B.cell * 0.5, G.board[at(nc, nr)].t === "cloud" ? "A cloud is in the way" : "Can't step on a star", "#ffffff", 15);
+      if (inside && tell("bump"))
+        text(cx(nc), cy(nr) - B.cell * 0.5, G.board[at(nc, nr)].t === "cloud" ? "A cloud is in the way" : "Can't step on a star", "#ffffff", 15);
       return;
     }
     snapshot();
@@ -964,7 +965,8 @@ textarea, .log {
     let v = lines.length * lines.length * 40 + blown.size * 25 + Math.min(room(b, nc, nr), 20) * 3;
     if (G.wish && G.wish.i === at(nc, nr)) v += 30;
     for (let k = 0; k < N; k++)
-      for (const idx of [lineCells(k, true), lineCells(k, false)]) if (!idx.some((i) => b[i].t === "cloud")) v += idx.filter((i) => b[i].t === "star").length ** 2 * 0.4;
+      for (const idx of [lineCells(k, true), lineCells(k, false)])
+        if (!idx.some((i) => b[i].t === "cloud")) v += idx.filter((i) => b[i].t === "star").length ** 2 * 0.4;
     if (!movesFrom(b, nc, nr).length) v -= 1000;
     return { b, nc, nr, v };
   }
@@ -1610,7 +1612,8 @@ textarea, .log {
     $("modeToday").textContent = tb ? `Today's sky · best ${fmt(tb)}` : "Today's sky";
     $("playBtn").textContent = `Play as ${me.name}`;
     const best = store.get("best", 0);
-    $("startBest").textContent = `${best ? `Your best: ${fmt(best)}` : ""}${best && !TOUCH ? " · " : ""}${TOUCH ? "" : "Arrow keys to walk (hold to keep going)"}`;
+    $("startBest").textContent =
+      `${best ? `Your best: ${fmt(best)}` : ""}${best && !TOUCH ? " · " : ""}${TOUCH ? "" : "Arrow keys to walk (hold to keep going)"}`;
     $("soundBtn").textContent = Sound.on ? "Sound on" : "Sound off";
   }
   $("playBtn").onclick = play;
