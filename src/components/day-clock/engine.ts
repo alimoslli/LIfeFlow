@@ -920,15 +920,37 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
           )}</span>${sameTime || x.someday ? "" : `<span class="dc-r-t">${esc(timeOf(x))}</span>`}</button>`,
       )
       .join("");
+    detail.style.maxHeight = "";
     detail.innerHTML = `<div class="dc-d-ic" aria-hidden="true">${iconHtml(n.it.icon)}</div><div class="dc-d-body"><div class="dc-d-k">${esc(kick)}</div><div class="dc-d-list">${rows}</div></div>`;
     for (const r of detail.querySelectorAll<HTMLElement>(".dc-d-row")) r.addEventListener("click", () => select(r.dataset.id ?? ""));
     const list = detail.querySelector<HTMLElement>(".dc-d-list");
-    // a stop's card ends above the chat bar docked under it on a phone (it stays while the line is open), else in the sky
-    const dock = document.querySelector<HTMLElement>(".dc-dock");
-    const floor = dock?.getClientRects().length ? dock.getBoundingClientRect().top - root.getBoundingClientRect().top : G.H;
-    const over = detail.offsetHeight - (floor - G.detailY - 12);
+    const over = detail.offsetHeight - placeCard(detail.offsetHeight);
     if (list && over > 0) list.style.maxHeight = `${Math.max(66, Math.floor((list.offsetHeight - over - 22) / 44) * 44 + 22)}px`;
     wrapHint(S.open ? 1 : S.p);
+  }
+  // Where a stop's card goes, and how tall it may be. Under the day's tiles when it fits; on a short phone, where only a
+  // sliver is left above the bar, in the tiles' place instead (they step aside while it's open, so nothing lies over
+  // anything). Returns the room it has.
+  function placeCard(natural: number) {
+    const room = cardFloor() - G.detailY - 12;
+    const up = natural > room && !!document.querySelector(".dc-dock");
+    root.classList.toggle("dc-card-up", up);
+    chips.style.visibility = !up && S.p > 0.78 ? "visible" : "hidden";
+    detail.style.top = `${up ? G.detailY - 62 : G.detailY}px`;
+    return up ? room + 62 : room;
+  }
+  // A stop's card ends above the chat bar docked under it on a phone (it stays while the line is open), and above the
+  // skyling standing on that bar, else at the bottom of the sky. The test user found a dentist card under both on a
+  // phone browser's short window (390 x 664).
+  function cardFloor() {
+    const dock = document.querySelector<HTMLElement>(".dc-dock");
+    if (!dock?.getClientRects().length) return G.H;
+    let top = dock.getBoundingClientRect().top;
+    for (const el of dock.querySelectorAll<HTMLElement>("*")) {
+      const r = el.getBoundingClientRect();
+      if (r.height > 0 && r.width > 0 && r.top < top) top = r.top;
+    }
+    return top - root.getBoundingClientRect().top;
   }
   function showDetail() {
     const stack = S.sel?.startsWith("stack:") ? TM.nodes.find((n) => n.id === S.sel) : undefined;
@@ -936,6 +958,12 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const it = S.sel ? ITEMS.find((x) => x.id === S.sel) : undefined;
     if (!it) {
       detail.innerHTML = "";
+      detail.style.maxHeight = "";
+      if (root.classList.contains("dc-card-up")) {
+        root.classList.remove("dc-card-up");
+        chips.style.visibility = S.p > 0.78 ? "visible" : "hidden";
+      }
+      detail.style.top = `${G.detailY}px`;
       wrapHint(S.open ? 1 : S.p);
       return;
     }
@@ -978,9 +1006,13 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const acts = opts.example
       ? ""
       : `${canDo ? '<button type="button" class="dc-d-done">Done</button>' : ""}${inPlace ? '<button type="button" class="dc-d-edit">Edit</button>' : ""}<button type="button" class="dc-d-open">${esc(onPage ? "Edit" : openLabel(it.href))}</button>`;
+    detail.style.maxHeight = "";
     detail.innerHTML = `<div class="dc-d-ic" aria-hidden="true">${iconHtml(it.icon)}</div><div class="dc-d-body"><div class="dc-d-k">${esc(kick)}</div><div class="dc-d-t">${esc(
       it.title,
     )}</div><div class="dc-d-w">${esc(when)}</div><div class="dc-d-s">${esc(sub)}</div><div class="dc-d-acts">${acts}</div></div>`;
+    // one stop's card that would still reach the bar scrolls inside the room it has, its buttons last
+    const room = placeCard(detail.offsetHeight);
+    detail.style.maxHeight = detail.offsetHeight > room ? `${Math.floor(room)}px` : "";
     detail.querySelector(".dc-d-open")?.addEventListener("click", () => opts.onOpen(it.href));
     detail.querySelector(".dc-d-edit")?.addEventListener("click", () => opts.onEdit(it));
     detail.querySelector(".dc-d-done")?.addEventListener("click", (e) => {
@@ -1022,7 +1054,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     daysNav.style.opacity = String(pk);
     daysNav.style.transform = reduce ? "" : `translateY(${(-8 * (1 - pk)).toFixed(2)}px)`;
     daysNav.style.visibility = pk > 0 ? "visible" : "hidden";
-    chips.style.visibility = P > 0.78 ? "visible" : "hidden";
+    chips.style.visibility = P > 0.78 && !root.classList.contains("dc-card-up") ? "visible" : "hidden";
     chips.querySelectorAll<HTMLElement>(".dc-tile").forEach((c, i) => {
       const t = reduce ? P : seg(P, 0.82 + i * 0.03, 0.95 + i * 0.02);
       c.style.opacity = String(t);

@@ -909,6 +909,8 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   display: none;
 }
 .dc-detail {
+  overflow-y: auto;
+  overscroll-behavior: contain;
   position: absolute;
   left: 16px;
   right: 16px;
