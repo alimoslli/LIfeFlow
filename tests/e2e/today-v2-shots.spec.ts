@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { localInstant, pool, signUp } from "./helpers";
 
@@ -40,7 +40,14 @@ for (const screen of SCREENS)
     await page.emulateMedia({ reducedMotion: "reduce" });
     for (const m of MOMENTS) {
       await page.emulateMedia({ reducedMotion: "reduce", colorScheme: m.scheme });
-      await page.clock.setFixedTime(localInstant(tz, m.hour, m.minute));
+      const at = localInstant(tz, m.hour, m.minute);
+      // the app server's clock too, when the run gives it one (E2E_SERVER_NODE_OPTIONS loads scripts/test-user/clock.cjs and
+      // LF_TEST_CLOCK names its file): without it the server words the note at the real time, not the picture's
+      if (process.env.LF_TEST_CLOCK) {
+        writeFileSync(process.env.LF_TEST_CLOCK, String(at.getTime() - Date.now()));
+        await page.waitForTimeout(400);
+      }
+      await page.clock.setFixedTime(at);
       await page.goto("/");
       await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
       await settle(page);

@@ -58,6 +58,14 @@ describe("Today's note: the next real thing in the next 24 hours", () => {
     expect(isDueEvent("Trip to Austin")).toBe(false);
   });
 
+  it("a class that is over is never Next (COO, 2026-11-16: a 6 to 8 PM class at 9:30 PM)", () => {
+    const now = at("2026-11-16", "21:30");
+    const over = cls("Class", "2026-11-16", "18:00", "20:00");
+    expect(pickNextUp([over], now, TZ)).toBeNull();
+    const picked = pickNextUp([over, cls("Study for exam", "2026-11-16", "20:30", "22:00"), due("Discussion post", "2026-11-16", "23:59")], now, TZ)!;
+    expect(nextUpText(picked, TZ, now)).toBe("Discussion post due tonight 11:59 PM");
+  });
+
   it("finished things are never on the agenda, so a passed deadline never shows", () => {
     const now = at("2026-11-16", "12:00");
     expect(pickNextUp([due("Reading quiz", "2026-11-16", "09:00")], now, TZ)).toBeNull();

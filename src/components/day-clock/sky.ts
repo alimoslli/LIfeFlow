@@ -500,7 +500,8 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       if (data.steps != null) pills.push(`👟 ${data.steps.toLocaleString("en-US")}`);
       if (data.sleepHours != null) pills.push(`😴 ${Math.floor(data.sleepHours)}h ${String(Math.round((data.sleepHours % 1) * 60)).padStart(2, "0")}m`);
       if (data.spentTodayCents != null) pills.push(`💳 $${(data.spentTodayCents / 100).toFixed(2).replace(/\.00$/, "")}`);
-      if (done) pills.push(`⭐ ${done}`);
+      // no stars count on Today (owner, 2026-11-16, item 3 of the Today list); the waitlist's example keeps it
+      if (done && example) pills.push(`⭐ ${done}`);
       // what comes after this half of the day: after sunset by day, after sunrise at night
       const m = mod(now);
       const edge = night ? now - m + (m < rise ? rise : DAY + rise) : now - m + set;
