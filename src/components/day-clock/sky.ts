@@ -66,7 +66,7 @@ const HF = 0.78;
 /**
  * The sky's mood for a day (owner, 2026-11-09: "add clouds, but not in all the settings, sometimes"; "sometimes we will
  * add rain"; "a Christmas mode"). Decorative, never a forecast, and the same all day: most days clear, some with
- * clouds, now and then an overcast day with rain; in December a festive sky that snows some days (always on the 24th
+ * clouds, now and then an overcast day (no rain: it read as trouble with nothing to say why); in December a festive sky that snows some days (always on the 24th
  * and 25th), with lights along the horizon.
  */
 export type Mood = { clouds: number; rain: boolean; snow: boolean; festive: boolean };
@@ -78,7 +78,9 @@ export function moodOf(date: string): Mood {
   const [month, day] = [Number(date.slice(5, 7)), Number(date.slice(8, 10))];
   const festive = month === 12 && day <= 26;
   const clouds = r1 < 0.42 ? 0 : r1 < 0.78 ? 0.5 : 1;
-  return { clouds, rain: !festive && clouds === 1 && r2 < 0.4, snow: festive && (r2 < 0.55 || day === 24 || day === 25), festive };
+  // no rain by the calendar: rain with nothing to say why read as a forecast or as trouble (COO, 2026-11-16, from three
+  // test students); an overcast day stays grey, and rain is only ?debug=1&mood=rain
+  return { clouds, rain: false, snow: festive && (r2 < 0.55 || day === 24 || day === 25), festive };
 }
 
 /** The wheel's radius in a window this wide with this much sky above its horizon (the engine turns it by the same). */
@@ -863,7 +865,10 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         mark(t, `${name} about ${fmt(Math.round(mod(t) / 5) * 5)}`);
       }
       const t = d * DAY;
-      if (t > h.a + 20 && t < h.b - 20) mark(t, dayWord(t, data));
+      // the day's name where midnight turns over, unless a stop sits in the hour before it: "Tomorrow" under an 11:59 PM
+      // deadline read as that deadline's day (test student p4020, three nights)
+      const lateStop = timed.some((it) => !it.done && it.start >= t - 60 && it.start < t);
+      if (t > h.a + 20 && t < h.b - 20 && !lateStop) mark(t, dayWord(t, data));
     }
     // tonight's shift, still under the day's horizon, is marked where the night rises (owner, 2026-11-16, item 7 of the
     // Today list: the test user's 10 PM shift was nowhere on the day's sky); once it's in view it is a stop like any other

@@ -105,6 +105,13 @@
   opacity: 0;
   pointer-events: none;
 }
+/* the switch itself is 1 px too, so nothing reads it as a control (two test students found a 13 x 22 one with no name) */
+.dc-hap input {
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  clip-path: inset(50%);
+}
 
 /* ---- the window's sky at the time on top of the wheel, with stars and clouds (placed by sky.ts on the window) ---- */
 .dc-skybg {

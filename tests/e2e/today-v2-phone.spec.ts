@@ -251,3 +251,32 @@ test("a night shift says PM on Work", async ({ page }) => {
   await expect(page.getByText(/10:00 PM to 6:30 AM/).first()).toBeAttached();
   await expect(page.getByText(/\b10:00 to 6:30 AM/)).toHaveCount(0);
 });
+
+// Test students, run 2: a 13 x 22 control with no name on Today (the iPhone haptic switch), a "Tomorrow" mark right under
+// an 11:59 PM deadline at night, and rain with nothing to say why.
+test("Today has no unnamed control, no Tomorrow under tonight's deadline, and no rain", async ({ page }) => {
+  const email = await signUp(page, "Tess Tonight");
+  await inTz(email);
+  await queryAsUser(email, `insert into courses (user_id, name, code) values (${me}, 'Intro to Business', 'BUS 310')`);
+  await queryAsUser(
+    email,
+    `insert into assignments (user_id, course_id, title, due_at, dedupe_key) select ${me}, c.id, 'Problem set 12', $1, md5('ps12') from courses c where c.user_id = ${me}`,
+    [localInstant(TZ, 23, 59)],
+  );
+  await page.clock.setFixedTime(localInstant(TZ, 22, 40));
+  await page.goto("/");
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
+  const unnamed = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>("a, button, [role=button], input, select, textarea")]
+      .filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width > 1 && r.height > 1 && getComputedStyle(el).visibility !== "hidden";
+      })
+      .filter((el) => !(el.getAttribute("aria-label") || el.innerText || el.getAttribute("placeholder") || "").trim())
+      .map((el) => el.outerHTML.slice(0, 80)),
+  );
+  expect(unnamed).toEqual([]);
+  const marks = await page.locator("[data-dc=dome] text.dc-rim-t").allTextContents();
+  expect(marks).not.toContain("Tomorrow");
+  expect(await page.locator(".dc-rain").evaluate((el) => getComputedStyle(el).opacity)).toBe("0");
+});
