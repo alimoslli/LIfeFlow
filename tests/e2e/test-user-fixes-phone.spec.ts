@@ -58,22 +58,18 @@ test("a page with a way back frosts its top bar as soon as it scrolls, so its ti
   await expect(bar).toHaveClass(/lf-appbar-scrolled/);
 });
 
-test("before sunrise the night's star line counts the day before as yesterday", async ({ browser }) => {
+test("Today's sky has no countdown on the water and no stars line, by day or at night (owner, 2026-11-16)", async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const page = await context.newPage();
   const email = await signUp(page, "Nadia Stars");
   const tz = await busyDay(email);
-  // 9:30 PM: what was done today
-  await page.clock.setFixedTime(localInstant(tz, 21, 30));
-  await page.goto("/");
-  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
-  const line = page.locator("[data-dc=dome] text.dc-stars-t");
-  await expect(line).toHaveText(/^\d+ stars? today$/);
-  // 1:30 AM the next morning, still night: the same stars, said as yesterday's
-  await page.clock.setFixedTime(new Date(localInstant(tz, 21, 30).getTime() + 4 * 3_600_000));
-  await page.reload();
-  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
-  await expect(line).toHaveText(/^\d+ stars? yesterday$/);
+  for (const hour of [10, 21]) {
+    await page.clock.setFixedTime(localInstant(tz, hour, 30));
+    await page.goto("/");
+    await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
+    await expect(page.locator("[data-dc=dome] text.dc-stars-t")).toHaveCount(0);
+    await expect(page.locator("[data-dc=dome] .dc-sunchip")).toHaveCount(0);
+  }
   await context.close();
 });
 

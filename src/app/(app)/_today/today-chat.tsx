@@ -15,8 +15,6 @@ import { AI_CONSENT_NEEDED } from "@/lib/ai-consent";
 import { isNarration } from "@/lib/narration";
 import { savesSomething } from "@/lib/tool-saves";
 import { cn } from "@/lib/utils";
-import { IdeaClouds } from "@/components/skylings/idea-clouds";
-import type { IdeaCloud } from "@/lib/idea-clouds";
 
 /**
  * The skyling answers right on Today (owner, 2026-11-10: "there's no different page for the assistant. You just type it
@@ -359,12 +357,13 @@ const fillBar = (ask: string) => window.dispatchEvent(new CustomEvent(FILL_BAR, 
  */
 export function TodayMiddle({
   name,
-  clouds,
   note,
+  brief,
   children,
 }: {
   name: string;
-  clouds: IdeaCloud[];
+  /** This morning's brief in one line, until noon (services/next-up.ts). */
+  brief?: string | null;
   /** The skyling's one note: a link, a question it sends, or words it puts in the bar. */
   note: { text: string; href?: string; prompt?: string; fill?: string; attention?: boolean } | null;
   /** Something that must come first (the birthday question). */
@@ -405,7 +404,11 @@ export function TodayMiddle({
           </button>
         </section>
       )}
-      <IdeaClouds clouds={clouds} show={3} onPick={fillBar} />
+      {brief && (
+        <p className="max-w-[22rem] text-center text-sm text-text-2" data-testid="morning-brief">
+          <span className="font-medium">Morning brief:</span> {brief}
+        </p>
+      )}
     </div>
   );
 }

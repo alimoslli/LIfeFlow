@@ -4,10 +4,11 @@ import { queryAsUser, signUp } from "./helpers";
 import { seedBusyStudent } from "./insight-seed";
 
 /**
- * Insight clouds on a phone (owner, 2026-11-12): the clouds on Today say something true about the person's own week, as
+ * Insight clouds on a phone (owner, 2026-11-12): the clouds say something true about the person's own week, as
  * weather (white a tip, grey a heads-up, dark with rain real trouble), each with one line of why and one button. A busy
  * student sees real ones, the Money lock removes every money one, and a new account sees a couple of calm tips, never an
- * empty sky. Set INSIGHT_SHOTS=1 to also write the pictures (393x852 at 2x) under docs/design/2026-11-12-insight-clouds/.
+ * empty sky. On a phone they live on the skyling's page, not on Today (owner, 2026-11-16, item 2 of the Today list).
+ * Set INSIGHT_SHOTS=1 to also write the pictures (393x852 at 2x) under docs/design/2026-11-12-insight-clouds/.
  */
 test.use({ viewport: { width: 393, height: 852 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
 const DIR = "docs/design/2026-11-12-insight-clouds";
@@ -24,7 +25,7 @@ test("a busy student sees real insights, as weather; a tap fills the bar or does
   await page.emulateMedia({ reducedMotion: "reduce" });
   const email = await signUp(page, "Maya Torres");
   await seedBusyStudent(email);
-  await page.goto("/");
+  await page.goto("/jarvis");
   await expect(row(page).getByRole("button").first()).toBeVisible();
 
   const said = await heads(page);
@@ -44,8 +45,8 @@ test("a busy student sees real insights, as weather; a tap fills the bar or does
   for (const c of await clouds.all()) expect((await c.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await shoot(page, "busy-student-day");
 
-  // the cloud sits above Today's bar, never on it
-  const bar = page.locator('form[data-tour="skyling"]:visible').first();
+  // the cloud sits above the message box, never on it
+  const bar = page.locator('textarea[aria-label="Message Ray"]:visible').first();
   const barTop = (await bar.boundingBox())!.y;
   for (const c of await clouds.all()) {
     const box = (await c.boundingBox())!;
@@ -73,14 +74,14 @@ test("a busy student sees real insights, as weather; a tap fills the bar or does
 
   // the same Today at night: the dark cloud keeps its light edge, the words stay readable
   await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
-  await page.goto("/");
+  await page.goto("/jarvis");
   await expect(row(page).getByRole("button").first()).toBeVisible();
   await shoot(page, "busy-student-night");
   // swipe to the grey heads-up
   await row(page).evaluate((el) => el.scrollTo({ left: el.scrollWidth }));
   await shoot(page, "busy-student-night-grey");
   await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "light" });
-  await page.goto("/");
+  await page.goto("/jarvis");
   await row(page).evaluate((el) => el.scrollTo({ left: el.scrollWidth }));
   await shoot(page, "busy-student-day-grey");
 });
@@ -89,7 +90,7 @@ test("the Money lock on: no money insight at all, only the rest of the week", as
   await page.emulateMedia({ reducedMotion: "reduce" });
   const email = await signUp(page, "Maya Torres");
   await seedBusyStudent(email, { locked: true });
-  await page.goto("/");
+  await page.goto("/jarvis");
   await expect(row(page).getByRole("button").first()).toBeVisible();
   const text = await row(page).innerText();
   expect(text).not.toMatch(/\$|Rent|available|bill|spent|checking|savings/i);
@@ -100,7 +101,7 @@ test("the Money lock on: no money insight at all, only the rest of the week", as
 test("a new account with nothing: a couple of calm white tips, never an empty sky; a tap fills the bar", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await signUp(page, "Cleo Cloud");
-  await page.goto("/");
+  await page.goto("/jarvis");
   const buttons = row(page).getByRole("button");
   await expect(buttons).toHaveCount(2);
   for (const c of await row(page).locator(".lf-idea-cloud").all()) await expect(c).toHaveAttribute("data-weather", "tip");
@@ -121,7 +122,7 @@ test("rain and lightning are CSS only: they move normally and stand still under 
       .first()
       .evaluate((el, p) => getComputedStyle(el, p).animationName, pseudo);
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.goto("/");
+  await page.goto("/jarvis");
   await expect(row(page).getByRole("button").first()).toBeVisible();
   expect(await anim('[aria-label="Ideas to try"]:visible .lf-idea-rain', "::before")).toBe("lf-rain");
   await expect(row(page).locator(".lf-idea-bolt").first()).toBeAttached();

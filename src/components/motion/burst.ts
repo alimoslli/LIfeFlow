@@ -170,9 +170,13 @@ export function celebrate(
     g.drawImage(star(who.look, f), 0, 0);
   };
   show(reduce ? who.face : "wow");
-  const tag = pill(label ?? "+1", who.look.ink);
-  tag.style.marginTop = "-6px";
-  holder.append(cv, tag);
+  // a star says what it was for; with nothing to say it says nothing (owner, 2026-11-16, item 3: no "+1")
+  holder.append(cv);
+  if (label) {
+    const tag = pill(label, who.look.ink);
+    tag.style.marginTop = "-6px";
+    holder.append(tag);
+  }
   layer.appendChild(holder);
   if (reduce) {
     holder.animate([{ opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 1, offset: 0.75 }, { opacity: 0 }], { duration: 1100 }).onfinish = () =>

@@ -2,7 +2,8 @@ import { expect, test } from "@playwright/test";
 import { COMPOSER, queryAsUser, signUp } from "./helpers";
 
 /**
- * Idea clouds (owner, 2026-11-10): beside Today's chat bar and under the skyling in the empty chat, a few short clouds,
+ * Idea clouds (owner, 2026-11-10): under the skyling in the empty chat (and beside a laptop's bar on Today; never on a
+ * phone's Today since 2026-11-16), a few short clouds,
  * each one thing to tell or ask the skyling. A new account has no classes, shifts or bank, so nothing is worth noticing yet: a couple
  * of calm white tips that fit anyone show (insight clouds with real data are in insight-clouds-phone.spec.ts). A tap puts the sentence in the chat box, never sends it, and counts the tap (never the text).
  */
@@ -12,23 +13,10 @@ const ANY = new RegExp(`^(${FOR_ANYONE.map((s) => s.replace(/[?.]/g, "\\$&")).jo
 test("idea clouds: short, from real data, a tap fills the box and sends nothing", async ({ page }) => {
   const email = await signUp(page, "Cleo Cloud");
 
-  // Today: the clouds fill the middle of a phone's Today, between the sky and the chat bar (owner, 2026-11-10)
+  // Today on a phone has no idea clouds (owner, 2026-11-16, item 2): its middle is the skyling's one note
   await page.goto("/");
-  const today = page.locator('[aria-label="Ideas to try"]:visible').first();
-  await expect(today.getByRole("button").first()).toBeVisible();
-  expect(await today.getByRole("button").count()).toBeLessThanOrEqual(3);
-  const say = await today.locator(".lf-idea-head").first().innerText();
-  expect(say.split(/\s+/).length).toBeLessThanOrEqual(8);
-  expect(say).not.toMatch(/did you know|assistant/i);
-  // the cloud and the name tag sit above Today's bar, never on it (nothing lies over anything)
-  const todayBar = page.locator('form[data-tour="skyling"]:visible').first();
-  await expect(todayBar).toBeVisible();
-  const barTop = (await todayBar.boundingBox())!.y;
-  for (const above of [today.getByRole("button").first(), page.locator('[data-testid="ask-skyling"]:visible span.lf-chip-night').first()]) {
-    await expect(above).toBeVisible();
-    const box = (await above.boundingBox())!;
-    expect(box.y + box.height).toBeLessThanOrEqual(barTop + 0.5);
-  }
+  await expect(page.getByTestId("day-clock")).toBeVisible();
+  await expect(page.locator('[aria-label="Ideas to try"]:visible')).toHaveCount(0);
   // The empty chat: the catchphrase and three clouds; a tap fills the box and sends nothing. With reduced motion the
   // clouds stand still (and a test can only click a still element).
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -59,19 +47,4 @@ test("idea clouds: short, from real data, a tap fills the box and sends nothing"
       return Object.values(row.p.ideaTaps ?? {}).reduce((a, b) => a + b, 0);
     })
     .toBe(1);
-
-  // Back on Today: a tap puts it in Today's own chat bar, right there (owner, 2026-11-10: the same chat, no side panel),
-  // and the answer comes on Today, in the middle where the clouds were (owner, 2026-11-10)
-  await page.goto("/");
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await today.getByRole("button").first().click();
-  const bar = page.locator('textarea[aria-label="Message Ray"]:visible').first();
-  await expect(bar).toHaveValue(ANY);
-  const typed = await bar.inputValue();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(page).toHaveURL(/\/$/);
-  await page.locator('form[data-tour="skyling"]:visible').getByRole("button", { name: "Send" }).click();
-  const reply = page.locator('[data-testid="today-reply"]:visible');
-  await expect(reply).toContainText(`You said: ${typed}`.slice(0, 60));
-  await expect(page).toHaveURL(/\/$/);
 });

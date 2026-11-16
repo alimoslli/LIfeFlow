@@ -286,6 +286,9 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   if (!svgQ || !whoQ || !bgQ || !wordsQ) return { draw: () => {}, visit: () => {}, cheer: () => {}, destroy: () => {} };
   const [svg, who, bg, words]: [SVGSVGElement, HTMLCanvasElement, HTMLElement, HTMLElement] = [svgQ, whoQ, bgQ, wordsQ];
   const stars = bg.querySelector<SVGSVGElement>("[data-dc=stars]");
+  // Today has no countdown on the water and no "N stars" line (owner, 2026-11-16, item 3 of the Today list); the
+  // waitlist's example sky keeps them, since its labels point at them
+  const example = root.hasAttribute("data-example");
   const clouds = [...bg.querySelectorAll<HTMLElement>("[data-dc=cloud]")];
   // the day's mood: up to six clouds (the skeleton has two), rain and snow layers, built once
   for (const [l, t, w, hh] of [
@@ -815,7 +818,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     // "5 stars today" at 6:40 AM, before anything had happened that day).
     const starsLine = `${starsToday.length} star${starsToday.length === 1 ? "" : "s"} ${mod(now) < rise ? "yesterday" : "today"}`;
     const starsBox = { x: cx, y: hyC - R * HF * 0.2 - 12.5 * 0.35, w: starsLine.length * 12.5 * 0.58 + 6, h: 12.5 * 1.5 };
-    if (starsToday.length) keepClear.push(starsBox);
+    if (example && starsToday.length) keepClear.push(starsBox);
     const mark = (t: number, s: string) => {
       for (const lift of [-18, -18 - 46 * sc]) {
         const [x, y] = wheelAt(t, lift);
@@ -938,12 +941,12 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         const stop = stopOf.get(it.id);
         star(sg, lerp(sx, stop ? stop.x + 12 : sx, kf), lerp(sy, stop ? stop.y - 12 : sy, kf), lerp(7.5, 5.5, kf), stop || !P ? 1 : 1 - P);
       });
-      if (fin.length) txt(sg, cx, hyC - R * HF * 0.2, starsLine, { class: "dc-stars-t", opacity: (kc * 0.85).toFixed(3) });
+      if (example && fin.length) txt(sg, cx, hyC - R * HF * 0.2, starsLine, { class: "dc-stars-t", opacity: (kc * 0.85).toFixed(3) });
     }
 
     // ---- on the water: how long until the sun sets (or rises); while turned away, "Back to now" (the engine's button)
     const waterY = full ? hyC + 32 : hy + (win.y + win.h - hy) / 2;
-    if (follow && kc > 0) {
+    if (example && follow && kc > 0) {
       const m = mod(now);
       const sunUp = m >= rise && m < set;
       const ahead = sunUp ? set - m : mod(rise - m);
