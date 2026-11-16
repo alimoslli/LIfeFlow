@@ -6,14 +6,18 @@ import type { UserScope } from "@/server/db/with-user";
 import { series } from "@/server/db/series";
 import { getAgenda } from "./calendar";
 
-export type NextUpNote = { key: string; text: string; href: string; due: boolean };
+/** `topics` are what the note talks about, in the clouds' terms (lib/insights.ts), so no cloud says it again. */
+export type NextUpNote = { key: string; text: string; href: string; due: boolean; topics: string[] };
 
 /** Today's note (lib/next-up.ts): the next real thing in the next 24 hours, from every source on the agenda. */
 export async function nextUpNote(scope: UserScope, tz: string, now: Date = new Date()): Promise<NextUpNote | null> {
   const today = todayIn(tz, now);
   const items = await getAgenda(scope, tz, today, addDaysStr(today, 1), { now });
   const n = pickNextUp(items, now, tz);
-  return n ? { key: n.item.key, text: nextUpText(n, tz, now), href: n.item.href, due: n.due } : null;
+  if (!n) return null;
+  const deadlines = [n.due ? n.item : null, n.also].filter((x) => x !== null);
+  const topics = deadlines.length ? ["due", ...deadlines.map((d) => `due:${d.title.toLowerCase()}`)] : [];
+  return { key: n.item.key, text: nextUpText(n, tz, now), href: n.item.href, due: n.due, topics };
 }
 
 /** Until noon, Today carries the morning brief (owner, 2026-11-16, item 1: it moves there from Updates). */

@@ -28,10 +28,10 @@ export async function ideaClouds(
   prefs: UserPreferences | undefined,
   name: string,
   now = new Date(),
-  opts: { noteId?: string | null } = {},
+  opts: { noteId?: string | null; topics?: string[] } = {},
 ): Promise<IdeaCloud[]> {
   const have = await cloudFacts(scope, tz, prefs, now);
-  const insights = cloudsFrom(await listInsights(scope, tz, prefs, now), { noteId: opts.noteId, count: 3 });
+  const insights = cloudsFrom(await listInsights(scope, tz, prefs, now), { noteId: opts.noteId, topics: opts.topics, count: 3 });
   if (insights.length >= 2) return insights;
   return [...insights, ...pickClouds(have, name, localDay(tz, now), 2 - insights.length)];
 }
