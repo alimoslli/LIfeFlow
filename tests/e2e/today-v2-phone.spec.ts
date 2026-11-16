@@ -88,3 +88,15 @@ test("the Calendar has no week chart", async ({ page }) => {
   await page.goto("/plan");
   await expect(page.getByRole("heading", { name: "Your week", exact: true })).toHaveCount(0);
 });
+
+test("School fits a phone: a class with long meeting times never widens the page (two test students, 2026-11-16)", async ({ page }) => {
+  const email = await signUp(page, "Sam School");
+  await queryAsUser(
+    email,
+    `insert into courses (user_id, name, code, meeting_info) values (${me}, 'Physics for Scientists and Engineers II', 'PHYS 406', 'Tue 13:00-15:00 · Thu 13:00-15:00 · Fri 09:00-10:15 · Online lab Wed 18:00-20:00')`,
+  );
+  await page.goto("/school");
+  await expect(page.getByText("PHYS 406")).toBeVisible();
+  const wide = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(wide).toBeLessThanOrEqual(0);
+});
