@@ -194,3 +194,60 @@ test("a +N pile on the closed sky opens the line with what's in it", async ({ pa
   await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "timeline");
   await expect(page.locator(".dc-detail .dc-d-list")).toBeVisible();
 });
+
+// Test students, run 2 (2026-11-16): handed-in work read as still due on the sky, Today's middle was cut at the top and
+// bottom, a "3 assignments due" tile opened only one of them, and a night shift read "10:00 to 6:30 AM".
+test("handed-in work never reads as next; the middle is never cut; a pile tile lists its things", async ({ page }) => {
+  const email = await signUp(page, "Hana Handed");
+  await inTz(email);
+  await queryAsUser(email, `insert into courses (user_id, name, code) values (${me}, 'Intro to Biology', 'BIO 110')`);
+  const due = localInstant(TZ, 23, 59);
+  for (const [title, status] of [
+    ["Homework 12", "done"],
+    ["Quiz 10", "todo"],
+    ["Quiz 5", "todo"],
+    ["Reading response", "todo"],
+  ])
+    await queryAsUser(
+      email,
+      `insert into assignments (user_id, course_id, title, due_at, status, completed_at, dedupe_key)
+       select ${me}, c.id, $1, $2, $3, case when $3 = 'done' then now() end, md5($1) from courses c where c.user_id = ${me}`,
+      [title, due, status],
+    );
+  await page.clock.setFixedTime(localInstant(TZ, 20, 30));
+  await page.goto("/");
+  const clock = page.getByTestId("day-clock");
+  await expect(clock).toHaveAttribute("data-ready", "true");
+  // the sky's own words never name the done one as next or due
+  const dome = await page.locator("[data-dc=dome]").evaluate((el) => el.textContent ?? "");
+  expect(dome).not.toMatch(/Homework 12/);
+  // the note and anything under it are whole: nothing cut at the middle's top or bottom
+  const line = page.locator('[data-testid="assistant-line"]:visible');
+  await expect(line).toContainText("Due tonight");
+  const cut = await line.evaluate((el) => {
+    const box = el.closest("div")!.getBoundingClientRect();
+    return { top: el.getBoundingClientRect().top - box.top };
+  });
+  expect(cut.top).toBeGreaterThanOrEqual(-0.5);
+  // the open day's tile for tonight's deadlines opens the list of what's still due, not one of them
+  await page.getByRole("button", { name: /^Today\. Now / }).click();
+  await expect(clock).toHaveAttribute("data-state", "timeline");
+  await page.locator(".dc-tile", { hasText: "3 assignments" }).first().click();
+  await expect(page.locator(".dc-detail .dc-d-list")).toBeVisible();
+  await expect(page.locator(".dc-detail .dc-d-row")).toHaveCount(4);
+});
+
+test("a night shift says PM on Work", async ({ page }) => {
+  const email = await signUp(page, "Mari Nights");
+  await inTz(email);
+  const [job] = await queryAsUser<{ id: string }>(email, `insert into employers (user_id, name) values (${me}, 'Valley Fulfillment') returning id`);
+  const start = new Date(localInstant(TZ, 22, 0).getTime() + 2 * 86_400_000);
+  await queryAsUser(email, `insert into work_shifts (user_id, employer_id, starts_at, ends_at) values (${me}, $1, $2, $3)`, [
+    job.id,
+    start,
+    new Date(start.getTime() + 8.5 * 3_600_000),
+  ]);
+  await page.goto("/work");
+  await expect(page.getByText(/10:00 PM to 6:30 AM/).first()).toBeAttached();
+  await expect(page.getByText(/\b10:00 to 6:30 AM/)).toHaveCount(0);
+});

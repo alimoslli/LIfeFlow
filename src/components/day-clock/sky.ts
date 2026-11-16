@@ -766,9 +766,10 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     // ---- tiles: one per moment on the rim (a pile when several share it, what's on now leading), late things at now,
     // the next two with their time. A tile that would sit on another moves just inside; failing that, it piles up.
     const cur = timed.find((it) => it.end != null && it.start <= now && it.end > now);
-    const nextIt = cur ?? timed.filter((it) => it.start > now && it.origin !== "milestone").sort((a, b) => a.start - b.start)[0];
+    const nextIt = cur ?? timed.filter((it) => it.start > now && !it.done && it.origin !== "milestone").sort((a, b) => a.start - b.start)[0];
     const placeOf = (it: ClockItem) => (isLate(it, now) ? now : it.start);
-    const weight = (it: ClockItem) => (it === nextIt ? 9 : it.end != null ? 5 : isExam(it) ? 4 : it.origin === "assignment" || it.origin === "task" ? 3 : 1);
+    const weight = (it: ClockItem) =>
+      it.done ? 0 : it === nextIt ? 9 : it.end != null ? 5 : isExam(it) ? 4 : it.origin === "assignment" || it.origin === "task" ? 3 : 1;
     const onPath = timed.filter((x) => inHalf(x.start) && !isLate(x, now) && !OFF_PATH.includes(x.origin ?? ""));
     const groups = new Map<string, ClockItem[]>();
     for (const it of [...st.items.filter((x) => isLate(x, now) && inHalf(now)), ...onPath]) {
@@ -778,11 +779,12 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     const list = [...groups.values()].map((gp) => gp.sort((a, b) => weight(b) - weight(a))).sort((a, b) => placeOf(a[0]) - placeOf(b[0]));
     const withTime = new Set(
       list
-        .filter((gp) => placeOf(gp[0]) > now && !(cur && gp.includes(cur)))
+        .filter((gp) => placeOf(gp[0]) > now && !gp[0].done && !(cur && gp.includes(cur)))
         .slice(0, 2)
         .map((gp) => gp[0]),
     );
-    // the next two say when and what ("5 PM Work"), so the wheel reads at a glance (owner, 2026-11-10)
+    // the next two say when and what ("5 PM Work"), so the wheel reads at a glance (owner, 2026-11-10); something already
+    // done never does: it sits at its due time, ticked (three test students saw handed-in work read as still due)
     const clip = (t: string) => (t.length > 14 ? `${t.slice(0, 13).trimEnd()}…` : t);
     const tag = (it: ClockItem) => `${fmt(it.start)} ${clip(it.title)}`;
     const tiles: Tile[] = [];

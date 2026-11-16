@@ -391,21 +391,22 @@ export function TodayMiddle({
   if (reply) return <TodayReplyCard name={name} refresh={refresh} fill />;
   if (children) return <div className="h-full overflow-y-auto">{children}</div>;
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 overflow-hidden px-1">
+    // centred when it fits, from the top and scrolling when it doesn't, so the note and the brief are never cut (test students p0001 and p2047)
+    <div className="flex h-full flex-col items-center justify-center-safe gap-3 overflow-y-auto overscroll-contain px-1 py-1">
       {note && (
         <section aria-label={note.attention ? "Heads up" : "From your skyling"} className="contents">
           <button
             type="button"
             data-testid="assistant-line"
             onClick={() => (note.href ? router.push(note.href) : note.prompt ? void askOnToday(note.prompt, refresh) : fillBar(note.fill ?? note.text))}
-            className="line-clamp-2 min-h-11 max-w-[22rem] text-center text-[0.9375rem] leading-snug font-medium text-text"
+            className="line-clamp-3 min-h-11 max-w-[22rem] shrink-0 text-center text-[0.9375rem] leading-snug font-medium text-text"
           >
             {note.text}
           </button>
         </section>
       )}
       {brief && (
-        <p className="max-w-[22rem] text-center text-sm text-text-2" data-testid="morning-brief">
+        <p className="max-w-[22rem] shrink-0 text-center text-sm text-text-2" data-testid="morning-brief">
           <span className="font-medium">Morning brief:</span> {brief}
         </p>
       )}

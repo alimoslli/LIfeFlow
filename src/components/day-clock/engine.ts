@@ -382,15 +382,15 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       const end = fmt(e).slice(-2) === fmt(now).slice(-2) ? fmtShort(e).slice(0, -3) : fmtShort(e);
       return { tag: `Now · till ${end}`, text: live.title, it: live };
     }
-    const next = DATED.filter((it) => !it.allDay && it.start > now && it.start <= we).sort((a, b) => a.start - b.start)[0];
+    const next = DATED.filter((it) => !it.allDay && !it.done && it.start > now && it.start <= we).sort((a, b) => a.start - b.start)[0];
     if (next) {
-      const pile = pileOf(DATED.filter((it) => !it.allDay && it.start === next.start));
+      const pile = pileOf(DATED.filter((it) => !it.allDay && !it.done && it.start === next.start));
       // exams happen, they aren't due (owner, 2026-11-11: "Exam 253 ... is due on ... day? That's not how it's supposed to be")
       const text = pile ? pileDue(pile) : next.title;
       return { tag: `${dayOf(next.start) > dayOf(now) ? "Tomorrow" : "Next"} · ${fmtShort(next.start)}`, text, it: next };
     }
     // Nothing in the next 24 hours: the next thing on the calendar, whenever it is (a deadline counts by its day).
-    const later = DATED.filter((it) => (it.allDay ? (dayOf(it.start) + 1) * 1440 : it.start) > now).sort((a, b) => a.start - b.start)[0];
+    const later = DATED.filter((it) => !it.done && (it.allDay ? (dayOf(it.start) + 1) * 1440 : it.start) > now).sort((a, b) => a.start - b.start)[0];
     if (later) {
       const d = dayOf(later.start);
       const when = later.allDay ? (billOf(later) ?? (later.origin === "goal" ? "goal" : isExam(later) ? "exam" : "due")) : fmtShort(later.start);
@@ -814,16 +814,16 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       const name = live(c) ? `In class: ${c.title}` : `Class: ${c.title}`;
       out.push({ it: c, icon: "class", name, time, label: `${c.title}, ${fmt(c.start)} to ${fmt(end)}` });
     }
-    let due = DATED.filter((it) => it.cat === "due" && inDay(it)).sort(byTime)[0];
+    let due = DATED.filter((it) => it.cat === "due" && !it.done && inDay(it)).sort(byTime)[0];
     let ahead = false;
     if (!due && d >= 0) {
-      due = DATED.filter((it) => it.cat === "due" && t0(it) >= (d + 1) * 1440).sort(byTime)[0];
+      due = DATED.filter((it) => it.cat === "due" && !it.done && t0(it) >= (d + 1) * 1440).sort(byTime)[0];
       ahead = true;
     }
     if (due) {
       const t = t0(due);
       const time = ahead ? dayShort(dayOf(t)) : (billOf(due) ?? (due.allDay ? "today" : fmtShort(t)));
-      const pile = pileOf(DATED.filter((it) => it.cat === "due" && it.start === due.start && it.allDay === due.allDay));
+      const pile = pileOf(DATED.filter((it) => it.cat === "due" && !it.done && it.start === due.start && it.allDay === due.allDay));
       const what = pile ?? due.title;
       // an exam is on its day, never "due": "Bio midterm", "Next: Exam 2", "Exam: Unit 3" when the title doesn't say so
       const exam = !billOf(due) && (pile ? pile.endsWith(" exams") : isExam(due));
@@ -844,9 +844,10 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       b.innerHTML = `${TILE_ICONS[c.icon]}<span class="dc-tx"><span class="dc-tn">${esc(c.name)}</span><span class="dc-tt">${esc(c.time)}</span></span>`;
       b.setAttribute("aria-label", c.label);
       b.addEventListener("click", () => {
-        select(c.it.id);
-        // same day: bring its node into view; a later day's deadline just opens its card
+        // a "3 assignments due" tile opens the stop's list, not its first item (test student p2047)
         const n = nodeOf(c.it.id);
+        select(n?.group && pileOf(n.group) && n.group.some((g) => g.id === c.it.id) ? n.id : c.it.id);
+        // same day: bring its node into view; a later day's deadline just opens its card
         if (n && dayOf(n.t) === S.day) {
           const v = n.x - trackWrap.scrollLeft;
           if (v < 50 || v > VW() - 50) trackWrap.scrollTo({ left: clamp(n.x - VW() / 2, 0, TM.total - VW()), behavior: reduce ? "auto" : "smooth" });
