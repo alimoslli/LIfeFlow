@@ -21,8 +21,10 @@ export const metadata: Metadata = { title: "School" };
 
 export default async function SchoolPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const sp = await searchParams;
-  // What's due is a section of this page (the Due page was folded in, owner's page map 2026-11-10): this week by default.
-  const view = (DUE_VIEWS.find((v) => v.key === sp.view)?.key ?? "week") as AssignmentView;
+  // What's due is a section of this page (the Due page was folded in, owner's page map 2026-11-10): the next 7 days by
+  // default (owner, 2026-11-16: rolling, not the calendar week, which was empty every Sunday). An old "This week" link
+  // (`view=week`) lands on it too.
+  const view = (DUE_VIEWS.find((v) => v.key === sp.view)?.key ?? "next7") as AssignmentView;
   const d = await withCurrentUser(async (s, u) => {
     const [courses, all, canvas, due] = await series(
       () => listCourses(s),

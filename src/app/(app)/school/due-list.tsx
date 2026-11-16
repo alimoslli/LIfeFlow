@@ -10,7 +10,7 @@ type Item = Awaited<ReturnType<typeof listAssignments>>[number];
 
 export const DUE_VIEWS: { key: AssignmentView; label: string }[] = [
   { key: "today", label: "Today" },
-  { key: "week", label: "This week" },
+  { key: "next7", label: "Next 7 days" },
   { key: "upcoming", label: "Upcoming" },
   { key: "overdue", label: "Overdue" },
   { key: "completed", label: "Done" },
@@ -44,10 +44,10 @@ export function DueList({
   list: Item[];
   tz: string;
   hasCourses: boolean;
-  /** Everything still open, whatever the view: an empty Today or This week must not read as "no due dates at all". */
+  /** Everything still open, whatever the view: an empty Today or Next 7 days must not read as "no due dates at all". */
   open?: number;
 }) {
-  const quiet = (view === "today" || view === "week") && open > 0;
+  const quiet = (view === "today" || view === "next7") && open > 0;
   return (
     <>
       <Tabs current={view} items={DUE_VIEWS.map((v) => ({ key: v.key, label: v.label, href: `/school?view=${v.key}#due` }))} />
@@ -55,7 +55,15 @@ export function DueList({
         {list.length === 0 ? (
           <EmptyState
             icon={<PixelIcon name="books" />}
-            title={view === "overdue" ? "Nothing overdue. Nice." : quiet ? (view === "today" ? "Nothing due today" : "Nothing due this week") : "Nothing here"}
+            title={
+              view === "overdue"
+                ? "Nothing overdue. Nice."
+                : quiet
+                  ? view === "today"
+                    ? "Nothing due today"
+                    : "Nothing due in the next 7 days"
+                  : "Nothing here"
+            }
           >
             {quiet ? (
               <>
