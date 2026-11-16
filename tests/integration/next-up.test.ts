@@ -12,7 +12,7 @@ afterAll(closeDb);
 
 // The owner's Today list, item 1 (2026-11-16): the note is the next real thing in the next 24 hours, from any source.
 describe("Today's note from real records", () => {
-  it("names the next class, carries tonight's deadline along, and never reaches past 24 hours", async () => {
+  it("names the next class, carries tonight's deadline along, and says plainly when nothing is within 24 hours", async () => {
     const u = await makeUser();
     const course = await u.run((s) => createCourse(s, { name: "Calculus I", code: "MATH 151" }));
     await u.run((s) => createEvent(s, TZ, { title: "Calculus I", date: "2026-11-16", startTime: "10:00", endTime: "10:50", kind: "class" }));
@@ -22,9 +22,9 @@ describe("Today's note from real records", () => {
     expect(note?.text).toBe("Next: Calculus I at 10:00 AM · MATH 151 Problem set 9 due tonight 11:59 PM");
     // what it talks about, so no idea cloud repeats it
     expect(note?.topics).toEqual(["due", "due:problem set 9"]);
-    // late at night, only the farther things are left: nothing in the next 24 hours, so no note from here
+    // late at night only the farther things are left: it says nothing is that close, then names the soonest one
     const late = await u.run((s) => nextUpNote(s, TZ, localToInstant("2026-11-17", "23:30", TZ)));
-    expect(late).toBeNull();
+    expect(late?.text).toBe("Nothing in the next 24 hours · Next: MATH 151 Midterm review due Fri 9:00 AM");
   });
 
   it("a shift, a client meeting and an all-day delivery are all real things; the delivery rides along once it is within 24 hours", async () => {

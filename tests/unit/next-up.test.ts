@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { localToInstant } from "@/lib/dates";
-import { isDueEvent, nextUpText, pickNextUp, type NextUpItem } from "@/lib/next-up";
+import { isDueEvent, laterText, nextUpText, pickNextUp, type NextUpItem } from "@/lib/next-up";
 
 const TZ = "America/Chicago";
 const at = (date: string, time: string) => localToInstant(date, time, TZ);
@@ -70,6 +70,21 @@ describe("Today's note: the next real thing in the next 24 hours", () => {
     expect(nextUpText(pickNextUp(more, now, TZ)!, TZ, now)).toBe(
       "Next: Study group at 7:30 PM · Due tonight: ANTH 378 Quiz 10, ECON 257 Quiz 10, PHYS 406 Quiz 5 and 1 more",
     );
+  });
+
+  it("with nothing in the next 24 hours, it says so and names the soonest thing after (test student p1027)", () => {
+    const now = at("2026-11-16", "21:00");
+    const shift = item({
+      title: "Work · Valley Fulfillment",
+      origin: "shift",
+      kind: "work",
+      startsAt: at("2026-11-18", "22:00"),
+      endsAt: at("2026-11-19", "06:30"),
+    });
+    const quiz = due("Quiz 4", "2026-11-20", "23:59");
+    expect(pickNextUp([shift, quiz], now, TZ)).toBeNull();
+    expect(laterText([quiz, shift], now, TZ)?.text).toBe("Nothing in the next 24 hours · Next: Valley Fulfillment shift Wed 10:00 PM");
+    expect(laterText([], now, TZ)).toBeNull();
   });
 
   it("a class that is over is never Next (COO, 2026-11-16: a 6 to 8 PM class at 9:30 PM)", () => {

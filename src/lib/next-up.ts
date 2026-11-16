@@ -117,3 +117,24 @@ export function nextUpText(n: NextUp, tz: string, now: Date) {
   }
   return n.also ? `${head} · ${deadlineWords(n.also, tz, now, n.dues)}` : head;
 }
+
+/**
+ * Nothing in the next 24 hours: the soonest real thing after that (within the week), said plainly so the note never
+ * points at something farther while a nearer one waits (test student p1027, 2026-11-16: at night the note named a quiz
+ * four days away while her shift was the day after tomorrow). "Nothing in the next 24 hours · Next: Lab worksheet 12 due
+ * Tue 11:59 PM".
+ */
+export function laterText(items: NextUpItem[], now: Date, tz: string): { text: string; item: NextUpItem } | null {
+  const t = now.getTime();
+  const later = items
+    .filter((i) => (isDeadline(i) ? dueBy(i, tz).getTime() > t : !i.allDay && i.blocksTime && i.startsAt.getTime() > t))
+    .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0];
+  if (!later) return null;
+  const day = formatIn(later.startsAt, tz, "EEE");
+  const what = isDeadline(later)
+    ? later.allDay
+      ? `${titleOf(later)} due ${day}`
+      : `${titleOf(later)} due ${day} ${time(later.startsAt, tz)}`
+    : `${titleOf(later)} ${day} ${time(later.startsAt, tz)}`;
+  return { text: `Nothing in the next 24 hours · Next: ${what}`, item: later };
+}
