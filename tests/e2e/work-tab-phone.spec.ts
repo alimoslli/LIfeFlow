@@ -37,6 +37,8 @@ test("no classes: Work is a tab, and its page leads with the next shift", async 
   await expect(hero).toContainText("None yet");
   await expect(page.getByRole("region", { name: "This week" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Shift", exact: true })).toBeVisible();
+  // the paychecks are one tap deeper (owner, 2026-11-16)
+  await page.getByTestId("work-pay").locator("summary").click();
   await expect(page.getByRole("button", { name: "Paycheck", exact: true })).toBeVisible();
 
   // More doesn't repeat the Work tab, and its Goals door goes straight to Goals
