@@ -135,7 +135,15 @@ export function DayClock({
 
   return (
     <>
-      <div ref={ref} className="dc" data-open="false" data-mode={mode} data-companion={companion ?? undefined} data-example={example ? "" : undefined} data-testid="day-clock">
+      <div
+        ref={ref}
+        className="dc"
+        data-open="false"
+        data-mode={mode}
+        data-companion={companion ?? undefined}
+        data-example={example ? "" : undefined}
+        data-testid="day-clock"
+      >
         {/* The window's sky at the time on top of the wheel; the line's own sky takes over as it opens. */}
         <div data-dc="skybg" className="dc-skybg" aria-hidden="true">
           <svg data-dc="stars" className="dc-stars" />
