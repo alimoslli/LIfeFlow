@@ -38,8 +38,10 @@ export async function morningBriefLine(scope: UserScope, tz: string, now: Date, 
   );
   const f = rows[0]?.facts;
   if (!f || rows[0].status === "dismissed") return null;
-  const count = typeof f.count === "number" ? f.count : 0;
   const money = opts.money && typeof f.money === "string" ? f.money : null;
-  const list = count ? `${count} ${count === 1 ? "thing" : "things"} on today's list` : "A clear day";
-  return money ? `${list}, ${money}` : list;
+  // the things themselves, never a count (two test students, 2026-11-16: "N things on today's list" never helped)
+  const sections = Array.isArray(f.sections) ? (f.sections as { heading?: string; lines?: unknown[] }[]) : [];
+  const due = (sections.find((x) => x.heading === "Due")?.lines ?? []).filter((l): l is string => typeof l === "string" && l !== "Nothing due today.");
+  const list = due.length ? `${due.slice(0, 2).join(", ")}${due.length > 2 ? ` and ${due.length - 2} more` : ""}` : "A clear day";
+  return money ? `${list}. ${money[0].toUpperCase()}${money.slice(1)}` : list;
 }

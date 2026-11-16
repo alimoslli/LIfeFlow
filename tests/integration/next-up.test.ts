@@ -55,10 +55,17 @@ describe("Today's note from real records", () => {
         dedupeKey: "morning_brief:2026-11-16",
         title: "Your morning brief",
         body: "3 things on today's list.",
-        facts: { count: 3, money: "$420.00 available now", oneThing: "Finish Problem set 9" },
+        facts: {
+          count: 3,
+          money: "$420.00 available now",
+          oneThing: "Finish Problem set 9",
+          sections: [{ heading: "Due", lines: ["Problem set 9 (Calculus I) due today", "Return library books", "Shift at Target"] }],
+        },
       }),
     );
-    expect(await u.run((s) => morningBriefLine(s, TZ, now, { money: true }))).toBe("3 things on today's list, $420.00 available now");
-    expect(await u.run((s) => morningBriefLine(s, TZ, now, { money: false }))).toBe("3 things on today's list");
+    expect(await u.run((s) => morningBriefLine(s, TZ, now, { money: true }))).toBe(
+      "Problem set 9 (Calculus I) due today, Return library books and 1 more. $420.00 available now",
+    );
+    expect(await u.run((s) => morningBriefLine(s, TZ, now, { money: false }))).toBe("Problem set 9 (Calculus I) due today, Return library books and 1 more");
   });
 });
