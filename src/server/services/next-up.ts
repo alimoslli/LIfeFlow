@@ -15,7 +15,7 @@ export async function nextUpNote(scope: UserScope, tz: string, now: Date = new D
   const items = await getAgenda(scope, tz, today, addDaysStr(today, 1), { now });
   const n = pickNextUp(items, now, tz);
   if (!n) return null;
-  const deadlines = [n.due ? n.item : null, n.also].filter((x) => x !== null);
+  const deadlines = n.dues;
   const topics = deadlines.length ? ["due", ...deadlines.map((d) => `due:${d.title.toLowerCase()}`)] : [];
   return { key: n.item.key, text: nextUpText(n, tz, now), href: n.item.href, due: n.due, topics };
 }

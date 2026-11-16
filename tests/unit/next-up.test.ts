@@ -58,6 +58,20 @@ describe("Today's note: the next real thing in the next 24 hours", () => {
     expect(isDueEvent("Trip to Austin")).toBe(false);
   });
 
+  it("several due in the same part of the day are all named, each with its class (test student p2047, 2026-11-16)", () => {
+    const now = at("2026-11-16", "18:50");
+    const quiz = (course: string, title: string) => ({ ...due(title, "2026-11-16", "23:59"), subtitle: course });
+    const three = [quiz("ANTH 378", "Quiz 10"), quiz("ECON 257", "Quiz 10"), quiz("PHYS 406", "Quiz 5")];
+    expect(nextUpText(pickNextUp(three, now, TZ)!, TZ, now)).toBe("Due tonight: ANTH 378 Quiz 10, ECON 257 Quiz 10, PHYS 406 Quiz 5");
+    // one alone keeps its time, with its class
+    expect(nextUpText(pickNextUp([three[0]], now, TZ)!, TZ, now)).toBe("ANTH 378 Quiz 10 due tonight 11:59 PM");
+    // behind the next class, the same list rides along; a fourth and more are counted
+    const more = [...three, quiz("HIST 374", "Reading response"), cls("Study group", "2026-11-16", "19:30", "20:30")];
+    expect(nextUpText(pickNextUp(more, now, TZ)!, TZ, now)).toBe(
+      "Next: Study group at 7:30 PM · Due tonight: ANTH 378 Quiz 10, ECON 257 Quiz 10, PHYS 406 Quiz 5 and 1 more",
+    );
+  });
+
   it("a class that is over is never Next (COO, 2026-11-16: a 6 to 8 PM class at 9:30 PM)", () => {
     const now = at("2026-11-16", "21:30");
     const over = cls("Class", "2026-11-16", "18:00", "20:00");

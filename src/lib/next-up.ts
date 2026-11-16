@@ -18,9 +18,13 @@ export type NextUpItem = {
   blocksTime: boolean;
   /** an event the person tagged as work (client meetings, shoots) */
   work?: boolean;
+  /** an assignment's course code or name, said before its title ("ECON 257 Quiz 10") */
+  subtitle?: string | null;
 };
 
-export type NextUp = { item: NextUpItem; state: "next" | "now"; due: boolean; also: NextUpItem | null };
+/** `dues` are the deadlines the line names: every one due in the same part of the day as the one it says (the test
+ * student had three quizzes due tonight and saw one, without its class). */
+export type NextUp = { item: NextUpItem; state: "next" | "now"; due: boolean; also: NextUpItem | null; dues: NextUpItem[] };
 
 export const NEXT_UP_HOURS = 24;
 
@@ -59,11 +63,13 @@ export function pickNextUp(items: NextUpItem[], now: Date, tz: string): NextUp |
     const due = isDeadline(first);
     // a deadline later in the 24 hours rides along, so "due tonight" is never hidden behind the next class
     const also = due ? null : (deadlines.find((d) => d !== first) ?? null);
-    return { item: first, state: "next", due, also };
+    const said = due ? first : also;
+    const dues = said ? deadlines.filter((d) => dueSlot(d, tz, now) === dueSlot(said, tz, now)) : [];
+    return { item: first, state: "next", due, also, dues };
   }
   // nothing ahead, but something is on right now (the last shift of the day)
   const live = timed.find((i) => i.startsAt.getTime() <= t);
-  return live ? { item: live, state: "now", due: false, also: null } : null;
+  return live ? { item: live, state: "now", due: false, also: null, dues: [] } : null;
 }
 
 const time = (d: Date, tz: string) => formatIn(d, tz, "h:mm a");
@@ -76,26 +82,38 @@ function dayWord(d: Date, tz: string, now: Date) {
   return "tomorrow";
 }
 
-/** "Work · Target" (the agenda's title for a shift) reads as "Target shift". */
+/** "Work · Target" (the agenda's title for a shift) reads as "Target shift"; an assignment carries its class. */
 function titleOf(i: NextUpItem) {
-  return i.origin === "shift" ? `${i.title.replace(/^Work · /, "")} shift` : i.title;
+  if (i.origin === "shift") return `${i.title.replace(/^Work · /, "")} shift`;
+  const course = i.origin === "assignment" ? i.subtitle?.trim() : null;
+  return course && !i.title.toLowerCase().startsWith(course.toLowerCase()) ? `${course} ${i.title}` : i.title;
 }
 
-function deadlineWords(i: NextUpItem, tz: string, now: Date) {
+/** Which part of the day a deadline is due in, in words: "today", "tonight" or "tomorrow". */
+function dueSlot(i: NextUpItem, tz: string, now: Date) {
   const word = dayWord(i.startsAt, tz, now);
-  if (i.allDay) return `${titleOf(i)} due ${word === "tomorrow" ? "tomorrow" : "today"}`;
-  return `${titleOf(i)} due ${word} ${time(i.startsAt, tz)}`;
+  return i.allDay ? (word === "tomorrow" ? "tomorrow" : "today") : word;
+}
+
+function deadlineWords(i: NextUpItem, tz: string, now: Date, group: NextUpItem[] = [i]) {
+  const slot = dueSlot(i, tz, now);
+  if (group.length > 1) {
+    const names = group.slice(0, 3).map(titleOf);
+    return `Due ${slot}: ${names.join(", ")}${group.length > 3 ? ` and ${group.length - 3} more` : ""}`;
+  }
+  if (i.allDay) return `${titleOf(i)} due ${slot}`;
+  return `${titleOf(i)} due ${slot} ${time(i.startsAt, tz)}`;
 }
 
 /** One line, the thing first: "Next: Calculus at 2:00 PM · Lab report due tonight 11:59 PM". */
 export function nextUpText(n: NextUp, tz: string, now: Date) {
   const i = n.item;
   let head: string;
-  if (n.due) head = deadlineWords(i, tz, now);
+  if (n.due) head = deadlineWords(i, tz, now, n.dues);
   else if (n.state === "now") head = `Now: ${titleOf(i)} until ${time(i.endsAt ?? i.startsAt, tz)}`;
   else {
     const word = dayWord(i.startsAt, tz, now);
     head = `Next: ${titleOf(i)} ${word === "tomorrow" ? "tomorrow at" : "at"} ${time(i.startsAt, tz)}`;
   }
-  return n.also ? `${head} · ${deadlineWords(n.also, tz, now)}` : head;
+  return n.also ? `${head} · ${deadlineWords(n.also, tz, now, n.dues)}` : head;
 }

@@ -19,7 +19,7 @@ describe("Today's note from real records", () => {
     await u.run((s) => createAssignment(s, TZ, { courseId: course.id, title: "Problem set 9", dueDate: "2026-11-16", dueTime: "23:59" }));
     await u.run((s) => createAssignment(s, TZ, { courseId: course.id, title: "Midterm review", dueDate: "2026-11-20", dueTime: "09:00" }));
     const note = await u.run((s) => nextUpNote(s, TZ, localToInstant("2026-11-16", "07:40", TZ)));
-    expect(note?.text).toBe("Next: Calculus I at 10:00 AM · Problem set 9 due tonight 11:59 PM");
+    expect(note?.text).toBe("Next: Calculus I at 10:00 AM · MATH 151 Problem set 9 due tonight 11:59 PM");
     // what it talks about, so no idea cloud repeats it
     expect(note?.topics).toEqual(["due", "due:problem set 9"]);
     // late at night, only the farther things are left: nothing in the next 24 hours, so no note from here
