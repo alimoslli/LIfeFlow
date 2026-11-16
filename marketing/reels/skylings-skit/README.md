@@ -35,3 +35,15 @@ characters or sets.
   the launch captions for every line, the sky wash for the ending, the logo; the sound is Tyler and Ali's real lines, the
   skylings' voices with a little of the fire's air, a fire bed, the launch score under it ending on the logo, the app's
   sounds. Final: `LifeFlow_Skylings_Skit.mp4`.
+
+## v2 (Ali: Dawn's first words weren't understandable; "Ray says his name way too fast and it isn't obvious he's introduced himself")
+- Every skyling now says its name on its own, a little slower, then a beat, then the rest, and its name pops up over its head in
+  the launch letters (gold, navy rim) as it says it:
+  - Dawn: "Good morning! I'm Dawn. Your whole day's planned before you even wake up." (voice af_nova; she waves, and a soft
+    sunrise glow comes up behind her)
+  - Ray: "Hi, I'm Ray! Classes, shifts, that quiz you forgot... I've got your daytime."
+  - Goldie: "I'm Goldie. Before you go out, I check what you've actually got."
+  - Twinkle: "I'm Twinkle! I'm the one who asks if you studied."
+  - Dreamy: "Hello. I'm Dreamy. Go to sleep. Tomorrow's handled."
+- Each introduction was chosen by transcribing the candidates back (faster-whisper, with the names as a hint) and keeping the
+  clearest; in the final mix every line reads back exactly as written. 40.8 s.

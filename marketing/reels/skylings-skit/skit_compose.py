@@ -70,10 +70,13 @@ def skyling(img, name, pose, T, X, Y, px, talk=0.0, alpha=1.0, glow=None, hop=0.
 
 # ---------------------------------------------------------------- captions: the launch style (fire_render.caption), every line
 CAP = {101: [(0.0, 9, "")]}
-LINES_TXT = {"dawn": "Mmm. Hi... I'm Dawn. I wake you up with today already planned.", "ray": "Ray! Classes, shifts, the quiz you forgot. I've got the daytime.",
+LINES_TXT = {"dawn": "Good morning! I'm Dawn. Your whole day's planned before you even wake up.", "ray": "Ray! Classes, shifts, the quiz you forgot. I've got the daytime.",
              "goldie": "Goldie. Before you go out, I check what you've actually got.", "twinkle": "Twinkle. I'm the one who asks if you studied.",
              "dreamy": "Dreamy. Go to sleep. Tomorrow's handled.", "ray_pick": "Pick one.", "dreamy_sky": "Or let the sky pick."}
 def sky_caption(img, key, t):
+    meta = json.load(open(f"{HERE}/vo/{key}.json"))
+    if meta["intro"]:
+        F.CAPS[101] = [(0.0, meta["intro_end"] + 0.12, meta["intro"]), (meta["rest_start"], meta["dur"] + 0.05, meta["rest"])]; F.caption(img, 101, t); return
     d = wav_len(VO[key]); txt = LINES_TXT[key]
     parts = [p.strip() for p in txt.replace("! ", "!|").replace(". ", ".|").replace("? ", "?|").split("|") if p.strip()]
     lens = [len(p) for p in parts]; tot = sum(lens); acc = 0; chunks = []
@@ -114,9 +117,16 @@ def frame(i):
         nm = s["sky"]; key = s["line"]; gl = next(g for n_, k_, g in FIVE if n_ == nm)
         X, Y = to_scr(c, c[0] + c[2] / 2, 2716); px = 9.6 * kk
         tl = t - LEAD; talk = env(key, tl) if tl >= 0 else 0.0
-        pose = ("think" if nm == "Dawn" and tl < 0.9 else ("wave" if 0 <= tl < 0.7 else "idle"))
+        pose = "wave" if 0 <= tl < (1.1 if nm == "Dawn" else 0.7) else "idle"
+        if nm == "Dawn" and tl > -0.1:                                  # first light: a soft sunrise glow comes up behind her
+            u = clamp((tl + 0.1) / 1.2); g = G.glow_disc(int(330 * kk / 2), (255, 196, 150), 0.55 * out3(u)); paste(img, g, int(X - g.width / 2), int(Y - 26 * px * 0.55 - 60 * out3(u) - g.height / 2))
         if nm.endswith("-night") and pose == "think": pose = "idle"
         skyling(img, nm, pose, T, X, Y, px, talk=talk, glow=gl, hop=8 * kk * math.sin(T * 2.4) if tl < 0 else 0)
+        intro_end = json.load(open(f"{HERE}/vo/{key}.json"))["intro_end"]
+        if tl >= intro_end - 0.4:                                       # its name, over its head, as it says it
+            u = (tl - intro_end + 0.4) / 0.28; s_ = back(u) if u < 1 else 1; name = nm.replace("-night", "").upper()
+            cells, wc = G.text_cells(name); pp = 13 * s_; top_y = Y - 26 * px - 70
+            G.draw_cells(ImageDraw.Draw(img), None, [(X + (q - wc / 2 + 0.5) * pp, top_y + (r - 3) * pp, pp * 0.92, min(1, u * 2), 0.0) for q, r in cells], gold=True)
         if tl >= 0: sky_caption(img, key, tl)
     if s["kind"] == "lineup":                                          # all five: "Pick one." "Or let the sky pick."
         talking = {who: (key, t0) for key, t0, who in s["lines"]}
