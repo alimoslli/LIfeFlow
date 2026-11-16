@@ -47,3 +47,55 @@ characters or sets.
   - Dreamy: "Hello. I'm Dreamy. Go to sleep. Tomorrow's handled."
 - Each introduction was chosen by transcribing the candidates back (faster-whisper, with the names as a hint) and keeping the
   clearest; in the final mix every line reads back exactly as written. 40.8 s.
+
+## v3, a new cut (Ali: "same footage, same idea, your touch"; then "those voices aren't good", "find the best free resource")
+Files in `v3/`. 44.6 s. Final: `LifeFlow_Skylings_Skit_v3.mp4`.
+
+### What changed in the film
+- **Cold open on the rim:** the five warm themselves at the fire while Tyler starts his question; one by one they notice they
+  are being talked about and look over.
+- **They belong in the shot:** each close-up is lit by the real fire (a warm rim light on the pixels that flickers with the
+  plate, a contact shadow and a cast shadow, light wrap), with a deeper macro focus and a soft haze of that skyling's own hour
+  behind it (the app's sky colours).
+- **They talk:** mouths open and close on their own voices (the app's open-mouth pixels from the celebrate frame on the idle
+  frame), and the skeptical face (the app's "think" frame) lands the jokes.
+- **A new beat on Ali's real line:** "Those are JUST five different characters..." All five turn. Ray: "Just?" The music
+  stops for it. Ali's real silent smile answers.
+- **Name tags:** the name in the launch pixel letters with its hour under it (FIRST LIGHT, THE DAY, GOLDEN HOUR, EVENING,
+  NIGHT), appearing on the word it says its name.
+- **Captions:** the launch style, timed word by word from the audio, broken into balanced lines.
+- **Ending:** Dawn "Pick one of us." Dreamy "Or let the sky pick." The sky runs through the day, then the logo with
+  "Which one's yours?" and "Get on the waitlist · lifeflowweb.com".
+
+### The lines
+- Dawn: "Good morning! I'm Dawn. I planned your whole day before you woke up. Somebody had to."
+- Ray: "I'm Ray. Your classes, your shifts, and that quiz you forgot about. Yeah. That one."
+- Goldie: "I'm Goldie. Before you go out tonight, I check if you can actually afford it."
+- Twinkle: "I'm Twinkle. You said you'd study tonight. Did you?"
+- Dreamy: "I'm Dreamy. Go to bed. Tomorrow's handled."
+
+### The voices (free, and why these)
+Ali rejected the Kokoro voices, then a first casting made by pitch-shifting them. What worked:
+- **Engine:** Chatterbox (Resemble AI, MIT), run from its ONNX export (`onnx-community/chatterbox-ONNX`) with onnxruntime
+  on CPU (`cb.py`). It speaks a line in the voice of a short reference clip.
+- **Reference voices:** real people who gave their voices away, from `kyutai/tts-voices` on Hugging Face. No pitch shifting.
+- **The cast (Ali chose by ear from an A/B casting tape, `cast2.py`):**
+  | Skyling | Reference | Licence |
+  |---|---|---|
+  | Dawn | the Kokoro af_heart sample, through Chatterbox, 1.5 semitones up (the one voice he kept from the first tape) | Apache-2.0 model output |
+  | Ray | voice-donations/ClassicWizard | CC0 |
+  | Goldie | voice-donations/3973 | CC0 |
+  | Twinkle | voice-donations/Hannah | CC0 |
+  | Dreamy | voice-zero/peter_yearsley (LibriVox) | CC0 |
+  No credit line is needed for any of them. (The Alba MacKenna voices in the same set are CC BY 4.0 and would need one.)
+- **Clarity rules that came out of his notes:** 2.5 to 3.2 words a second; the name is its own sentence; a line is made in
+  segments joined with our own pauses; every take is transcribed back (faster-whisper small.en) and the clearest kept;
+  the finished mix is transcribed again and must read back exactly as written (it does).
+- One-word lines are the engine's weak spot: of 14 takes of "Just?", 9 had the word and 1 sounded like a question (`just_takes.py`).
+- Not used: OpenAI's voices (reachable from here but paid, and the owner's rule is no OpenAI calls), Higgsfield (0.10 credits).
+
+### How to rebuild
+1. `python3 plates3.py` (the four new plates; the others are v1's).
+2. `python3 voices3.py <chatterbox_dir>` (reads `picks.json`; writes `vo/<key>.wav` and word timings).
+3. `python3 skit3_compose.py` (`--preview 3.0,9.5` for stills; `python3 sheet.py 1,2,3 out.jpg` for a contact sheet).
+The footage, the reference clips and the model files are not in the repo.

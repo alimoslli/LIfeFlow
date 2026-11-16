@@ -1,0 +1,41 @@
+{
+ "dawn": {
+  "ref": "dawn",
+  "ex": 0.7,
+  "st": 1.5,
+  "files": {
+   "dawn_0": "takes/dawn_s1.wav"
+  }
+ },
+ "ray": {
+  "ref": "don_ClassicWizard",
+  "ex": 0.6,
+  "files": {
+   "ray_0": "takes2/ray_don_ClassicWizard_0.wav",
+   "ray_1": "takes2/ray_don_ClassicWizard_1.wav"
+  }
+ },
+ "goldie": {
+  "ref": "don_3973",
+  "ex": 0.5,
+  "files": {
+   "goldie_0": "takes2/goldie_don_3973_0.wav"
+  }
+ },
+ "twinkle": {
+  "ref": "don_Hannah",
+  "ex": 0.6,
+  "files": {
+   "twinkle_0": "takes2/twinkle_don_Hannah_0.wav",
+   "twinkle_1": "takes2/twinkle_don_Hannah_1.wav"
+  }
+ },
+ "dreamy": {
+  "ref": "voice-zero_peter_yearsley",
+  "ex": 0.35,
+  "files": {
+   "dreamy_0": "takes2/dreamy_voice-zero_peter_yearsley_0.wav",
+   "dreamy_1": "takes2/dreamy_voice-zero_peter_yearsley_1.wav"
+  }
+ }
+}

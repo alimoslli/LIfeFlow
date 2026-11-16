@@ -1,0 +1,6 @@
+{
+ "ray":     {"ex": 0.6,  "cands": ["don_Jay", "don_ClassicWizard"], "segs": ["I'm Ray. Your classes, your shifts, and that quiz you forgot about.", "Yeah. That one."]},
+ "goldie":  {"ex": 0.5,  "cands": ["alba-mackenna_casual", "don_3973"], "segs": ["I'm Goldie. Before you go out tonight, I check if you can actually afford it."]},
+ "twinkle": {"ex": 0.6,  "cands": ["don_Hannah", "don_Aon"], "segs": ["I'm Twinkle. You said you'd study tonight.", "Did you?"]},
+ "dreamy":  {"ex": 0.35, "cands": ["don_Butter", "voice-zero_peter_yearsley"], "segs": ["I'm Dreamy.", "Go to bed. Tomorrow's handled."]}
+}
