@@ -505,9 +505,17 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       const m = mod(now);
       const edge = night ? now - m + (m < rise ? rise : DAY + rise) : now - m + set;
       const after: string[] = [];
+      // tonight's shift is said with its time, and keeps its place when the words are short of room (owner, 2026-11-16,
+      // item 7 of the Today list: a night shift is under the day's horizon, and the test user's Thursday shift was missing)
+      let shiftTonight = false;
       for (const it of timed.filter((x) => x.start >= edge && x.start < edge + 600).sort((a, b) => a.start - b.start)) {
-        const say = `${it.icon} ${named(it)}`;
-        if (after.length < 2 && !after.includes(say)) after.push(say);
+        const shift = !night && it.origin === "shift";
+        const say = shift ? `${it.icon} ${named(it)} ${fmt(it.start)}` : `${it.icon} ${named(it)}`;
+        if (shift && !shiftTonight) {
+          shiftTonight = true;
+          after.unshift(say);
+          if (after.length > 2) after.pop();
+        } else if (after.length < 2 && !after.includes(say)) after.push(say);
       }
       const asleep = night && (m >= 23 * 60 || m < rise);
       out = [
@@ -516,7 +524,9 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         cur && nx ? `<span class="dc-w-then">Then ${nx.icon} ${named(nx)} · ${fmt(nx.start)}</span>` : "",
         !pills.length && face.stats[0] ? `<span class="dc-w-then">${esc(face.stats[0])}</span>` : "",
         pills.length ? `<span class="dc-w-pills">${pills.map((x) => `<span>${esc(x)}</span>`).join("")}</span>` : "",
-        after.length ? `<span class="dc-w-after">${night ? "After sunrise" : "After sunset"} · ${after.join(" · ")}</span>` : "",
+        after.length
+          ? `<span class="dc-w-after${shiftTonight ? " dc-w-keep" : ""}">${night ? "After sunrise" : shiftTonight ? "Tonight" : "After sunset"} · ${after.join(" · ")}</span>`
+          : "",
       ].join("");
     } else {
       const on = timed.find((it) => it.end != null && it.start <= view && it.end > view);
@@ -979,7 +989,9 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     const room = wide ? hyC - 28 - wordsTop - below : H - footH - wordsTop;
     const fitKey = `${words.dataset.html}|${room}`;
     if (fit !== fitKey) {
-      const parts = [".dc-w-after", ".dc-w-then", ".dc-w-pills"].map((sel) => words.querySelector<HTMLElement>(sel)).filter((e) => e !== null);
+      // what gives way first: what comes after, then "then", then the numbers; tonight's shift gives way last
+      const order = words.querySelector(".dc-w-keep") ? [".dc-w-then", ".dc-w-pills", ".dc-w-after"] : [".dc-w-after", ".dc-w-then", ".dc-w-pills"];
+      const parts = order.map((sel) => words.querySelector<HTMLElement>(sel)).filter((e) => e !== null);
       for (const e of parts) e.style.display = "";
       for (const e of parts) if (words.offsetHeight > room) e.style.display = "none";
       shownH = words.offsetHeight;
