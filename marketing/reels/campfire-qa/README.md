@@ -123,3 +123,8 @@ Dreamy (the moon) sends Tyler a small cloud in the app's own cloud style (the ki
 `cloud_lines`): "Hey Ty, try out this high protein / recipe after work today!", after a little "!" over Dreamy. The owner's
 words; note that today the skyling suggests recipes when asked in chat, it doesn't send recipe ideas on its own yet.
 The cloud has room round its words and sits 70 px from the screen edge (Ali: "the text is almost touching the side"). Built from the v5 parts plus `--range 1384 1546 v6r2b0.mp4` and `--range 1546 1708 v6r2b1.mp4`; `assemble5.py` (`SOURCES`) checks every count. Final: `LifeFlow_Campfire_QA_v6.mp4`, 69.4 s, -14 LUFS.
+
+## v7 (Ali, 2026-11-16: the campfire footage becomes two videos)
+The skylings skit (an ad in the style of the "why are there so many of you?" reels) takes Tyler's "what exactly is the little
+character thing on top?" and Ali's "Oh, the skylings ... each different time of day", so the Q&A drops them: 58.6 s, everything
+else as v6. `timeline7.json`, `assemble7.py` (skips body frames 729..1052), `fire_mix7.py`.
