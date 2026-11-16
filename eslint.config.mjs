@@ -24,6 +24,7 @@ const eslintConfig = defineConfig([
     "docs/design/2026-11-12-sky-relay/**", // the Sky Relay game prototype: a browser page and its build and check scripts, not app code
     "docs/design/2026-11-12-starlight/**", // the Starlight game prototype: a browser page and its build and check scripts, not app code
     "docs/design/2026-11-16-clear-skies/**", // the Clear Skies game prototype: a browser page and its build and check scripts, not app code
+    "docs/design/2026-11-16-skyling-steps/**", // the Skyling Steps game prototype: a browser page and its build and check scripts, not app code
   ]),
 ]);
 

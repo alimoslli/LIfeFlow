@@ -1,0 +1,170 @@
+<title>Skyling Steps</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Geist:wght@400;600;800&display=swap">
+<style>
+/* Layout: the skyling's own sky (a canvas) with the board in the middle; one score on top; frosted glass cards over it. */
+:root {
+  --night: #152643;
+  --glass: rgba(21, 38, 67, 0.7);
+  --edge: rgba(255, 255, 255, 0.16);
+  --text: #f6f8fb;
+  --muted: #b9c7dd;
+  --star: #ffdc6e;
+  --star-deep: #dcae35;
+  --ink: #262320;
+  --good: #86d3a0;
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-body: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--night); color: var(--text); font-family: var(--font-body);
+  overflow: hidden; overscroll-behavior: none; -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+}
+#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:focus-visible, textarea:focus-visible { outline: 3px solid var(--star); outline-offset: 2px; }
+
+#hud {
+  position: fixed; left: 0; right: 0; top: 0; z-index: 2; pointer-events: none;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; grid-template-columns: 44px 1fr 44px; align-items: start;
+}
+.iconbtn {
+  pointer-events: auto; width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--edge);
+  background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: grid; place-items: center; padding: 0;
+}
+.pausebars { width: 12px; height: 14px; border-left: 4px solid var(--text); border-right: 4px solid var(--text); box-sizing: border-box; }
+.score { text-align: center; text-shadow: 0 2px 0 rgba(10, 18, 36, 0.45); }
+#score { font: 800 2.25rem/1 var(--font-body); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; display: inline-flex; align-items: center; gap: 8px; }
+#score canvas { width: 28px; height: 28px; image-rendering: pixelated; }
+#best { display: block; margin-top: 4px; font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 1.2em; }
+#score.bump { animation: bump 0.22s ease-out; }
+@keyframes bump { 45% { transform: scale(1.12); } }
+
+.overlay {
+  position: fixed; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; box-sizing: border-box; overflow-y: auto;
+  padding-block: calc(env(safe-area-inset-top, 0px) + 16px) calc(env(safe-area-inset-bottom, 0px) + 16px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.card {
+  width: 100%; max-width: 400px; box-sizing: border-box; padding: 24px 20px 18px; border-radius: 26px; margin: auto;
+  background: var(--glass); border: 1px solid var(--edge); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 20px 60px rgba(5, 12, 28, 0.35); display: grid; gap: 16px; text-align: center;
+}
+.card .hero { justify-self: center; width: 96px; height: 96px; image-rendering: pixelated; }
+h1 { margin: 0; font: 800 clamp(2.4rem, 12vw, 3.25rem)/0.95 var(--font-display); letter-spacing: -0.02em; }
+h2 { margin: 0; font: 600 1.375rem/1.2 var(--font-display); text-wrap: balance; }
+p { margin: 0; line-height: 1.45; color: var(--muted); }
+.lead { font-size: 1.0625rem; color: var(--text); text-wrap: balance; }
+.btn {
+  min-height: 54px; border-radius: 16px; border: 0; font-weight: 800; font-size: 1.0625rem;
+  background: var(--star); color: var(--ink); box-shadow: 0 4px 0 var(--star-deep); transition: transform 0.08s, box-shadow 0.08s;
+}
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--star-deep); }
+.btn.ghost { background: rgba(255, 255, 255, 0.1); color: var(--text); box-shadow: inset 0 0 0 1px var(--edge); font-weight: 600; }
+.links { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; }
+.link { background: none; border: 0; color: var(--muted); font-size: 0.875rem; text-decoration: underline; text-underline-offset: 3px; min-height: 44px; padding: 0 4px; }
+.total { font: 800 3.25rem/1 var(--font-body); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; display: inline-flex; gap: 10px; align-items: center; justify-content: center; }
+.total canvas { width: 40px; height: 40px; image-rendering: pixelated; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.chip { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 0.8125rem; font-weight: 600; background: rgba(255, 255, 255, 0.12); }
+.chip.gold { background: var(--star); color: var(--ink); }
+.facts { font-size: 0.9375rem; color: var(--muted); line-height: 1.5; }
+.facts b { color: var(--text); font-weight: 600; }
+.note { display: grid; gap: 10px; padding: 12px 14px; border-radius: 16px; background: rgba(255, 220, 110, 0.1); border: 1px solid rgba(255, 220, 110, 0.3); text-align: left; }
+.note .opts { display: flex; gap: 8px; flex-wrap: wrap; }
+.note .opts button { min-height: 40px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--edge); background: rgba(255, 255, 255, 0.08); font-weight: 600; font-size: 0.875rem; }
+.note .opts button[aria-pressed="true"] { background: var(--star); color: var(--ink); border-color: var(--star); }
+textarea, .log {
+  width: 100%; box-sizing: border-box; border-radius: 12px; border: 1px solid var(--edge); background: rgba(5, 12, 28, 0.35);
+  color: var(--text); font: 0.9375rem/1.4 var(--font-body); padding: 10px 12px; resize: vertical; text-align: left;
+}
+.log { font-size: 0.75rem; max-height: 40vh; overflow: auto; white-space: pre-wrap; -webkit-user-select: text; user-select: text; }
+.tiny { font-size: 0.75rem; color: var(--muted); }
+#pad { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); z-index: 2; display: flex; justify-content: center; pointer-events: none; }
+.dpad { display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(2, 56px); gap: 6px; }
+.dpad button { pointer-events: auto; border-radius: 16px; border: 1px solid var(--edge); background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); touch-action: none; display: grid; place-items: center; padding: 0; }
+.dpad button:active { background: rgba(255, 255, 255, 0.22); }
+.dpad .up { grid-column: 2; grid-row: 1; }
+.dpad .left { grid-column: 1; grid-row: 2; }
+.dpad .down { grid-column: 2; grid-row: 2; }
+.dpad .right { grid-column: 3; grid-row: 2; }
+.tri { width: 0; height: 0; border: 11px solid transparent; }
+.up .tri { border-bottom: 14px solid var(--text); border-top-width: 0; }
+.down .tri { border-top: 14px solid var(--text); border-bottom-width: 0; }
+.left .tri { border-right: 14px solid var(--text); border-left-width: 0; }
+.right .tri { border-left: 14px solid var(--text); border-right-width: 0; }
+.cast { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.pick { border: 1px solid var(--edge); background: rgba(255, 255, 255, 0.06); border-radius: 14px; padding: 6px 2px 8px; display: grid; justify-items: center; gap: 2px; min-height: 44px; }
+.pick canvas { width: 100%; max-width: 56px; aspect-ratio: 1; image-rendering: pixelated; }
+.pick b { font-size: 0.75rem; font-weight: 700; }
+.pick small { font-size: 0.625rem; color: var(--muted); line-height: 1.1; }
+.pick[aria-checked="true"] { border-color: var(--star); box-shadow: inset 0 0 0 1px var(--star); background: rgba(255, 220, 110, 0.12); }
+.auto { justify-self: center; border: 1px solid var(--edge); background: rgba(255, 255, 255, 0.06); border-radius: 999px; padding: 6px 14px; font-size: 0.8125rem; font-weight: 600; min-height: 36px; }
+.auto[aria-checked="true"] { border-color: var(--star); background: rgba(255, 220, 110, 0.14); }
+@media (prefers-reduced-motion: reduce) { #score.bump { animation: none; } }
+</style>
+
+<canvas id="c" aria-label="Skyling Steps. Use the arrow keys to walk. Every step leaves a star; fill a row or column with stars to send it to the sky."></canvas>
+
+<div id="hud" hidden>
+  <button class="iconbtn" id="pauseBtn" aria-label="Pause"><span class="pausebars"></span></button>
+  <div class="score"><span id="score"><canvas width="7" height="7"></canvas><span id="scoreN">0</span></span><span id="best"></span></div>
+  <span></span>
+</div>
+
+<div id="pad" hidden>
+  <div class="dpad">
+    <button class="up" data-dir="up" aria-label="Up"><span class="tri"></span></button>
+    <button class="left" data-dir="left" aria-label="Left"><span class="tri"></span></button>
+    <button class="down" data-dir="down" aria-label="Down"><span class="tri"></span></button>
+    <button class="right" data-dir="right" aria-label="Right"><span class="tri"></span></button>
+  </div>
+</div>
+
+<div class="overlay" id="start">
+  <div class="card">
+    <h1>Skyling Steps</h1>
+    <p class="lead">Every step leaves a star. Fill a row or column with stars and it flies up into the sky. Don't get boxed in.</p>
+    <div class="cast" id="cast" role="radiogroup" aria-label="Choose your skyling"></div>
+    <button class="btn" id="playBtn">Play</button>
+    <p id="startBest" class="tiny"></p>
+    <div class="links">
+      <button class="link" id="soundBtn"></button>
+      <button class="link" id="notesBtn">Your runs</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="pause" hidden>
+  <div class="card">
+    <h2>Paused</h2>
+    <button class="btn" id="resumeBtn">Keep playing</button>
+    <button class="btn ghost" id="restartBtn">Start again</button>
+  </div>
+</div>
+
+<div class="overlay" id="end" hidden>
+  <div class="card" id="endCard"></div>
+</div>
+
+<div class="overlay" id="notes" hidden>
+  <div class="card">
+    <h2>Your runs</h2>
+    <p>Kept only in this browser, for tuning. Copy them into the chat if you want me to look.</p>
+    <div class="log" id="logBox"></div>
+    <button class="btn" id="copyBtn">Copy</button>
+    <button class="btn ghost" id="closeNotes">Close</button>
+    <p class="tiny" id="copyMsg" aria-live="polite"></p>
+  </div>
+</div>
+
+<script>/*ENGINE*/</script>
+<script>/*GAME*/</script>
