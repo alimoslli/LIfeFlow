@@ -177,7 +177,9 @@ export function pileOf(g: ClockItem[]): string | null {
             : all((x) => !!x.done)
               ? "done"
               : null;
-  return noun ? `${g.length} ${noun}` : null;
+  // what's done sits at its due time, ticked, but a stop counts only what's still due (COO, 2026-11-16)
+  const count = noun === "done" ? g.length : g.filter((x) => !x.done).length;
+  return noun && count >= 2 ? `${count} ${noun}` : null;
 }
 
 /** A pile's words on the sky: "9 assignments due", "2 bills due"; exams happen and done is done, so never "due". */

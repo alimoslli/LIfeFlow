@@ -1042,7 +1042,9 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       const s2 = detail.querySelector<HTMLElement>(".dc-d-s");
       if (s2) s2.textContent = "";
       const w2 = detail.querySelector<HTMLElement>(".dc-d-w");
-      if (w2 && place) w2.textContent = `${when} · ${place}`;
+      // (the waitlist's example sky keeps its "Example" mark: it's what tells a stop there is made up)
+      const tail = opts.example ? sub : place;
+      if (w2 && tail) w2.textContent = `${when} · ${tail}`;
       room = placeCard(detail.offsetHeight);
     }
     detail.style.maxHeight = detail.offsetHeight > room ? `${Math.floor(room)}px` : "";
