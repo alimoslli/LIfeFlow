@@ -128,3 +128,23 @@ The cloud has room round its words and sits 70 px from the screen edge (Ali: "th
 The skylings skit (an ad in the style of the "why are there so many of you?" reels) takes Tyler's "what exactly is the little
 character thing on top?" and Ali's "Oh, the skylings ... each different time of day", so the Q&A drops them: 58.6 s, everything
 else as v6. `timeline7.json`, `assemble7.py` (skips body frames 729..1052), `fire_mix7.py`.
+
+## v8 (Ali, 2026-11-16: the animated intro "is a bit cheap and not good with the vid", "the Q&A text isn't as good as the rest", "users aren't sure if this is a LifeFlow video")
+The pixel-scene intro (`fire_intro.py`) is replaced by a show open made on the real footage, in the launch look. Same length
+(160 frames, 3.47 to 8.8 s), so the cut, the score and every other cue are v7's. 58.6 s.
+- **The picture:** the wide shot of the two of them at the fire just before Ali's first answer, in slow motion (every
+  120 fps frame, with the body's own 3-frame blend), as if time holds between the question and the answer.
+- **LifeFlow first:** the lockup (app icon and wordmark, from the kit) comes in first, at the top.
+- **The title:** "Campfire Q&A" in the launch type (Fraunces Bold, soft white, "Q&A" in gold, a navy edge), not pixel letters.
+- **The sky:** the night sky over the fence runs one whole day in the app's own sky colours while the real string lights keep
+  shining on top of it, and daylight reaches the yard a little. Each skyling lands on the title's letters in its own hour
+  (Dawn, Ray, Goldie, Twinkle; Dreamy hovers as the moon). Then night and the app's stars.
+- **The way out:** the camera pushes in to Ali while time comes back to normal; the open's last frame is one step before the
+  body's first frame (same clip, same crop), so there is no flash and no visible cut. The title is fixed in the scene, so it
+  leaves the frame with the camera move.
+- **Sound:** the app's own sounds (the sky turning, a pop and a rising chime as each one lands, the night stars), air on the
+  push-in and a soft landing on Ali's first frame.
+
+Build: `open2_plate.py` (stage 1: the slow-motion plate and the camera, `open2/plate.mp4` + crops), `open2_compose.py`
+(stage 2: sky, lockup, title, skylings, sound; writes `intro_silent.mp4` and `intro.wav`; `"Title |Gold part"` as an argument
+makes the open for another talk video shot the same way), `fire_mix8.py`, `assemble8.py`.
