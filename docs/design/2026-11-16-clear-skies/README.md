@@ -48,3 +48,25 @@ boxed in by the clouds.
 `?seed=N`, `?debug=1`.
 
 `node docs/design/2026-11-16-clear-skies/build.mjs && BOT=human node docs/design/2026-11-16-clear-skies/check.mjs 6 60`
+
+## Round 2 (owner, 2026-11-16)
+
+The owner: "It's pretty nice. I like that you're thinking outside of that ... but it's impossible to win. You always get
+boxed in. Add more to it ... I want the game to be played with the arrows. I'm addicted. Faster-paced, maybe."
+- Eight nights you can win, each a goal and one new thing, with a move limit ("moves left"; run out and morning comes)
+  and 1 to 3 moons by moves (par): 1 First light (clear 3 lines), 2 Shooting star (5 lines), 3 Golden stars (260
+  points), 4 Winds (6 lines), 5 The Kite (light its 9 stars, 42 moves), 6 Storm front (blow away 10 clouds), 7 Double night (a
+  puzzle start: a row and a column one star short meet at one star; up, then right), 8 The long night (12 lines).
+  Endless opens after Night 3. Progress and moons stay in this browser.
+- Shooting stars, the way out of a box: Space, then an arrow, and Twinkle blasts straight to the edge through the
+  clouds, blowing them away. Earned from Doubles, golden stars and every 6 lines or so (up to 3). Boxed in only ends
+  the night with none left.
+- Golden stars (+5, and they charge a shooting star). Winds: Twinkle turns where a wind blows, so one key can light an
+  L or a zigzag; clouds can cover a wind, and it blows again once the cloud goes. The kite: outlined stars, never
+  covered by clouds.
+- Faster: slides at 30 cells a second, clears in 0.3 s, up to two arrow presses queue up. Arrow keys or WASD on a
+  laptop; on a phone, on-screen arrows and a shooting-star button, and swipes.
+- Bot checks (careful bot, 3 tries a night): nights 1 to 3 and 6 won every time, 4, 5, 7 and 8 most times; a
+  first-timer-like bot wins 1, 2 and 6 easily and finds 4, 5, 7 and 8 hard. Two loops found and closed (winds and the
+  kite were never covered, so a run could go on forever; now clouds cover winds and every night has a move limit).
+  `node docs/design/2026-11-16-clear-skies/check.mjs 3 1` (tries per night, Endless runs).

@@ -88,23 +88,61 @@ textarea, .log {
 }
 .log { font-size: 0.75rem; max-height: 40vh; overflow: auto; white-space: pre-wrap; -webkit-user-select: text; user-select: text; }
 .tiny { font-size: 0.75rem; color: var(--muted); }
+#goal { display: block; margin-top: 6px; font-size: 0.875rem; font-weight: 600; color: var(--text); text-shadow: 0 1px 0 rgba(10, 18, 36, 0.5); }
+#goal small { color: var(--muted); font-weight: 400; }
+.nights { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.night { min-height: 66px; border-radius: 14px; border: 1px solid var(--edge); background: rgba(255, 255, 255, 0.07); display: grid; place-items: center; align-content: center; gap: 2px; padding: 6px 4px; font-weight: 800; font-size: 1.0625rem; }
+.night small { font-size: 0.6875rem; color: var(--muted); font-weight: 600; line-height: 1.2; }
+.night .moons { color: var(--star); font-size: 0.75rem; letter-spacing: 2px; min-height: 1em; }
+.night[disabled] { opacity: 0.38; cursor: default; }
+.night.next { border-color: var(--star); box-shadow: inset 0 0 0 1px var(--star); }
+.keys { display: inline-flex; gap: 4px; vertical-align: middle; }
+.keys kbd { font: 700 0.75rem var(--font-body); border: 1px solid var(--edge); border-bottom-width: 3px; border-radius: 6px; padding: 1px 6px; background: rgba(255, 255, 255, 0.08); color: var(--text); }
+#pad { position: fixed; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); z-index: 2; display: flex; justify-content: center; align-items: center; gap: 22px; pointer-events: none; }
+.dpad { display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(2, 54px); gap: 6px; }
+.dpad button, .starbtn { pointer-events: auto; border-radius: 16px; border: 1px solid var(--edge); background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); touch-action: none; display: grid; place-items: center; padding: 0; }
+.dpad .up { grid-column: 2; grid-row: 1; }
+.dpad .left { grid-column: 1; grid-row: 2; }
+.dpad .down { grid-column: 2; grid-row: 2; }
+.dpad .right { grid-column: 3; grid-row: 2; }
+.tri { width: 0; height: 0; border: 11px solid transparent; }
+.up .tri { border-bottom: 14px solid var(--text); border-top-width: 0; }
+.down .tri { border-top: 14px solid var(--text); border-bottom-width: 0; }
+.left .tri { border-right: 14px solid var(--text); border-left-width: 0; }
+.right .tri { border-left: 14px solid var(--text); border-right-width: 0; }
+.dpad button:active, .starbtn:active { background: rgba(255, 255, 255, 0.22); }
+.starbtn { width: 74px; height: 74px; border-radius: 50%; gap: 0; font-size: 0.75rem; font-weight: 800; }
+.starbtn canvas { width: 28px; height: 28px; image-rendering: pixelated; }
+.starbtn.armed { background: var(--star); color: var(--ink); }
+.starbtn[disabled] { opacity: 0.4; }
 @media (prefers-reduced-motion: reduce) { #score.bump { animation: none; } }
 </style>
 
-<canvas id="c" aria-label="Clear Skies. Use the arrow keys or swipe to slide Twinkle. Light whole rows and columns to clear them."></canvas>
+<canvas id="c" aria-label="Clear Skies. Use the arrow keys to slide Twinkle; space bar for a shooting star. Light whole rows and columns to clear them."></canvas>
 
 <div id="hud" hidden>
   <button class="iconbtn" id="pauseBtn" aria-label="Pause"><span class="pausebars"></span></button>
-  <div class="score"><span id="score"><canvas width="7" height="7"></canvas><span id="scoreN">0</span></span><span id="best"></span></div>
+  <div class="score"><span id="score"><canvas width="7" height="7"></canvas><span id="scoreN">0</span></span><span id="goal"></span><span id="best"></span></div>
   <span></span>
+</div>
+
+<div id="pad" hidden>
+  <div class="dpad">
+    <button class="up" data-dir="up" aria-label="Up"><span class="tri"></span></button>
+    <button class="left" data-dir="left" aria-label="Left"><span class="tri"></span></button>
+    <button class="down" data-dir="down" aria-label="Down"><span class="tri"></span></button>
+    <button class="right" data-dir="right" aria-label="Right"><span class="tri"></span></button>
+  </div>
+  <button class="starbtn" id="starBtn" aria-label="Shooting star"><canvas width="7" height="7"></canvas><span id="starN">0</span></button>
 </div>
 
 <div class="overlay" id="start">
   <div class="card">
     <canvas class="hero" id="hero" width="24" height="24"></canvas>
     <h1>Clear Skies</h1>
-    <p class="lead">Slide Twinkle across the night to light the stars. Fill a row or column to clear it, and don't get boxed in by the clouds.</p>
+    <p class="lead">Slide Twinkle across the night with the arrow keys. Light whole rows and columns to clear them, and win each night before the clouds box you in.</p>
     <button class="btn" id="playBtn">Play</button>
+    <div class="nights" id="nights"></div>
     <p id="startBest" class="tiny"></p>
     <div class="links">
       <button class="link" id="soundBtn"></button>
@@ -118,6 +156,7 @@ textarea, .log {
     <h2>Paused</h2>
     <button class="btn" id="resumeBtn">Keep playing</button>
     <button class="btn ghost" id="restartBtn">Start again</button>
+    <button class="btn ghost" id="homeBtn">Nights</button>
   </div>
 </div>
 
