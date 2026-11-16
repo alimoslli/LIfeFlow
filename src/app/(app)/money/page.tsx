@@ -4,7 +4,7 @@ import Link from "next/link";
 import { isChatPage } from "@/lib/app-routes";
 import { CashOutlook } from "@/components/finance/cash-outlook";
 import { CountUp } from "@/components/motion/count-up";
-import { addDaysStr, formatDateStr, formatIn, monthStart, todayIn } from "@/lib/dates";
+import { addDaysStr, daysBetween, formatDateStr, formatIn, monthStart, todayIn } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
@@ -109,7 +109,10 @@ export default async function MoneyPage() {
 
   const dollars = (cents: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(cents / 100);
   const nextBill = [...d.forecast.bills].sort((a, b) => a.date.localeCompare(b.date))[0];
-  const billDay = (date: string) => (date === d.today ? "today" : date === addDaysStr(d.today, 1) ? "tomorrow" : formatDateStr(date, "EEEE"));
+  // a weekday only within the coming week: "Hulu Thursday" on a Wednesday read as tomorrow for a bill due the Thursday after
+  // (all three test students, 2026-11-16); further out it's the date
+  const billDay = (date: string) =>
+    date === d.today ? "today" : date === addDaysStr(d.today, 1) ? "tomorrow" : formatDateStr(date, daysBetween(d.today, date) < 7 ? "EEEE" : "MMM d");
   const places: { href: string; icon: "bill" | "calendar" | "card" | "money"; label: string; detail: string }[] = [
     { href: "/finances/transactions", icon: "bill", label: "Activity", detail: `${dollars(o.month.netSpendingCents)} spent this month` },
     {

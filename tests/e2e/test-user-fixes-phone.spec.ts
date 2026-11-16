@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
-import { localInstant, pool, signUp } from "./helpers";
+import { localInstant, pool, queryAsUser, signUp } from "./helpers";
 
 // What the test user (.claude/agents/test-user.md) ran into on a phone browser's short window, 2026-11-16.
 const E2E_DB = process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e";
@@ -75,4 +75,21 @@ test("before sunrise the night's star line counts the day before as yesterday", 
   await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
   await expect(line).toHaveText(/^\d+ stars? yesterday$/);
   await context.close();
+});
+
+test("Money's bills line names a weekday only within the coming week, the date after that", async ({ page }) => {
+  const email = await signUp(page, "Nadia Hulu");
+  const me = `current_setting('app.user_id')::uuid`;
+  const today = `(now() at time zone (select timezone from users where id = ${me}))::date`;
+  await queryAsUser(
+    email,
+    `insert into financial_accounts (user_id, name, type, subtype, current_balance_cents) values (${me}, 'Checking', 'depository', 'checking', 50000)`,
+  );
+  await queryAsUser(
+    email,
+    `insert into recurring_items (user_id, name, amount_cents, frequency, kind, next_due_date) values (${me}, 'Hulu', -999, 'monthly', 'subscription', ${today} + 8)`,
+  );
+  const [{ due }] = await queryAsUser<{ due: string }>(email, `select to_char(${today} + 8, 'Mon FMDD') as due`);
+  await page.goto("/money");
+  await expect(page.getByRole("link", { name: /Bills and subscriptions/ })).toContainText(`Hulu ${due}`);
 });
