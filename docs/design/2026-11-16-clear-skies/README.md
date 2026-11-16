@@ -70,3 +70,17 @@ boxed in. Add more to it ... I want the game to be played with the arrows. I'm a
   first-timer-like bot wins 1, 2 and 6 easily and finds 4, 5, 7 and 8 hard. Two loops found and closed (winds and the
   kite were never covered, so a run could go on forever; now clouds cover winds and every night has a move limit).
   `node docs/design/2026-11-16-clear-skies/check.mjs 3 1` (tries per night, Endless runs).
+
+## Round 3: back to simple (owner, 2026-11-16)
+
+The owner on round 2: "too long, boring, got too complicated and far from the vision of a simple addicting game."
+Round 2 answered "add more to it" with eight nights, goals, move limits, moons, shooting stars, winds, golden stars and
+a kite, which buried the simple loop he was hooked on in round 1. Round 1's code is back as the base, with only:
+- One rule that fixes "always boxed in": a cloud only drifts in when a move doesn't clear a line (where the dashed
+  outline shows). Keep clearing and the sky stays clear; how long you last is down to your play. From move 40 a miss
+  sometimes brings two.
+- Faster: slides at 30 cells a second, clears in 0.3 s, two arrow presses queue up.
+- Arrows: arrow keys or WASD; on-screen arrows on a phone (and swipes).
+- Checks: first-timer-like runs 54 to 102 moves (7 to 38 lines), careful 89 to 106 moves with a clear about every
+  third move; no page errors, 60 fps.
+Round 2 stays in git (commit `ae91bf8`) if any of its pieces are wanted later, one at a time.
