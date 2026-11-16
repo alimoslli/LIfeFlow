@@ -810,8 +810,10 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     const starsToday =
       night && follow && P < 1 ? timed.filter((it) => dayOf(it.start) === dayOf(now - (mod(now) < rise ? DAY : 0)) && isFinished(it, now)) : [];
     const keepClear: { x: number; y: number; w: number; h: number }[] = [...tiles];
-    // the "N stars today" line: 12.5px words (day-clock.css .dc-stars-t), centred, its baseline a fifth of the way up
-    const starsLine = `${starsToday.length} star${starsToday.length === 1 ? "" : "s"} today`;
+    // the "N stars today" line: 12.5px words (day-clock.css .dc-stars-t), centred, its baseline a fifth of the way up.
+    // From midnight until sunrise the night still shows the day before's stars, so the line says so (the test user saw
+    // "5 stars today" at 6:40 AM, before anything had happened that day).
+    const starsLine = `${starsToday.length} star${starsToday.length === 1 ? "" : "s"} ${mod(now) < rise ? "yesterday" : "today"}`;
     const starsBox = { x: cx, y: hyC - R * HF * 0.2 - 12.5 * 0.35, w: starsLine.length * 12.5 * 0.58 + 6, h: 12.5 * 1.5 };
     if (starsToday.length) keepClear.push(starsBox);
     const mark = (t: number, s: string) => {
