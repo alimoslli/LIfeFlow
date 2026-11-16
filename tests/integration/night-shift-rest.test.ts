@@ -32,6 +32,24 @@ describe("sleep after an overnight shift", () => {
     expect(slots[0].startsAt.getTime()).toBe(localToInstant("2026-11-20", "13:00", TZ).getTime());
   });
 
+  it("an early opener (5 AM to 9:30 AM) is awake after it: the afternoon stays free", async () => {
+    const u = await makeUser();
+    const job = await u.run((s) => createEmployer(s, { name: "Corner Coffee", hourlyRateCents: 1500 }));
+    await u.run((s) => createShift(s, TZ, { employerId: job.id, date: "2026-11-20", startTime: "05:00", endTime: "09:30" }));
+    const day = await u.run((s) => getAgenda(s, TZ, "2026-11-20", "2026-11-20"));
+    const slots = freeSlots(day, "2026-11-20", TZ, "09:00", "21:00", 120);
+    expect(slots[0].startsAt.getTime()).toBe(localToInstant("2026-11-20", "09:30", TZ).getTime());
+  });
+
+  it("a shift that starts after midnight (2 AM to 8 AM) is a night shift", async () => {
+    const u = await makeUser();
+    const job = await u.run((s) => createEmployer(s, { name: "Fulfillment Center", hourlyRateCents: 1900 }));
+    await u.run((s) => createShift(s, TZ, { employerId: job.id, date: "2026-11-20", startTime: "02:00", endTime: "08:00" }));
+    const day = await u.run((s) => getAgenda(s, TZ, "2026-11-20", "2026-11-20"));
+    const slots = freeSlots(day, "2026-11-20", TZ, "09:00", "21:00", 120);
+    expect(slots[0].startsAt.getTime()).toBe(localToInstant("2026-11-20", "16:00", TZ).getTime());
+  });
+
   it("the day before an overnight shift is unchanged: the evening up to the shift is free", async () => {
     const u = await makeUser();
     const job = await u.run((s) => createEmployer(s, { name: "Fulfillment Center", hourlyRateCents: 1900 }));

@@ -419,7 +419,7 @@ export function findConflicts(items: AgendaItem[]) {
 
 /**
  * Sleep after an overnight shift is not free time (COO, 2026-11-16, from the test user: "Block Fri 9 AM" was offered to
- * a student asleep after a shift ending at 6:30 AM). A shift that crosses midnight, or ends before 10 AM, is followed by
+ * a student asleep after a shift ending at 6:30 AM). A shift that crosses midnight, or starts between 10 PM and 4 AM, is followed by
  * `SLEEP_AFTER_NIGHT_SHIFT_HOURS` of rest. A fixed gap until a learned sleep model exists (none is stored today).
  */
 export const SLEEP_AFTER_NIGHT_SHIFT_HOURS = 8;
@@ -427,7 +427,9 @@ function restAfterNightShifts<T extends Pick<AgendaItem, "blocksTime" | "startsA
   const rest: Pick<AgendaItem, "blocksTime" | "startsAt" | "endsAt">[] = [];
   for (const i of items) {
     if (i.origin !== "shift" || !i.endsAt) continue;
-    const overnight = localDateOf(i.startsAt, tz) !== localDateOf(i.endsAt, tz) || localTimeOf(i.endsAt, tz) < "10:00";
+    // a night shift crosses local midnight or starts in the night (10 PM to 4 AM); an opener from 5 AM is awake after it
+    const starts = localTimeOf(i.startsAt, tz);
+    const overnight = localDateOf(i.startsAt, tz) !== localDateOf(i.endsAt, tz) || starts >= "22:00" || starts < "04:00";
     if (overnight) rest.push({ blocksTime: true, startsAt: i.endsAt, endsAt: new Date(i.endsAt.getTime() + SLEEP_AFTER_NIGHT_SHIFT_HOURS * 3_600_000) });
   }
   return rest;
