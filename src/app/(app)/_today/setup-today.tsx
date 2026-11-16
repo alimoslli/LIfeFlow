@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { DayClock } from "@/components/day-clock/day-clock";
+import { notifyAskDue, notifyAskNo, notifyAskShown } from "@/components/jarvis/notify-ask";
 import { LiveVoice, VoiceButton } from "@/components/jarvis/voice-call";
 import { AllFive } from "@/components/skylings/all-five";
 import { cheerSkylings } from "@/components/skylings/night";
@@ -14,6 +15,7 @@ import { celebrate } from "@/components/motion/burst";
 import { FormError, Input } from "@/components/ui/field";
 import { BirthdayField } from "@/components/ui/birthday-field";
 import { Sheet } from "@/components/ui/sheet";
+import { toast } from "@/components/ui/toaster";
 import { useShell } from "@/components/shell/app-shell";
 import { useLink } from "@/components/finance/plaid-link";
 import { ASSISTANT_STYLES, nameAtStart, type AssistantStyle } from "@/lib/assistant";
@@ -22,6 +24,7 @@ import { COMPANIONS, companionOf, ownsNight, SKY_CHOICE, SKY_CHOICE_LABEL, type 
 import type { ClockData } from "@/lib/day-clock";
 import type { LifeStage } from "@/lib/life";
 import type { TodayMode } from "@/lib/theme";
+import { turnOnPush } from "@/lib/push-client";
 import { cn } from "@/lib/utils";
 import { setAiConsentAction } from "@/app/(app)/settings/actions";
 import { connectCanvasFeedAction } from "@/app/(app)/settings/integrations/actions";
@@ -38,11 +41,12 @@ import "./setup-today.css";
  * The skyling's note sits where its note always sits and walks them through it, and each thing to fill in opens in the
  * app's own sheet:
  *   meet (pick and name a skyling) > about (name, birthday, what fills the week) > connect (one real connection, required)
- *   > landed (their week is on the wheel) > learn (turn, open, fold it) > finish.
+ *   > landed (their week is on the wheel) > learn (turn, open, fold it) > notify (one calm ask for notifications, only
+ *   on a device where they can come and are off; "Not now" is remembered there) > finish.
  * Every server rule of the old welcome is kept (the birthday, under 13, the saved progress, the fixed return from Google and
  * Microsoft); the one new rule is that setup can't finish without a connection (setup-first.ts). Nothing is invented.
  */
-type Step = "meet" | "about" | "connect" | "landed" | "learn";
+type Step = "meet" | "about" | "connect" | "landed" | "learn" | "notify";
 export type SetupSaved = {
   companion: CompanionChoice | null;
   name: string;
@@ -121,6 +125,8 @@ export function SetupToday({
   const typed = birthDate ? birthDateProblem(birthDate, clock.today) : null;
   const birthProblem = typed === AGE_LINE ? null : typed;
   const [busy, setBusy] = useState(false);
+  // the last beat: where notifications stand on this device when it's due ("needs-install": an iPhone outside the installed app)
+  const [ask, setAsk] = useState<"off" | "needs-install">("off");
 
   const [aiOn, setAiOn] = useState(aiOk);
 
@@ -175,6 +181,36 @@ export function SetupToday({
     }
     setError(r?.error ?? "Couldn't finish. Try again.");
   };
+  // "Go to my sky": the one calm ask for notifications first (owner, 2026-11-16: the old welcome ended on it), only where
+  // they can come and are off, and at most twice on a device; everywhere else straight to the sky
+  const leave = async () => {
+    setBusy(true);
+    setError(null);
+    const due = await notifyAskDue();
+    if (!due) return finish();
+    notifyAskShown();
+    setAsk(due);
+    setBusy(false);
+    setStep("notify");
+  };
+  const turnOn = async () => {
+    setBusy(true);
+    setError(null);
+    const r = await turnOnPush();
+    if (r.ok) toast("Notifications are on for this device.");
+    else if (r.state === "denied") toast("They're blocked for LifeFlow in this browser's settings.", { tone: "danger" });
+    else if (r.error) {
+      // it couldn't be turned on just now: say so and stay, so they can try again or go on without
+      setBusy(false);
+      return setError(r.error);
+    }
+    // on, blocked, or the browser's own question closed without an answer: setup never waits on it
+    await finish();
+  };
+  const notNow = () => {
+    notifyAskNo();
+    void finish();
+  };
 
   const first = cleanYou.split(" ")[0] || "there";
   const note = (() => {
@@ -210,6 +246,20 @@ export function SetupToday({
         };
       case "learn":
         return null;
+      case "notify":
+        return ask === "needs-install"
+          ? {
+              text: `One more thing, ${first}. I can send you a line when something needs you. On an iPhone that needs LifeFlow on your Home Screen: tap Share, then Add to Home Screen, and open it from there.`,
+              button: "Go to my sky",
+              go: finish,
+            }
+          : {
+              text: `One more thing, ${first}. Want my check-ins as notifications? One line when something needs you, like a bill your checking can't cover or a promise to check on. Quiet at night.`,
+              button: "Turn on notifications",
+              go: turnOn,
+              later: notNow,
+              laterLabel: "Not now",
+            };
     }
   })();
 
@@ -217,7 +267,7 @@ export function SetupToday({
     reply && step !== "landed" ? (
       <TodayReplyCard name={who} refresh={() => router.refresh()} fill />
     ) : step === "learn" ? (
-      <Learn who={who} glyph={drawn} onFinish={finish} busy={busy} error={error} />
+      <Learn who={who} glyph={drawn} onFinish={leave} busy={busy} error={error} />
     ) : (
       note && (
         <SkylingNote
@@ -228,12 +278,17 @@ export function SetupToday({
           error={step === "meet" || step === "about" ? null : error}
         >
           <div className="flex flex-wrap items-center gap-x-1 gap-y-2">
-            <SkyButton onClick={note.go} skyling={drawn ?? "dawn"} size="sm">
+            <SkyButton onClick={note.go} loading={step === "notify" && busy} skyling={drawn ?? "dawn"} size="sm">
               {note.button}
             </SkyButton>
-            {"later" in note && (
-              <button type="button" onClick={note.later} className="min-h-11 rounded-full px-3 text-sm font-medium text-muted hover:text-text">
-                Pick later
+            {"later" in note && note.later && (
+              <button
+                type="button"
+                onClick={note.later}
+                disabled={step === "notify" && busy}
+                className="min-h-11 rounded-full px-3 text-sm font-medium text-muted hover:text-text"
+              >
+                {"laterLabel" in note ? note.laterLabel : "Pick later"}
               </button>
             )}
           </div>
@@ -247,7 +302,7 @@ export function SetupToday({
       <TodayOwner userId={userId} />
       <section aria-label="Your day" className="-mx-5 sm:-mx-8 md:mx-0">
         {/* connecting and landing: opened into the week, so what came in lands on its day; learning: folded back to turn and open */}
-        <DayClock data={clock} mode={mode} companion={companion} open={step === "landed" ? true : step === "learn" ? false : undefined}>
+        <DayClock data={clock} mode={mode} companion={companion} open={step === "landed" ? true : step === "learn" || step === "notify" ? false : undefined}>
           <div className="max-md:hidden" data-testid="setup-note-wide">
             {cloud}
           </div>

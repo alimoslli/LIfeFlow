@@ -397,3 +397,106 @@ test("on a laptop the note waits under the open week: the next step never disapp
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Maya");
   await ctx.close();
 });
+
+/** An account whose first two steps and one real class are already there: setup opens with the week landed. */
+async function landedAccount(page: Page) {
+  const email = await signUp(page, "Maya Chen", { onboarding: "stay", ai: false });
+  await pool.query(`update users set preferences = preferences || '{"birthDate":"2005-04-12","lifeStage":"student"}'::jsonb where email = $1`, [email]);
+  await queryAsUser(email, "insert into courses (user_id, name) select id, 'BIO 110' from users where email = $1", [email]);
+  await page.goto("/");
+  await expect(page.locator(".dc-today[data-setup=landed]")).toBeVisible();
+  return email;
+}
+const SHORT_PHONE = { viewport: { width: 390, height: 664 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true };
+
+// The old welcome ended on one calm ask for notifications; setup on Today didn't ask at all (owner, 2026-11-16: add it).
+test("setup's last beat asks for notifications once; Not now is remembered on the device", async ({ browser }) => {
+  const ctx = await browser.newContext(SHORT_PHONE);
+  const page = await ctx.newPage();
+  // a browser that hasn't said yes or no yet (headless Chromium always reports "denied")
+  await page.addInitScript(() => Object.defineProperty(Notification, "permission", { get: () => "default" }));
+  const email = await landedAccount(page);
+  const n = note(page);
+  await n.getByRole("button", { name: "Show me how to read it" }).click();
+  await n.getByRole("button", { name: "Go to my sky" }).click();
+  await expect(page.locator(".dc-today[data-setup=notify]")).toBeVisible();
+  await expect(n.getByTestId("setup-words")).toContainText("Want my check-ins as notifications?");
+  await expect(n.getByTestId("setup-words")).toContainText("Quiet at night.");
+  await expect(n.getByTestId("setup-step")).toHaveCount(0);
+  await reachable(page, n.getByRole("button", { name: "Turn on notifications" }));
+  const later = n.getByRole("button", { name: "Not now" });
+  await reachable(page, later);
+  expect(Math.round((await later.boundingBox())!.height)).toBeGreaterThanOrEqual(44);
+  await shot(page, "phone-notify-ask");
+  await later.click();
+  await expect(page.locator(".dc-today[data-setup]")).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Maya");
+  expect((await queryAsUser<{ o: string }>(email, "select preferences->>'onboarding' as o from users where email = $1", [email]))[0].o).toBe("done");
+
+  // setup again on the same device: it goes straight to the sky, never asked twice after "Not now"
+  await pool.query(`update users set preferences = preferences || '{"onboarding":"pending"}'::jsonb where email = $1`, [email]);
+  await page.goto("/");
+  await expect(page.locator(".dc-today[data-setup=landed]")).toBeVisible();
+  await n.getByRole("button", { name: "Show me how to read it" }).click();
+  await n.getByRole("button", { name: "Go to my sky" }).click();
+  await expect(page.locator(".dc-today[data-setup]")).toHaveCount(0);
+  await ctx.close();
+});
+
+test("notifications the browser blocks never hold setup: it says so and lands on the sky (a laptop)", async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  // not answered yet when setup looks; the browser's own question then comes back "denied" (as headless Chromium answers)
+  await page.addInitScript(() => Object.defineProperty(Notification, "permission", { get: () => "default" }));
+  await landedAccount(page);
+  // the week has opened; "Show me how to read it" folds it back, and the note is beside the wheel again
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "timeline");
+  await page.getByTestId("setup-note-open").getByRole("button", { name: "Show me how to read it" }).click();
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "clock");
+  const n = page.getByTestId("setup-note-wide");
+  await n.getByRole("button", { name: "Go to my sky" }).click();
+  await expect(page.locator(".dc-today[data-setup=notify]")).toBeVisible();
+  await reachable(page, n.getByRole("button", { name: "Turn on notifications" }));
+  await reachable(page, n.getByRole("button", { name: "Not now" }));
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/laptop-notify-ask.png` });
+  await n.getByRole("button", { name: "Turn on notifications" }).click();
+  await expect(page.getByText("They're blocked for LifeFlow in this browser's settings.")).toBeVisible();
+  await expect(page.locator(".dc-today[data-setup]")).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Maya");
+  await ctx.close();
+});
+
+test("an iPhone outside the installed app is told the one step, and a device that can't get them isn't asked", async ({ browser }) => {
+  // Safari on an iPhone has no push until LifeFlow is on the Home Screen
+  const ctx = await browser.newContext({
+    ...SHORT_PHONE,
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 Version/17.5 Mobile/15E148 Safari/604.1",
+  });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => Reflect.deleteProperty(window, "PushManager"));
+  await landedAccount(page);
+  const n = note(page);
+  await n.getByRole("button", { name: "Show me how to read it" }).click();
+  await n.getByRole("button", { name: "Go to my sky" }).click();
+  await expect(page.locator(".dc-today[data-setup=notify]")).toBeVisible();
+  await expect(n.getByTestId("setup-words")).toContainText("tap Share, then Add to Home Screen");
+  await expect(n.getByRole("button", { name: "Turn on notifications" })).toHaveCount(0);
+  const go = n.getByRole("button", { name: "Go to my sky" });
+  await reachable(page, go);
+  await go.click();
+  await expect(page.locator(".dc-today[data-setup]")).toHaveCount(0);
+  await ctx.close();
+
+  // any other device without push (an Android browser here) isn't asked: straight to its sky
+  const plain = await browser.newContext({
+    ...SHORT_PHONE,
+    userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36",
+  });
+  const p2 = await plain.newPage();
+  await p2.addInitScript(() => Reflect.deleteProperty(window, "PushManager"));
+  await landedAccount(p2);
+  await note(p2).getByRole("button", { name: "Show me how to read it" }).click();
+  await note(p2).getByRole("button", { name: "Go to my sky" }).click();
+  await expect(p2.locator(".dc-today[data-setup]")).toHaveCount(0);
+  await plain.close();
+});
