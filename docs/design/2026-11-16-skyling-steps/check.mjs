@@ -1,5 +1,5 @@
 // Plays Skyling Steps with the bot in a headless browser at phone size: fails on page errors, prints each run (steps,
-// lines, combos, clouds). BOT=human slips now and then; the default plans a few steps ahead.
+// lines, combos, streaks, wishes, rewinds, clouds). BOT=human slips now and then; the default plans a few steps ahead.
 // Usage: node docs/design/2026-11-16-skyling-steps/check.mjs [runs] [speed]
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
@@ -27,8 +27,12 @@ for (let r = 0; r < n; r++) {
       lines: rec.lines,
       doubles: rec.doubles,
       triples: rec.triples,
+      streak: rec.bestStreak,
+      wishes: rec.wishes,
+      rewinds: rec.rewinds,
       blown: rec.blown,
       clouds: rec.clouds,
+      seconds: rec.seconds,
       fps: rec.fps,
     }),
   );

@@ -109,6 +109,21 @@ textarea, .log {
 .pick[aria-checked="true"] { border-color: var(--star); box-shadow: inset 0 0 0 1px var(--star); background: rgba(255, 220, 110, 0.12); }
 .auto { justify-self: center; border: 1px solid var(--edge); background: rgba(255, 255, 255, 0.06); border-radius: 999px; padding: 6px 14px; font-size: 0.8125rem; font-weight: 600; min-height: 36px; }
 .auto[aria-checked="true"] { border-color: var(--star); background: rgba(255, 220, 110, 0.14); }
+.home { justify-self: center; width: 300px; max-width: 100%; aspect-ratio: 200 / 80; image-rendering: pixelated; border-radius: 14px; }
+.unlock { display: grid; gap: 6px; font-size: 0.8125rem; color: var(--muted); }
+.unlock .bar { height: 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.unlock .bar i { display: block; height: 100%; border-radius: 6px; background: var(--star); }
+.rules { margin: 0; padding: 0 0 0 1.4em; text-align: left; display: grid; gap: 4px; color: var(--muted); font-size: 0.9375rem; line-height: 1.4; }
+.rules b { color: var(--text); font-weight: 600; }
+.modes { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+#rewind { align-items: flex-end; }
+#rewind .card { gap: 10px; padding: 16px; margin: auto auto 0; }
+@media (min-width: 1200px) { #rewind { align-items: center; justify-content: flex-end; } #rewind .card { max-width: 340px; margin: auto 0; } }
+#rewind .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+@media (pointer: coarse) { .keys { display: none; } }
+#streak { display: block; margin-top: 4px; min-height: 1.4em; font-size: 0.875rem; font-weight: 800; color: var(--star); text-shadow: 0 1px 0 rgba(10, 18, 36, 0.6); font-variant-numeric: tabular-nums; }
+#streak .bar { display: block; width: 72px; height: 3px; margin: 3px auto 0; border-radius: 3px; background: rgba(255, 255, 255, 0.18); overflow: hidden; }
+#streak .bar i { display: block; height: 100%; background: var(--star); }
 @media (prefers-reduced-motion: reduce) { #score.bump { animation: none; } }
 </style>
 
@@ -116,7 +131,7 @@ textarea, .log {
 
 <div id="hud" hidden>
   <button class="iconbtn" id="pauseBtn" aria-label="Pause"><span class="pausebars"></span></button>
-  <div class="score"><span id="score"><canvas width="7" height="7"></canvas><span id="scoreN">0</span></span><span id="best"></span></div>
+  <div class="score"><span id="score"><canvas width="7" height="7"></canvas><span id="scoreN">0</span></span><span id="best"></span><span id="streak"></span></div>
   <span></span>
 </div>
 
@@ -132,14 +147,36 @@ textarea, .log {
 <div class="overlay" id="start">
   <div class="card">
     <h1>Skyling Steps</h1>
-    <p class="lead">Every step leaves a star. Fill a row or column with stars and it flies up into the sky. Don't get boxed in.</p>
+    <canvas class="home" id="home" width="200" height="80" aria-label="Your skyling's cloud"></canvas>
+    <div class="unlock" id="unlockLine"></div>
+    <ol class="rules">
+      <li><b>Every step leaves a star.</b> You can't step on stars.</li>
+      <li><b>Fill a row or column</b> and it flies up into the sky.</li>
+      <li><b>Don't get boxed in.</b> Catch wishes, keep a streak going.</li>
+    </ol>
     <div class="cast" id="cast" role="radiogroup" aria-label="Choose your skyling"></div>
+    <div class="modes" role="radiogroup" aria-label="Which sky">
+      <button class="auto" id="modeFree" role="radio">Free play</button>
+      <button class="auto" id="modeToday" role="radio">Today's sky</button>
+    </div>
     <button class="btn" id="playBtn">Play</button>
     <p id="startBest" class="tiny"></p>
     <div class="links">
       <button class="link" id="soundBtn"></button>
       <button class="link" id="notesBtn">Your runs</button>
     </div>
+  </div>
+</div>
+
+<div class="overlay" id="rewind" hidden>
+  <div class="card">
+    <h2 id="rewindTitle">Boxed in!</h2>
+    <p>Go back 3 steps and try another way. Once a run.</p>
+    <div class="row">
+      <button class="btn" id="rewindBtn">Rewind 3 steps</button>
+      <button class="btn ghost" id="giveUpBtn">End the run</button>
+    </div>
+    <p class="tiny keys">Enter to rewind · Esc to end</p>
   </div>
 </div>
 
