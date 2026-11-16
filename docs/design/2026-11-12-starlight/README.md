@@ -101,3 +101,18 @@ not the addicting worldwide game I wanted." He chose the flick, and to share the
 - One hint at a time, never over a big moment.
 - The bot now aims by trying about 175 flicks in its head. First-timer-like runs: 45 s to 3.4 min (about 1 min 45 s
   typical), up to 11 stars in one flick; never stuck, no page errors, 60 fps.
+
+## Round 5: back to the tap, with lines (owner, 2026-11-16)
+
+The owner: "I don't like the drag back at all, and I feel like we drifted a lot from what I liked." He chose to go
+back to round 3 (tap the star you mean; the swaying sky, storms, twinkling and shooting stars) and to fix the sore
+wrist and "too easy" without changing the tap. Round 3's code is the base; the flick is gone.
+- One tap lights every star on the straight line to the star you tap (within 50 of the path), each worth more than
+  the last (+1, +2, +3...), with "Nice!", "Lovely!", "Brilliant!" from 3 in one line; a whole shape in one line is
+  worth double. Swaying rows make lines come and go.
+- Star strings: 4 to 6 stars in a straight line with a faint thread, the first right above the start, so the first
+  tap teaches the rule.
+- Reach 430 (was 300): one tap climbs about three rows, so a run needs about one tap a second, half of round 3.
+- The sea: 80 a second, plus 1.9 a second. New things at 240, 560, 960, 1,360 and 1,840 m.
+- Checks: first-timer-like runs last 1 1/4 to 2 1/4 minutes; a strong, fast player 4 minutes and more (shapes and
+  shooting stars calm the sea); never stuck, no page errors, 60 fps.
