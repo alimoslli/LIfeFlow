@@ -145,7 +145,7 @@ describe("confirm your email: the code", () => {
 
   it("says a send worked only when the provider returned an id, and leaves no code behind otherwise", async () => {
     const { user } = await makeUser("Sam");
-    expect(await sendConfirmCode(db, user.id, { send: outbox("").send, config: CFG })).toEqual({ ok: false, reason: "failed" });
+    expect(await sendConfirmCode(db, user.id, { send: outbox("").send, config: CFG })).toEqual({ ok: false, reason: "failed", why: "no id" });
     const throwing = async () => {
       throw new Error("refused");
     };
