@@ -18,7 +18,7 @@ export async function sendEmailCode(_prev: ConfirmState, _fd?: FormData): Promis
   if (r.reason === "already") return { confirmed: true, at: Date.now() };
   if (r.reason === "unavailable") return { error: "Email codes aren't available yet. Please try again later.", at: Date.now() };
   if (r.reason === "too_many") return { error: "We've sent a few codes already. Use the newest one, or try again in an hour.", at: Date.now() };
-  await recordError(db, { source: "server", route: "/waitlist", message: "email confirmation send failed" }).catch(() => {});
+  await recordError(db, { source: "server", route: "/waitlist", message: `email confirmation send failed${r.why ? `: ${r.why}` : ""}` }).catch(() => {});
   return { error: "We couldn't send the email just now. Try again in a minute.", at: Date.now() };
 }
 

@@ -30,7 +30,7 @@ const same = (a: string, b: string) => {
   return x.length === y.length && timingSafeEqual(x, y);
 };
 
-export type SendResult = { ok: true; id: string } | { ok: false; reason: "already" | "unavailable" | "too_many" | "failed" | "no_user" };
+export type SendResult = { ok: true; id: string } | { ok: false; reason: "already" | "unavailable" | "too_many" | "failed" | "no_user"; why?: string };
 export type SendEmailFn = (cfg: EmailConfig, msg: Parameters<typeof sendEmail>[1]) => Promise<{ id: string }>;
 
 /**
@@ -65,8 +65,8 @@ export async function sendConfirmCode(
       .values({ userId, ...row })
       .onConflictDoUpdate({ target: emailConfirmations.userId, set: row });
     return { ok: true, id: sent.id };
-  } catch {
-    return { ok: false, reason: "failed" };
+  } catch (e) {
+    return { ok: false, reason: "failed", why: e instanceof Error ? e.message.slice(0, 220) : undefined };
   }
 }
 

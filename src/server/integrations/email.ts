@@ -25,7 +25,16 @@ export async function sendEmail(
     headers: { authorization: `Bearer ${cfg.apiKey}`, "content-type": "application/json" },
     body: JSON.stringify({ from: cfg.from, to: [msg.to], subject: msg.subject, text: msg.text, html: msg.html, ...(msg.replyTo && { reply_to: msg.replyTo }) }),
   });
-  const json = (await res.json().catch(() => ({}))) as { id?: string };
-  if (!res.ok || !json.id) throw new EmailError(`Email provider refused the message (HTTP ${res.status}).`);
+  const json = (await res.json().catch(() => ({}))) as { id?: string; name?: string; message?: string };
+  if (!res.ok || !json.id) {
+    // Say why the provider refused (e.g. an unverified sending domain), so the error report names the cause. Callers record
+    // this through recordError, which scrubs addresses, ids and tokens; the text is bounded here.
+    const why = [json.name, json.message]
+      .filter((x) => typeof x === "string" && x)
+      .join(": ")
+      .replace(/\s+/g, " ")
+      .slice(0, 160);
+    throw new EmailError(`Email provider refused the message (HTTP ${res.status})${why ? `: ${why}` : ""}.`);
+  }
   return { id: json.id };
 }
