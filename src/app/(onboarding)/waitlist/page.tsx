@@ -57,6 +57,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
   const place = w.place ?? (preview ? Math.max(w.waiting, 1) : null);
   const waiting = w.waiting;
   const mine = companionOf(user.preferences?.companion);
+  const contact = process.env.LEGAL_CONTACT_EMAIL?.trim() || null;
 
   return (
     <div className="min-h-dvh overflow-x-clip bg-night-0 text-white">
@@ -130,6 +131,15 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
         <SkyExplainer name={assistantProfile(user.preferences, user.timezone).name} tz={user.timezone ?? "UTC"} companion={user.preferences?.companion} />
 
         <p className="mt-2 text-center text-[0.9375rem] leading-relaxed text-star-gold/90">{w.launchNote ?? DEFAULT_LAUNCH}</p>
+        {/* a real way to reach us (owner, 2026-11-17: "how will they contact the team??") */}
+        {contact && (
+          <p className="text-center text-[0.9375rem] text-white/75">
+            Questions, or want in early?{" "}
+            <a href={`mailto:${contact}?subject=LifeFlow%20waitlist`} className="font-medium text-white underline underline-offset-4">
+              Write to us
+            </a>
+          </p>
+        )}
 
         <nav className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-1 text-sm" aria-label="Your account">
           {[
