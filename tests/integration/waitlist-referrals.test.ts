@@ -133,7 +133,7 @@ describe("confirm your email: the code", () => {
     const throwing = async () => {
       throw new Error("refused");
     };
-    expect(await sendConfirmCode(db, user.id, { send: throwing, config: CFG, ...fixed("222222") })).toEqual({ ok: false, reason: "failed" });
+    expect(await sendConfirmCode(db, user.id, { send: throwing, config: CFG, ...fixed("222222") })).toEqual({ ok: false, reason: "failed", why: "refused" });
     expect(await confirmEmailCode(db, user.id, "222222")).toEqual({ ok: false, reason: "wrong" });
     expect(await confirmEmailCode(db, user.id, "111111")).toMatchObject({ ok: true });
   });
@@ -149,7 +149,7 @@ describe("confirm your email: the code", () => {
     const throwing = async () => {
       throw new Error("refused");
     };
-    expect(await sendConfirmCode(db, user.id, { send: throwing, config: CFG })).toEqual({ ok: false, reason: "failed" });
+    expect(await sendConfirmCode(db, user.id, { send: throwing, config: CFG })).toEqual({ ok: false, reason: "failed", why: "refused" });
     expect(await db.select().from(emailConfirmations).where(eq(emailConfirmations.userId, user.id))).toEqual([]);
     expect(await sendConfirmCode(db, user.id, { config: null })).toEqual({ ok: false, reason: "unavailable" });
   });
