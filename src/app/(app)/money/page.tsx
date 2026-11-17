@@ -132,6 +132,20 @@ export default async function MoneyPage() {
       ? [{ href: "/finances/accounts#investments", icon: "money" as const, label: "Investments", detail: `${dollars(o.investments.valueCents)} invested` }]
       : []),
   ];
+  const alertRow = (a: (typeof alerts)[number], i: number) => (
+    <li key={i} className="flex gap-3 px-4 py-3.5">
+      <span className={cn("lf-chip-night mt-0.5 h-9 w-9 shrink-0 rounded-[0.75rem]", a.tone === "danger" && "text-dawn-glow")}>
+        <PixelIcon name="alert" className="h-4 w-4" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[0.9375rem] leading-snug font-medium">{a.text}</p>
+        {a.fix && <p className="mt-0.5 text-[0.8125rem] leading-snug text-text-2">{a.fix}</p>}
+        <Link href={a.href} prefetch={isChatPage(a.href) ? false : undefined} className="lf-sb-link -mb-2 text-[0.8125rem] font-semibold text-text">
+          {a.label} <PixelIcon name="arrow" className="h-4 w-4" />
+        </Link>
+      </div>
+    </li>
+  );
   return (
     // a laptop gets two columns (A-to-Z audit C2): what you have and what needs you on the left, the month ahead and
     // where it went on the right; a phone keeps one column in the same order
@@ -197,22 +211,16 @@ export default async function MoneyPage() {
         {alerts.length > 0 && (
           <section className="animate-rise max-lg:order-[-2]" style={{ animationDelay: "140ms" }} aria-label="Heads up">
             <h2 className="mb-3 font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Heads up</h2>
-            <ul className="lf-tiles">
-              {alerts.map((a, i) => (
-                <li key={i} className="flex gap-3 px-4 py-3.5">
-                  <span className={cn("lf-chip-night mt-0.5 h-9 w-9 shrink-0 rounded-[0.75rem]", a.tone === "danger" && "text-dawn-glow")}>
-                    <PixelIcon name="alert" className="h-4 w-4" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[0.9375rem] leading-snug font-medium">{a.text}</p>
-                    {a.fix && <p className="mt-0.5 text-[0.8125rem] leading-snug text-text-2">{a.fix}</p>}
-                    <Link href={a.href} prefetch={isChatPage(a.href) ? false : undefined} className="lf-sb-link -mb-2 text-[0.8125rem] font-semibold text-text">
-                      {a.label} <PixelIcon name="arrow" className="h-4 w-4" />
-                    </Link>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {/* one thing at a time (the simple concept): the most serious in full, the others one tap away */}
+            <ul className="lf-tiles">{alerts.slice(0, 1).map(alertRow)}</ul>
+            {alerts.length > 1 && (
+              <details className="mt-2">
+                <summary className="cursor-pointer px-1 text-sm font-medium text-text-2">
+                  {alerts.length - 1} more {alerts.length === 2 ? "heads-up" : "heads-ups"}
+                </summary>
+                <ul className="lf-tiles mt-1">{alerts.slice(1).map(alertRow)}</ul>
+              </details>
+            )}
           </section>
         )}
       </div>
