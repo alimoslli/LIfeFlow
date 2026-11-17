@@ -201,8 +201,8 @@ function AimingView({ d, locked }: { d: Data; locked: boolean }) {
       <section className="animate-rise" aria-label="Closest goal">
         <SkyWindow tz={d.tz} data-tilt className="rounded-[1.75rem]">
           <div className="relative min-h-[12rem] px-6 pt-6 pb-6">
-            <p className="text-xs font-semibold tracking-[0.18em] text-white/80 uppercase">{closest ? "Closest" : "Goals"}</p>
-            <p className="lf-sw-num mt-2 max-w-[62%] font-display text-[1.75rem] leading-tight font-medium break-words">
+            {closest && <p className="text-xs font-semibold tracking-[0.18em] text-white/80 uppercase">Closest</p>}
+            <p className={`lf-sw-num ${closest ? "mt-2" : ""} max-w-[62%] font-display text-[1.75rem] leading-tight font-medium break-words`}>
               {closest ? closest.title : "What are you aiming for?"}
             </p>
             <p className="mt-1 max-w-[62%] text-sm text-white/80">{closest ? closest.line : "Add a goal with the button above."}</p>

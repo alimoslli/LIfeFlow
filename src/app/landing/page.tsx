@@ -165,7 +165,8 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               className="animate-rise font-display text-[2.5rem] leading-[1.1] font-medium tracking-[-0.045em] text-balance sm:text-[4.25rem] lg:mt-4 lg:text-[4.6rem]"
               style={{ animationDelay: "60ms" }}
             >
-              Every app sees one slice. <em className="lf-clip-text bg-gradient-to-r from-dawn-cream to-dawn-2 bg-clip-text text-transparent">LifeFlow sees all of it.</em>
+              Every app sees one slice.{" "}
+              <em className="lf-clip-text bg-gradient-to-r from-dawn-cream to-dawn-2 bg-clip-text text-transparent">LifeFlow sees all of it.</em>
             </h1>
             <p
               className="animate-rise mt-5 max-w-[44ch] text-[1.0625rem] leading-relaxed text-white/80 max-lg:order-5 sm:text-[1.125rem]"

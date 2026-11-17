@@ -102,8 +102,7 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
         {clientWork}
         <SkyWindow tz={tz} className="rounded-[1.75rem]">
           <div className="relative min-h-[11rem] px-6 pt-6 pb-5">
-            <p className="text-xs font-semibold tracking-[0.14em] text-sun uppercase">Work</p>
-            <p className="mt-1 max-w-[62%] font-display text-[1.75rem] leading-tight font-medium">Add your job</p>
+            <p className="max-w-[62%] font-display text-[1.75rem] leading-tight font-medium">Add your job</p>
             <p className="mt-2 max-w-[62%] text-sm text-white/80">Then your shifts and pay show up here and on your sky.</p>
             <SkylingOnCup />
           </div>
