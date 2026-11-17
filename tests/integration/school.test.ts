@@ -99,6 +99,32 @@ describe("assignment ingestion", () => {
     expect(await view("overdue")).toEqual([]);
   });
 
+  it("Next 7 days rolls from today; the calendar week still ends on its last day", async () => {
+    const u = await makeUser();
+    const c = await u.run((s) => createCourse(s, { name: "Chem", code: "CHEM 1" }));
+    const now = new Date("2026-11-01T15:00:00Z"); // Sunday, 10:00 New York: the calendar week ends today
+    await u.run((s) =>
+      importAssignments(
+        s,
+        TZ,
+        [
+          { title: "Late", courseId: c.id, dueDate: "2026-10-30" },
+          { title: "Due today", courseId: c.id, dueDate: "2026-11-01" },
+          { title: "Due Monday", courseId: c.id, dueDate: "2026-11-02" },
+          { title: "A week from today", courseId: c.id, dueDate: "2026-11-08", dueTime: "23:59" },
+          { title: "Eight days out", courseId: c.id, dueDate: "2026-11-09", dueTime: "00:00" },
+        ],
+        { now },
+      ),
+    );
+    const view = (v: "week" | "next7") => u.run((s) => listAssignments(s, TZ, { view: v, now })).then((r) => r.map((a) => a.title));
+    expect(await view("week")).toEqual(["Due today"]);
+    expect(await view("next7")).toEqual(["Due today", "Due Monday", "A week from today"]);
+    const monday = (await u.run((s) => listAssignments(s, TZ, { view: "next7", now })))[1];
+    await u.run((s) => updateAssignment(s, TZ, monday.id, { status: "done" }));
+    expect(await view("next7")).toEqual(["Due today", "A week from today"]);
+  });
+
   it("resolves a course by id only if owned", async () => {
     const a = await makeUser();
     const b = await makeUser();

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AssistantName } from "@/components/assistant-name";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { Card, EmptyState, Tabs } from "@/components/ui/surface";
@@ -9,7 +10,7 @@ type Item = Awaited<ReturnType<typeof listAssignments>>[number];
 
 export const DUE_VIEWS: { key: AssignmentView; label: string }[] = [
   { key: "today", label: "Today" },
-  { key: "week", label: "This week" },
+  { key: "next7", label: "Next 7 days" },
   { key: "upcoming", label: "Upcoming" },
   { key: "overdue", label: "Overdue" },
   { key: "completed", label: "Done" },
@@ -32,14 +33,46 @@ function byClass(items: Item[]) {
 }
 
 /** School's "Due" section (the old Due page, owner's page map 2026-11-10): every assignment and exam by class, soonest first. */
-export function DueList({ view, list, tz, hasCourses }: { view: AssignmentView; list: Item[]; tz: string; hasCourses: boolean }) {
+export function DueList({
+  view,
+  list,
+  tz,
+  hasCourses,
+  open = 0,
+}: {
+  view: AssignmentView;
+  list: Item[];
+  tz: string;
+  hasCourses: boolean;
+  /** Everything still open, whatever the view: an empty Today or Next 7 days must not read as "no due dates at all". */
+  open?: number;
+}) {
+  const quiet = (view === "today" || view === "next7") && open > 0;
   return (
     <>
       <Tabs current={view} items={DUE_VIEWS.map((v) => ({ key: v.key, label: v.label, href: `/school?view=${v.key}#due` }))} />
       <Card className="mb-10">
         {list.length === 0 ? (
-          <EmptyState icon={<PixelIcon name="books" />} title={view === "overdue" ? "Nothing overdue. Nice." : "Nothing here"}>
-            {view === "completed" ? (
+          <EmptyState
+            icon={<PixelIcon name="books" />}
+            title={
+              view === "overdue"
+                ? "Nothing overdue. Nice."
+                : quiet
+                  ? view === "today"
+                    ? "Nothing due today"
+                    : "Nothing due in the next 7 days"
+                  : "Nothing here"
+            }
+          >
+            {quiet ? (
+              <>
+                {open === 1 ? "1 thing is" : `${open} things are`} still open.{" "}
+                <Link href="/school?view=upcoming#due" className="inline-flex min-h-11 items-center font-medium text-accent">
+                  See what&apos;s coming
+                </Link>
+              </>
+            ) : view === "completed" ? (
               "What you finish collects here."
             ) : hasCourses ? (
               <>

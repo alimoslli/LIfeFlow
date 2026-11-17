@@ -247,7 +247,8 @@ export async function deleteAssignment(scope: UserScope, id: string) {
   return row;
 }
 
-export type AssignmentView = "today" | "week" | "upcoming" | "overdue" | "completed" | "all";
+/** "week" is the calendar week (what the skyling means by "this week"); "next7" rolls: today and the 7 days after it. */
+export type AssignmentView = "today" | "week" | "next7" | "upcoming" | "overdue" | "completed" | "all";
 
 export async function listAssignments(scope: UserScope, tz: string, opts: { view?: AssignmentView; courseId?: string; limit?: number; now?: Date } = {}) {
   const now = opts.now ?? new Date();
@@ -255,12 +256,15 @@ export async function listAssignments(scope: UserScope, tz: string, opts: { view
   const startToday = startOfLocalDay(today, tz);
   const startTomorrow = startOfLocalDay(addDaysStr(today, 1), tz);
   const endOfWeek = startOfLocalDay(addDaysStr(weekStart(today), 7), tz);
+  // the same reach as To-dos' "Next 7 days", so a Sunday still shows Monday's work (the calendar week ended that day)
+  const afterNext7 = startOfLocalDay(addDaysStr(today, 8), tz);
   const conds = [eq(assignments.userId, scope.userId)];
   if (opts.courseId) conds.push(eq(assignments.courseId, opts.courseId));
   const view = opts.view ?? "all";
   const open = ne(assignments.status, "done");
   if (view === "today") conds.push(open, gte(assignments.dueAt, startToday), lt(assignments.dueAt, startTomorrow));
   if (view === "week") conds.push(open, gte(assignments.dueAt, startToday), lt(assignments.dueAt, endOfWeek));
+  if (view === "next7") conds.push(open, gte(assignments.dueAt, startToday), lt(assignments.dueAt, afterNext7));
   if (view === "upcoming") conds.push(open, gte(assignments.dueAt, now));
   if (view === "overdue") conds.push(open, lt(assignments.dueAt, now));
   if (view === "completed") conds.push(eq(assignments.status, "done"));
