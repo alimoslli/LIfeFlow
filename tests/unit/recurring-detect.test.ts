@@ -47,6 +47,17 @@ describe("month-end bills keep their day (A15)", () => {
     expect(comcast(["2025-12-31", "2026-01-31", "2026-02-28"])).toMatchObject({ nextExpectedDate: "2026-03-31", dueDay: 31 });
     expect(comcast(["2026-01-15", "2026-02-15", "2026-03-15"])).toMatchObject({ nextExpectedDate: "2026-04-15", dueDay: 15 });
   });
+
+  it("a charge a weekend pushed to Monday keeps the bill's usual day (test student p0001, 2026-11-16)", () => {
+    const ins = (dates: string[]) => detectRecurring(dates.map((d) => tx(d, -9600, "SafeRoute Insurance", "SAFEROUTE INS")))[0];
+    // the 18th; October 18 was a Sunday, so it billed Monday the 19th: November is the 18th (a Wednesday), not the 19th
+    expect(ins(["2026-08-18", "2026-09-18", "2026-10-19"])).toMatchObject({ nextExpectedDate: "2026-11-18", dueDay: 18 });
+    // a real move to a new day (the 19th on a weekday) is kept
+    expect(ins(["2026-07-18", "2026-08-18", "2026-09-21"])).toMatchObject({ dueDay: 21 });
+    expect(ins(["2026-08-18", "2026-09-18", "2026-10-20"])).toMatchObject({ dueDay: 20 });
+    // a Saturday's charge billed the Monday after (October 17 was a Saturday)
+    expect(ins(["2026-08-17", "2026-09-17", "2026-10-19"])).toMatchObject({ nextExpectedDate: "2026-11-17", dueDay: 17 });
+  });
 });
 
 describe("bills paid by transfer (A4)", () => {

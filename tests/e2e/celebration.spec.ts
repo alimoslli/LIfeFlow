@@ -18,10 +18,11 @@ test("reaching a goal brings the milestone sun, one more toward a goal brings a 
   await page.getByRole("button", { name: "Add goal" }).click();
   await expect(page.getByText("0 of 2 books")).toBeVisible();
 
-  // one more, not there yet: a star with its "+1"
+  // one more, not there yet: a star, with no "+1" under it (owner, 2026-11-16)
   await page.getByRole("button", { name: 'One more for "Read 2 books"' }).click();
   const layer = page.locator("body > div[aria-hidden=true]").filter({ has: page.locator("canvas") });
-  await expect(layer.getByText("+1", { exact: true })).toBeVisible();
+  await expect(layer.locator("canvas")).toHaveCount(1);
+  await expect(layer.getByText("+1", { exact: true })).toHaveCount(0);
   await expect(page.getByText("1 of 2 books")).toBeVisible();
   await expect(layer).toHaveCount(0, { timeout: 6000 });
 

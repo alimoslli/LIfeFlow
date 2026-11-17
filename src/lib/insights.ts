@@ -52,8 +52,9 @@ export function rankInsights(list: Insight[]): Insight[] {
 }
 
 /** At most `count` clouds: the most urgent first, never two about the same thing, none the note already says. */
-export function cloudsFrom(list: Insight[], opts: { noteId?: string | null; count?: number } = {}): IdeaCloud[] {
-  const taken = new Set(noteTopics(opts.noteId));
+export function cloudsFrom(list: Insight[], opts: { noteId?: string | null; topics?: string[]; count?: number } = {}): IdeaCloud[] {
+  // what the note already says (its id, or the topics of the next-up note) is never a cloud too
+  const taken = new Set([...noteTopics(opts.noteId), ...(opts.topics ?? [])]);
   const out: IdeaCloud[] = [];
   for (const i of rankInsights(list)) {
     if (out.length >= (opts.count ?? 3)) break;

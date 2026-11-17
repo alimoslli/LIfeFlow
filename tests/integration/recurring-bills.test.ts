@@ -55,7 +55,8 @@ describe("bills paid by transfer (A4)", () => {
     const { bills } = await run((s) => billsAndPace(s, TODAY, TODAY, addDaysStr(TODAY, 30)));
     expect(bills.map((b) => [b.date, b.amountCents])).toEqual([
       [TODAY, -60_000], // Nov 1's rent hasn't gone out yet: a few days late, so still due, dated today
-      ["2026-11-12", -38_900],
+      // the loan is due the 10th; October 10 was a Saturday, so it went out Monday the 12th and is due the 10th again
+      ["2026-11-10", -38_900],
       ["2026-12-01", -60_000],
     ]);
   });

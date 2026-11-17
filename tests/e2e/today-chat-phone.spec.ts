@@ -110,7 +110,7 @@ for (const [label, size] of [
     await expectInOrder(page);
   });
 
-/** Top to bottom with nothing over anything: the sky's own drawing ("Sun sets in…" on the water), the middle, then the
+/** Top to bottom with nothing over anything: the sky (and any words drawn on its water), the middle, then the
  * docked bar's highest part (the skyling standing on it). The sky redraws as it moves, so it's all read at once. */
 async function expectInOrder(page: Page) {
   await expect
@@ -126,8 +126,8 @@ async function expectInOrder(page: Page) {
             .filter((r) => r.width && r.height)
             .map((r) => r.top),
         );
-        if (!chip?.height) return "no chip yet";
-        return Math.round(Math.max(chip.bottom - mid.top, sky.bottom - mid.top - 1, mid.bottom - top - 1));
+        // Today has no sunrise/sunset countdown any more (owner, 2026-11-16); the waitlist's example sky still draws it
+        return Math.round(Math.max(chip?.height ? chip.bottom - mid.top : -1, sky.bottom - mid.top - 1, mid.bottom - top - 1));
       }),
     )
     .toBeLessThanOrEqual(0);

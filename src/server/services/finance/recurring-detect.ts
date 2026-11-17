@@ -390,7 +390,15 @@ function usualDay(dates: string[]): number {
 /** The day a monthly (or longer) series keeps: its last charge's, unless that's a short month's last day standing in for the 29th to 31st. */
 function dueDayOf(dates: string[]): number {
   const last = dates[dates.length - 1];
-  if (dayOf(last) !== lastDayOfMonth(last)) return dayOf(last);
+  if (dayOf(last) !== lastDayOfMonth(last)) {
+    // a charge a weekend pushed to Monday keeps its usual day: the 18th on a Sunday billed the 19th, and the next one is
+    // the 18th again (test student p0001, 2026-11-16: insurance said Thursday, came out Wednesday)
+    const usual = [...Map.groupBy(dates, dayOf).entries()].sort((a, b) => b[1].length - a[1].length || a[0] - b[0])[0][0];
+    const wd = new Date(`${last.slice(0, 8)}${String(usual).padStart(2, "0")}T12:00:00Z`).getUTCDay();
+    // Saturday's charge lands two days later, Sunday's one: the Monday after
+    if ((wd === 6 && dayOf(last) - usual === 2) || (wd === 0 && dayOf(last) - usual === 1)) return usual;
+    return dayOf(last);
+  }
   return Math.max(...dates.map(dayOf).filter((d) => d >= dayOf(last)));
 }
 

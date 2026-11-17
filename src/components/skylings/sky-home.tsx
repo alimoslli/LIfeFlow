@@ -50,7 +50,7 @@ function Icon({ art, className, ghost, cell }: { art: string[]; className?: stri
 /**
  * The skyling's cloud (owner, 2026-11-11, from the picture he said yes to): the person's own skyling stands on it (with
  * "Changes with the sky", whoever is up), and what their stars and suns unlocked lives around it. Drawn in code on the
- * 4 px grid; still, so it's the same under reduced motion. The counts open the sheet.
+ * 4 px grid; still, so it's the same under reduced motion. "<name>'s cloud" opens the sheet, which has the counts.
  */
 export function SkyHome({ counts, skyling, name }: { counts: SkyCounts; skyling?: CompanionKey | null; name: string }) {
   const box = useRef<HTMLDivElement>(null);
@@ -154,13 +154,12 @@ export function SkyHome({ counts, skyling, name }: { counts: SkyCounts; skyling?
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={`${countLine(counts)} Open ${name}'s cloud`}
         className="lf-chip-night absolute top-3 left-3 z-20 flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-[0.8125rem] font-semibold"
       >
+        {/* the star and sun counts are one tap deeper, in the sheet (owner, 2026-11-16, item 4 of the Today list) */}
         <Icon art={STAR_ICON} className="h-3.5 w-3.5" />
-        {counts.stars.toLocaleString("en-US")}
-        <Icon art={SUN_ICON} className="ml-1 h-[1.125rem] w-[1.125rem]" />
-        {counts.suns.toLocaleString("en-US")}
+        <Icon art={SUN_ICON} className="h-[1.125rem] w-[1.125rem]" />
+        {name}&apos;s cloud
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title={`${name}'s cloud`}>
         <HomeSheet counts={counts} />
