@@ -6,6 +6,8 @@ import { getDb } from "@/server/db/client";
 import {
   AdminError,
   acceptFromWaitlist,
+  confirmEmailsByAdmin,
+  sendApologies,
   clearError,
   createAnnouncement,
   deleteUser,
@@ -159,6 +161,34 @@ export async function acceptWaitlistAction(fd: FormData) {
     const r = await acceptFromWaitlist(getDb(), admin, ids, field(fd, "confirm") === "yes");
     if (!r.accepted) return r.already ? "They were already in. Nothing changed." : "Nobody was let in.";
     return `Let ${plural(r.accepted)} in.${r.already ? ` ${plural(r.already)} already had access.` : ""} Nobody was messaged.`;
+  });
+}
+
+const ids = (fd: FormData) =>
+  fd
+    .getAll("id")
+    .map((v) => String(v).slice(0, 40))
+    .slice(0, 101);
+
+/** Confirms the chosen people's emails, as if they had typed the code (their friend's invite then counts). Sends nothing. */
+export async function confirmEmailsAction(fd: FormData) {
+  const admin = await requireAdmin();
+  await run(waitlistBack, async () => {
+    const r = await confirmEmailsByAdmin(getDb(), admin, ids(fd), field(fd, "confirm") === "yes");
+    if (!r.confirmed) return "Nobody needed confirming. Nothing changed.";
+    return `Confirmed ${plural(r.confirmed)}.${r.moved ? ` ${plural(r.moved)} who invited them moved up.` : ""} Nobody was messaged.`;
+  });
+}
+
+/** Sends the chosen (confirmed) people the short apology with the link to their place in line. */
+export async function sendApologiesAction(fd: FormData) {
+  const admin = await requireAdmin();
+  await run(waitlistBack, async () => {
+    const r = await sendApologies(getDb(), admin, ids(fd), field(fd, "confirm") === "yes");
+    if (r.sent && !r.failed) return `Sent the note to ${plural(r.sent)}.`;
+    if (r.sent) return `Sent the note to ${plural(r.sent)}; ${r.failed} didn't go out.`;
+    if (r.failed) throw new AdminError(`The email service refused the note, so nothing was sent. ${r.why}`.trim());
+    return "Nobody chosen has a confirmed email yet. Confirm them first.";
   });
 }
 
