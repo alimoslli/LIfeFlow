@@ -46,7 +46,7 @@ describe("the waitlist page", () => {
     expect(await waitlistPlace(db, inviter.id)).toBe(1);
   });
 
-  it("admin preview shows the real number of people waiting, with only the example place marked", async () => {
+  it("admin preview puts the admin last in the real line as an example, with no head count", async () => {
     await db.update(users).set({ access: "in" }).where(eq(users.access, "waiting"));
     const a = (await makeUser("A")).user;
     await makeUser("B");
@@ -55,15 +55,13 @@ describe("the waitlist page", () => {
     process.env.ADMIN_EMAILS = a.email;
     h.user = asSession(a);
     const html = await render({ preview: "1" });
-    expect(html).toContain("3 people are waiting");
-    expect(html).not.toContain("12 people are waiting");
-    // only the admin's own place is marked as an example, exactly once, and the place heading shows the last real place
-    expect(html.match(/<span[^>]*>You \(example\)<\/span>/g)).toHaveLength(1);
-    expect(html.match(/\(example\)/g)).toHaveLength(1);
+    // no head count (owner, 2026-11-17); the example place is the last real place, said once
+    expect(html).not.toMatch(/people are waiting|person is waiting/);
+    expect(html.match(/Your place here is an example/g)).toHaveLength(1);
     expect(html).toMatch(/data-testid="wl-place"[^>]*>#3</);
   });
 
-  it("the rules say what really happens: a friend can move you up, up to 10 places a day, never at first place or past the limit", async () => {
+  it("the page says what really happens: a confirmed friend moves you up one spot, and at first place there's nobody to pass", async () => {
     await db.update(users).set({ access: "in" }).where(eq(users.access, "waiting"));
     const a = (await makeUser("A")).user;
     h.user = asSession(a);
@@ -75,8 +73,9 @@ describe("the waitlist page", () => {
     } finally {
       await db.update(appAccess).set({ waitlistOn: before?.waitlistOn ?? false });
     }
-    expect(html).toContain("can move you up a place, up to 10 places a day");
-    expect(html).toContain("a friend doesn&#x27;t move you");
+    expect(html).toContain("When a friend signs up and confirms their email, you move up one spot.");
+    // first in line: nobody left to pass, so the page doesn't promise a move
+    expect(html).toContain("there’s no one left to pass");
     expect(html).not.toContain("puts you ahead of the person just above");
   });
 

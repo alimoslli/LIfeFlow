@@ -72,7 +72,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
         <div className="relative z-10 mx-auto w-full max-w-2xl px-5 pt-4">
           {preview && (
             <p role="status" className="mb-5 rounded-2xl bg-white/10 px-4 py-3 text-sm text-white/85 ring-1 ring-white/15">
-              Preview: this is what someone waiting sees. Your place here is an example; the other numbers are real.
+              Preview: this is what someone waiting sees. Your place here is an example.
             </p>
           )}
           <h1 className="animate-rise font-display text-[2.75rem] leading-[1.1] font-medium tracking-[-0.045em] text-balance sm:text-[4rem]">
@@ -124,7 +124,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
                 {w.friends === 1 ? "friend has" : "friends have"} moved you up so far.{" "}
               </>
             ) : null}
-            Up to 10 spots a day.
+            {place === 1 ? "You\u2019re first, so there\u2019s no one left to pass." : "Up to 10 spots a day."}
           </p>
         </section>
 
