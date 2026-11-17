@@ -103,7 +103,7 @@ export default async function GoalsPage({ searchParams }: { searchParams: Promis
       <header className="animate-rise flex items-end justify-between gap-3">
         <div>
           <p className="text-sm text-muted">{formatDateStr(d.today, "EEEE, MMMM d")}</p>
-          <h1 className="mt-1 font-display text-[2.5rem] leading-none font-medium tracking-tight">Goals</h1>
+          <h1 className="mt-1 font-display text-[2.5rem] leading-[1.1] font-medium tracking-tight">Goals</h1>
         </div>
         {done ? (
           <AddSheet label="Milestone" title="Add a milestone">
@@ -201,8 +201,8 @@ function AimingView({ d, locked }: { d: Data; locked: boolean }) {
       <section className="animate-rise" aria-label="Closest goal">
         <SkyWindow tz={d.tz} data-tilt className="rounded-[1.75rem]">
           <div className="relative min-h-[12rem] px-6 pt-6 pb-6">
-            <p className="text-xs font-semibold tracking-[0.18em] text-white/80 uppercase">{closest ? "Closest" : "Goals"}</p>
-            <p className="lf-sw-num mt-2 max-w-[62%] font-display text-[1.75rem] leading-tight font-medium break-words">
+            {closest && <p className="text-xs font-semibold tracking-[0.18em] text-white/80 uppercase">Closest</p>}
+            <p className={`lf-sw-num ${closest ? "mt-2" : ""} max-w-[62%] font-display text-[1.75rem] leading-tight font-medium break-words`}>
               {closest ? closest.title : "What are you aiming for?"}
             </p>
             <p className="mt-1 max-w-[62%] text-sm text-white/80">{closest ? closest.line : "Add a goal with the button above."}</p>
@@ -222,7 +222,7 @@ function AimingView({ d, locked }: { d: Data; locked: boolean }) {
       </section>
 
       <section aria-label="Aiming for">
-        <h2 className="mb-3 font-display text-[1.3125rem] leading-none font-medium tracking-tight">Aiming for</h2>
+        <h2 className="mb-3 font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Aiming for</h2>
         {locked && (
           <Link href="/money" className="mb-2 flex min-h-14 items-center gap-3 rounded-3xl bg-surface px-5 shadow-soft">
             <PixelIcon name="lock" className="h-6 w-6" />
@@ -313,7 +313,7 @@ function AimingView({ d, locked }: { d: Data; locked: boolean }) {
       </section>
 
       <section aria-label="Habits">
-        <h2 className="mb-3 font-display text-[1.3125rem] leading-none font-medium tracking-tight">Every day</h2>
+        <h2 className="mb-3 font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Every day</h2>
         <ul className="lf-tiles lf-tiles-2">
           {habits.map((h) => (
             <li key={h.id} className="flex flex-col gap-1 p-3">

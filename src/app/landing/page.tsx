@@ -92,8 +92,7 @@ const FAQS: { q: string; a: string }[] = [
   },
 ];
 
-const h2 = "font-display text-[2.375rem] leading-[1.02] font-medium tracking-[-0.035em] text-balance sm:text-[3.5rem]";
-const kicker = "text-[0.75rem] font-semibold tracking-[0.14em] uppercase";
+const h2 = "font-display text-[2.375rem] leading-[1.1] font-medium tracking-[-0.035em] text-balance sm:text-[3.5rem]";
 
 /** Instagram's glyph (lucide no longer ships brand icons). */
 function InstagramIcon({ className }: { className?: string }) {
@@ -162,12 +161,12 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
                 {inviter.firstName} invited you to LifeFlow.
               </p>
             )}
-            <p className={`animate-rise ${kicker} text-star-gold`}>Your whole life, on one sky</p>
             <h1
-              className="animate-rise mt-3 font-display text-[2.5rem] leading-[0.98] font-medium tracking-[-0.045em] text-balance sm:text-[4.25rem] lg:mt-4 lg:text-[4.6rem]"
+              className="animate-rise font-display text-[2.5rem] leading-[1.1] font-medium tracking-[-0.045em] text-balance sm:text-[4.25rem] lg:mt-4 lg:text-[4.6rem]"
               style={{ animationDelay: "60ms" }}
             >
-              Every app sees one slice. <em className="bg-gradient-to-r from-dawn-cream to-dawn-2 bg-clip-text text-transparent">LifeFlow sees all of it.</em>
+              Every app sees one slice.{" "}
+              <em className="lf-clip-text bg-gradient-to-r from-dawn-cream to-dawn-2 bg-clip-text text-transparent">LifeFlow sees all of it.</em>
             </h1>
             <p
               className="animate-rise mt-5 max-w-[44ch] text-[1.0625rem] leading-relaxed text-white/80 max-lg:order-5 sm:text-[1.125rem]"
@@ -222,8 +221,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
       <section id="skylings" className="relative scroll-mt-4 bg-gradient-to-b from-night-4 via-night-3 to-night-2 px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)] lg:gap-14">
           <div className="lg:sticky lg:top-16 lg:self-start">
-            <p className={`${kicker} text-star-gold`}>The skylings</p>
-            <h2 className={`mt-3 ${h2}`}>Five little ones. One of them is yours.</h2>
+            <h2 className={h2}>Five little ones. One of them is yours.</h2>
             <p className="mt-5 max-w-[40ch] text-[1.0625rem] leading-relaxed text-white/75">
               Each skyling is named for a moment of the sky and helps in its own way. Pick one, give it a name, and it lives on top of your day: awake with the
               sun, asleep with you.
@@ -241,8 +239,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
       {/* ---------- What a skyling does before you ask ---------- */}
       <section id="moments" className="scroll-mt-4 bg-night-2 px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
-          <p className={`${kicker} text-night-link`}>What it does before you ask</p>
-          <h2 className={`mt-3 max-w-[18ch] ${h2}`}>It notices the problem while there&apos;s still time to fix it.</h2>
+          <h2 className={`max-w-[18ch] ${h2}`}>It notices the problem while there&apos;s still time to fix it.</h2>
           <p className="mt-5 max-w-[52ch] text-[1.0625rem] text-white/75">Three things skylings do on a normal week. Each one shows the numbers it used.</p>
           <ul className="mt-10 grid gap-4 md:grid-cols-3">
             {MOMENTS.map((m) => (
@@ -252,7 +249,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
                     <CompanionGlyph companion={m.who} night={ownsNight(m.who)} className="lf-pixel h-12 w-12" />
                   </span>
                   <div>
-                    <p className="font-display text-[1.1875rem] leading-none font-medium">{m.name}</p>
+                    <p className="font-display text-[1.1875rem] leading-[1.2] font-medium">{m.name}</p>
                     <p className="mt-1 text-[0.6875rem] font-semibold tracking-[0.1em] text-star-gold uppercase">{m.tag}</p>
                   </div>
                 </div>
@@ -350,8 +347,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
         <section id="faq" className="scroll-mt-4 border-t border-ink-night/10 px-5 py-16 sm:px-8 lg:py-24">
           <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
             <div>
-              <p className={`${kicker} text-ember`}>Questions</p>
-              <h2 className={`mt-3 ${h2}`}>Straight answers.</h2>
+              <h2 className={h2}>Questions, straight answers.</h2>
               <p className="mt-4 max-w-sm text-[1.0625rem] leading-relaxed text-ink-night/70">
                 Something else? Message us on{" "}
                 <a href={INSTAGRAM} target="_blank" rel="noopener noreferrer" className="font-medium text-morning-link underline underline-offset-4">
@@ -379,7 +375,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
           <div className="relative isolate mx-auto min-h-[36rem] max-w-6xl overflow-hidden rounded-[2.25rem] text-white lg:min-h-[28rem]">
             <NightSky stage="band" />
             <div className="pointer-events-none relative z-10 p-8 sm:p-14">
-              <h2 className="max-w-[14ch] font-display text-[2.5rem] leading-none font-medium tracking-[-0.04em] text-balance sm:text-[3.75rem]">
+              <h2 className="max-w-[14ch] font-display text-[2.5rem] leading-[1.1] font-medium tracking-[-0.04em] text-balance sm:text-[3.75rem]">
                 They&apos;re ready when you are.
               </h2>
               <p className="mt-4 max-w-[40ch] text-white/80">Set up in minutes. Add everything yourself, or connect it later.</p>

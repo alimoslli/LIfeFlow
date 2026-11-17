@@ -34,11 +34,9 @@ test("a busy student on a laptop: real insights, a tap fills the bar, a fix has 
     await page.screenshot({ path: "docs/design/2026-11-12-insight-clouds/laptop-busy-student.png" });
   }
 
-  // an asking cloud fills the bar, and nothing is sent
-  await row(page)
-    .getByRole("button", { name: /Quiz 2 due/ })
-    .click();
-  await expect(page.locator('textarea[aria-label="Message Ray"]:visible').first()).toHaveValue(/^Help me finish Quiz 2/);
+  // Quiz 2 is in Today's note (the next thing due), so no cloud says it again (owner, 2026-11-16)
+  expect(said.join(" | ")).not.toMatch(/Quiz 2/);
+  // (an asking cloud filling the bar is checked on the skyling's page, insight-clouds-phone.spec.ts: here every cloud left is a fix)
   await expect(page.locator(".lf-bubble-me")).toHaveCount(0);
 
   // the fix: one tap, what changed, Undo

@@ -21,7 +21,7 @@ export function VerifyForm({ next, emailAvailable = false }: { next?: string; em
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent">
             <ShieldCheck className="h-6 w-6" />
           </span>
-          <h1 className="mt-5 font-display text-[2.125rem] leading-[1.05] font-medium tracking-tight">One more step.</h1>
+          <h1 className="mt-5 font-display text-[2.125rem] leading-[1.1] font-medium tracking-tight">One more step.</h1>
           <p className="mt-2 text-[0.9375rem] text-muted">
             {backup
               ? "Enter one of the backup codes you saved when you turned this on."

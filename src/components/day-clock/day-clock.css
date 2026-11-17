@@ -105,6 +105,13 @@
   opacity: 0;
   pointer-events: none;
 }
+/* the switch itself is 1 px too, so nothing reads it as a control (two test students found a 13 x 22 one with no name) */
+.dc-hap input {
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  clip-path: inset(50%);
+}
 
 /* ---- the window's sky at the time on top of the wheel, with stars and clouds (placed by sky.ts on the window) ---- */
 .dc-skybg {
@@ -909,6 +916,8 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   display: none;
 }
 .dc-detail {
+  overflow-y: auto;
+  overscroll-behavior: contain;
   position: absolute;
   left: 16px;
   right: 16px;
@@ -969,6 +978,32 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
 }
 .dc-d-s:empty {
   display: none;
+}
+/* a card short of room on a phone: one line of title, so the time, the place and the buttons stay in view */
+.dc-detail.dc-d-tight .dc-d-t {
+  font-size: 1.1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.dc-detail.dc-d-tight {
+  padding: 8px 14px;
+}
+.dc-detail.dc-d-tight .dc-d-k {
+  display: none;
+}
+.dc-detail.dc-d-tight .dc-d-ic {
+  width: 36px;
+  height: 36px;
+}
+.dc-detail.dc-d-tight .dc-d-w {
+  font-size: 0.85rem;
+  line-height: 1.3;
+  margin-top: 0;
+}
+.dc-detail.dc-d-tight .dc-d-acts {
+  margin-top: 4px;
 }
 /* a stack's card: one row per thing, each a full-width 44 px tap */
 .dc-d-list {

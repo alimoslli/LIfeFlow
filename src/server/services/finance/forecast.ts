@@ -230,7 +230,10 @@ export async function cashForecast(scope: UserScope, today: string, days = 30) {
   const p = projectCash({ startCents: balances.cashCents, today, days, bills, income: pay, dailySpendCents: typical.dailyCents });
   const warnings: string[] = [];
   if (p.overdraftDateWithoutPay && p.overdraftDateWithPay)
-    warnings.push(`You could run out of money around ${nice(p.overdraftDateWithPay)} if you keep spending like usual, even with your expected pay.`);
+    // "even with your expected pay" only when there is expected pay (test students p0001 and p4020: said to people with no salaried paycheck)
+    warnings.push(
+      `You could run out of money around ${nice(p.overdraftDateWithPay)} if you keep spending like usual${pay.length ? ", even with your expected pay" : ""}.`,
+    );
   else if (p.overdraftDateWithoutPay)
     warnings.push(
       pay.length

@@ -31,7 +31,7 @@ export function HealthHeader({
       <header className="flex items-end justify-between gap-3">
         <div>
           <p className="text-sm text-text-2">{date}</p>
-          <h1 className="font-display text-[2.75rem] leading-none font-medium tracking-tight">Health</h1>
+          <h1 className="font-display text-[2.75rem] leading-[1.1] font-medium tracking-tight">Health</h1>
         </div>
         <div className="flex items-center gap-2">
           {apple && (

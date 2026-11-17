@@ -11,7 +11,7 @@ export type AssistantNote = { id?: string; text: string; tone: "attention" | "he
  * Under the clock: the one thing the skyling noticed by joining the dots (an exam and tonight's study,
  * a shift and a class too close), with its one next step. Nothing to say means nothing shown.
  */
-export function AssistantLine({ name, note }: { name: string; note: AssistantNote | null }) {
+export function AssistantLine({ name, note, brief }: { name: string; note: AssistantNote | null; brief?: string | null }) {
   const { openJarvis } = useShell();
   if (!note) return null;
   const body = (
@@ -21,6 +21,11 @@ export function AssistantLine({ name, note }: { name: string; note: AssistantNot
       <span className="min-w-0 flex-1">
         <span className="block text-xs font-medium text-muted">{name}</span>
         <span className="mt-0.5 block text-[0.9375rem] leading-snug">{note.text}</span>
+        {brief && (
+          <span className="mt-1 block text-sm text-text-2" data-testid="morning-brief">
+            <span className="font-medium">Morning brief:</span> {brief}
+          </span>
+        )}
         {note.label && <span className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-accent">{note.label}</span>}
       </span>
       <PixelIcon name="arrow" className="mt-1 h-4 w-4 shrink-0 text-muted" aria-hidden />

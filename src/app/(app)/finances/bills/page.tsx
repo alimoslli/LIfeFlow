@@ -95,7 +95,7 @@ export default async function BillsPage() {
   return (
     <div className="mx-auto flex max-w-[640px] flex-col gap-7">
       <header>
-        <h1 className="font-display text-[2.375rem] leading-none font-medium tracking-tight">Bills</h1>
+        <h1 className="font-display text-[2.375rem] leading-[1.1] font-medium tracking-tight">Bills</h1>
         <p className="mt-2 text-sm text-text-2">Bills and subscriptions.</p>
       </header>
 

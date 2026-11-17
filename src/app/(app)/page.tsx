@@ -30,6 +30,8 @@ import { TodayMiddle, TodayOwner } from "./_today/today-chat";
 import { BirthdayCard } from "./_today/birthday-card";
 import { EmptyNext } from "./_today/empty-next";
 import { ideaClouds } from "@/server/services/idea-clouds";
+import { BRIEF_UNTIL_HOUR, morningBriefLine, nextUpNote } from "@/server/services/next-up";
+import { formatIn } from "@/lib/dates";
 
 /**
  * Today (v3): your time as a clock that opens into the timeline of your week (docs/design/clock/spec.md),
@@ -95,13 +97,17 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     await withUser(me.id, (scope) => runProactive({ scope, tz: me.timezone, prefs: me.preferences, trigger: "promise" })).catch((e) =>
       console.error("promise check failed", e instanceof Error ? e.name : e),
     );
-  const { clock, note, assistantName, setup, hello, clouds, userId } = await withCurrentUser(async (scope, user) => {
+  const { clock, note, brief, clash, assistantName, setup, hello, clouds, userId } = await withCurrentUser(async (scope, user) => {
     const tz = user.timezone ?? "UTC";
     // Money (bills due, spent today) joins the clock only while the Money lock is open.
     // Today only reads here, and its parts ask for the same rows (bills, categories, 13 months of transactions) again and
     // again: each is read once for this render.
     readOnce(scope);
-    const clock = await dayClockData(scope, tz, new Date(), { money: !locked });
+    const now = new Date();
+    const clock = await dayClockData(scope, tz, now, { money: !locked });
+    // the note is the next real thing in the next 24 hours; the briefing's notes only when nothing is that close
+    const next = await nextUpNote(scope, tz, now);
+    const brief = Number(formatIn(now, tz, "H")) < BRIEF_UNTIL_HOUR ? await morningBriefLine(scope, tz, now, { money: !locked }) : null;
     const { briefing } = await getBriefing(scope, user);
     const [integrationList, banks] = await series(
       () => integrationStatus(scope),
@@ -119,15 +125,21 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     // run out of money"): no money warnings, budget nags or "you have late to-dos" here; Money and the line show those.
     const ranked = insights.filter((i) => !/^(overdraft|budget-|pace-|overdue)/.test(i.id));
     const top = ranked.find((i) => i.tone === "attention") ?? ranked.find((i) => i.tone === "heads-up") ?? null;
-    const note: AssistantNote | null = top
+    const far: AssistantNote | null = top
       ? { id: top.id, text: top.text, tone: top.tone, href: top.action?.href, prompt: top.action?.prompt, label: top.action?.label }
       : null;
+    const note: AssistantNote | null = next ? { id: next.key, text: next.text, tone: "heads-up", href: next.href } : far;
     return {
       clock,
       note,
+      brief,
+      clash: !!top?.id?.startsWith("conflict"),
       assistantName: assistantProfile(user.preferences, user.timezone).name,
       // idea clouds beside the chat bar, from their own data (lib/idea-clouds)
-      clouds: await ideaClouds(scope, tz, user.preferences, assistantProfile(user.preferences, user.timezone).name, new Date(), { noteId: note?.id }),
+      clouds: await ideaClouds(scope, tz, user.preferences, assistantProfile(user.preferences, user.timezone).name, new Date(), {
+        noteId: note?.id,
+        topics: next?.topics,
+      }),
       userId: user.id,
       setup,
       hello: `${greetingIn(tz)}, ${user.name.split(" ")[0]}`,
@@ -143,12 +155,12 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       <ClaimStars />
       <TodayOwner userId={userId} />
       <section aria-label="Your day" data-tour="today-page" className="-mx-5 sm:-mx-8 md:mx-0">
-        <DayClock data={clock} mode={mode} companion={me.preferences?.companion} clash={!!note?.id?.startsWith("conflict")}>
+        <DayClock data={clock} mode={mode} companion={me.preferences?.companion} clash={clash}>
           {/* a laptop's and a tablet's sky have these under the wheel; a phone has them in the middle (TodayMiddle) */}
           <div className="max-md:hidden">
             {/* accounts made before the birthday was required are asked once, first (owner, 2026-11-10; not a lockout) */}
             {!me.preferences?.birthDate && <BirthdayCard />}
-            {me.preferences?.birthDate && note && <AssistantLine name={assistantName} note={note} />}
+            {me.preferences?.birthDate && note && <AssistantLine name={assistantName} note={note} brief={brief} />}
             {/* nothing planned yet: one next step, on the first screen (connect what can be connected, else tell the skyling) */}
             {me.preferences?.birthDate &&
               !note &&
@@ -176,12 +188,13 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           )}
         </DayClock>
       </section>
-      {/* a phone (owner, 2026-11-10): the sky on top, the skyling's note and the idea clouds filling the middle (or its
-          answer in their place), and the chat bar at the bottom, one screen with nothing to scroll */}
+      {/* a phone (owner, 2026-11-10): the sky on top, the skyling's note in the middle (or its answer in its place), and the
+          chat bar at the bottom, one screen with nothing to scroll. No idea clouds here on a phone (owner, 2026-11-16, item
+          2): they stay on the skyling's page. */}
       <div className="dc-middle md:hidden">
         <TodayMiddle
           name={assistantName}
-          clouds={clouds}
+          brief={me.preferences?.birthDate ? brief : null}
           note={
             !me.preferences?.birthDate
               ? null

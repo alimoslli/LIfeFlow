@@ -408,7 +408,7 @@ export function Onboarding({
             <>
               <div data-anim className="flex items-end gap-3">
                 <CompanionGlyph companion={drawn} night={ownsNight(drawn)} pose="celebrate" frame={3} className="lf-breathe h-14 w-14" />
-                <h1 className="font-display text-[2.75rem] leading-[1.05] font-medium tracking-tight">Hi{cleanYou ? ` ${cleanYou.split(" ")[0]}` : ""}.</h1>
+                <h1 className="font-display text-[2.75rem] leading-[1.1] font-medium tracking-tight">Hi{cleanYou ? ` ${cleanYou.split(" ")[0]}` : ""}.</h1>
               </div>
               <p data-anim className="mt-3 text-[1.0625rem] leading-relaxed text-text-2">
                 I&apos;m {shown ?? "your skyling"}. Tell me a little about you, and then we&apos;ll connect your sky.

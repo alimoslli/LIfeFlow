@@ -279,13 +279,13 @@ async function lifeSoFar(scope: UserScope, tz: string, today: string, now: Date)
   const [doneTasks, doneWork, said] = await series(
     () =>
       scope.tx
-        .select({ id: tasks.id, title: tasks.title, at: tasks.completedAt })
+        .select({ id: tasks.id, title: tasks.title, at: tasks.completedAt, dueAt: tasks.dueAt })
         .from(tasks)
         .where(and(eq(tasks.userId, scope.userId), eq(tasks.status, "done"), isNull(tasks.parentId), gte(tasks.completedAt, since)))
         .limit(80),
     () =>
       scope.tx
-        .select({ id: assignments.id, title: assignments.title, courseId: assignments.courseId, at: assignments.completedAt })
+        .select({ id: assignments.id, title: assignments.title, courseId: assignments.courseId, at: assignments.completedAt, dueAt: assignments.dueAt })
         .from(assignments)
         .where(and(eq(assignments.userId, scope.userId), eq(assignments.status, "done"), gte(assignments.completedAt, since)))
         .limit(80),
@@ -299,6 +299,9 @@ async function lifeSoFar(scope: UserScope, tz: string, today: string, now: Date)
   );
   const out: ClockItem[] = [];
   const doneAt = (at: Date) => Math.min(wallMinutes(at, tz, today), wallMinutes(now, tz, today));
+  // a done thing with a due time sits at its due time, ticked (COO, 2026-11-16: the test students saw "Problem Set 12,
+  // 2:58 AM", when it was handed in, while it was due at 11:59 PM); without one, where it was done
+  const placed = (at: Date, due: Date | null) => (due ? wallMinutes(due, tz, today) : doneAt(at));
   for (const t of doneTasks) {
     if (!t.at) continue;
     const { emoji, rest } = splitEmoji(t.title);
@@ -308,7 +311,8 @@ async function lifeSoFar(scope: UserScope, tz: string, today: string, now: Date)
       cat: "other",
       icon: emoji ?? iconFor(t.title, "task", "task"),
       title: rest,
-      start: doneAt(t.at),
+      start: placed(t.at, t.dueAt),
+      atDue: !!t.dueAt || undefined,
       end: null,
       allDay: false,
       href: `/tasks/${t.id}`,
@@ -327,7 +331,8 @@ async function lifeSoFar(scope: UserScope, tz: string, today: string, now: Date)
       cat: "other",
       icon: "📄",
       title: a.title,
-      start: doneAt(a.at),
+      start: placed(a.at, a.dueAt),
+      atDue: !!a.dueAt || undefined,
       end: null,
       allDay: false,
       href: `/school/courses/${a.courseId}`,

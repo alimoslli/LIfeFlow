@@ -14,6 +14,8 @@ import { SkyWindow } from "@/components/skylings/sky-window";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { listEmployers, listPaychecks, listShifts, regularHoursOf, shiftPaidMinutes } from "@/server/services/work";
+import { getAgenda } from "@/server/services/calendar";
+import { isDueEvent } from "@/lib/next-up";
 import { JobHoursForm, PaycheckDialog, ShiftDialog, WorkHoursField } from "./forms";
 import { ShiftList } from "./shift-list";
 import { addPaycheckAction, createEmployerAction, createShiftAction, setJobHoursAction } from "./actions";
@@ -28,14 +30,18 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
     const tz = u.timezone;
     const today = todayIn(tz);
     const wk = weekStart(sp.week && isValidDateStr(sp.week) ? sp.week : today);
-    const [employers, shifts, thisWeek, ahead, paychecks] = await series(
+    const [employers, shifts, thisWeek, ahead, paychecks, agenda] = await series(
       () => listEmployers(s),
       () => listShifts(s, tz, wk, addDaysStr(wk, 6), { includeCancelled: true }),
       () => listShifts(s, tz, weekStart(today), addDaysStr(weekStart(today), 6)),
       () => listShifts(s, tz, today, addDaysStr(today, 30)),
       () => listPaychecks(s, 8),
+      () => getAgenda(s, tz, today, addDaysStr(today, 13), { include: ["event"] }),
     );
-    return { employers, shifts, thisWeek, ahead, paychecks, wk, today, tz, now: currentInstant().getTime() };
+    // client work sits under Work by its tag (owner, 2026-11-16, item 6 of the Today list): calendar events of the type
+    // Work, meetings and shoots, and all-day deliveries, which count as due. A tag, not a section of its own.
+    const clientWork = agenda.filter((e) => e.kind === "work").slice(0, 6);
+    return { employers, shifts, thisWeek, ahead, paychecks, clientWork, wk, today, tz, now: currentInstant().getTime() };
   });
   const { tz, today, now } = d;
   const jobs = d.employers.map((e) => ({ id: e.id, name: e.name }));
@@ -60,19 +66,48 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
     return { day, letter: formatDateStr(day, "EEEEE"), hours, done, today: day === today, planned: on.length > 0 && !done };
   });
 
+  const clientWork = d.clientWork.length > 0 && (
+    <section className="animate-rise" aria-label="Meetings, shoots and deliveries">
+      <h2 className="mb-3 font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Meetings, shoots and deliveries</h2>
+      <ul className="lf-tiles">
+        {d.clientWork.map((e) => {
+          const due = e.allDay && isDueEvent(e.title);
+          return (
+            <li key={e.key}>
+              <Link href={e.href} className="flex min-h-16 items-center gap-3.5 px-4 py-3">
+                <PixelIcon name={due ? "flag" : "calendar"} className="h-8 w-8" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[0.9375rem] font-semibold">{e.title}</span>
+                  <span className="block truncate text-[0.8125rem] text-muted">
+                    {due
+                      ? `Due ${/^To/.test(dayWord(e.startsAt)) ? dayWord(e.startsAt).toLowerCase() : dayWord(e.startsAt)}`
+                      : e.allDay
+                        ? dayWord(e.startsAt)
+                        : `${dayWord(e.startsAt)} · ${formatIn(e.startsAt, tz, "h:mm a")}`}
+                  </span>
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-2 px-1 text-xs text-muted">From your calendar, for anything you set as Work.</p>
+    </section>
+  );
+
   if (d.employers.length === 0)
     return (
-      <div className="mx-auto max-w-[640px]">
+      <div className="mx-auto flex max-w-[640px] flex-col gap-6">
         <Header today={today} />
-        <SkyWindow tz={tz} className="mt-6 rounded-[1.75rem]">
+        {clientWork}
+        <SkyWindow tz={tz} className="rounded-[1.75rem]">
           <div className="relative min-h-[11rem] px-6 pt-6 pb-5">
-            <p className="text-xs font-semibold tracking-[0.14em] text-sun uppercase">Work</p>
-            <p className="mt-1 max-w-[62%] font-display text-[1.75rem] leading-tight font-medium">Add your job</p>
+            <p className="max-w-[62%] font-display text-[1.75rem] leading-tight font-medium">Add your job</p>
             <p className="mt-2 max-w-[62%] text-sm text-white/80">Then your shifts and pay show up here and on your sky.</p>
             <SkylingOnCup />
           </div>
         </SkyWindow>
-        <div className="mt-6 rounded-[1.375rem] bg-surface p-5 shadow-soft">
+        <div className="rounded-[1.375rem] bg-surface p-5 shadow-soft">
           <EmployerForm />
         </div>
       </div>
@@ -137,6 +172,8 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
           </div>
         </SkyWindow>
       </section>
+
+      {clientWork}
 
       <section className="animate-rise" style={{ animationDelay: "60ms" }} aria-label="This week">
         <h2 className="mb-3 font-display text-[1.3125rem] leading-tight font-medium tracking-tight">This week</h2>
@@ -211,9 +248,12 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
         </details>
       </section>
 
-      <section className="animate-rise" style={{ animationDelay: "120ms" }} aria-label="Pay that came in">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Pay that came in</h2>
+      {/* the paycheck list, one tap deeper (owner, 2026-11-16, item 4 of the Today list); the last one is in the window above */}
+      <details className="animate-rise" style={{ animationDelay: "120ms" }} aria-label="Pay that came in" data-testid="work-pay">
+        <summary className="flex min-h-11 cursor-pointer items-center px-1 text-sm font-medium text-text-2">
+          Pay that came in{d.paychecks.length ? ` · ${d.paychecks.length}` : ""}
+        </summary>
+        <div className="mt-2 mb-3 flex justify-end">
           <PaycheckDialog action={addPaycheckAction} employers={jobs} today={today} />
         </div>
         {d.paychecks.length === 0 ? (
@@ -235,7 +275,7 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
             ))}
           </ul>
         )}
-      </section>
+      </details>
 
       {/* the job itself (pay rate, usual hours, another job), one tap deeper */}
       <details className="animate-rise" style={{ animationDelay: "160ms" }}>
@@ -287,7 +327,7 @@ function Header({ today, action }: { today: string; action?: React.ReactNode }) 
     <header className="animate-rise flex items-end justify-between gap-3">
       <div>
         <p className="text-sm text-muted">{formatDateStr(today, "EEEE, MMMM d")}</p>
-        <h1 className="mt-1 font-display text-[2.5rem] leading-none font-medium tracking-tight">Work</h1>
+        <h1 className="mt-1 font-display text-[2.5rem] leading-[1.1] font-medium tracking-tight">Work</h1>
       </div>
       {action}
     </header>

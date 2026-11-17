@@ -53,7 +53,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
     <div className="flex flex-col gap-6">
       <CalendarViewToggle active="month" />
       <header className="flex items-center justify-between gap-3">
-        <h1 className="font-display text-[2.125rem] leading-none font-medium tracking-tight sm:text-[2.5rem]">
+        <h1 className="font-display text-[2.125rem] leading-[1.1] font-medium tracking-tight sm:text-[2.5rem]">
           {formatDateStr(d.month, "MMMM")} <span className="text-muted">{formatDateStr(d.month, "yyyy")}</span>
         </h1>
         <div className="flex items-center gap-2">
@@ -187,7 +187,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                       {i.allDay
                         ? "All day"
                         : i.endsAt
-                          ? `${formatIn(i.startsAt, tz, "h:mm")}–${formatIn(i.endsAt, tz, "h:mm a")}`
+                          ? `${formatIn(i.startsAt, tz, formatIn(i.startsAt, tz, "a") === formatIn(i.endsAt, tz, "a") ? "h:mm" : "h:mm a")}–${formatIn(i.endsAt, tz, "h:mm a")}`
                           : formatIn(i.startsAt, tz, "h:mm a")}
                       {i.subtitle ? ` · ${i.subtitle}` : ""}
                     </p>

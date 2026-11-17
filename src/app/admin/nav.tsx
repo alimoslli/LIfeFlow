@@ -45,7 +45,7 @@ export function AdminNav({ email, counts }: { email: string; counts: { feedback:
         <div className="flex items-center justify-between gap-3 pt-3">
           <Link href="/admin" className="flex min-h-11 items-center gap-2.5">
             <BrandMark className="h-9 w-9" alt="" />
-            <span className="font-display text-[1.375rem] leading-none font-medium">
+            <span className="font-display text-[1.375rem] leading-[1.2] font-medium">
               LifeFlow <span className="hq-eyebrow align-middle">HQ</span>
             </span>
           </Link>
@@ -101,7 +101,7 @@ export function AdminNav({ email, counts }: { email: string; counts: { feedback:
             <BrandMark className="h-8 w-8" alt="" />
           </span>
           <span>
-            <span className="block font-display text-[1.375rem] leading-none font-medium">LifeFlow</span>
+            <span className="block font-display text-[1.375rem] leading-[1.2] font-medium">LifeFlow</span>
             <span className="text-[0.625rem] tracking-[0.2em] text-brass-ink uppercase">Headquarters</span>
           </span>
         </Link>

@@ -160,6 +160,7 @@ test("things at the same moment stack into one stop that lists them", async ({ p
   await page.reload();
   await expect(clock).toHaveAttribute("data-ready", "true");
   await page.getByRole("button", { name: /^Today\. Now / }).click();
+  // the done one is back at its due time, ticked, and the stop counts only what's still due
   await expect(page.getByRole("button", { name: /^2 assignments due, .*11:59 PM$/ }).first()).toBeVisible();
 });
 
