@@ -2296,3 +2296,13 @@ html[data-lf-new-visit] [data-chat-log] {
     cursor: pointer;
   }
 }
+
+/* Gradient words (bg-clip-text) paint only inside their own box, so an italic's overhang and the descenders of
+   g, j, p, q, y were cut off (a reviewer, 2026-11-17). The padding widens the painted box past the glyphs; the
+   negative margin keeps the spacing and line height exactly as before. */
+.lf-clip-text {
+  padding: 0.04em 0.12em 0.14em 0.04em;
+  margin: -0.04em -0.12em -0.14em -0.04em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}

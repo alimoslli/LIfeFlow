@@ -163,7 +163,7 @@ export function BudgetBody({ b }: { b: Budget }) {
   if (b.weekPct === null) {
     return (
       <>
-        <p className="mt-1 font-display text-[1.5rem] leading-none font-medium">Not measured yet</p>
+        <p className="mt-1 font-display text-[1.5rem] leading-tight font-medium">Not measured yet</p>
         <p className="mt-1.5 text-xs text-text-2">Automated rounds: not measured yet</p>
       </>
     );

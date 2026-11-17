@@ -106,7 +106,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
     <div className="mx-auto flex max-w-[680px] flex-col gap-8">
       <header className="flex items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-[2.5rem] leading-none font-medium tracking-tight">Calendar</h1>
+          <h1 className="font-display text-[2.5rem] leading-[1.1] font-medium tracking-tight">Calendar</h1>
           <div className="mt-3">
             <CalendarViewToggle active="week" />
           </div>

@@ -32,7 +32,7 @@ export function ForgotForm({ available, contact, sender }: { available: boolean;
     return (
       <div className="flex flex-col gap-4">
         <MailCheck className="h-10 w-10 text-accent" />
-        <h1 className="font-display text-[2.125rem] leading-[1.05] font-medium tracking-tight">Check your email.</h1>
+        <h1 className="font-display text-[2.125rem] leading-[1.1] font-medium tracking-tight">Check your email.</h1>
         <p className="text-[0.9375rem] text-text-2">
           If {state.email} has a LifeFlow account, a link to choose a new password is on its way. It works once, for one hour.
         </p>
@@ -65,7 +65,7 @@ export function ForgotForm({ available, contact, sender }: { available: boolean;
   return (
     <form action={action} className="flex flex-col gap-4">
       <div className="mb-3">
-        <h1 className="font-display text-[2.375rem] leading-[1.05] font-medium tracking-tight">Forgot your password?</h1>
+        <h1 className="font-display text-[2.375rem] leading-[1.1] font-medium tracking-tight">Forgot your password?</h1>
         <p className="mt-2 text-[0.9375rem] text-muted">Enter your email and we&apos;ll send you a link to choose a new one.</p>
       </div>
       {!available && (

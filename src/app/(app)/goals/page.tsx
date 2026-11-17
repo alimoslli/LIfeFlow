@@ -103,7 +103,7 @@ export default async function GoalsPage({ searchParams }: { searchParams: Promis
       <header className="animate-rise flex items-end justify-between gap-3">
         <div>
           <p className="text-sm text-muted">{formatDateStr(d.today, "EEEE, MMMM d")}</p>
-          <h1 className="mt-1 font-display text-[2.5rem] leading-none font-medium tracking-tight">Goals</h1>
+          <h1 className="mt-1 font-display text-[2.5rem] leading-[1.1] font-medium tracking-tight">Goals</h1>
         </div>
         {done ? (
           <AddSheet label="Milestone" title="Add a milestone">
@@ -222,7 +222,7 @@ function AimingView({ d, locked }: { d: Data; locked: boolean }) {
       </section>
 
       <section aria-label="Aiming for">
-        <h2 className="mb-3 font-display text-[1.3125rem] leading-none font-medium tracking-tight">Aiming for</h2>
+        <h2 className="mb-3 font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Aiming for</h2>
         {locked && (
           <Link href="/money" className="mb-2 flex min-h-14 items-center gap-3 rounded-3xl bg-surface px-5 shadow-soft">
             <PixelIcon name="lock" className="h-6 w-6" />
@@ -313,7 +313,7 @@ function AimingView({ d, locked }: { d: Data; locked: boolean }) {
       </section>
 
       <section aria-label="Habits">
-        <h2 className="mb-3 font-display text-[1.3125rem] leading-none font-medium tracking-tight">Every day</h2>
+        <h2 className="mb-3 font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Every day</h2>
         <ul className="lf-tiles lf-tiles-2">
           {habits.map((h) => (
             <li key={h.id} className="flex flex-col gap-1 p-3">
