@@ -11,9 +11,6 @@ import { findConflicts, getAgenda, getEvent, type AgendaItem } from "@/server/se
 import { listEmployers, listShifts } from "@/server/services/work";
 import { getAssignment, listCourses } from "@/server/services/school";
 import { listTasks } from "@/server/services/tasks";
-import { lifeLoad } from "@/server/services/life-load";
-import { moneyLocked } from "@/server/auth/money-lock";
-import { LifeLoad } from "./life-load";
 import { EditableBlock, type Block } from "./block-editor";
 import { SkylingIcon } from "@/components/skylings/sprite";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
@@ -39,14 +36,12 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
   const filter = FILTERS.find((x) => x.key === sp.f)?.key ?? "all";
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);
-    const locked = await moneyLocked(u);
     const from = sp.date && isValidDateStr(sp.date) && sp.date > today ? sp.date : today;
-    const [items, courses, jobs, tasks, week] = await series(
+    const [items, courses, jobs, tasks] = await series(
       () => getAgenda(s, u.timezone, from, addDaysStr(from, 6)),
       () => listCourses(s),
       () => listEmployers(s),
       () => listTasks(s, { status: "open", topLevelOnly: true, limit: 200 }),
-      () => lifeLoad(s, u.timezone, today, { includeMoney: !locked }),
     );
     // What each block's editor needs (every block on the calendar can be edited in place).
     const tz = u.timezone;
@@ -98,7 +93,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         };
       }
     }
-    return { week, items, blocks, courses, jobs, openTasks: tasks.length, undated: tasks.filter((t) => !t.dueAt).slice(0, 5), today, from, tz };
+    return { items, blocks, courses, jobs, openTasks: tasks.length, undated: tasks.filter((t) => !t.dueAt).slice(0, 5), today, from, tz };
   });
   const items = d.items.filter((i) => matches(i, filter));
   const conflictKeys = new Set(findConflicts(d.items).flatMap((c) => [c.a.key, c.b.key]));
@@ -111,7 +106,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
     <div className="mx-auto flex max-w-[680px] flex-col gap-8">
       <header className="flex items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-[2.5rem] leading-none font-medium tracking-tight">Calendar</h1>
+          <h1 className="font-display text-[2.5rem] leading-[1.1] font-medium tracking-tight">Calendar</h1>
           <div className="mt-3">
             <CalendarViewToggle active="week" />
           </div>
@@ -130,7 +125,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         </div>
       </header>
 
-      {d.from === d.today && <LifeLoad week={d.week} />}
+      {/* no "Your week" bar chart (owner, 2026-11-16, item 5 of the Today list): the days below say the same */}
 
       <nav
         className="lf-hscroll -mx-5 -my-1.5 flex gap-1.5 overflow-x-auto px-5 py-1.5 [scrollbar-width:none] sm:-mx-8 sm:px-8 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden"

@@ -22,8 +22,7 @@ export function SkyExplainer({ name, tz, companion }: { name: string; tz: string
   return (
     <>
       <section className="relative overflow-hidden rounded-[1.75rem] bg-white/[0.06] p-5 ring-1 ring-white/12 backdrop-blur-md sm:p-6" aria-labelledby="wl-sky">
-        <p className="text-[0.75rem] font-semibold tracking-[0.14em] text-star-gold uppercase">While you wait</p>
-        <h2 id="wl-sky" className="mt-2 font-display text-[1.75rem] leading-[1.05] font-medium tracking-[-0.03em]">
+        <h2 id="wl-sky" className="font-display text-[1.75rem] leading-[1.15] font-medium tracking-[-0.03em]">
           See how your sky works
         </h2>
         <p className="mt-2 text-[0.9375rem] leading-relaxed text-white/75">

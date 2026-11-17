@@ -15,8 +15,6 @@ import { AI_CONSENT_NEEDED } from "@/lib/ai-consent";
 import { isNarration } from "@/lib/narration";
 import { savesSomething } from "@/lib/tool-saves";
 import { cn } from "@/lib/utils";
-import { IdeaClouds } from "@/components/skylings/idea-clouds";
-import type { IdeaCloud } from "@/lib/idea-clouds";
 
 /**
  * The skyling answers right on Today (owner, 2026-11-10: "there's no different page for the assistant. You just type it
@@ -359,12 +357,13 @@ const fillBar = (ask: string) => window.dispatchEvent(new CustomEvent(FILL_BAR, 
  */
 export function TodayMiddle({
   name,
-  clouds,
   note,
+  brief,
   children,
 }: {
   name: string;
-  clouds: IdeaCloud[];
+  /** This morning's brief in one line, until noon (services/next-up.ts). */
+  brief?: string | null;
   /** The skyling's one note: a link, a question it sends, or words it puts in the bar. */
   note: { text: string; href?: string; prompt?: string; fill?: string; attention?: boolean } | null;
   /** Something that must come first (the birthday question). */
@@ -392,20 +391,25 @@ export function TodayMiddle({
   if (reply) return <TodayReplyCard name={name} refresh={refresh} fill />;
   if (children) return <div className="h-full overflow-y-auto">{children}</div>;
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 overflow-hidden px-1">
+    // centred when it fits, from the top and scrolling when it doesn't, so the note and the brief are never cut (test students p0001 and p2047)
+    <div className="flex h-full flex-col items-center justify-center-safe gap-3 overflow-y-auto overscroll-contain px-1 py-1">
       {note && (
         <section aria-label={note.attention ? "Heads up" : "From your skyling"} className="contents">
           <button
             type="button"
             data-testid="assistant-line"
             onClick={() => (note.href ? router.push(note.href) : note.prompt ? void askOnToday(note.prompt, refresh) : fillBar(note.fill ?? note.text))}
-            className="line-clamp-2 min-h-11 max-w-[22rem] text-center text-[0.9375rem] leading-snug font-medium text-text"
+            className="line-clamp-3 min-h-11 max-w-[22rem] shrink-0 text-center text-[0.9375rem] leading-snug font-medium text-text"
           >
             {note.text}
           </button>
         </section>
       )}
-      <IdeaClouds clouds={clouds} show={3} onPick={fillBar} />
+      {brief && (
+        <p className="max-w-[22rem] shrink-0 text-center text-sm text-text-2" data-testid="morning-brief">
+          <span className="font-medium">Morning brief:</span> {brief}
+        </p>
+      )}
     </div>
   );
 }

@@ -75,12 +75,16 @@ export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () =
   const assistantName = useAssistantName();
   const [scrolled, setScrolled] = useState(false);
   const [demoHidden, setDemoHidden] = useState(true);
+  const hasBack = !!info.back;
   useEffect(() => {
-    const on = () => setScrolled(window.scrollY > 44);
+    // A page with a way back shows its small title from the start, so its bar is frosted as soon as the page moves: left
+    // clear for the first 44 px, the page's big title slid under the back button and its own small title (the test user,
+    // 2026-11-16, on Bills). Elsewhere the bar stays clear until the big title has gone under it.
+    const on = () => setScrolled(window.scrollY > (hasBack ? 0 : 44));
     on();
     window.addEventListener("scroll", on, { passive: true });
     return () => window.removeEventListener("scroll", on);
-  }, [pathname]);
+  }, [pathname, hasBack]);
   useEffect(() => {
     let hidden = false;
     try {

@@ -18,15 +18,18 @@ async function smallTargets(page: Page): Promise<string[]> {
     const tapBox = (el: HTMLElement) => {
       const r = el.getBoundingClientRect();
       let { top, bottom, left, right } = r;
-      if (getComputedStyle(el).position !== "static") {
+      // a ::before/::after hit area sits on the element itself, or, when the element is static, on the box it's laid out
+      // in (an idea cloud's button: the whole cloud is its tap target)
+      const box = getComputedStyle(el).position !== "static" ? r : (el.offsetParent as HTMLElement | null)?.getBoundingClientRect();
+      if (box) {
         for (const pseudo of ["::before", "::after"]) {
           const ps = getComputedStyle(el, pseudo);
           if (ps.content === "none" || ps.position !== "absolute") continue;
           const px = (v: string) => (v.endsWith("px") ? parseFloat(v) : 0);
-          top = Math.min(top, r.top + px(ps.top));
-          left = Math.min(left, r.left + px(ps.left));
-          bottom = Math.max(bottom, r.bottom - px(ps.bottom));
-          right = Math.max(right, r.right - px(ps.right));
+          top = Math.min(top, box.top + px(ps.top));
+          left = Math.min(left, box.left + px(ps.left));
+          bottom = Math.max(bottom, box.bottom - px(ps.bottom));
+          right = Math.max(right, box.right - px(ps.right));
         }
       }
       return { w: right - left, h: bottom - top };

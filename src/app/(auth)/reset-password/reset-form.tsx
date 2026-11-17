@@ -24,7 +24,7 @@ export function ResetForm() {
   if (token === "")
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="font-display text-[2.125rem] leading-[1.05] font-medium tracking-tight">This link isn&apos;t complete.</h1>
+        <h1 className="font-display text-[2.125rem] leading-[1.1] font-medium tracking-tight">This link isn&apos;t complete.</h1>
         <p className="text-[0.9375rem] text-text-2">Open the link from the email again, or ask for a new one.</p>
         <Link href="/forgot-password" className="font-medium text-accent">
           Send a new link
@@ -34,7 +34,7 @@ export function ResetForm() {
   return (
     <form action={action} className="flex flex-col gap-4">
       <div className="mb-3">
-        <h1 className="font-display text-[2.375rem] leading-[1.05] font-medium tracking-tight">Choose a new password.</h1>
+        <h1 className="font-display text-[2.375rem] leading-[1.1] font-medium tracking-tight">Choose a new password.</h1>
         <p className="mt-2 text-[0.9375rem] text-muted">You&apos;ll be signed out everywhere else, then you can sign in with it.</p>
       </div>
       <FormError message={state?.error} />

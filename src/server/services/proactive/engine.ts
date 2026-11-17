@@ -199,7 +199,14 @@ export function scheduledFrom(slot: Slot, quietEnd: string): string {
 }
 
 /** Runs the current slot once per day (morning, midday, evening). Cheap when already done. */
-export async function runDueSlot(scope: UserScope, tz: string, prefs: UserPreferences | undefined, now = new Date(), opts: { scheduled?: boolean } = {}) {
+export async function runDueSlot(
+  scope: UserScope,
+  tz: string,
+  prefs: UserPreferences | undefined,
+  now = new Date(),
+  /** `idle`: the account hasn't opened the app in 7 days (services/idle.ts), so nothing paid is done for it in the background. */
+  opts: { scheduled?: boolean; idle?: boolean } = {},
+) {
   const localTime = localTimeOf(now, tz);
   const slot = slotOf(localTime);
   // from the scheduler: not before the slot's time has come (nothing is logged, so the next run tries again)
@@ -217,7 +224,7 @@ export async function runDueSlot(scope: UserScope, tz: string, prefs: UserPrefer
   // Receipts kept while their bank charge hadn't posted ride along on it once it has. Never blocks the rest.
   await attachWaitingReceiptsSafely(scope, todayIn(tz, now));
   // Mornings, if the user turned it on: file new school, bill and work emails from Gmail. Never blocks the rest.
-  if (slot === "morning" && prefs?.gmailFiling)
+  if (slot === "morning" && prefs?.gmailFiling && !opts.idle)
     await fileFromGmail(scope, tz, todayIn(tz, now)).catch((e) => console.error("[gmail filing]", e instanceof Error ? e.name : e));
   return runProactive({ scope, tz, prefs, trigger: slot, now });
 }

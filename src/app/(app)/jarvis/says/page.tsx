@@ -17,7 +17,8 @@ export default async function JarvisSaysPage({ searchParams }: { searchParams: P
   const { shared } = await searchParams;
   const d = await withCurrentUser(async (s, u) => {
     const locked = await moneyLocked(u);
-    const rows = (await listMessages(s, 150)).filter((m) => !(locked && m.topic === "money"));
+    // the morning brief lives on Today now (owner, 2026-11-16, item 1), not here
+    const rows = (await listMessages(s, 150)).filter((m) => m.kind !== "morning_brief" && !(locked && m.topic === "money"));
     return { rows, tz: u.timezone, name: assistantProfile(u.preferences, u.timezone).name, locked };
   });
   const days = new Map<string, typeof d.rows>();

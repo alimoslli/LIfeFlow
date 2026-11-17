@@ -746,7 +746,9 @@ export type DetectorName = keyof typeof DETECTORS;
 
 /** Which detectors run when. Events run right after the change that triggered them. */
 export const RUNS: Record<string, DetectorName[]> = {
-  morning: ["emailBrief", "morningBrief", "monthlyReview", "savingsCheck", "billsDue", "paydaySplit", "deadlineConflicts", "goalMilestones", "savedMore"],
+  // The monthly cheaper-bill web search (`savingsCheck`) is off (owner, 2026-11-15: "Turn it off for now"): it is a paid search,
+  // and no page shows what it finds. It stays in DETECTORS for when Bills lists the results; putting it back is one name here.
+  morning: ["emailBrief", "morningBrief", "monthlyReview", "billsDue", "paydaySplit", "deadlineConflicts", "goalMilestones", "savedMore"],
   midday: ["spendingPace", "unusualSpend", "billsDue", "overdueTasks", "subscriptionWatch", "moneyFinds", "reviewTransactions"],
   // The evening wrap-up offers to move what's left, so late to-dos are raised at midday.
   evening: [
