@@ -39,8 +39,11 @@ test("by day, tonight's night shift is on the sky with its time", async ({ page 
   await expect(mark).toHaveCount(1);
   await expect(mark).toHaveText("Tonight: Work 10 PM");
   await expect(mark).toContainText("10 PM");
-  await expect(page.locator('[data-testid="assistant-line"]:visible')).toHaveText("Next: Fulfillment Center shift at 10:00 PM");
-  await page.screenshot({ path: "/tmp/claude-0/-home-user/f5e405f4-f20d-592b-8f29-de312d5a4ef1/scratchpad/night.png" });
+  // the note is written by the server at the real time (only the browser's clock is fixed here), so between 10 PM and
+  // the shift's end in New York it rightly says "Now"; either way it names the shift
+  await expect(page.locator('[data-testid="assistant-line"]:visible')).toHaveText(
+    /^(Next: Fulfillment Center shift (tomorrow )?at 10:00 PM|Now: Fulfillment Center shift until 6:30 AM)$/,
+  );
 });
 
 test("client work sits under Work by its tag, a delivery as due", async ({ page }) => {
