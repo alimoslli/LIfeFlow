@@ -1,7 +1,7 @@
 import { after } from "next/server";
 import Link from "next/link";
 import { ClaimStars } from "./_today/claim-stars";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { TODAY_COOKIE, parseTodayMode } from "@/lib/theme";
 import { aiAllowed } from "@/lib/ai-consent";
 import { isCompanionChoice } from "@/lib/companions";
@@ -92,10 +92,16 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       ),
     );
   // Promises whose time has come get their one "Did you?" as soon as the app opens (the 30-minute cron does it when it's closed).
+  // It runs right after the page is sent, never before it (owner, 2026-11-17: "the app takes a lot of time to load up"): it is a
+  // transaction of its own, about ten trips to the database, and nothing on this page waits for what it writes.
   if (me.accountKind !== "demo")
-    await withUser(me.id, (scope) => runProactive({ scope, tz: me.timezone, prefs: me.preferences, trigger: "promise" })).catch((e) =>
-      console.error("promise check failed", e instanceof Error ? e.name : e),
+    after(() =>
+      withUser(me.id, (scope) => runProactive({ scope, tz: me.timezone, prefs: me.preferences, trigger: "promise" })).catch((e) =>
+        console.error("promise check failed", e instanceof Error ? e.name : e),
+      ),
     );
+  // A phone's Today shows no idea clouds (owner, 2026-11-16), so a phone doesn't work them out either.
+  const phone = /\b(iPhone|iPod|Android.+Mobile)\b/.test((await headers()).get("user-agent") ?? "");
   const { clock, note, brief, clash, assistantName, setup, hello, clouds, userId } = await withCurrentUser(async (scope, user) => {
     const tz = user.timezone ?? "UTC";
     // Money (bills due, spent today) joins the clock only while the Money lock is open.
@@ -135,10 +141,12 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       clash: !!top?.id?.startsWith("conflict"),
       assistantName: assistantProfile(user.preferences, user.timezone).name,
       // idea clouds beside the chat bar, from their own data (lib/idea-clouds)
-      clouds: await ideaClouds(scope, tz, user.preferences, assistantProfile(user.preferences, user.timezone).name, new Date(), {
-        noteId: note?.id,
-        topics: next?.topics,
-      }),
+      clouds: phone
+        ? []
+        : await ideaClouds(scope, tz, user.preferences, assistantProfile(user.preferences, user.timezone).name, new Date(), {
+            noteId: note?.id,
+            topics: next?.topics,
+          }),
       userId: user.id,
       setup,
       hello: `${greetingIn(tz)}, ${user.name.split(" ")[0]}`,
