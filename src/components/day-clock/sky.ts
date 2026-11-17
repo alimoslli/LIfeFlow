@@ -66,7 +66,7 @@ const HF = 0.78;
 /**
  * The sky's mood for a day (owner, 2026-11-09: "add clouds, but not in all the settings, sometimes"; "sometimes we will
  * add rain"; "a Christmas mode"). Decorative, never a forecast, and the same all day: most days clear, some with
- * clouds, now and then an overcast day with rain; in December a festive sky that snows some days (always on the 24th
+ * clouds, now and then an overcast day (no rain: it read as trouble with nothing to say why); in December a festive sky that snows some days (always on the 24th
  * and 25th), with lights along the horizon.
  */
 export type Mood = { clouds: number; rain: boolean; snow: boolean; festive: boolean };
@@ -78,7 +78,9 @@ export function moodOf(date: string): Mood {
   const [month, day] = [Number(date.slice(5, 7)), Number(date.slice(8, 10))];
   const festive = month === 12 && day <= 26;
   const clouds = r1 < 0.42 ? 0 : r1 < 0.78 ? 0.5 : 1;
-  return { clouds, rain: !festive && clouds === 1 && r2 < 0.4, snow: festive && (r2 < 0.55 || day === 24 || day === 25), festive };
+  // no rain by the calendar: rain with nothing to say why read as a forecast or as trouble (COO, 2026-11-16, from three
+  // test students); an overcast day stays grey, and rain is only ?debug=1&mood=rain
+  return { clouds, rain: false, snow: festive && (r2 < 0.55 || day === 24 || day === 25), festive };
 }
 
 /** The wheel's radius in a window this wide with this much sky above its horizon (the engine turns it by the same). */
@@ -283,9 +285,12 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   const whoQ = root.querySelector<HTMLCanvasElement>("[data-dc=who]");
   const bgQ = root.querySelector<HTMLElement>("[data-dc=skybg]");
   const wordsQ = root.querySelector<HTMLElement>("[data-dc=words]");
-  if (!svgQ || !whoQ || !bgQ || !wordsQ) return { draw: () => {}, visit: () => {}, cheer: () => {}, destroy: () => {} };
+  if (!svgQ || !whoQ || !bgQ || !wordsQ) return { draw: () => {}, pileAt: () => null, visit: () => {}, cheer: () => {}, destroy: () => {} };
   const [svg, who, bg, words]: [SVGSVGElement, HTMLCanvasElement, HTMLElement, HTMLElement] = [svgQ, whoQ, bgQ, wordsQ];
   const stars = bg.querySelector<SVGSVGElement>("[data-dc=stars]");
+  // Today has no countdown on the water and no "N stars" line (owner, 2026-11-16, item 3 of the Today list); the
+  // waitlist's example sky keeps them, since its labels point at them
+  const example = root.hasAttribute("data-example");
   const clouds = [...bg.querySelectorAll<HTMLElement>("[data-dc=cloud]")];
   // the day's mood: up to six clouds (the skeleton has two), rain and snow layers, built once
   for (const [l, t, w, hh] of [
@@ -360,6 +365,8 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   let last: SkyState | null = null;
   let sun: { key: string; rise: number; set: number } | null = null;
   let night = false;
+  /** The "+N" piles drawn on the closed sky, in the sky's own pixels, for `pileAt`. */
+  let piles: { x: number; y: number; w: number; h: number; ids: string[] }[] = [];
   let pose: Pose = "idle";
   let step = 0;
   // what the skyling's day looks like right now (set by draw), so the timer can pick its pose without redrawing the sky
@@ -497,14 +504,23 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       if (data.steps != null) pills.push(`👟 ${data.steps.toLocaleString("en-US")}`);
       if (data.sleepHours != null) pills.push(`😴 ${Math.floor(data.sleepHours)}h ${String(Math.round((data.sleepHours % 1) * 60)).padStart(2, "0")}m`);
       if (data.spentTodayCents != null) pills.push(`💳 $${(data.spentTodayCents / 100).toFixed(2).replace(/\.00$/, "")}`);
-      if (done) pills.push(`⭐ ${done}`);
+      // no stars count on Today (owner, 2026-11-16, item 3 of the Today list); the waitlist's example keeps it
+      if (done && example) pills.push(`⭐ ${done}`);
       // what comes after this half of the day: after sunset by day, after sunrise at night
       const m = mod(now);
       const edge = night ? now - m + (m < rise ? rise : DAY + rise) : now - m + set;
       const after: string[] = [];
+      // tonight's shift is said with its time, and keeps its place when the words are short of room (owner, 2026-11-16,
+      // item 7 of the Today list: a night shift is under the day's horizon, and the test user's Thursday shift was missing)
+      let shiftTonight = false;
       for (const it of timed.filter((x) => x.start >= edge && x.start < edge + 600).sort((a, b) => a.start - b.start)) {
-        const say = `${it.icon} ${named(it)}`;
-        if (after.length < 2 && !after.includes(say)) after.push(say);
+        const shift = !night && it.origin === "shift";
+        const say = shift ? `${it.icon} ${named(it)} ${fmt(it.start)}` : `${it.icon} ${named(it)}`;
+        if (shift && !shiftTonight) {
+          shiftTonight = true;
+          after.unshift(say);
+          if (after.length > 2) after.pop();
+        } else if (after.length < 2 && !after.includes(say)) after.push(say);
       }
       const asleep = night && (m >= 23 * 60 || m < rise);
       out = [
@@ -513,7 +529,9 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         cur && nx ? `<span class="dc-w-then">Then ${nx.icon} ${named(nx)} · ${fmt(nx.start)}</span>` : "",
         !pills.length && face.stats[0] ? `<span class="dc-w-then">${esc(face.stats[0])}</span>` : "",
         pills.length ? `<span class="dc-w-pills">${pills.map((x) => `<span>${esc(x)}</span>`).join("")}</span>` : "",
-        after.length ? `<span class="dc-w-after">${night ? "After sunrise" : "After sunset"} · ${after.join(" · ")}</span>` : "",
+        after.length
+          ? `<span class="dc-w-after${shiftTonight ? " dc-w-keep" : ""}">${night ? "After sunrise" : shiftTonight ? "Tonight" : "After sunset"} · ${after.join(" · ")}</span>`
+          : "",
       ].join("");
     } else {
       const on = timed.find((it) => it.end != null && it.start <= view && it.end > view);
@@ -750,9 +768,10 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     // ---- tiles: one per moment on the rim (a pile when several share it, what's on now leading), late things at now,
     // the next two with their time. A tile that would sit on another moves just inside; failing that, it piles up.
     const cur = timed.find((it) => it.end != null && it.start <= now && it.end > now);
-    const nextIt = cur ?? timed.filter((it) => it.start > now && it.origin !== "milestone").sort((a, b) => a.start - b.start)[0];
+    const nextIt = cur ?? timed.filter((it) => it.start > now && !it.done && it.origin !== "milestone").sort((a, b) => a.start - b.start)[0];
     const placeOf = (it: ClockItem) => (isLate(it, now) ? now : it.start);
-    const weight = (it: ClockItem) => (it === nextIt ? 9 : it.end != null ? 5 : isExam(it) ? 4 : it.origin === "assignment" || it.origin === "task" ? 3 : 1);
+    const weight = (it: ClockItem) =>
+      it.done ? 0 : it === nextIt ? 9 : it.end != null ? 5 : isExam(it) ? 4 : it.origin === "assignment" || it.origin === "task" ? 3 : 1;
     const onPath = timed.filter((x) => inHalf(x.start) && !isLate(x, now) && !OFF_PATH.includes(x.origin ?? ""));
     const groups = new Map<string, ClockItem[]>();
     for (const it of [...st.items.filter((x) => isLate(x, now) && inHalf(now)), ...onPath]) {
@@ -762,11 +781,12 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     const list = [...groups.values()].map((gp) => gp.sort((a, b) => weight(b) - weight(a))).sort((a, b) => placeOf(a[0]) - placeOf(b[0]));
     const withTime = new Set(
       list
-        .filter((gp) => placeOf(gp[0]) > now && !(cur && gp.includes(cur)))
+        .filter((gp) => placeOf(gp[0]) > now && !gp[0].done && !(cur && gp.includes(cur)))
         .slice(0, 2)
         .map((gp) => gp[0]),
     );
-    // the next two say when and what ("5 PM Work"), so the wheel reads at a glance (owner, 2026-11-10)
+    // the next two say when and what ("5 PM Work"), so the wheel reads at a glance (owner, 2026-11-10); something already
+    // done never does: it sits at its due time, ticked (three test students saw handed-in work read as still due)
     const clip = (t: string) => (t.length > 14 ? `${t.slice(0, 13).trimEnd()}…` : t);
     const tag = (it: ClockItem) => `${fmt(it.start)} ${clip(it.title)}`;
     const tiles: Tile[] = [];
@@ -815,7 +835,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     // "5 stars today" at 6:40 AM, before anything had happened that day).
     const starsLine = `${starsToday.length} star${starsToday.length === 1 ? "" : "s"} ${mod(now) < rise ? "yesterday" : "today"}`;
     const starsBox = { x: cx, y: hyC - R * HF * 0.2 - 12.5 * 0.35, w: starsLine.length * 12.5 * 0.58 + 6, h: 12.5 * 1.5 };
-    if (starsToday.length) keepClear.push(starsBox);
+    if (example && starsToday.length) keepClear.push(starsBox);
     const mark = (t: number, s: string) => {
       for (const lift of [-18, -18 - 46 * sc]) {
         const [x, y] = wheelAt(t, lift);
@@ -838,12 +858,30 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         [d * DAY + set, "Sunset"],
       ] as const) {
         if (t < h.a || t > h.b) continue;
+        // at night nothing about sunset (COO, 2026-11-16: "Sunset about 4:45 PM" still showed at 9 PM)
+        if (night && name === "Sunset") continue;
         const [x, y] = wheelAt(t);
         el("circle", { cx: x.toFixed(1), cy: y.toFixed(1), r: 4, class: "dc-rim-sun", opacity: up(t).toFixed(3) }, marks);
         mark(t, `${name} about ${fmt(Math.round(mod(t) / 5) * 5)}`);
       }
       const t = d * DAY;
-      if (t > h.a + 20 && t < h.b - 20) mark(t, dayWord(t, data));
+      // the day's name where midnight turns over, unless a stop sits in the hour before it: "Tomorrow" under an 11:59 PM
+      // deadline read as that deadline's day (test student p4020, three nights)
+      const lateStop = timed.some((it) => !it.done && it.start >= t - 60 && it.start < t);
+      if (t > h.a + 20 && t < h.b - 20 && !lateStop) mark(t, dayWord(t, data));
+    }
+    // tonight's shift, still under the day's horizon, is marked where the night rises (owner, 2026-11-16, item 7 of the
+    // Today list: the test user's 10 PM shift was nowhere on the day's sky); once it's in view it is a stop like any other
+    if (follow && !night) {
+      const m = mod(now);
+      const edge = now - m + set;
+      const sh = timed.find((x) => x.origin === "shift" && x.start > h.b && x.start >= edge && x.start < edge + 600);
+      if (sh) {
+        const t = view + 290;
+        const [x, y] = wheelAt(t);
+        el("circle", { cx: x.toFixed(1), cy: y.toFixed(1), r: 4, class: "dc-rim-sun", opacity: up(t).toFixed(3) }, marks);
+        mark(t, `Tonight: ${sh.title} ${fmt(sh.start)}`);
+      }
     }
     if (!follow && inHalf(now)) {
       const [x, y] = wheelAt(now);
@@ -857,6 +895,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     layer.insertBefore(stemG, pathG);
     const topG = el("g", {}, layer);
     const shown: Tile[] = [];
+    piles = [];
     for (const tl of tileOf.values()) {
       const head = tl.of ?? tl;
       const n = stopOf.get(tl.it.id);
@@ -886,6 +925,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         });
       const [bx, by] = [x + w / 2 - 2, y - hh / 2 + 2];
       if (tl.count) {
+        if (!k) piles.push({ x, y, w, h: hh, ids: [...tileOf.values()].filter((o) => (o.of ?? o) === head).map((o) => o.it.id) });
         el("circle", { cx: bx.toFixed(1), cy: by.toFixed(1), r: 8.5, class: "dc-badge" }, tg);
         txt(tg, bx, by + 3.6, `+${tl.count}`, { class: "dc-badge-t" });
       } else if (late) {
@@ -938,12 +978,12 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         const stop = stopOf.get(it.id);
         star(sg, lerp(sx, stop ? stop.x + 12 : sx, kf), lerp(sy, stop ? stop.y - 12 : sy, kf), lerp(7.5, 5.5, kf), stop || !P ? 1 : 1 - P);
       });
-      if (fin.length) txt(sg, cx, hyC - R * HF * 0.2, starsLine, { class: "dc-stars-t", opacity: (kc * 0.85).toFixed(3) });
+      if (example && fin.length) txt(sg, cx, hyC - R * HF * 0.2, starsLine, { class: "dc-stars-t", opacity: (kc * 0.85).toFixed(3) });
     }
 
     // ---- on the water: how long until the sun sets (or rises); while turned away, "Back to now" (the engine's button)
     const waterY = full ? hyC + 32 : hy + (win.y + win.h - hy) / 2;
-    if (follow && kc > 0) {
+    if (example && follow && kc > 0) {
       const m = mod(now);
       const sunUp = m >= rise && m < set;
       const ahead = sunUp ? set - m : mod(rise - m);
@@ -976,7 +1016,9 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     const room = wide ? hyC - 28 - wordsTop - below : H - footH - wordsTop;
     const fitKey = `${words.dataset.html}|${room}`;
     if (fit !== fitKey) {
-      const parts = [".dc-w-after", ".dc-w-then", ".dc-w-pills"].map((sel) => words.querySelector<HTMLElement>(sel)).filter((e) => e !== null);
+      // what gives way first: what comes after, then "then", then the numbers; tonight's shift gives way last
+      const order = words.querySelector(".dc-w-keep") ? [".dc-w-then", ".dc-w-pills", ".dc-w-after"] : [".dc-w-after", ".dc-w-then", ".dc-w-pills"];
+      const parts = order.map((sel) => words.querySelector<HTMLElement>(sel)).filter((e) => e !== null);
       for (const e of parts) e.style.display = "";
       for (const e of parts) if (words.offsetHeight > room) e.style.display = "none";
       shownH = words.offsetHeight;
@@ -1071,6 +1113,13 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   });
   return {
     draw,
+    /** The ids in the "+N" pile under a point on the screen (with a thumb's slop), or null. */
+    pileAt(cx: number, cy: number) {
+      const r = svg.getBoundingClientRect();
+      const [x, y] = [cx - r.left, cy - r.top];
+      const hit = piles.find((p) => Math.abs(x - p.x) <= p.w / 2 + 12 && Math.abs(y - p.y) <= p.h / 2 + 12);
+      return hit ? hit.ids : null;
+    },
     /** Diagnostics (?debug=1): a visitor now. */
     visit: (kind?: VisitorKind) => visitors?.visit(kind),
     cheer,

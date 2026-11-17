@@ -187,7 +187,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                       {i.allDay
                         ? "All day"
                         : i.endsAt
-                          ? `${formatIn(i.startsAt, tz, "h:mm")}–${formatIn(i.endsAt, tz, "h:mm a")}`
+                          ? `${formatIn(i.startsAt, tz, formatIn(i.startsAt, tz, "a") === formatIn(i.endsAt, tz, "a") ? "h:mm" : "h:mm a")}–${formatIn(i.endsAt, tz, "h:mm a")}`
                           : formatIn(i.startsAt, tz, "h:mm a")}
                       {i.subtitle ? ` · ${i.subtitle}` : ""}
                     </p>

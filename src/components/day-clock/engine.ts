@@ -19,6 +19,8 @@ type Tile = { it: ClockItem; icon: "work" | "class" | "due"; name: string; time:
 export type DayClockOptions = {
   /** Draws Today and the pour (sky.ts), on every change and every frame of opening and closing. */
   sky: (state: SkyState) => void;
+  /** The ids of the things in a "+N" pile on the closed sky under a point on the screen, if there is one (sky.ts). */
+  pileAt?: (x: number, y: number) => string[] | null;
   /** "Open" on a card: go to the page that owns the item. */
   onOpen: (href: string) => void;
   /** "Done" on a to-do's or an assignment's card (`at`: where its button was, for the celebration). */
@@ -380,15 +382,15 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       const end = fmt(e).slice(-2) === fmt(now).slice(-2) ? fmtShort(e).slice(0, -3) : fmtShort(e);
       return { tag: `Now · till ${end}`, text: live.title, it: live };
     }
-    const next = DATED.filter((it) => !it.allDay && it.start > now && it.start <= we).sort((a, b) => a.start - b.start)[0];
+    const next = DATED.filter((it) => !it.allDay && !it.done && it.start > now && it.start <= we).sort((a, b) => a.start - b.start)[0];
     if (next) {
-      const pile = pileOf(DATED.filter((it) => !it.allDay && it.start === next.start));
+      const pile = pileOf(DATED.filter((it) => !it.allDay && !it.done && it.start === next.start));
       // exams happen, they aren't due (owner, 2026-11-11: "Exam 253 ... is due on ... day? That's not how it's supposed to be")
       const text = pile ? pileDue(pile) : next.title;
       return { tag: `${dayOf(next.start) > dayOf(now) ? "Tomorrow" : "Next"} · ${fmtShort(next.start)}`, text, it: next };
     }
     // Nothing in the next 24 hours: the next thing on the calendar, whenever it is (a deadline counts by its day).
-    const later = DATED.filter((it) => (it.allDay ? (dayOf(it.start) + 1) * 1440 : it.start) > now).sort((a, b) => a.start - b.start)[0];
+    const later = DATED.filter((it) => !it.done && (it.allDay ? (dayOf(it.start) + 1) * 1440 : it.start) > now).sort((a, b) => a.start - b.start)[0];
     if (later) {
       const d = dayOf(later.start);
       const when = later.allDay ? (billOf(later) ?? (later.origin === "goal" ? "goal" : isExam(later) ? "exam" : "due")) : fmtShort(later.start);
@@ -764,9 +766,13 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       x = (first ? first.x : xAt(d * 1440 + 480)) - VW() * 0.22;
     }
     S.sel = null;
+    // the tapped day stays picked while the line scrolls to it: the scroll below reads the day at the window's middle,
+    // which on a short day (a Friday with no classes) is already the next one (two test students tapped Fri and got Sat)
+    goingTo = { d, until: performance.now() + 1200 };
     trackWrap.scrollTo({ left: clamp(x, 0, TM.total - VW()), behavior: reduce ? "auto" : "smooth" });
     setDay(d);
   }
+  let goingTo: { d: number; until: number } | null = null;
   function setDay(d: number) {
     if (d === S.day && chips.childElementCount) return;
     S.day = d;
@@ -808,16 +814,16 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       const name = live(c) ? `In class: ${c.title}` : `Class: ${c.title}`;
       out.push({ it: c, icon: "class", name, time, label: `${c.title}, ${fmt(c.start)} to ${fmt(end)}` });
     }
-    let due = DATED.filter((it) => it.cat === "due" && inDay(it)).sort(byTime)[0];
+    let due = DATED.filter((it) => it.cat === "due" && !it.done && inDay(it)).sort(byTime)[0];
     let ahead = false;
     if (!due && d >= 0) {
-      due = DATED.filter((it) => it.cat === "due" && t0(it) >= (d + 1) * 1440).sort(byTime)[0];
+      due = DATED.filter((it) => it.cat === "due" && !it.done && t0(it) >= (d + 1) * 1440).sort(byTime)[0];
       ahead = true;
     }
     if (due) {
       const t = t0(due);
       const time = ahead ? dayShort(dayOf(t)) : (billOf(due) ?? (due.allDay ? "today" : fmtShort(t)));
-      const pile = pileOf(DATED.filter((it) => it.cat === "due" && it.start === due.start && it.allDay === due.allDay));
+      const pile = pileOf(DATED.filter((it) => it.cat === "due" && !it.done && it.start === due.start && it.allDay === due.allDay));
       const what = pile ?? due.title;
       // an exam is on its day, never "due": "Bio midterm", "Next: Exam 2", "Exam: Unit 3" when the title doesn't say so
       const exam = !billOf(due) && (pile ? pile.endsWith(" exams") : isExam(due));
@@ -838,9 +844,10 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       b.innerHTML = `${TILE_ICONS[c.icon]}<span class="dc-tx"><span class="dc-tn">${esc(c.name)}</span><span class="dc-tt">${esc(c.time)}</span></span>`;
       b.setAttribute("aria-label", c.label);
       b.addEventListener("click", () => {
-        select(c.it.id);
-        // same day: bring its node into view; a later day's deadline just opens its card
+        // a "3 assignments due" tile opens the stop's list, not its first item (test student p2047)
         const n = nodeOf(c.it.id);
+        select(n?.group && pileOf(n.group) && n.group.some((g) => g.id === c.it.id) ? n.id : c.it.id);
+        // same day: bring its node into view; a later day's deadline just opens its card
         if (n && dayOf(n.t) === S.day) {
           const v = n.x - trackWrap.scrollLeft;
           if (v < 50 || v > VW() - 50) trackWrap.scrollTo({ left: clamp(n.x - VW() / 2, 0, TM.total - VW()), behavior: reduce ? "auto" : "smooth" });
@@ -952,9 +959,20 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     }
     return top - root.getBoundingClientRect().top;
   }
+  /** "Up next" is only for the very next thing (test student p4020: the 3:30 shoot said it while the 1 PM class came first). */
+  function isNextUp(it: ClockItem) {
+    const next = DATED.filter((x) => !x.allDay && !x.done && x.start > S.now && x.origin !== "milestone" && x.origin !== "day").sort(
+      (a, b) => a.start - b.start,
+    )[0];
+    return !!next && next.start === it.start;
+  }
   function showDetail() {
     const stack = S.sel?.startsWith("stack:") ? TM.nodes.find((n) => n.id === S.sel) : undefined;
     if (stack?.group) return showStack(stack, stack.group);
+    if (S.sel?.startsWith("pile:")) {
+      const g = pileIds.map((id) => ITEMS.find((x) => x.id === id)).filter((x): x is ClockItem => !!x);
+      if (g.length > 1) return showStack({ id: S.sel, it: g[0], group: g, t: t0(g[0]), past: false, x: 0, el: null }, g);
+    }
     const it = S.sel ? ITEMS.find((x) => x.id === S.sel) : undefined;
     if (!it) {
       detail.innerHTML = "";
@@ -970,7 +988,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const t = t0(it);
     let kick = it.when ?? dayLong(dayOf(t));
     if (it.someday) kick = "Someday";
-    else if (dayOf(t) === 0 && !it.allDay) kick = it.end != null && t <= S.now && it.end > S.now ? "Now" : t > S.now ? "Up next" : "Earlier today";
+    else if (dayOf(t) === 0 && !it.allDay)
+      kick = it.end != null && t <= S.now && it.end > S.now ? "Now" : t > S.now ? (isNextUp(it) ? "Up next" : "Later today") : "Earlier today";
     else if (dayOf(t) > 0 && S.day === 0) kick += dayOf(t) === 1 ? " · tomorrow" : ` · in ${dayOf(t)} days`;
     const when = it.someday
       ? "No day yet. Pin it to a day when you know."
@@ -981,7 +1000,9 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
             ? "You kept it"
             : `You said you'd do it by ${fmt(it.start)}`
           : it.done
-            ? `Done at ${fmt(it.start)}`
+            ? it.atDue
+              ? `Due ${fmt(it.start)} · done`
+              : `Done at ${fmt(it.start)}`
             : it.origin === "milestone"
               ? agoOf(-dayOf(t))
               : it.origin === "goal" || it.origin === "money_goal"
@@ -1000,6 +1021,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
                           ? `${fmt(it.start)} – ${fmt(it.end)}`
                           : `Due ${fmt(it.start)}`;
     const sub = [it.subtitle, it.source].filter(Boolean).join(" · ");
+    const place = it.subtitle ?? "";
     const canDo = (it.origin === "task" || it.origin === "reminder" || it.origin === "assignment") && !!it.ref && !it.done;
     const inPlace = it.origin === "event" || it.origin === "shift" || it.origin === "assignment";
     const onPage = it.origin === "task" || it.origin === "reminder" || it.origin === "goal" || it.origin === "milestone";
@@ -1010,8 +1032,22 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     detail.innerHTML = `<div class="dc-d-ic" aria-hidden="true">${iconHtml(it.icon)}</div><div class="dc-d-body"><div class="dc-d-k">${esc(kick)}</div><div class="dc-d-t">${esc(
       it.title,
     )}</div><div class="dc-d-w">${esc(when)}</div><div class="dc-d-s">${esc(sub)}</div><div class="dc-d-acts">${acts}</div></div>`;
-    // one stop's card that would still reach the bar scrolls inside the room it has, its buttons last
-    const room = placeCard(detail.offsetHeight);
+    // one stop's card that would still reach the bar first tightens (a one-line title, the place without where it came
+    // from), so its time, place and buttons stay in view on a short phone (test student p4020, 2026-11-16: the place and
+    // the buttons were scrolled away under a two-line title); only then does it scroll inside the room it has
+    detail.classList.remove("dc-d-tight");
+    let room = placeCard(detail.offsetHeight);
+    if (detail.offsetHeight > room) {
+      detail.classList.add("dc-d-tight");
+      // the time and the place share one line, and the kicker steps aside
+      const s2 = detail.querySelector<HTMLElement>(".dc-d-s");
+      if (s2) s2.textContent = "";
+      const w2 = detail.querySelector<HTMLElement>(".dc-d-w");
+      // (the waitlist's example sky keeps its "Example" mark: it's what tells a stop there is made up)
+      const tail = opts.example ? sub : place;
+      if (w2 && tail) w2.textContent = `${when} · ${tail}`;
+      room = placeCard(detail.offsetHeight);
+    }
     detail.style.maxHeight = detail.offsetHeight > room ? `${Math.floor(room)}px` : "";
     detail.querySelector(".dc-d-open")?.addEventListener("click", () => opts.onOpen(it.href));
     detail.querySelector(".dc-d-edit")?.addEventListener("click", () => opts.onEdit(it));
@@ -1076,6 +1112,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   const setState = (st: "clock" | "moving" | "timeline") => {
     root.dataset.state = st;
   };
+  let pendingPile: string[] | null = null;
   function finishOpen() {
     S.open = true;
     drawStrip();
@@ -1083,7 +1120,17 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     G.wrapSl = null;
     setInteractive(true);
     markSel();
+    const ids = pendingPile;
+    pendingPile = null;
+    if (!ids?.length) return;
+    // the pile on the closed sky groups by where its tiles sit, the line by time, so the line may not have the same stack:
+    // the card lists exactly what the pile held (test student p4020: a "+2" opened one to-do's card instead)
+    const n = TM.nodes.find((x) => x.group && ids.every((id) => x.group!.some((it) => it.id === id)));
+    if (n) return select(n.id);
+    pileIds = ids;
+    select(`pile:${ids.join(",")}`);
   }
+  let pileIds: string[] = [];
   function animateTo(target: number, ms: number, ease: (t: number) => number, done?: () => void) {
     const from = S.p;
     const start = performance.now();
@@ -1284,7 +1331,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     hit.classList.remove("dc-grabbing");
     if (!d.moved) {
       if (d.caught) afterSpin();
-      else if (!cancelled) open();
+      else if (!cancelled) {
+        // a "+N" pile opens the line with its list showing (COO, 2026-11-16: the pile hid the pitch and couldn't be tapped)
+        pendingPile = opts.pileAt?.(e.clientX, e.clientY) ?? null;
+        open();
+      }
       return;
     }
     const last = d.samples[d.samples.length - 1];
@@ -1528,6 +1579,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
           drawStrip();
         }
         const d = x >= TM.somedayX ? SOMEDAY : dayOf(tAt(x));
+        if (goingTo && performance.now() < goingTo.until) return;
+        goingTo = null;
         if (d !== S.day) {
           // the card stays while its node is still on screen (a tap near the edge scrolls it in)
           const sel = nodeOf(S.sel);

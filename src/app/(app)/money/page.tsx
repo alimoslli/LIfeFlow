@@ -173,29 +173,6 @@ export default async function MoneyPage() {
                 </span>
               </Link>
             )}
-            <div className="lf-sw-glass grid grid-cols-2 divide-x divide-white/12 border-t border-white/10">
-              <Stat
-                label={
-                  <>
-                    <PixelIcon name="up" className="h-4 w-4" /> Spent
-                  </>
-                }
-                cents={m.netSpendingCents}
-                sub={`${lastShort} ${whole(d.last.netSpendingCents)}`}
-              />
-              <Stat
-                label={
-                  <>
-                    <PixelIcon name="down" className="h-4 w-4" /> Came in
-                  </>
-                }
-                cents={m.incomeCents}
-                sub={`${lastShort} ${whole(d.last.incomeCents)}`}
-              />
-            </div>
-            <p className="lf-sw-glass border-t border-white/10 px-6 py-2.5 text-xs text-white/75">
-              Spent and came in cover {m.period.label} · {net >= 0 ? `${whole(net)} more came in than went out` : `${whole(-net)} more went out than came in`}
-            </p>
           </SkyWindow>
         </section>
 
@@ -239,46 +216,85 @@ export default async function MoneyPage() {
           </section>
         )}
       </div>
-      <div className="contents lg:flex lg:flex-col lg:gap-9 lg:pt-[7.5rem]">
-        <section className="animate-rise" style={{ animationDelay: "180ms" }} aria-label="Next 30 days">
-          <Title href="/finances/bills">Next 30 days</Title>
-          <div data-tilt className="rounded-[1.75rem] bg-surface p-5 shadow-soft">
-            <CashOutlook
-              cashCents={o.balances.cashCents}
-              bills={forecast.bills}
-              dailySpendCents={forecast.typicalDailySpendCents}
-              days={30}
-              expectedPay={forecast.expectedPay}
-            />
-          </div>
-        </section>
-
-        {shown.length > 0 && (
-          <section className="animate-rise" style={{ animationDelay: "220ms" }} aria-label="Where it went">
-            <Title href="/finances/transactions">{early ? `Where it went in ${d.lastLabel}` : `Where it went, ${m.period.label}`}</Title>
-            <ul data-tilt className="flex flex-col gap-4 rounded-[1.75rem] bg-surface p-5 shadow-soft">
-              {shown.map((c) => (
-                <li key={c.name}>
-                  <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[0.9375rem]">
-                    <span className="min-w-0 truncate">{c.name}</span>
-                    <span className="tabular shrink-0">
-                      {whole(c.cents)}
-                      {!early && lastByName.has(c.name) && (
-                        <span className="ml-1.5 text-xs text-muted">
-                          {lastShort} {whole(lastByName.get(c.name)!)}
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                  <div className="h-2.5 rounded-[3px] bg-surface-2">
-                    <div className="lf-grow h-2.5 rounded-[3px] bg-accent" style={{ width: `${(c.cents / maxCat) * 100}%` }} />
-                  </div>
-                </li>
-              ))}
-            </ul>
+      {/* One tap deeper (owner, 2026-11-16, item 4 of the Today list): this month against last, the next 30 days and where
+          it went. The first screen is Available now, Money's places and its heads-ups. */}
+      <details className="lf-month animate-rise lg:pt-[7.5rem]" style={{ animationDelay: "180ms" }} data-testid="money-month">
+        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 rounded-[1.25rem] bg-surface px-5 py-3 shadow-soft [&::-webkit-details-marker]:hidden">
+          <span className="min-w-0">
+            <span className="block text-[0.9375rem] font-semibold">This month and the next 30 days</span>
+            <span className="block truncate text-[0.8125rem] text-muted">Spent and came in, bills ahead, where it went</span>
+          </span>
+          <PixelIcon name="down" className="h-4 w-4 shrink-0 text-muted" aria-hidden />
+        </summary>
+        <div className="mt-5 flex flex-col gap-9">
+          <section aria-label="Spent and came in">
+            <SkyWindow tz={d.tz} className="rounded-[1.75rem]">
+              <div className="lf-sw-glass grid grid-cols-2 divide-x divide-white/12">
+                <Stat
+                  label={
+                    <>
+                      <PixelIcon name="up" className="h-4 w-4" /> Spent
+                    </>
+                  }
+                  cents={m.netSpendingCents}
+                  sub={`${lastShort} ${whole(d.last.netSpendingCents)}`}
+                />
+                <Stat
+                  label={
+                    <>
+                      <PixelIcon name="down" className="h-4 w-4" /> Came in
+                    </>
+                  }
+                  cents={m.incomeCents}
+                  sub={`${lastShort} ${whole(d.last.incomeCents)}`}
+                />
+              </div>
+              <p className="lf-sw-glass border-t border-white/10 px-6 py-2.5 text-xs text-white/75">
+                Spent and came in cover {m.period.label} · {net >= 0 ? `${whole(net)} more came in than went out` : `${whole(-net)} more went out than came in`}
+              </p>
+            </SkyWindow>
           </section>
-        )}
-      </div>
+
+          <section aria-label="Next 30 days">
+            <Title href="/finances/bills">Next 30 days</Title>
+            <div data-tilt className="rounded-[1.75rem] bg-surface p-5 shadow-soft">
+              <CashOutlook
+                cashCents={o.balances.cashCents}
+                bills={forecast.bills}
+                dailySpendCents={forecast.typicalDailySpendCents}
+                days={30}
+                expectedPay={forecast.expectedPay}
+              />
+            </div>
+          </section>
+
+          {shown.length > 0 && (
+            <section aria-label="Where it went">
+              <Title href="/finances/transactions">{early ? `Where it went in ${d.lastLabel}` : `Where it went, ${m.period.label}`}</Title>
+              <ul data-tilt className="flex flex-col gap-4 rounded-[1.75rem] bg-surface p-5 shadow-soft">
+                {shown.map((c) => (
+                  <li key={c.name}>
+                    <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[0.9375rem]">
+                      <span className="min-w-0 truncate">{c.name}</span>
+                      <span className="tabular shrink-0">
+                        {whole(c.cents)}
+                        {!early && lastByName.has(c.name) && (
+                          <span className="ml-1.5 text-xs text-muted">
+                            {lastShort} {whole(lastByName.get(c.name)!)}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="h-2.5 rounded-[3px] bg-surface-2">
+                      <div className="lf-grow h-2.5 rounded-[3px] bg-accent" style={{ width: `${(c.cents / maxCat) * 100}%` }} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+      </details>
     </div>
   );
 }

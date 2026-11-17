@@ -69,7 +69,7 @@ test("The desk: the pile opens the files, a file plays the MacBook and lands in 
 
   // A new task: the MacBook opens, then this tab goes to a new Claude Code chat (Claude's documented web pre-fill link)
   // in the LifeFlow repo and environment, with the first prompt typed in. It is copied too, in case the box arrives empty.
-  await op.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin: "http://localhost:3100" });
+  await op.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin: `http://localhost:${process.env.E2E_PORT ?? 3100}` });
   await sheet.getByRole("button", { name: /Finish the V3 redesign revision/ }).click();
   const mac = op.getByTestId("hq-macbook");
   await expect(mac).toBeVisible();

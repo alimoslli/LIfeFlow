@@ -66,7 +66,7 @@ export function ShiftList({
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-[0.9375rem]">
-                      {formatIn(s.startsAt, tz, "h:mm")} to {formatIn(s.endsAt, tz, "h:mm a")}
+                      {startOf(s.startsAt, s.endsAt, tz)} to {formatIn(s.endsAt, tz, "h:mm a")}
                     </span>
                     <span className="block text-sm text-muted">
                       {name.get(s.employerId) ?? "Job"}
@@ -74,7 +74,7 @@ export function ShiftList({
                     </span>
                     {s.recordedStart && s.recordedEnd && (
                       <span className="mt-0.5 block text-sm text-text-2">
-                        Clocked {formatIn(s.recordedStart, tz, "h:mm")} to {formatIn(s.recordedEnd, tz, "h:mm a")}
+                        Clocked {startOf(s.recordedStart, s.recordedEnd, tz)} to {formatIn(s.recordedEnd, tz, "h:mm a")}
                       </span>
                     )}
                     {needsHours && (
@@ -198,4 +198,9 @@ export function ShiftList({
       </Sheet>
     </>
   );
+}
+
+/** A start time drops its AM/PM only when the end shares it: a night shift reads "10:00 PM to 6:30 AM" (test student p1027). */
+function startOf(start: Date, end: Date, tz: string) {
+  return formatIn(start, tz, "a") === formatIn(end, tz, "a") ? formatIn(start, tz, "h:mm") : formatIn(start, tz, "h:mm a");
 }
