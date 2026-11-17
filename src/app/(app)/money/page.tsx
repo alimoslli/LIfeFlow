@@ -59,7 +59,7 @@ export default async function MoneyPage() {
   if (d.empty) {
     return (
       <div className="mx-auto max-w-[640px]">
-        <h1 className="font-display text-[2.5rem] leading-none font-medium tracking-tight">Money</h1>
+        <h1 className="font-display text-[2.5rem] leading-[1.1] font-medium tracking-tight">Money</h1>
         <SkyWindow tz={d.tz} className="mt-8 rounded-[1.75rem]">
           <div className="relative min-h-[12rem] px-6 pt-6 pb-6">
             <PixelIcon name="money" className="h-8 w-8" />
@@ -139,7 +139,7 @@ export default async function MoneyPage() {
       <div className="contents lg:flex lg:flex-col lg:gap-9">
         <header className="animate-rise max-lg:order-[-3]">
           <p className="text-sm text-muted">{formatDateStr(d.today, "EEEE, MMMM d")}</p>
-          <h1 className="mt-1 font-display text-[2.5rem] leading-none font-medium tracking-tight">Money</h1>
+          <h1 className="mt-1 font-display text-[2.5rem] leading-[1.1] font-medium tracking-tight">Money</h1>
           <p className="mt-2 text-xs text-muted">
             Balances as of {asOf ?? "unknown"}
             {o.balances.hasDemoData ? " · Sample data" : ""}
@@ -219,7 +219,7 @@ export default async function MoneyPage() {
 
         {alerts.length > 0 && (
           <section className="animate-rise max-lg:order-[-2]" style={{ animationDelay: "140ms" }} aria-label="Heads up">
-            <h2 className="mb-3 font-display text-[1.3125rem] leading-none font-medium tracking-tight">Heads up</h2>
+            <h2 className="mb-3 font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Heads up</h2>
             <ul className="lf-tiles">
               {alerts.map((a, i) => (
                 <li key={i} className="flex gap-3 px-4 py-3.5">

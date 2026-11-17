@@ -287,7 +287,7 @@ function Header({ today, action }: { today: string; action?: React.ReactNode }) 
     <header className="animate-rise flex items-end justify-between gap-3">
       <div>
         <p className="text-sm text-muted">{formatDateStr(today, "EEEE, MMMM d")}</p>
-        <h1 className="mt-1 font-display text-[2.5rem] leading-none font-medium tracking-tight">Work</h1>
+        <h1 className="mt-1 font-display text-[2.5rem] leading-[1.1] font-medium tracking-tight">Work</h1>
       </div>
       {action}
     </header>
