@@ -27,7 +27,7 @@ test.afterAll(async () => {
   await pool.query("update app_access set waitlist_on = false");
 });
 
-test("someone waiting sees their real place, their link, the anonymous front of the line and the rules", async ({ page }) => {
+test("someone waiting sees their real place and one way to move up, never a head count or other people", async ({ page }) => {
   test.setTimeout(120_000);
   // A fresh line: everyone already here is let in, so this person is first.
   await pool.query("update users set access = 'in' where access = 'waiting'");
@@ -38,16 +38,14 @@ test("someone waiting sees their real place, their link, the anonymous front of 
   await pool.query("update app_access set waitlist_on = true");
   await page.goto("/waitlist");
   await expect(page.getByRole("heading", { level: 1, name: "You're #1 in line." })).toBeVisible();
-  await expect(page.getByText("1 person is waiting.", { exact: false })).toBeVisible();
-  await expect(page.getByLabel("Your link")).toHaveValue(/\/\?invite=[a-z2-9]+$/);
-  const front = page.getByRole("region", { name: "The front of the line" });
-  await expect(front.getByRole("listitem")).toHaveCount(1);
-  await expect(front.getByText("You", { exact: true })).toBeVisible();
-  await expect(front.getByRole("listitem")).toHaveText([/#1.*You$/]);
-  // Never a name or an email in the line.
-  await expect(front).not.toContainText("Maya");
-  await expect(front).not.toContainText("@");
-  await expect(page.getByText("A free trial and a student offer are planned.", { exact: false })).toBeVisible();
+  // no head count and no list of other people (owner, 2026-11-17)
+  await expect(page.getByText(/people are waiting|person is waiting/)).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "The front of the line" })).toHaveCount(0);
+  // one plain way to move up, with the real link behind one button
+  await expect(page.getByRole("heading", { name: "Every friend who joins moves you up." })).toBeVisible();
+  await expect(page.getByTestId("invite-link")).toHaveText(/\/\?invite=[a-z2-9]+$/);
+  await expect(page.getByRole("button", { name: /Copy my link|Send my link to a friend/ })).toBeVisible();
+  await expect(page.locator("main")).not.toContainText("@");
   await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
   expect(await noSideScroll(page)).toBe(true);
   await page.screenshot({ path: "test-results/waitlist-phone.png", fullPage: true });
@@ -99,7 +97,7 @@ test("after setup, someone waiting lands on their place in line; the app stays c
   // The invite card sits at the bottom, after the line and the rules.
   const headings = await page.getByRole("heading", { level: 2 }).allTextContents();
   // The confirm card is a peer section, so its heading is an h2 too, and it comes first (it is the one thing to do here).
-  expect(headings).toEqual(["Confirm your email", "The front of the line", "How the line works", "Bring a friend, move up a spot.", "See how your sky works"]);
+  expect(headings).toEqual(["Confirm your email", "Every friend who joins moves you up.", "Try your sky while you wait"]);
 
   // The confirm card: with no email service in the test run, "Send code" answers plainly; a wrong code says so.
   const card = page.getByRole("region", { name: "Confirm your email" });

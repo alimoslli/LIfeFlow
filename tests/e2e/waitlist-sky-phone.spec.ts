@@ -24,9 +24,9 @@ test("someone waiting opens the example sky, learns the moves and comes back to 
       seen.push(`${r.method()} ${u.pathname}`);
   };
 
-  await expect(page.getByRole("heading", { name: "See how your sky works" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Try your sky while you wait" })).toBeVisible();
   await page.screenshot({ path: "test-results/waitlist-sky-entry.png" });
-  await page.getByRole("button", { name: "Show me" }).click();
+  await page.getByRole("button", { name: "Try it", exact: true }).click();
   page.on("request", collect); // from the moment it opens (the page's own link prefetches came before)
   const dialog = page.getByRole("dialog", { name: "How your sky works" });
   await expect(dialog).toBeVisible();
@@ -37,8 +37,6 @@ test("someone waiting opens the example sky, learns the moves and comes back to 
   await expect(dialog.locator(".dc-today .dc")).toBeVisible();
   await expect(dialog.getByRole("textbox")).toHaveCount(0);
   await expect(dialog.getByRole("navigation", { name: "Main" })).toHaveCount(0);
-  for (const t of ["The wheel is your day", "Now", "A stop", "A clash", "The timeline", "The night"])
-    await expect(dialog.getByRole("term").filter({ hasText: t })).toBeVisible();
   for (const [k, t] of [
     ["turn", "Turn it"],
     ["open", "Open it"],
@@ -94,7 +92,7 @@ test("someone waiting opens the example sky, learns the moves and comes back to 
   await dialog.getByRole("button", { name: "Back to my place in line" }).last().click();
   await expect(dialog).toBeHidden();
   await expect(page.getByRole("heading", { level: 1, name: "You're #1 in line." })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Show me" })).toBeFocused();
+  await expect(page.getByRole("button", { name: "Try it", exact: true })).toBeFocused();
   expect(seen, "the explainer only needs static files").toEqual([]);
 
   // app pages are still closed to someone waiting

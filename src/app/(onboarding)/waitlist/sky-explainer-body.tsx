@@ -54,18 +54,9 @@ function useWheelSteps() {
 }
 
 const TRY: [Step, string, string][] = [
-  ["turn", "Turn it", "Drag the sky sideways. Things rise on the right and set on the left, so you can look ahead or back."],
-  ["open", "Open it", "Tap the sky. It pours into a line of your whole week."],
-  ["fold", "Fold it", "Tap the skyling on the line, or press Escape, and it folds back into the wheel."],
-];
-
-const PARTS: [string, string][] = [
-  ["The wheel is your day", "The arc is the sun's path across your day, sunrise to sunset. Everything you have sits on it at the time it happens."],
-  ["Now", "The top of the wheel is now, with the skyling's picture on it. Turn the wheel and a button brings you back."],
-  ["A stop", "A class, a shift or something due. The icon says what kind it is; tap one to read it in a card."],
-  ["A clash", "When two things share the same time, their stops sit together. Here the Statistics class and the shift overlap at 2 PM."],
-  ["The timeline", "Open the sky and it becomes a line of your week: the days across the top, every stop in order along it."],
-  ["The night", "Under the horizon is the night. On the line each night is a dip between two days, with sleep and what happened."],
+  ["turn", "Turn it", "Drag the sky sideways to look ahead or back."],
+  ["open", "Open it", "Tap the sky to see your whole week."],
+  ["fold", "Fold it", "Tap the skyling on the line to fold it back."],
 ];
 
 /**
@@ -130,7 +121,7 @@ export default function SkyExplainerBody({ name, tz, companion, onClose }: { nam
           How your sky works
         </h2>
         {/* the row Today's phone app bar and laptop top bar occupy: here it holds the way back and the Example tag */}
-        <header className="sticky top-0 z-30 -mx-5 mb-2 flex h-12 items-center justify-between gap-2 px-3 pt-[env(safe-area-inset-top)] sm:-mx-8 md:static md:mx-0 md:mb-3 md:h-11 md:px-0">
+        <header className="relative z-40 -mx-5 mb-2 flex min-h-12 items-center justify-between gap-2 px-3 pt-[env(safe-area-inset-top)] sm:-mx-8 md:mx-0 md:mb-3 md:px-0">
           {back}
           <span
             data-testid="sky-example-tag"
@@ -149,7 +140,7 @@ export default function SkyExplainerBody({ name, tz, companion, onClose }: { nam
               </div>
             </section>
             {/* the room Today gives its middle: what this is */}
-            <div className="dc-middle md:hidden">
+            <div className="md:hidden">
               <p className="text-[0.9375rem] text-muted">
                 A made-up day, so you can learn the moves. Nothing here is yours or saved. {name} and your own sky fill from what you connect.
               </p>
@@ -164,7 +155,7 @@ export default function SkyExplainerBody({ name, tz, companion, onClose }: { nam
                     data-testid={`try-${k}`}
                     data-done={done[k]}
                     className={cn(
-                      "flex items-start gap-3 rounded-2xl px-4 py-3.5 transition-colors duration-300",
+                      "flex items-start gap-3 rounded-2xl px-4 py-3 transition-colors duration-300",
                       done[k] ? "bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night" : "bg-surface shadow-soft",
                     )}
                   >
@@ -179,15 +170,6 @@ export default function SkyExplainerBody({ name, tz, companion, onClose }: { nam
                   </li>
                 ))}
               </ol>
-              <h3 className="mt-6 text-sm font-medium text-text-2">What everything means</h3>
-              <dl className="mt-2 grid gap-2.5 sm:grid-cols-2">
-                {PARTS.map(([t, d]) => (
-                  <div key={t} className="rounded-2xl bg-surface px-4 py-3.5 shadow-soft">
-                    <dt className="text-[0.9375rem] font-medium">{t}</dt>
-                    <dd className="mt-0.5 text-sm text-muted">{d}</dd>
-                  </div>
-                ))}
-              </dl>
               <p className="mt-6 text-[0.9375rem] font-medium">The rest opens when you&apos;re let in.</p>
               <div className="mt-3">{back}</div>
             </div>

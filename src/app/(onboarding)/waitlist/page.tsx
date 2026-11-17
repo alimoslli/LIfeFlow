@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { BrandLockup } from "@/components/brand/brand-mark";
 import { SignOutButton } from "@/components/pwa/sign-out-button";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { COMPANION_KEYS, companionOf, ownsNight } from "@/lib/companions";
 import { isAdminEmail } from "@/server/auth/admin";
 import { getAccountUser } from "@/server/auth/current-user";
@@ -20,14 +21,14 @@ import "./waitlist.css";
 export const metadata: Metadata = { title: "Your place in line" };
 
 const DEFAULT_LAUNCH = "We're aiming for the App Store in January 2027. That date may still move.";
-const kicker = "text-[0.75rem] font-semibold tracking-[0.14em] uppercase";
 const glass = "relative overflow-hidden rounded-[1.75rem] bg-white/[0.06] p-5 ring-1 ring-white/12 backdrop-blur-md sm:p-6";
 const h2 = "font-display text-[1.75rem] leading-[1.15] font-medium tracking-[-0.03em]";
 
 /**
  * The waitlist page (owner, 2026-11-11; docs/backlog/2026-11-11-audit-and-waitlist.md), on the skylings' night like the
- * landing page: your real place, a little line of skylings walking to the gate with yours in it, your invite link, the
- * front of the line (anonymous) and the rules in plain words. Admins can open `?preview=1` to see what someone waiting
+ * landing page: your real place, a little line of skylings walking to the gate with yours in it, one way to move up (a
+ * friend joins), and a try of the sky. No head count and no list of other people (owner, 2026-11-17: "i dont like the
+ * names of the ppl in line ... why are we saying how many ppl are waiting ... too many boxes"). Admins can open `?preview=1` to see what someone waiting
  * sees; there, their own place is marked as an example.
  */
 export default async function WaitlistPage({ searchParams }: { searchParams: Promise<{ preview?: string }> }) {
@@ -56,7 +57,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
   const place = w.place ?? (preview ? Math.max(w.waiting, 1) : null);
   const waiting = w.waiting;
   const mine = companionOf(user.preferences?.companion);
-  const meInFront = w.front.some((r) => r.me);
+  const contact = process.env.LEGAL_CONTACT_EMAIL?.trim() || null;
 
   return (
     <div className="min-h-dvh overflow-x-clip bg-night-0 text-white">
@@ -71,7 +72,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
         <div className="relative z-10 mx-auto w-full max-w-2xl px-5 pt-4">
           {preview && (
             <p role="status" className="mb-5 rounded-2xl bg-white/10 px-4 py-3 text-sm text-white/85 ring-1 ring-white/15">
-              Preview: this is what someone waiting sees. Your place here is an example; the other numbers are real.
+              Preview: this is what someone waiting sees. Your place here is an example.
             </p>
           )}
           <h1 className="animate-rise font-display text-[2.75rem] leading-[1.1] font-medium tracking-[-0.045em] text-balance sm:text-[4rem]">
@@ -88,113 +89,57 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
             )}
           </h1>
           <p className="animate-rise mt-4 max-w-[40ch] text-[1.0625rem] leading-relaxed text-white/80" style={{ animationDelay: "80ms" }}>
-            {waiting === 1 ? "1 person is waiting" : `${waiting} people are waiting`}. We&apos;re letting people in a few at a time while we finish your sky.
+            {mine.name} is holding your spot. We&apos;ll email you the moment your sky is ready.
           </p>
         </div>
 
-        <Queue place={place} waiting={waiting} mine={mine.key} name={mine.name} />
+        <Queue place={place} waiting={waiting} mine={mine.key} />
       </section>
 
       <main className="relative z-10 mx-auto flex w-full max-w-2xl flex-col gap-4 px-5 pt-6 pb-16">
         {!w.emailVerified && !preview && <ConfirmEmail invited={w.invited} className={`${glass} wl-ticket`} />}
 
-        <section className={glass} aria-labelledby="wl-front">
-          <h2 id="wl-front" className={h2}>
-            The front of the line
-          </h2>
-          <p className="mt-1 text-sm text-white/65">Names stay private. Everyone waits under a skyling name.</p>
-          {w.front.length === 0 ? (
-            <p className="mt-4 text-sm text-white/60">Nobody is waiting yet.</p>
-          ) : (
-            <ol role="list" className="mt-4 flex flex-col gap-1">
-              {w.front.map((r) => (
-                <li
-                  key={r.place}
-                  className={`flex min-h-12 items-center gap-3 rounded-2xl px-3 text-[0.9375rem] ${r.me ? "bg-star-gold/15 ring-1 ring-star-gold/50" : ""}`}
-                >
-                  <span className="tabular w-8 shrink-0 text-white/55">#{r.place}</span>
-                  <CompanionGlyph
-                    companion={r.me ? mine.key : r.companion}
-                    night={ownsNight(r.me ? mine.key : r.companion)}
-                    className="lf-pixel h-8 w-8 shrink-0"
-                  />
-                  <span className="min-w-0 flex-1 truncate">{r.label}</span>
-                  {r.me && <span className={`${kicker} text-star-gold`}>You</span>}
-                </li>
-              ))}
-            </ol>
-          )}
-          {!meInFront && place && (
-            <>
-              <p className="mt-3 text-center text-white/35" aria-hidden>
-                · · ·
-              </p>
-              <p className="mt-1 flex min-h-12 items-center gap-3 rounded-2xl bg-star-gold/15 px-3 text-[0.9375rem] ring-1 ring-star-gold/50">
-                <span className="tabular w-8 shrink-0 text-white/70">#{place}</span>
-                <CompanionGlyph companion={mine.key} night={ownsNight(mine.key)} className="lf-pixel h-8 w-8 shrink-0" />
-                <span className="min-w-0 flex-1">You{preview ? " (example)" : ""}</span>
-              </p>
-            </>
-          )}
-        </section>
-
-        <section className={glass} aria-labelledby="wl-how">
-          <h2 id="wl-how" className={h2}>
-            How the line works
-          </h2>
-          <ol role="list" className="mt-4 grid gap-3 sm:grid-cols-3">
-            {[
-              { who: "dawn", title: "Your spot", text: "Your place starts from when you signed up." },
-              {
-                who: "ray",
-                title: "Friends move you",
-                text: "Each friend who confirms their email can move you up a place, up to 10 places a day. At first place, or past the limit, a friend doesn't move you.",
-              },
-              { who: "moon", title: "A few at a time", text: "We let people in in small groups. Other people's friends and each group can change your place." },
-            ].map((s, i) => (
-              <li key={s.title} className="flex gap-3 rounded-2xl bg-white/[0.04] p-4 ring-1 ring-white/10 sm:flex-col">
-                <CompanionGlyph companion={s.who} night={ownsNight(s.who)} className="lf-pixel h-10 w-10 shrink-0" />
-                <div>
-                  <p className="font-medium">
-                    <span className="tabular text-star-gold">{i + 1}.</span> {s.title}
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-white/70">{s.text}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-          <p className="mt-4 text-[0.9375rem] text-white/80">When it&apos;s your turn, you get the whole app. A free trial and a student offer are planned.</p>
-        </section>
-
+        {/* one way to move up, said plainly (owner, 2026-11-17: "its not obvious that if your friend joins u move up, too many boxes") */}
         <section className={`${glass} wl-ticket`} aria-labelledby="wl-move">
           <h2 id="wl-move" className={h2}>
-            Bring a friend, move up a spot.
+            Every friend who joins moves you up.
           </h2>
-          <p className="mt-2 text-[0.9375rem] leading-relaxed text-white/75">
-            Each friend who joins with your link and confirms their email can move you up a place (up to 10 a day).
+          {place && place > 1 && (
+            <p className="mt-4 flex items-center gap-3 font-display text-[2rem] leading-[1.1] tracking-[-0.03em]" aria-hidden>
+              <span className="tabular text-white/55">#{place}</span>
+              <PixelIcon name="arrow" className="h-6 w-6 text-star-gold" />
+              <span className="tabular text-star-gold">#{place - 1}</span>
+            </p>
+          )}
+          <p className="mt-3 text-[0.9375rem] leading-relaxed text-white/75">
+            Send your link. When a friend signs up and confirms their email, you move up one spot.
           </p>
-          <InviteShare link={link} firstName={firstName} dark />
-          <ul role="list" className="mt-4 flex flex-col gap-1 text-sm text-white/70">
-            <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 bg-star-gold" aria-hidden />
-              Friends counted:{" "}
-              <span className="tabular font-medium text-white" data-testid="wl-friends">
-                {w.friends}
-              </span>
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 bg-white/40" aria-hidden />
-              Waiting to confirm their email:{" "}
-              <span className="tabular font-medium text-white" data-testid="wl-pending">
-                {w.pending}
-              </span>
-            </li>
-          </ul>
+          <InviteShare link={link} firstName={firstName} dark simple />
+          <p className="mt-4 text-sm text-white/60">
+            {w.friends > 0 ? (
+              <>
+                <span className="tabular font-medium text-white" data-testid="wl-friends">
+                  {w.friends}
+                </span>{" "}
+                {w.friends === 1 ? "friend has" : "friends have"} moved you up so far.{" "}
+              </>
+            ) : null}
+            {place === 1 ? "You\u2019re first, so there\u2019s no one left to pass." : "Up to 10 spots a day."}
+          </p>
         </section>
 
         <SkyExplainer name={assistantProfile(user.preferences, user.timezone).name} tz={user.timezone ?? "UTC"} companion={user.preferences?.companion} />
 
         <p className="mt-2 text-center text-[0.9375rem] leading-relaxed text-star-gold/90">{w.launchNote ?? DEFAULT_LAUNCH}</p>
+        {/* a real way to reach us (owner, 2026-11-17: "how will they contact the team??") */}
+        {contact && (
+          <p className="text-center text-[0.9375rem] text-white/75">
+            Questions, or want in early?{" "}
+            <a href={`mailto:${contact}?subject=LifeFlow%20waitlist`} className="font-medium text-white underline underline-offset-4">
+              Write to us
+            </a>
+          </p>
+        )}
 
         <nav className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-1 text-sm" aria-label="Your account">
           {[
@@ -216,7 +161,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
  * The line as a little scene: skylings walking toward a glowing gate, yours with a gold "You" pin. Only as many as are
  * really ahead of and behind you (at most four and three). Decorative; the heading says the place in words.
  */
-function Queue({ place, waiting, mine, name }: { place: number | null; waiting: number; mine: string; name: string }) {
+function Queue({ place, waiting, mine }: { place: number | null; waiting: number; mine: string }) {
   const ahead = place ? Math.min(place - 1, 4) : 0;
   const behind = place ? Math.min(Math.max(waiting - place, 0), 3) : 0;
   const others = COMPANION_KEYS.filter((k) => k !== mine);
@@ -251,7 +196,6 @@ function Queue({ place, waiting, mine, name }: { place: number | null; waiting: 
           ))}
         </ul>
       </div>
-      <p className="mt-2 text-center text-xs text-white/55">{name} is holding your spot.</p>
     </div>
   );
 }
