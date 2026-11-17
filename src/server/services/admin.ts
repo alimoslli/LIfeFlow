@@ -11,6 +11,7 @@ import {
   errorReports,
   ownerInbox,
   passkeys,
+  rateLimitBuckets,
   rememberedDevices,
   sessions,
   users,
@@ -19,7 +20,7 @@ import { todayIn } from "@/lib/dates";
 import { isAdminEmail, type Admin } from "../auth/admin";
 import { billingConfig, inTestingPhase, TESTING_LIMITS } from "../billing";
 import { priceCoverage, type PriceCoverage } from "./ai-prices";
-import { emailConfig, sendEmail } from "../integrations/email";
+import { emailConfig } from "../integrations/email";
 import { googleConfig } from "../integrations/google";
 import { plaidConfig } from "../integrations/plaid";
 import { smsConfig } from "../integrations/twilio";
@@ -788,19 +789,24 @@ export async function acceptFromWaitlist(db: Database, actor: Admin, ids: string
 }
 
 /**
- * Accounts whose email isn't confirmed yet, newest first (owner, 2026-11-17: the confirmation email couldn't reach anyone
- * but him, so he confirms them from HQ). Real accounts only; never an admin, the demo account or an account locked under 13.
+ * People who pressed "send code" on the waitlist and still aren't confirmed (owner, 2026-11-17: the confirmation email
+ * reached nobody but him; "find out who tried ... and sign them up from our side"). Read from the send counter each press
+ * leaves (`email-confirm:send:user:<id>`, kept about a day), so it lists only people who really asked. Real accounts
+ * only; never an admin, the demo account or an account locked under 13.
  */
-export async function unconfirmedEmails(db: Database, limit = 50) {
-  const rows = await timed(db, (tx) =>
-    tx
-      .select({ id: users.id, name: users.name, email: users.email, createdAt: users.createdAt })
-      .from(users)
-      .where(and(isNull(users.emailVerifiedAt), eq(users.accountKind, "standard"), notAgeLocked()))
-      .orderBy(desc(users.createdAt))
-      .limit(Math.min(Math.max(limit, 1), 100)),
-  );
-  return rows.filter((p) => !isAdminEmail(p.email));
+export async function codeAskers(db: Database) {
+  const found = await timed(db, async (tx) => {
+    const res = await tx.execute(sql`
+      select u.id, u.name, u.email, max(b.window_start) as "askedAt"
+      from ${rateLimitBuckets} b
+      join ${users} u on b.key = 'email-confirm:send:user:' || u.id::text
+      where u.email_verified_at is null and u.account_kind = 'standard' and not (u.preferences ? 'ageBlockedAt')
+      group by u.id, u.name, u.email
+      order by max(b.window_start) desc
+      limit 100`);
+    return rows<{ id: string; name: string; email: string; askedAt: Date | string }>(res);
+  });
+  return found.filter((p) => !isAdminEmail(p.email)).map((p) => ({ ...p, askedAt: new Date(p.askedAt) }));
 }
 
 /** The exact accounts an email action may touch: chosen ids that are real, not the admin, not an admin, not the demo, not locked. */
@@ -834,52 +840,6 @@ export async function confirmEmailsByAdmin(db: Database, actor: Admin, ids: stri
     await db.transaction((tx) => log(tx, actor, "email.confirm_by_admin", { id: p.id, email: p.email }, { moved: r.moved }));
   }
   return { confirmed: done, moved, skipped: ids.length - done };
-}
-
-const APOLOGY_SUBJECT = "Sorry, your LifeFlow code didn't arrive";
-function apology(firstName: string, link: string) {
-  const name = firstName.replace(/[<>&"]/g, "").slice(0, 40) || "there";
-  const text = `Hi ${name},\n\nSorry: the confirmation code we tried to send you never arrived. That was our mistake, not yours.\n\nYour place on the LifeFlow waitlist is saved, and your email is confirmed now, so there's nothing more to do.\n\nSee your place in line and share your invite link (each friend who joins can move you up): ${link}\n\nThanks for waiting with us,\nLifeFlow`;
-  const html = `<p>Hi ${name},</p><p>Sorry: the confirmation code we tried to send you never arrived. That was our mistake, not yours.</p><p>Your place on the LifeFlow waitlist is saved, and your email is confirmed now, so there's nothing more to do.</p><p><a href="${link}">See your place in line and share your invite link</a>. Each friend who joins can move you up.</p><p>Thanks for waiting with us,<br>LifeFlow</p>`;
-  return { text, html };
-}
-
-/**
- * Sends the chosen accounts a short apology with a link to their place in line (owner, 2026-11-17: "apologise for the
- * mistake ... send them back to see their waiting list status and share the link"). Only to accounts whose email is
- * confirmed (confirm them first), with the confirm box; counted as sent only with the provider's id; an `admin_actions`
- * row each. The link is APP_URL's /waitlist, never a URL from the request.
- */
-export async function sendApologies(
-  db: Database,
-  actor: Admin,
-  ids: string[],
-  confirmed: boolean,
-  deps: { send?: typeof sendEmail; env?: Record<string, string | undefined> } = {},
-) {
-  if (!confirmed) throw new AdminError("Tick the box to confirm. Nothing was sent.");
-  const env = deps.env ?? process.env;
-  const cfg = emailConfig(env);
-  if (!cfg) throw new AdminError("Email isn't set up yet, so nothing was sent.");
-  const base = (env.APP_URL ?? "").replace(/\/+$/, "");
-  if (!/^https?:\/\//.test(base)) throw new AdminError("The app's address isn't set, so nothing was sent.");
-  await limited(db, actor);
-  const people = (await emailTargets(db, actor, ids)).filter((p) => p.verifiedAt);
-  let sent = 0;
-  let failed = 0;
-  let why = "";
-  for (const p of people) {
-    try {
-      const r = await (deps.send ?? sendEmail)(cfg, { to: p.email, subject: APOLOGY_SUBJECT, ...apology(p.name.split(" ")[0] ?? "", `${base}/waitlist`) });
-      if (!r.id) throw new Error("no id");
-      sent++;
-      await db.transaction((tx) => log(tx, actor, "email.apology_sent", { id: p.id, email: p.email }, { providerId: r.id }));
-    } catch (e) {
-      failed++;
-      why ||= e instanceof Error ? e.message.slice(0, 200) : "";
-    }
-  }
-  return { sent, failed, notConfirmed: ids.length - people.length, why };
 }
 
 /** The owner's switch and the launch line. Turning it on needs a confirm, because everyone not let in starts waiting. */

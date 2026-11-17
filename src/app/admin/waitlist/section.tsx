@@ -3,8 +3,8 @@ import { Badge, Card, EmptyState } from "@/components/ui/surface";
 import { Button, SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import { getDb } from "@/server/db/client";
-import { safe, unconfirmedEmails, waitlistBatchSizes, waitlistHistory, waitlistNext, waitlistView, type WaitlistEvent } from "@/server/services/admin";
-import { acceptWaitlistAction, confirmEmailsAction, sendApologiesAction, waitlistSwitchAction } from "../actions";
+import { codeAskers, safe, waitlistBatchSizes, waitlistHistory, waitlistNext, waitlistView, type WaitlistEvent } from "@/server/services/admin";
+import { acceptWaitlistAction, confirmEmailsAction, waitlistSwitchAction } from "../actions";
 import { Head } from "../head";
 import { Failed, adminTz, ago, fmt } from "../format";
 import { PageSection, Tile } from "../ui";
@@ -29,25 +29,25 @@ const EVENT: Record<string, string> = {
 };
 
 /**
- * Emails that aren't confirmed yet (owner, 2026-11-17: the confirmation email reached nobody but him). Tick people, then
- * confirm their emails (as if they typed the code; their friend's invite counts), and, once email works, send the short
- * apology with the link to their place in line. Both need the confirm box; neither changes a plan or a place.
+ * People who asked for an email code and still aren't confirmed (owner, 2026-11-17: the code reached nobody but him;
+ * "sign them up from our side"). Confirming is the same as typing the code: their friend's invite counts. Sends nothing.
  */
-async function UnconfirmedCard() {
-  const list = await safe("unconfirmed emails", () => unconfirmedEmails(getDb()));
+function eventText(e: WaitlistEvent) {
+  const what = EVENT[e.action] ?? e.action;
+  return e.action === "waitlist.accept" ? `${what} ${e.targetEmail ?? "an account"}` : what;
+}
+
+async function CodeAskersCard() {
+  const list = await safe("code askers", () => codeAskers(getDb()));
+  if (list.ok && list.data.length === 0) return null;
   return (
     <Card className="p-5" data-testid="waitlist-unconfirmed">
-      <Head
-        title="Emails not confirmed"
-        subtitle="People whose confirmation code may not have arrived. Confirming counts their friend's invite. The note says sorry and links to their place in line."
-      />
+      <Head title="Asked for a code, not confirmed" subtitle="Their code may not have arrived. Confirm them here; it's the same as typing the code." />
       {!list.ok ? (
         <p className="mt-3 text-sm text-danger">{Failed()}</p>
-      ) : list.data.length === 0 ? (
-        <p className="mt-3 text-sm text-muted">Everyone's email is confirmed.</p>
       ) : (
-        <form className="mt-3 flex flex-col gap-3">
-          <ul role="list" className="divide-y divide-border rounded-2xl bg-surface-2/60 px-4" aria-label="Emails not confirmed">
+        <form action={confirmEmailsAction} className="mt-3 flex flex-col gap-3">
+          <ul role="list" className="divide-y divide-border rounded-2xl bg-surface-2/60 px-4" aria-label="Asked for a code, not confirmed">
             {list.data.map((p) => (
               <li key={p.id}>
                 <label className="flex min-h-11 items-center gap-3 py-2 text-sm">
@@ -55,36 +55,21 @@ async function UnconfirmedCard() {
                   <span className="min-w-0 flex-1 truncate">
                     <span className="font-medium">{p.name}</span> <span className="text-text-2">{p.email}</span>
                   </span>
-                  <span className="shrink-0 text-xs text-muted">joined {ago(p.createdAt)}</span>
+                  <span className="shrink-0 text-xs text-muted">asked {ago(p.askedAt)}</span>
                 </label>
               </li>
             ))}
           </ul>
-          <Confirm>Yes, do this for the people ticked above.</Confirm>
-          <div className="flex flex-wrap gap-2">
-            <SubmitButton formAction={confirmEmailsAction} pendingText="Confirming…">
-              Confirm their emails
-            </SubmitButton>
-            <SubmitButton formAction={sendApologiesAction} variant="secondary" pendingText="Sending…">
-              Send the sorry note
-            </SubmitButton>
-          </div>
-          <p className="text-xs text-muted">The note only reaches people once email works, and only those already confirmed.</p>
+          <Confirm>Yes, confirm the people ticked above.</Confirm>
+          <SubmitButton className="self-start" pendingText="Confirming…">
+            Confirm
+          </SubmitButton>
         </form>
       )}
     </Card>
   );
 }
 
-function eventText(e: WaitlistEvent) {
-  const what = EVENT[e.action] ?? e.action;
-  return e.action === "waitlist.accept" ? `${what} ${e.targetEmail ?? "an account"}` : what;
-}
-
-/**
- * The waitlist (owner, 2026-11-11): who's waiting in order, letting people in one at a time or the next batch, the switch
- * that closes the app to everyone not let in, and what changed. Letting someone in never changes their plan or messages them.
- */
 export async function WaitlistSection({ sp }: { sp: WaitlistParams }) {
   const size = waitlistBatchSizes.includes(Number(sp.wn) as (typeof waitlistBatchSizes)[number]) ? Number(sp.wn) : 10;
   const v = await safe("waitlist", () => waitlistView(getDb(), { q: sp.wq, page: Number(sp.wpage) || 1 }));
@@ -203,7 +188,7 @@ export async function WaitlistSection({ sp }: { sp: WaitlistParams }) {
         )}
       </Card>
 
-      <UnconfirmedCard />
+      <CodeAskersCard />
 
       <Card className="px-5 py-4" data-testid="waitlist-line">
         <Head title="The line" subtitle="Friends = people who signed up with their invite link." />
