@@ -27,7 +27,9 @@ test("a failed save keeps what was typed and explains the problem in plain words
   await page.getByLabel("Employer").fill("Campus Library");
   await page.getByLabel("Hourly rate ($)").fill("16.5");
   await page.getByRole("button", { name: "Save job" }).click();
-  // Record a paycheck is one tap deeper, behind "+ Paycheck" (owner's reset, 2026-11-10)
+  // Record a paycheck is one tap deeper, behind "+ Paycheck" (owner's reset, 2026-11-10), inside "Pay that came in"
+  // (owner, 2026-11-16: the paycheck list is one tap deeper)
+  await page.getByText("Pay that came in", { exact: false }).click();
   await page.getByRole("button", { name: "Paycheck", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Record a paycheck" });
 
@@ -47,7 +49,7 @@ test("a failed save keeps what was typed and explains the problem in plain words
   await dialog.getByLabel("Take-home pay ($)").fill("150");
   await dialog.getByRole("button", { name: "Save paycheck" }).click();
   await expect(dialog).toBeHidden();
-  await expect(page.getByRole("region", { name: "Pay that came in" })).toContainText("$150.00");
+  await expect(page.getByTestId("work-pay")).toContainText("$150.00");
 });
 
 test("Jarvis saves assignments and tasks that then appear in School and Tasks", async ({ page }) => {

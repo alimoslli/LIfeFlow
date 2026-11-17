@@ -6,6 +6,7 @@ import { users } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
 import { errorResponse, HttpError } from "@/server/http";
 import { markLoginRepaired, markNeedsReauth, ownerOfItem, recordNewAccountsAvailable, syncConnection, verifyWebhook } from "@/server/integrations/plaid";
+import { idleSyncDue, isIdle, lastSeenOf } from "@/server/services/idle";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
     if (!event.item_id) return NextResponse.json({ ok: true });
     const owner = await ownerOfItem(getDb(), event.item_id);
     if (!owner) return NextResponse.json({ ok: true }); // unknown or already removed
-    const [u] = await getDb().select({ tz: users.timezone }).from(users).where(eq(users.id, owner.userId));
+    const [u] = await getDb().select({ tz: users.timezone, createdAt: users.createdAt }).from(users).where(eq(users.id, owner.userId));
     const type = event.webhook_type ?? "";
     const code = event.webhook_code ?? "";
     if (type === "ITEM" && (code === "ERROR" || code === "PENDING_EXPIRATION" || code === "USER_PERMISSION_REVOKED")) {
@@ -41,7 +42,11 @@ export async function POST(req: Request) {
     } else if (type === "ITEM" && code === "NEW_ACCOUNTS_AVAILABLE") {
       await withUser(owner.userId, (s) => recordNewAccountsAvailable(s, owner.integrationId));
     } else if ((type === "TRANSACTIONS" || type === "HOLDINGS" || type === "LIABILITIES") && SYNC.has(code)) {
-      await syncOnce(owner.userId, owner.integrationId, u?.tz ?? "UTC"); // errors are recorded on the connection
+      // an account that hasn't opened the app in 7 days syncs every 3 days (services/idle.ts): the bank's "new data" waits
+      // for that sync, or for them to open the app
+      const resting =
+        !!u && isIdle(await lastSeenOf(getDb(), owner.userId), u.createdAt) && !(await withUser(owner.userId, (s) => idleSyncDue(s, owner.integrationId)));
+      if (!resting) await syncOnce(owner.userId, owner.integrationId, u?.tz ?? "UTC"); // errors are recorded on the connection
     }
     return NextResponse.json({ ok: true });
   } catch (e) {

@@ -27,7 +27,8 @@ export async function signUp(page: Page, name = "Jordan Lee", opts: { onboarding
   // Every test signs up from the same IP; reset only the sign-up limiter so the suite can grow past its 10/hour cap.
   await pool.query("delete from rate_limit_buckets where key like 'signup:ip:%'");
   // the old welcome screens, for the tests that are about them (setup in the app is the default)
-  if (opts.onboarding === "stay") await page.context().addCookies([{ name: "lf_setup", value: "old", url: "http://localhost:3100" }]);
+  if (opts.onboarding === "stay")
+    await page.context().addCookies([{ name: "lf_setup", value: "old", url: `http://localhost:${process.env.E2E_PORT ?? 3100}` }]);
   await page.goto("/signup");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("correct horse battery");

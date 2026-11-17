@@ -22,7 +22,7 @@ export const metadata: Metadata = { title: "Your place in line" };
 const DEFAULT_LAUNCH = "We're aiming for the App Store in January 2027. That date may still move.";
 const kicker = "text-[0.75rem] font-semibold tracking-[0.14em] uppercase";
 const glass = "relative overflow-hidden rounded-[1.75rem] bg-white/[0.06] p-5 ring-1 ring-white/12 backdrop-blur-md sm:p-6";
-const h2 = "font-display text-[1.75rem] leading-[1.05] font-medium tracking-[-0.03em]";
+const h2 = "font-display text-[1.75rem] leading-[1.15] font-medium tracking-[-0.03em]";
 
 /**
  * The waitlist page (owner, 2026-11-11; docs/backlog/2026-11-11-audit-and-waitlist.md), on the skylings' night like the
@@ -74,12 +74,11 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
               Preview: this is what someone waiting sees. Your place here is an example; the other numbers are real.
             </p>
           )}
-          <p className={`animate-rise ${kicker} text-star-gold`}>You&apos;re on the list</p>
-          <h1 className="animate-rise mt-3 font-display text-[2.75rem] leading-[0.98] font-medium tracking-[-0.045em] text-balance sm:text-[4rem]">
+          <h1 className="animate-rise font-display text-[2.75rem] leading-[1.1] font-medium tracking-[-0.045em] text-balance sm:text-[4rem]">
             {place ? (
               <>
                 You&apos;re{" "}
-                <em className="bg-gradient-to-r from-dawn-cream to-dawn-2 bg-clip-text text-transparent" data-testid="wl-place">
+                <em className="lf-clip-text bg-gradient-to-r from-dawn-cream to-dawn-2 bg-clip-text text-transparent" data-testid="wl-place">
                   #{place}
                 </em>{" "}
                 in line.
@@ -168,8 +167,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
         </section>
 
         <section className={`${glass} wl-ticket`} aria-labelledby="wl-move">
-          <p className={`${kicker} text-star-gold`}>Skip ahead</p>
-          <h2 id="wl-move" className={`${h2} mt-2`}>
+          <h2 id="wl-move" className={h2}>
             Bring a friend, move up a spot.
           </h2>
           <p className="mt-2 text-[0.9375rem] leading-relaxed text-white/75">
@@ -196,7 +194,7 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
 
         <SkyExplainer name={assistantProfile(user.preferences, user.timezone).name} tz={user.timezone ?? "UTC"} companion={user.preferences?.companion} />
 
-        <p className={`${kicker} mt-2 text-center leading-relaxed text-star-gold/90`}>{w.launchNote ?? DEFAULT_LAUNCH}</p>
+        <p className="mt-2 text-center text-[0.9375rem] leading-relaxed text-star-gold/90">{w.launchNote ?? DEFAULT_LAUNCH}</p>
 
         <nav className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-1 text-sm" aria-label="Your account">
           {[
@@ -263,8 +261,7 @@ function YoureIn({ name, admin, confirm }: { name: string; admin: boolean; confi
     <div className="min-h-dvh bg-night-0 text-white">
       <div className="lf-stars pointer-events-none fixed inset-0" aria-hidden />
       <main className="relative mx-auto flex w-full max-w-xl flex-col gap-4 px-5 pt-16 pb-16">
-        <p className={`${kicker} text-star-gold`}>No line for you</p>
-        <h1 className="font-display text-[2.5rem] leading-none font-medium tracking-[-0.04em]">You&apos;re in, {name}</h1>
+        <h1 className="font-display text-[2.5rem] leading-[1.1] font-medium tracking-[-0.04em]">You&apos;re in, {name}</h1>
         <p className="text-[1.0625rem] text-white/80">You don&apos;t need to wait. Your sky is ready.</p>
         {confirm}
         <div className="mt-2 flex flex-wrap gap-2">

@@ -38,7 +38,7 @@ export function AuthForm({
   return (
     <form action={action} className="flex flex-col gap-4">
       <div className="mb-3">
-        <h1 className="font-display text-[2.375rem] leading-[1.05] font-medium tracking-tight">
+        <h1 className="font-display text-[2.375rem] leading-[1.1] font-medium tracking-tight">
           {mode === "login" ? "Welcome back." : "Your skyling is waiting."}
         </h1>
         <p className="mt-2 text-[0.9375rem] text-muted">

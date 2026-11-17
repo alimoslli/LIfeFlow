@@ -146,7 +146,7 @@ export default async function AccountsPage() {
   return (
     <div className="mx-auto flex max-w-[640px] flex-col gap-7">
       <header>
-        <h1 className="font-display text-[2.375rem] leading-none font-medium tracking-tight">Accounts</h1>
+        <h1 className="font-display text-[2.375rem] leading-[1.1] font-medium tracking-tight">Accounts</h1>
         <p className="mt-2 text-sm text-text-2">Your banks, cards and cash.</p>
       </header>
 

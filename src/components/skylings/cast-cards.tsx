@@ -42,7 +42,7 @@ export function CastCards() {
               frame={frame}
               className="lf-pixel relative h-20 w-20 sm:h-24 sm:w-24"
             />
-            <p className="relative mt-3 font-display text-[1.375rem] leading-none font-medium tracking-[-0.02em] text-white">{c.name}</p>
+            <p className="relative mt-3 font-display text-[1.375rem] leading-[1.2] font-medium tracking-[-0.02em] text-white">{c.name}</p>
             <p className="relative mt-1 text-[0.6875rem] font-semibold tracking-[0.1em] text-[#ffd77a] uppercase">{c.moment}</p>
             <p className="relative mt-2.5 text-[0.875rem] leading-snug text-white/75">{c.line}</p>
             <p className="relative mt-auto pt-3 text-[0.8125rem] leading-snug text-white/55">

@@ -8,7 +8,9 @@ import webpush from "web-push";
  * speaks the Responses API wire format. Run `npm run build` first.
  */
 const E2E_DB = process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e";
-const PORT = 3100;
+// E2E_PORT / E2E_MODEL_PORT let a second run go alongside another (each with its own E2E_DATABASE_URL)
+const PORT = Number(process.env.E2E_PORT ?? 3100);
+const MODEL_PORT = Number(process.env.E2E_MODEL_PORT ?? 4010);
 // A throwaway key pair so the notification settings can be exercised (no real push service is reachable here).
 const vapid = webpush.generateVAPIDKeys();
 
@@ -28,7 +30,7 @@ export default defineConfig({
     { name: "iphone", use: { ...devices["iPhone 13"], browserName: "chromium" }, testMatch: /phone\.spec\.ts/ },
   ],
   webServer: [
-    { command: "node tests/e2e/fake-openai.mjs", url: "http://127.0.0.1:4010", reuseExistingServer: false },
+    { command: `FAKE_OPENAI_PORT=${MODEL_PORT} node tests/e2e/fake-openai.mjs`, url: `http://127.0.0.1:${MODEL_PORT}`, reuseExistingServer: false },
     {
       command: `npx next start -p ${PORT}`,
       url: `http://localhost:${PORT}/api/health`,
@@ -37,11 +39,13 @@ export default defineConfig({
       env: {
         DATABASE_URL: E2E_DB,
         // one made-up Canvas feed address answers locally (setup-in-app.spec.ts); nothing else is touched
-        NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ""} --require ${process.cwd()}/tests/e2e/fake-feeds.cjs`.trim(),
+        // E2E_SERVER_NODE_OPTIONS: extra options for the app server only (a picture run can load a test clock there)
+        NODE_OPTIONS:
+          `${process.env.NODE_OPTIONS ?? ""} ${process.env.E2E_SERVER_NODE_OPTIONS ?? ""} --require ${process.cwd()}/tests/e2e/fake-feeds.cjs`.trim(),
         ENCRYPTION_KEY: Buffer.alloc(32, 9).toString("base64"),
         OPENAI_API_KEY: "sk-e2e-test",
         OPENAI_MODEL: "gpt-5.5",
-        OPENAI_BASE_URL: "http://127.0.0.1:4010/v1",
+        OPENAI_BASE_URL: `http://127.0.0.1:${MODEL_PORT}/v1`,
         VAPID_PUBLIC_KEY: vapid.publicKey,
         VAPID_PRIVATE_KEY: vapid.privateKey,
         VAPID_SUBJECT: "mailto:e2e@example.com",

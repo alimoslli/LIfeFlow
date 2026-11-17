@@ -15,6 +15,7 @@ import { purgeOldBudgets, sweepBudgets } from "@/server/services/ai-budget";
 import { purgeOldSmsInbound } from "@/server/services/sms";
 import { pushImportant, runDueSlot } from "@/server/services/proactive/engine";
 import { runNotifications, sendOnce, webPushSender } from "@/server/services/push";
+import { isIdle, lastSeenByUser } from "@/server/services/idle";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -45,9 +46,11 @@ async function runNotify() {
   const send = await webPushSender();
   // people on the waitlist get nothing from the jobs until they're let in (services/waitlist.ts)
   const all = await getDb()
-    .select({ id: users.id, tz: users.timezone, prefs: users.preferences, kind: users.accountKind, suspended: users.suspendedAt })
+    .select({ id: users.id, tz: users.timezone, prefs: users.preferences, kind: users.accountKind, suspended: users.suspendedAt, createdAt: users.createdAt })
     .from(users)
     .where(await openToApp(getDb()));
+  // accounts that haven't opened the app in 7 days get no paid AI in the background (owner, 2026-11-15; services/idle.ts)
+  const seen = await lastSeenByUser(getDb());
   let messages = 0;
   let sent = 0;
   for (const u of all) {
@@ -60,7 +63,8 @@ async function runNotify() {
     if (u.kind === "demo" || u.prefs?.ageBlockedAt || u.suspended) continue;
     // Separate transactions: one user's (or one step's) failure never blocks the rest.
     try {
-      messages += (await withUser(u.id, (s) => runDueSlot(s, u.tz, u.prefs, new Date(), { scheduled: true }))).length;
+      const idle = isIdle(seen.get(u.id), u.createdAt);
+      messages += (await withUser(u.id, (s) => runDueSlot(s, u.tz, u.prefs, new Date(), { scheduled: true, idle }))).length;
     } catch {}
     if (!send) continue;
     try {

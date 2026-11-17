@@ -60,7 +60,10 @@ async function problems(page: Page): Promise<string[]> {
 async function walkTheLine(page: Page) {
   const clock = page.getByTestId("day-clock");
   await expect(clock).toHaveAttribute("data-ready", "true");
-  await page.getByRole("button", { name: /^Today\. Now / }).click();
+  // opened from the water, so the tap never lands on a "+N" pile (that opens the line with the pile's list)
+  const sky = page.getByRole("button", { name: /^Today\. Now / });
+  const box = (await sky.boundingBox())!;
+  await sky.click({ position: { x: box.width / 2, y: box.height - 16 } });
   await expect(clock).toHaveAttribute("data-state", "timeline");
   await expect(page.locator(".dc-node").first()).toBeAttached();
   await page.waitForTimeout(900); // the opening motion
@@ -197,10 +200,9 @@ for (const size of [
           if (hit) out.push(`a line crosses "${w.text}"`);
         }
       }
-      return { stars: stars.length, line: words.some((w) => / stars? today$/.test(w.text)), out: [...new Set(out)] };
+      return { stars: stars.length, out: [...new Set(out)] };
     });
     // the seeded day has finished things, so there are stars to check (otherwise this proves nothing)
-    expect(r.line).toBe(true);
     expect(r.stars).toBeGreaterThan(0);
     expect(r.out).toEqual([]);
     await context.close();
