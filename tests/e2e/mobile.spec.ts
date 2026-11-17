@@ -1,28 +1,34 @@
 import { expect, test } from "@playwright/test";
-import { signUp, fillBirthday, giveSomething } from "./helpers";
+import { giveSomething, setupAbout, shown, signUp } from "./helpers";
 
 test("core pages fit a phone screen without horizontal scrolling", async ({ page }) => {
   const email = await signUp(page, "Phone User", { onboarding: "stay" });
-  // The helper saves the name after /welcome loaded (sign-up asks only email and password); reload so the first screen has it.
+  // The helper saves the name after Today loaded (sign-up asks only email and password); reload so the first screen has it.
   await page.reload();
-  // Every onboarding step fits: the skylings, about you (with long names), connect your sky, read your sky.
+  // Every step of setup fits: the note on Today, the skylings, about you, the ways to connect, the week landing, reading it.
   const fits = async (label: string) => {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-    expect(overflow, `/welcome (${label}) overflows by ${overflow}px`).toBeLessThanOrEqual(1);
+    expect(overflow, `setup (${label}) overflows by ${overflow}px`).toBeLessThanOrEqual(1);
   };
-  await fits("skyling");
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByLabel("What should I call you?").fill("Tara");
-  await fillBirthday(page, "2004-03-15");
-  await page.getByRole("radio", { name: /Both/ }).click();
-  await fits("about");
-  await page.getByRole("button", { name: "Connect my sky" }).click();
-  await fits("connect");
-  await page.getByRole("button", { name: "I'll connect later" }).click();
-  await fits("learn");
+  await fits("the first note");
+  await shown(page, "Meet the skylings").click();
+  await fits("the skylings");
+  await page.getByRole("dialog", { name: "Meet the skylings" }).getByRole("radio", { name: /^Ray/ }).click();
+  await page.getByRole("dialog", { name: "Meet the skylings" }).getByRole("button", { name: "This one" }).click();
+  const about = await setupAbout(page, { name: "Tara", birthday: "2004-03-15", week: "Both" }, true);
+  await fits("about you");
+  await about.getByRole("button", { name: "Continue" }).click();
+  await shown(page, "Pick the first one").click();
+  await fits("the ways to connect");
+  await page.keyboard.press("Escape");
   await giveSomething(email);
-  await page.getByRole("button", { name: "Skip setup" }).click();
-  await page.waitForURL((u) => u.pathname === "/");
+  await page.reload();
+  await expect(page.locator(".dc-today[data-setup=landed]")).toBeVisible();
+  await fits("the week lands");
+  await shown(page, "Show me how to read it").click();
+  await fits("read your sky");
+  await shown(page, "Go to my sky").click();
+  await expect(page.locator(".dc-today[data-setup]")).toHaveCount(0);
   for (const path of ["/", "/plan", "/money", "/tasks", "/school", "/calendar", "/finances", "/work", "/notes", "/jarvis", "/settings"]) {
     await page.goto(path);
     await page.waitForLoadState("networkidle");

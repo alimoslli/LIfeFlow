@@ -5,7 +5,6 @@ import { cookies } from "next/headers";
 import { TODAY_COOKIE, parseTodayMode } from "@/lib/theme";
 import { aiAllowed } from "@/lib/ai-consent";
 import { isCompanionChoice } from "@/lib/companions";
-import { inAppSetup, SETUP_COOKIE } from "@/lib/setup-mode";
 import { canvasConnection } from "@/server/integrations/canvas";
 import { microsoftConfig } from "@/server/integrations/microsoft";
 import { firstConnection } from "@/server/services/setup-first";
@@ -43,7 +42,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const me = await requireUser();
   // A new account sets up right here (owner, 2026-11-12): the same sky, wheel and chat bar, with the skyling guiding it. No money
   // on the sky yet, and none of the day's looks run until setup is done.
-  if (me.preferences?.onboarding === "pending" && inAppSetup((await cookies()).get(SETUP_COOKIE)?.value)) {
+  if (me.preferences?.onboarding === "pending") {
     const { connected, result } = await searchParams;
     const p = me.preferences ?? {};
     const data = await withCurrentUser(async (scope, user) => {

@@ -200,7 +200,8 @@ export async function signup(_prev: AuthState, fd: FormData): Promise<AuthState>
     if (e instanceof AuthError) return { error: e.message, email };
     throw e;
   }
-  redirect("/welcome");
+  // a new account sets up on Today itself
+  redirect("/");
 }
 
 export async function logout() {

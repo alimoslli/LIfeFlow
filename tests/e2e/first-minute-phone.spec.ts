@@ -1,38 +1,33 @@
 import { expect, test } from "@playwright/test";
-import { queryAsUser, signUp, fillBirthday } from "./helpers";
+import { queryAsUser, setupAbout, setupSkyling, shown, signUp } from "./helpers";
 
 test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
-// Owner's program, item 7: from sign-up to a usable Today in the welcome's steps only (no tour after it), ending on their
-// own sky with something real on it: here a week told in one message, saved by set_up_schedule (the test model calls it).
-test("the first minute: the real welcome ends on Today with the told week on the sky, no tour, one hint once", async ({ page }) => {
+// Owner's program, item 7: from sign-up to a usable Today in setup's own steps (no tour after it), ending on their own sky
+// with something real on it: here a week told in one message, saved by set_up_schedule (the test model calls it).
+test("the first minute: setup ends on Today with the told week on the sky, no tour, one hint once", async ({ page }) => {
   const email = await signUp(page, "Maya Chen", { onboarding: "stay", ai: false });
-  // 1. the skylings
-  await page.getByRole("radio", { name: /^Ray/ }).click();
-  await page.getByRole("button", { name: "Continue" }).click();
-  // 2. about you
-  await page.getByLabel("What should I call you?").fill("Maya");
-  await page.getByRole("radio", { name: /^Both/ }).click();
-  await fillBirthday(page, "2005-04-12");
-  await page.getByRole("button", { name: "Connect my sky" }).click();
+  // 1. the skyling, 2. about you
+  await setupSkyling(page, { skyling: "Ray" });
+  await setupAbout(page, { name: "Maya", birthday: "2005-04-12", week: "Both" });
 
-  // 3. nothing to connect: a photo, or the week typed in one message. AI is asked for first, never assumed.
-  await expect(page.getByRole("heading", { name: "Connect your sky" })).toBeVisible();
-  await expect(page.getByText("sends it to OpenAI", { exact: false }).first()).toBeVisible();
-  await expect(page.getByRole("button", { name: "Send Ray a photo" })).toBeVisible();
-  await page.getByRole("button", { name: "Or type it" }).click();
-  await page
-    .getByLabel("Type it to Ray")
+  // 3. nothing to connect: the week typed in one message. AI is asked for first, never assumed.
+  await shown(page, "Pick the first one").click();
+  const ways = page.getByRole("dialog", { name: "Your first connection" });
+  await ways.getByText("Nothing here works for me").click();
+  await expect(ways.getByText("to OpenAI", { exact: false }).first()).toBeVisible();
+  await ways
+    .getByLabel("Tell Ray your week")
     .fill('/tool set_up_schedule {"classes":[{"name":"BIO 101","days":[0,1,2,3,4,5,6],"startTime":"10:00","endTime":"11:15"}]}');
-  await page.getByRole("button", { name: "Allow and send" }).click();
-  await expect(page.getByRole("status").filter({ hasText: /^Done|Saved/ })).toBeVisible({ timeout: 30_000 });
-  // the sky above has it, and the step now goes on like a connection
+  await ways.getByRole("button", { name: "Allow and send" }).click();
+  // the week lands: the sky has it, and setup goes on like after a connection
+  await expect(page.locator(".dc-today[data-setup=landed]")).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole("button", { name: /^BIO 101, / }).first()).toBeAttached();
-  await page.getByRole("button", { name: "Show me how to read it" }).click();
+  await shown(page, "Show me how to read it").click();
 
   // 4. read your sky, then their own Today: no tour, the class on it
-  await page.getByRole("button", { name: "Go to my sky" }).click();
-  await page.waitForURL((u) => u.pathname === "/");
+  await shown(page, "Go to my sky").click();
+  await expect(page.locator(".dc-today[data-setup]")).toHaveCount(0);
   await expect(page.getByTestId("day-clock")).toBeVisible();
   await expect(page.getByRole("dialog", { name: "Welcome to LifeFlow" })).toHaveCount(0);
   await page.getByRole("button", { name: /^Today\. Now / }).click();

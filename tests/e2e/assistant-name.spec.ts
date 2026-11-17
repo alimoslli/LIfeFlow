@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { COMPOSER, queryAsUser, signUp, whatUsersSee, fillBirthday, giveSomething } from "./helpers";
+import { COMPOSER, giveSomething, queryAsUser, setupAbout, setupSkyling, shown, signUp, whatUsersSee } from "./helpers";
 
 /**
  * The skyling has no fixed name. A new user who taps through setup without naming it (or picking one) meets Ray, the
@@ -50,28 +50,34 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   // No AI consent yet, so the first-chat consent card and its wording are checked too.
   const email = await signUp(page, "Riley Park", { onboarding: "stay", ai: false });
 
-  // Setup, every step, without naming the skyling. First the skylings: the name starts empty, none is picked, and
-  // "Jarvis" isn't offered.
-  const nameBox = page.getByLabel("Skyling's name");
+  // Setup on Today, every step, without picking or naming a skyling. First the skylings: the name starts empty, none is
+  // picked, and "Jarvis" isn't offered.
+  await expectNoJarvis(page, "setup: the first note");
+  await shown(page, "Meet the skylings").click();
+  const meet = page.getByRole("dialog", { name: "Meet the skylings" });
+  const nameBox = meet.getByLabel("Skyling's name");
   await expect(nameBox).toHaveValue("");
   await expect(nameBox).toHaveAttribute("placeholder", "your skyling");
-  await expect(page.getByRole("button", { name: "Jarvis" })).toHaveCount(0);
-  await expect(page.getByRole("button", { pressed: true })).toHaveCount(0);
-  await expect(page.getByRole("radiogroup", { name: "Your skyling" }).getByRole("radio", { checked: true })).toHaveCount(0);
-  await expect(page.getByText("Your skyling:", { exact: false })).toBeVisible();
-  await expectNoJarvis(page, "welcome: the skylings");
-  await page.getByRole("button", { name: "Continue" }).click();
-  await expectNoJarvis(page, "welcome: about you");
-  await page.getByLabel("What should I call you?").fill("Riley");
-  await fillBirthday(page, "2003-07-21");
-  await page.getByRole("radio", { name: /Both/ }).click();
-  await page.getByRole("button", { name: "Connect my sky" }).click();
-  await expectNoJarvis(page, "welcome: connect your sky");
-  await page.getByRole("button", { name: "I'll connect later" }).click();
-  await expectNoJarvis(page, "welcome: read your sky");
+  await expect(meet.getByRole("button", { name: "Jarvis" })).toHaveCount(0);
+  await expect(meet.getByRole("radiogroup", { name: "Your skyling" }).getByRole("radio", { checked: true })).toHaveCount(0);
+  await expectNoJarvis(page, "setup: the skylings");
+  await page.keyboard.press("Escape");
+  await expect(meet).toBeHidden();
+  await setupSkyling(page); // picking can wait
+  const about = await setupAbout(page, { name: "Riley", birthday: "2003-07-21", week: "Both" }, true);
+  await expectNoJarvis(page, "setup: about you");
+  await about.getByRole("button", { name: "Continue" }).click();
+  await shown(page, "Pick the first one").click();
+  await expectNoJarvis(page, "setup: the ways to connect");
+  await page.keyboard.press("Escape");
   await giveSomething(email);
-  await page.getByRole("button", { name: "Go to my sky" }).click();
-  await page.waitForURL((u) => u.pathname === "/");
+  await page.reload();
+  await expect(page.locator(".dc-today[data-setup=landed]")).toBeVisible();
+  await expectNoJarvis(page, "setup: the week lands");
+  await shown(page, "Show me how to read it").click();
+  await expectNoJarvis(page, "setup: read your sky");
+  await shown(page, "Go to my sky").click();
+  await expect(page.locator(".dc-today[data-setup]")).toHaveCount(0);
 
   // No name was saved: it goes by its skyling's own name (Ray, the default) until they choose one.
   const [prefs] = await queryAsUser<{ p: { assistantName?: string; onboarding?: string } }>(email, "select preferences as p from users where email = $1", [
@@ -80,7 +86,7 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   expect(prefs.p.onboarding).toBe("done");
   expect(prefs.p.assistantName).toBeUndefined();
 
-  // No tour after the welcome (item 7); replayed from Settings, every step still never says "Jarvis".
+  // No tour after setup (item 7); replayed from Settings, every step still never says "Jarvis".
   await expect(page.getByRole("dialog", { name: "Welcome to LifeFlow" })).toHaveCount(0);
   await page.goto("/settings");
   await page.getByRole("button", { name: "Replay the tour" }).click();

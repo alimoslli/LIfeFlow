@@ -10,15 +10,12 @@ import { createTask } from "@/server/services/tasks";
 import { createCourse } from "@/server/services/school";
 import { createEmployer } from "@/server/services/work";
 import { provisionalName } from "@/lib/provisional-name";
-import { listAccounts } from "@/server/services/finance/accounts";
-import { listActiveMemories } from "@/server/services/memory";
 import { setCompanion, updateProfile } from "@/server/services/accounts";
 import {
   afterAgeLock,
   HANDLED_ON_LOCK,
   KEEP_ON_LOCK,
   closeLockedConnections,
-  completeOnboarding,
   finishOnboarding,
   retryLockClosing,
   saveBirthday,
@@ -174,45 +171,13 @@ describe("onboarding", () => {
     expect((await db.select({ email: users.email }).from(users).where(eq(users.id, kid.user.id)))[0].email).toBe(kid.user.email);
   });
 
-  it("saves everything through the regular services and queues the tour", async () => {
-    const { user, run } = await makeUser("Nia Brooks");
-    await born(run);
-    const r = await run((s) =>
-      completeOnboarding(s, {
-        lifeStage: "both",
-        courses: ["Biology II", "biology ii", "Statistics"],
-        job: { name: "Campus Library", hourlyRate: 16.5 },
-        checking: { name: "Checking", balance: 1250.5 },
-        studyTime: "evening",
-        jarvisTone: "concise",
-        aboutMe: "Saving for a car.",
-      }),
-    );
-    expect(r).toEqual({ courses: 2, job: true, checking: true, memory: true });
-    expect((await run((s) => listCourses(s))).map((c) => c.name).sort()).toEqual(["Biology II", "Statistics"]);
-    const [job] = await run((s) => listEmployers(s));
-    expect(job).toMatchObject({ name: "Campus Library", hourlyRateCents: 1650 });
-    const [acct] = await run((s) => listAccounts(s));
-    expect(acct).toMatchObject({ name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 125050 });
-    const [mem] = await run((s) => listActiveMemories(s));
-    expect(mem).toMatchObject({ content: "Saving for a car.", source: "user", status: "active" });
-    expect(await prefs(user.id)).toMatchObject({ lifeStage: "both", studyTime: "evening", jarvisTone: "concise", onboarding: "done", tour: "done" });
-  });
-
   it("finishing setup with no name leaves it going by its skyling's own (Ray by default), never 'Jarvis'", async () => {
     const { user, run } = await makeUser();
     await born(run);
-    await run((s) => completeOnboarding(s, { lifeStage: "both", assistant: { name: undefined, style: "friend" } }));
+    await run((s) => finishOnboarding(s, { lifeStage: "both", assistantName: undefined, assistantStyle: "friend" }));
     const p = await prefs(user.id);
     expect(p.assistantName).toBeUndefined();
     expect(assistantProfile(p)).toMatchObject({ name: "Ray", named: false });
-  });
-
-  it("is all-or-nothing: a refused step saves nothing", async () => {
-    const { user, run } = await makeUser();
-    await expect(run((s) => completeOnboarding(s, { courses: ["Chemistry"], aboutMe: "my password is hunter22" }))).rejects.toThrow(/Sensitive data/);
-    expect(await run((s) => listCourses(s))).toHaveLength(0);
-    expect((await prefs(user.id)).onboarding).toBeUndefined();
   });
 
   it("skipping finishes setup without creating anything or queuing a tour, and the tour can be replayed and finished", async () => {
@@ -262,16 +227,15 @@ describe("onboarding", () => {
     expect((await prefs(user.id)).birthDate).toBe("2005-04-12");
   });
 
-  it("keeps 'where you work' while they connect, and makes it an employer only when setup finishes", async () => {
+  it("a workplace kept by an earlier setup is never made into an employer, and is cleared when setup finishes", async () => {
     const { user, run } = await makeUser("Ren Ito");
     await run((s) => saveWelcomeProgress(s, "UTC", { lifeStage: "working", job: "Campus Coffee" }));
     expect((await prefs(user.id)).welcomeJob).toBe("Campus Coffee");
     expect(await run((s) => listEmployers(s))).toEqual([]);
-    // back from Google: the welcome hands the kept name to finishing
-    const kept = (await prefs(user.id)).welcomeJob!;
+    // setup no longer asks where they work (connecting, a schedule picture or the skyling brings it in): finishing drops the kept name
     await born(run);
-    await run((s) => completeOnboarding(s, { lifeStage: "working", job: { name: kept } }));
-    expect((await run((s) => listEmployers(s))).map((e) => e.name)).toEqual(["Campus Coffee"]);
+    await run((s) => finishOnboarding(s, { lifeStage: "working" }));
+    expect(await run((s) => listEmployers(s))).toEqual([]);
     expect((await prefs(user.id)).welcomeJob).toBeUndefined();
   });
 
@@ -289,7 +253,6 @@ describe("onboarding", () => {
 
   it("setup can't be finished or skipped without a birthday, checked on the server", async () => {
     const { run } = await makeUser("Noa Lin");
-    await expect(run((s) => completeOnboarding(s, { lifeStage: "student" }))).rejects.toThrow("Add your birthday to finish setting up.");
     await expect(run((s) => finishOnboarding(s))).rejects.toThrow("Add your birthday to finish setting up.");
     await born(run);
     await run((s) => finishOnboarding(s));
@@ -318,7 +281,6 @@ describe("onboarding", () => {
     // retyping an older year: still locked, still nothing kept
     expect(await run((s) => saveWelcomeProgress(s, "UTC", { birthDate: "2000-01-01" }))).toEqual({ blocked: true });
     expect((await prefs(user.id)).birthDate).toBeUndefined();
-    await expect(run((s) => completeOnboarding(s, { lifeStage: "student" }))).rejects.toThrow("LifeFlow is for people 13 and older.");
     await expect(run((s) => finishOnboarding(s))).rejects.toThrow("LifeFlow is for people 13 and older.");
     expect(await run((s) => saveBirthday(s, "UTC", "2000-01-01"))).toEqual({ blocked: true });
     await expect(updateProfile(getDb(), user.id, { name: "Kai", timezone: "UTC", birthDate: "2000-01-01" })).rejects.toThrow("13 and older");

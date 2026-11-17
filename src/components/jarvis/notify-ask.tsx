@@ -19,6 +19,18 @@ const write = (s: Seen) => {
   } catch {}
 };
 
+/** Whether the calm ask may be shown on this device now: not declined, not shown twice, and they can come but are off. */
+export async function notifyAskDue(): Promise<"off" | "needs-install" | null> {
+  const seen = read();
+  if (seen.no || seen.n >= 2) return null;
+  const s = await pushState();
+  return s === "off" || s === "needs-install" ? s : null;
+}
+/** The ask was shown once more on this device. */
+export const notifyAskShown = () => write({ ...read(), n: read().n + 1 });
+/** "Not now": never asked again on this device (Settings › Notifications still has them). */
+export const notifyAskNo = () => write({ ...read(), no: true });
+
 /**
  * The calm ask for notifications (owner's program, item 3, 2026-11-10): the only other place to turn them on is Settings ›
  * Notifications. Shown at most twice on this device, "Not now" is remembered, and never when they're on, blocked, or
@@ -32,11 +44,9 @@ export function NotifyAsk({ title, line }: { title: string; line: string }) {
 
   useEffect(() => {
     let alive = true;
-    const seen = read();
-    if (seen.no || seen.n >= 2) return;
-    void pushState().then((s) => {
-      if (!alive || (s !== "off" && s !== "needs-install")) return;
-      write({ ...seen, n: seen.n + 1 });
+    void notifyAskDue().then((s) => {
+      if (!alive || !s) return;
+      notifyAskShown();
       setState(s);
     });
     return () => {
@@ -46,7 +56,7 @@ export function NotifyAsk({ title, line }: { title: string; line: string }) {
 
   if (!state || gone) return null;
   const notNow = () => {
-    write({ ...read(), no: true });
+    notifyAskNo();
     setGone(true);
   };
   const on = async () => {

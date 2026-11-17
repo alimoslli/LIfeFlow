@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { expect, test, type Page } from "@playwright/test";
-import { signUp, fillBirthday, giveSomething } from "./helpers";
+import { signUp, walkSetup } from "./helpers";
 
 test.use({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true });
 
@@ -82,21 +82,9 @@ test("393px: every control on onboarding and the main screens is at least 44x44"
     for (const p of await smallTargets(page)) problems.push(`${where}: ${p}`);
   };
 
-  // Onboarding, every step.
+  // Setup on Today, every step and every sheet.
   const email = await signUp(page, "Tara Target", { onboarding: "stay" });
-  await check("welcome/skyling");
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByLabel("What should I call you?").fill("Tara");
-  await fillBirthday(page, "2004-03-15");
-  await page.getByRole("radio", { name: /Both/ }).click();
-  await check("welcome/about");
-  await page.getByRole("button", { name: "Connect my sky" }).click();
-  await check("welcome/connect");
-  await page.getByRole("button", { name: "I'll connect later" }).click();
-  await check("welcome/learn");
-  await giveSomething(email);
-  await page.getByRole("button", { name: "Skip setup" }).click();
-  await page.waitForURL((u) => u.pathname === "/");
+  await walkSetup(page, email, check);
 
   // The main screens, with real content (goals with "What if I added", a job, subscriptions).
   execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/seed-coach.ts", email], {

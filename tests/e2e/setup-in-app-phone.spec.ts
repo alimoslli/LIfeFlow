@@ -14,7 +14,6 @@ test.use({
 });
 
 const SHOTS = process.env.SETUP_SHOTS; // set to a folder to write the pictures for the owner
-const OLD = SHOTS ? `${SHOTS}/old` : null;
 async function shot(page: Page, name: string, dir = SHOTS) {
   if (!dir) return;
   mkdirSync(dir, { recursive: true });
@@ -42,7 +41,7 @@ async function schedulePicture(page: Page) {
 /** Sign-up, then the setup inside the app: the first steps up to "pick the first connection". */
 async function toConnect(page: Page, opts: { shots?: boolean } = {}) {
   const email = await signUp(page, "Maya Chen", { onboarding: "stay", ai: false });
-  await page.goto("/setup");
+  await page.goto("/");
   await page.waitForURL((u) => u.pathname === "/");
   // the real Today: the same sky and the same chat bar, with the skyling's note where its note always sits
   await expect(page.getByTestId("day-clock")).toBeVisible();
@@ -159,7 +158,7 @@ test("a picture of a class schedule: read, checked with one tap, and it lands on
   expect((await queryAsUser<{ name: string }>(email, "select name from courses")).map((c) => c.name)).toEqual(["BIO 110"]);
 });
 
-test("a plain sign-up lands in the in-app setup by default, and /welcome only forwards there", async ({ page }) => {
+test("a plain sign-up lands in setup on Today, and /welcome only forwards there", async ({ page }) => {
   await signUp(page, "Dana Default", { onboarding: "app", ai: false });
   await page.waitForURL((u) => u.pathname === "/");
   await expect(page.locator(".dc-today[data-setup=meet]")).toBeVisible();
@@ -170,7 +169,7 @@ test("a plain sign-up lands in the in-app setup by default, and /welcome only fo
 
 test("under 13 locks setup in the app exactly as before", async ({ page }) => {
   const email = await signUp(page, "Kid Example", { onboarding: "stay", ai: false });
-  await page.goto("/setup");
+  await page.goto("/");
   await page.waitForURL((u) => u.pathname === "/");
   await note(page).getByRole("button", { name: "Meet the skylings" }).click();
   await page.getByRole("dialog", { name: "Meet the skylings" }).getByRole("radio", { name: /^Ray/ }).click();
@@ -205,27 +204,6 @@ test("setup can't be finished without a connection: no finish, no skip, still in
   await expect(page.locator(".dc-today[data-setup=connect]")).toBeVisible();
   const [row] = await queryAsUser<{ o: string }>(email, "select preferences->>'onboarding' as o from users where email = $1", [email]);
   expect(row.o).toBe("pending");
-});
-
-test("the old welcome is still there to compare", async ({ page }) => {
-  test.skip(!OLD, "pictures only");
-  await signUp(page, "Maya Chen", { onboarding: "stay", ai: false });
-  await page.goto("/setup?old=1");
-  await page.waitForURL("**/welcome");
-  await shot(page, "old-1-meet-the-skylings", OLD!);
-  await page.getByRole("radio", { name: /^Ray/ }).click();
-  await shot(page, "old-2-picked", OLD!);
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByLabel("What should I call you?").fill("Maya");
-  await page.getByRole("radio", { name: /^Both/ }).click();
-  await fillBirthday(page, "2005-04-12");
-  await shot(page, "old-3-about-you", OLD!);
-  await page.getByRole("button", { name: "Connect my sky" }).click();
-  await expect(page.getByRole("heading", { name: "Connect your sky" })).toBeVisible();
-  await shot(page, "old-4-connect-your-sky", OLD!);
-  await page.getByRole("button", { name: "I'll connect later" }).click();
-  await expect(page.getByRole("heading", { name: "Read your sky" })).toBeVisible();
-  await shot(page, "old-5-read-your-sky", OLD!);
 });
 
 test("nothing to connect: tell the skyling the week in a message; only what is really saved moves setup on", async ({ page }) => {
@@ -279,7 +257,7 @@ test("on a laptop the same setup sits beside the wheel", async ({ browser }) => 
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   await signUp(page, "Maya Chen", { onboarding: "stay", ai: false });
-  await page.goto("/setup");
+  await page.goto("/");
   await page.waitForURL((u) => u.pathname === "/");
   const wide = page.getByTestId("setup-note-wide");
   await expect(wide.getByRole("button", { name: "Meet the skylings" })).toBeVisible();
@@ -329,7 +307,7 @@ test("a phone browser's short window: every step's button is in view and uncover
   const ctx = await browser.newContext({ viewport: { width: 390, height: 664 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
   const email = await signUp(page, "Maya Chen", { onboarding: "stay", ai: false });
-  await page.goto("/setup");
+  await page.goto("/");
   await page.waitForURL((u) => u.pathname === "/");
   const n = note(page);
   await expect(n.getByTestId("setup-step")).toHaveText("Step 1 of 3");
@@ -382,7 +360,7 @@ test("on a laptop the note waits under the open week: the next step never disapp
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   await signUp(page, "Maya Chen", { onboarding: "stay", ai: false });
-  await page.goto("/setup");
+  await page.goto("/");
   await page.waitForURL((u) => u.pathname === "/");
   const wide = page.getByTestId("setup-note-wide");
   const under = page.getByTestId("setup-note-open");
@@ -418,4 +396,107 @@ test("on a laptop the note waits under the open week: the next step never disapp
   await expect(page.locator(".dc-today[data-setup]")).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Maya");
   await ctx.close();
+});
+
+/** An account whose first two steps and one real class are already there: setup opens with the week landed. */
+async function landedAccount(page: Page) {
+  const email = await signUp(page, "Maya Chen", { onboarding: "stay", ai: false });
+  await pool.query(`update users set preferences = preferences || '{"birthDate":"2005-04-12","lifeStage":"student"}'::jsonb where email = $1`, [email]);
+  await queryAsUser(email, "insert into courses (user_id, name) select id, 'BIO 110' from users where email = $1", [email]);
+  await page.goto("/");
+  await expect(page.locator(".dc-today[data-setup=landed]")).toBeVisible();
+  return email;
+}
+const SHORT_PHONE = { viewport: { width: 390, height: 664 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true };
+
+// The old welcome ended on one calm ask for notifications; setup on Today didn't ask at all (owner, 2026-11-16: add it).
+test("setup's last beat asks for notifications once; Not now is remembered on the device", async ({ browser }) => {
+  const ctx = await browser.newContext(SHORT_PHONE);
+  const page = await ctx.newPage();
+  // a browser that hasn't said yes or no yet (headless Chromium always reports "denied")
+  await page.addInitScript(() => Object.defineProperty(Notification, "permission", { get: () => "default" }));
+  const email = await landedAccount(page);
+  const n = note(page);
+  await n.getByRole("button", { name: "Show me how to read it" }).click();
+  await n.getByRole("button", { name: "Go to my sky" }).click();
+  await expect(page.locator(".dc-today[data-setup=notify]")).toBeVisible();
+  await expect(n.getByTestId("setup-words")).toContainText("Want my check-ins as notifications?");
+  await expect(n.getByTestId("setup-words")).toContainText("Quiet at night.");
+  await expect(n.getByTestId("setup-step")).toHaveCount(0);
+  await reachable(page, n.getByRole("button", { name: "Turn on notifications" }));
+  const later = n.getByRole("button", { name: "Not now" });
+  await reachable(page, later);
+  expect(Math.round((await later.boundingBox())!.height)).toBeGreaterThanOrEqual(44);
+  await shot(page, "phone-notify-ask");
+  await later.click();
+  await expect(page.locator(".dc-today[data-setup]")).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Maya");
+  expect((await queryAsUser<{ o: string }>(email, "select preferences->>'onboarding' as o from users where email = $1", [email]))[0].o).toBe("done");
+
+  // setup again on the same device: it goes straight to the sky, never asked twice after "Not now"
+  await pool.query(`update users set preferences = preferences || '{"onboarding":"pending"}'::jsonb where email = $1`, [email]);
+  await page.goto("/");
+  await expect(page.locator(".dc-today[data-setup=landed]")).toBeVisible();
+  await n.getByRole("button", { name: "Show me how to read it" }).click();
+  await n.getByRole("button", { name: "Go to my sky" }).click();
+  await expect(page.locator(".dc-today[data-setup]")).toHaveCount(0);
+  await ctx.close();
+});
+
+test("notifications the browser blocks never hold setup: it says so and lands on the sky (a laptop)", async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  // not answered yet when setup looks; the browser's own question then comes back "denied" (as headless Chromium answers)
+  await page.addInitScript(() => Object.defineProperty(Notification, "permission", { get: () => "default" }));
+  await landedAccount(page);
+  // the week has opened; "Show me how to read it" folds it back, and the note is beside the wheel again
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "timeline");
+  await page.getByTestId("setup-note-open").getByRole("button", { name: "Show me how to read it" }).click();
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-state", "clock");
+  const n = page.getByTestId("setup-note-wide");
+  await n.getByRole("button", { name: "Go to my sky" }).click();
+  await expect(page.locator(".dc-today[data-setup=notify]")).toBeVisible();
+  await reachable(page, n.getByRole("button", { name: "Turn on notifications" }));
+  await reachable(page, n.getByRole("button", { name: "Not now" }));
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/laptop-notify-ask.png` });
+  await n.getByRole("button", { name: "Turn on notifications" }).click();
+  await expect(page.getByText("They're blocked for LifeFlow in this browser's settings.")).toBeVisible();
+  await expect(page.locator(".dc-today[data-setup]")).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Maya");
+  await ctx.close();
+});
+
+test("an iPhone outside the installed app is told the one step, and a device that can't get them isn't asked", async ({ browser }) => {
+  // Safari on an iPhone has no push until LifeFlow is on the Home Screen
+  const ctx = await browser.newContext({
+    ...SHORT_PHONE,
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 Version/17.5 Mobile/15E148 Safari/604.1",
+  });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => Reflect.deleteProperty(window, "PushManager"));
+  await landedAccount(page);
+  const n = note(page);
+  await n.getByRole("button", { name: "Show me how to read it" }).click();
+  await n.getByRole("button", { name: "Go to my sky" }).click();
+  await expect(page.locator(".dc-today[data-setup=notify]")).toBeVisible();
+  await expect(n.getByTestId("setup-words")).toContainText("tap Share, then Add to Home Screen");
+  await expect(n.getByRole("button", { name: "Turn on notifications" })).toHaveCount(0);
+  const go = n.getByRole("button", { name: "Go to my sky" });
+  await reachable(page, go);
+  await go.click();
+  await expect(page.locator(".dc-today[data-setup]")).toHaveCount(0);
+  await ctx.close();
+
+  // any other device without push (an Android browser here) isn't asked: straight to its sky
+  const plain = await browser.newContext({
+    ...SHORT_PHONE,
+    userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36",
+  });
+  const p2 = await plain.newPage();
+  await p2.addInitScript(() => Reflect.deleteProperty(window, "PushManager"));
+  await landedAccount(p2);
+  await note(p2).getByRole("button", { name: "Show me how to read it" }).click();
+  await note(p2).getByRole("button", { name: "Go to my sky" }).click();
+  await expect(p2.locator(".dc-today[data-setup]")).toHaveCount(0);
+  await plain.close();
 });
