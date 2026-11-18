@@ -33,11 +33,28 @@ describe("a day off from a connected calendar (owner, 2026-11-18: Canvas's break
       "Labor Day",
       "MLK Day - no school",
       "Holiday",
+      "Labor Day (observed)",
+      "Christmas Day",
+      "Thanksgiving",
     ])
       expect(isDayOff(t), t).toBe(true);
   });
   it("leaves ordinary events alone", () => {
-    for (const t of ["BIO 105 Lecture", "Office hours", "Breakfast with Sam", "Lab report due", "Breakdance club", "Midterm review"])
+    for (const t of [
+      "BIO 105 Lecture",
+      "Office hours",
+      "Breakfast with Sam",
+      "Lab report due",
+      "Breakdance club",
+      "Midterm review",
+      // QA, 2026-11-18: classes that only mention a holiday or a break
+      "Lecture: Holiday Marketing",
+      "Christmas Carol seminar",
+      "Break-even analysis workshop",
+      "Lunch break",
+      "Thanksgiving food drive",
+      "Holiday party planning",
+    ])
       expect(isDayOff(t), t).toBe(false);
   });
 });

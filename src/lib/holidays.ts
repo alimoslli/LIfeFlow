@@ -44,30 +44,43 @@ export function holidaysBetween(tz: string, from: string, to: string): { date: s
   return out.sort((a, b) => a.date.localeCompare(b.date));
 }
 
+/** A named break or a plain closure: "Thanksgiving Break", "Spring break", "No classes", "Campus closed", "Reading day". */
+const BREAK_WORDS =
+  /\b((spring|fall|autumn|winter|summer|thanksgiving|holiday|mid-?(term|semester)|semester|term|reading|study) break|no (class|classes|school)|classes (do not|don't|will not|won't) meet|(campus|university|college|school|offices?)( is| are)? closed|recess|reading (day|period|week)|day off)\b/i;
+/** What may stand beside a holiday's name in a day-off title ("Labor Day (observed) - no classes"), and nothing else. */
+const FILLER = /\b(day|eve|observed|holidays?|break|no|class|classes|school|campus|closed|the|university|college|recess|jr|of)\b|[^a-z]+/gi;
+
+const HOLIDAY_NAMES: [RegExp, string][] = [
+  [/new year'?s?/i, "New Year's Day"],
+  [/martin luther king|\bmlk\b/i, "Martin Luther King Jr. Day"],
+  [/presidents'? day|washington'?s birthday/i, "Presidents' Day"],
+  [/memorial day/i, "Memorial Day"],
+  [/juneteenth/i, "Juneteenth"],
+  [/independence day|fourth of july|4th of july/i, "Independence Day"],
+  [/labor day/i, "Labor Day"],
+  [/veterans'? day/i, "Veterans Day"],
+  [/thanksgiving/i, "Thanksgiving"],
+  [/christmas/i, "Christmas Day"],
+];
+
 /**
  * A day off by its title, from any calendar the person connected (a Canvas "Thanksgiving Break - No Classes", a school
- * calendar's "Spring Break", "Campus closed"): it shows as a day off, never as a class (owner, 2026-11-18: "if a holiday
- * or smth like that is given from a different calendar like the canvas one it has to be added too").
+ * calendar's "Spring Break", "Campus closed", "Labor Day"): it shows as a day off, never as a class (owner, 2026-11-18:
+ * "if a holiday or smth like that is given from a different calendar like the canvas one it has to be added too").
+ * Strict on purpose (QA, 2026-11-18): a class whose title only mentions a holiday or a break ("Lecture: Holiday
+ * Marketing", "Christmas Carol seminar", "Break-even analysis workshop", "Lunch break") is not a day off. Only all-day
+ * events are ever asked.
  */
-export const isDayOff = (title: string) =>
-  /\b(break|holidays?|no (class(es)?|school)|classes (do not|don't) meet|recess|(campus|university|college|school|office)( is)? closed|closure|day off|reading (day|period|week)|vacation)\b/i.test(
-    title,
-  ) || usHolidayNamed(title) != null;
+export function isDayOff(title: string): boolean {
+  if (BREAK_WORDS.test(title)) return true;
+  // a plain "Holiday" / "University holiday"
+  if (/^\s*((school|university|college|campus|public|bank) )?holidays?\s*$/i.test(title)) return true;
+  // a public holiday by name, with nothing but filler beside it
+  const hit = HOLIDAY_NAMES.find(([re]) => re.test(title));
+  return !!hit && title.replace(hit[0], " ").replace(FILLER, "").trim() === "";
+}
 
 /** The public holiday a title names ("Thanksgiving Day", "MLK Day"), or null. */
 export function usHolidayNamed(title: string): string | null {
-  const t = title.toLowerCase();
-  const names: [RegExp, string][] = [
-    [/new year/, "New Year's Day"],
-    [/martin luther king|\bmlk\b/, "Martin Luther King Jr. Day"],
-    [/presidents'? day|washington'?s birthday/, "Presidents' Day"],
-    [/memorial day/, "Memorial Day"],
-    [/juneteenth/, "Juneteenth"],
-    [/independence day|fourth of july|4th of july/, "Independence Day"],
-    [/labor day/, "Labor Day"],
-    [/veterans'? day/, "Veterans Day"],
-    [/thanksgiving/, "Thanksgiving"],
-    [/christmas/, "Christmas Day"],
-  ];
-  return names.find(([re]) => re.test(t))?.[1] ?? null;
+  return HOLIDAY_NAMES.find(([re]) => re.test(title))?.[1] ?? null;
 }

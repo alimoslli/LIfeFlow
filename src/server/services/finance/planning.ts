@@ -396,7 +396,7 @@ async function detectBankSeries(scope: UserScope, today: string) {
   return {
     tracked: all.filter((c) => tracked.has(c)),
     // money to or from a person (Zelle, Venmo…) repeats but is never a bill to suggest (owner, 2026-11-18)
-    untracked: all.filter((c) => !tracked.has(c) && c.confidence >= MIN_CONFIDENCE && !personPaymentApp(c.name, c.merchantKey)),
+    untracked: all.filter((c) => !tracked.has(c) && c.confidence >= MIN_CONFIDENCE && !personPaymentApp(c.name)),
     trackedActive: all.filter((c) => trackedActive.has(c)),
     all,
   };

@@ -470,14 +470,16 @@ async function syncFeed(scope: UserScope, creds: Creds & { feedUrl: string }, f:
         allDay: !e.start.time,
         location: e.location?.slice(0, 300) ?? null,
       };
-      // a break or holiday posted on Canvas ("Thanksgiving Break - No Classes") is a day off, never a class (owner, 2026-11-18);
-      // set on every sync, so one saved as a class before this is corrected (a class earns stars and shows on School)
-      const r = isDayOff(title)
-        ? await upsertProviderEvent(scope, "canvas", providerEventId, { ...fields, kind: "other", courseId: null })
-        : await upsertProviderEvent(scope, "canvas", providerEventId, fields, {
-            kind: "class",
-            courseId: label || ref ? await courseFor(ref, label) : null,
-          });
+      // a break or holiday posted on Canvas ("Thanksgiving Break - No Classes", all day) is saved as a day off, never a
+      // class (owner, 2026-11-18). Only when it's first saved (QA, 2026-11-18: never undo what the person set later), and
+      // only for all-day events, so a class whose title mentions a holiday keeps its class
+      const r = await upsertProviderEvent(
+        scope,
+        "canvas",
+        providerEventId,
+        fields,
+        !e.start.time && isDayOff(title) ? { kind: "other", courseId: null } : { kind: "class", courseId: label || ref ? await courseFor(ref, label) : null },
+      );
       if (r.added) added++;
     }
   }

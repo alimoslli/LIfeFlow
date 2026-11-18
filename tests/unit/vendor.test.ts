@@ -142,11 +142,14 @@ describe("personPaymentApp (owner, 2026-11-18: money to a person is never a bill
     expect(personPaymentApp("Zelle", "ZELLE TO MOM CONF# Q1")).toBe("Zelle");
     expect(personPaymentApp(null, "VENMO PAYMENT 1023")).toBe("Venmo");
     expect(personPaymentApp("Cash App", null)).toBe("Cash App");
-    expect(personPaymentApp("PAYPAL *JORDAN")).toBe("PayPal");
+    expect(personPaymentApp("PayPal", "PAYPAL TRANSFER TO J SMITH")).toBe("PayPal");
     expect(personPaymentApp("APPLE CASH SENT MONEY")).toBe("Apple Cash");
   });
   it("is null for everything else", () => {
     expect(personPaymentApp("Verizon Wireless", "VERIZON WIRELESS PAYMENT")).toBeNull();
+    // a shop paid through PayPal is the shop (QA, 2026-11-18): the cleaned name wins, and "PAYPAL *<shop>" never counts
+    expect(personPaymentApp("Spotify", "PAYPAL *SPOTIFY 4029357733")).toBeNull();
+    expect(personPaymentApp(null, "PAYPAL *SPOTIFY 4029357733")).toBeNull();
     expect(personPaymentApp("Apple", "APPLE.COM/BILL")).toBeNull();
     expect(personPaymentApp(null, undefined)).toBeNull();
   });

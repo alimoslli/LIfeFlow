@@ -15,7 +15,7 @@ import {
 import { getAgenda } from "@/server/services/calendar";
 import { createAssignment, createCourse, listAssignments, listCourses, updateAssignment } from "@/server/services/school";
 import { makeUser } from "../helpers";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { calendarEvents } from "@/server/db/schema";
 
 afterAll(closeDb);
@@ -223,7 +223,7 @@ describe("Canvas", () => {
 });
 
 describe("a break posted on Canvas (owner, 2026-11-18: it has to be added too)", () => {
-  it("comes in as a day off with no class, and one saved as a class before is corrected on the next sync", async () => {
+  it("comes in as a day off with no class; a timed class that mentions a holiday keeps its class; a person's change is kept", async () => {
     const { run } = await makeUser();
     const FEED = "https://state.instructure.com/feeds/calendars/user_BrEaK123dEf456GhI789j.ics";
     const today = todayIn(TZ);
@@ -238,20 +238,35 @@ describe("a break posted on Canvas (owner, 2026-11-18: it has to be added too)",
       "SUMMARY:Thanksgiving Break - No Classes [BIO 202]",
       "URL:https://state.instructure.com/calendar?include_contexts=course_101",
       "END:VEVENT",
+      "BEGIN:VEVENT",
+      "UID:event-calendar-event-89",
+      `DTSTART:${ics(addDaysStr(today, 2))}T140000Z`,
+      `DTEND:${ics(addDaysStr(today, 2))}T153000Z`,
+      "SUMMARY:Lecture: Holiday Marketing [MKT 310]",
+      "URL:https://state.instructure.com/calendar?include_contexts=course_202",
+      "END:VEVENT",
       "END:VCALENDAR",
     ].join("\r\n");
     const f = (async (url: string) => (url === FEED ? new Response(body, { status: 200 }) : new Response("nope", { status: 404 }))) as unknown as typeof fetch;
     await run((s) => connectCanvasFeed(s, FEED, f));
     await run((s) => syncCanvas(s, f, TZ));
     const rows = () =>
-      run((s) => s.tx.select({ kind: calendarEvents.kind, courseId: calendarEvents.courseId, allDay: calendarEvents.allDay }).from(calendarEvents));
-    expect(await rows()).toEqual([{ kind: "other", courseId: null, allDay: true }]);
-    // no class was made up for it either
-    expect(await run((s) => listCourses(s))).toEqual([]);
-    // saved as a class by an older sync: the next sync puts it right
-    await run((s) => s.tx.update(calendarEvents).set({ kind: "class" }).where(eq(calendarEvents.userId, s.userId)));
+      run((s) =>
+        s.tx
+          .select({ title: calendarEvents.title, kind: calendarEvents.kind, hasCourse: sql<boolean>`${calendarEvents.courseId} is not null` })
+          .from(calendarEvents)
+          .orderBy(calendarEvents.title),
+      );
+    expect(await rows()).toEqual([
+      { title: "Lecture: Holiday Marketing", kind: "class", hasCourse: true },
+      { title: "Thanksgiving Break - No Classes", kind: "other", hasCourse: false },
+    ]);
+    // only the lecture's class was made, none for the break
+    expect((await run((s) => listCourses(s))).map((c) => c.name)).toEqual(["MKT 310"]);
+    // what the person sets afterwards is never undone by a sync
+    await run((s) => s.tx.update(calendarEvents).set({ kind: "personal" }).where(eq(calendarEvents.title, "Thanksgiving Break - No Classes")));
     await run((s) => syncCanvas(s, f, TZ));
-    expect(await rows()).toEqual([{ kind: "other", courseId: null, allDay: true }]);
+    expect((await rows()).find((r) => r.title.startsWith("Thanksgiving"))!.kind).toBe("personal");
   });
 });
 
