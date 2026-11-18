@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { holidaysBetween, usHolidaysOf, usesUsHolidays } from "@/lib/holidays";
+import { holidaysBetween, isDayOff, usHolidaysOf, usesUsHolidays } from "@/lib/holidays";
 
 describe("public holidays on the sky (owner, 2026-11-18: a test student couldn't tell if it was Thanksgiving week)", () => {
   it("works out the floating days from the calendar", () => {
@@ -17,5 +17,27 @@ describe("public holidays on the sky (owner, 2026-11-18: a test student couldn't
     expect(holidaysBetween("Europe/London", "2026-11-16", "2026-12-31")).toEqual([]);
     expect(usesUsHolidays("America/Indiana/Indianapolis")).toBe(true);
     expect(usesUsHolidays("Pacific/Honolulu")).toBe(true);
+  });
+});
+
+describe("a day off from a connected calendar (owner, 2026-11-18: Canvas's breaks are added too)", () => {
+  it("knows breaks, closures and holidays by their title", () => {
+    for (const t of [
+      "Thanksgiving Break - No Classes",
+      "Spring Break",
+      "Fall break",
+      "No classes",
+      "Campus Closed",
+      "University closed for winter recess",
+      "Reading Day",
+      "Labor Day",
+      "MLK Day - no school",
+      "Holiday",
+    ])
+      expect(isDayOff(t), t).toBe(true);
+  });
+  it("leaves ordinary events alone", () => {
+    for (const t of ["BIO 105 Lecture", "Office hours", "Breakfast with Sam", "Lab report due", "Breakdance club", "Midterm review"])
+      expect(isDayOff(t), t).toBe(false);
   });
 });

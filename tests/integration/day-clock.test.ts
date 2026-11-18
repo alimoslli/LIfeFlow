@@ -249,6 +249,20 @@ describe("day clock data", () => {
     expect(hidden.items.some((i) => i.origin === "trial" || i.origin === "money_goal" || i.origin === "bill" || i.origin === "pay")).toBe(false);
   });
 
+  it("shows a break from a connected calendar once, as a day off with its last day, in place of the public holiday", async () => {
+    const { run } = await makeUser("Break Owner");
+    const data = await run(async (s) => {
+      // Canvas posted Thanksgiving week; saved as a class before the day-off rule, it still reads as a day off on the sky
+      await createEvent(s, TZ, { title: "Thanksgiving Break - No Classes", date: "2026-11-23", endDate: "2026-11-27", allDay: true, kind: "class" }, "canvas");
+      return dayClockData(s, TZ, NOW);
+    });
+    const brk = data.items.find((i) => i.title === "Thanksgiving Break - No Classes");
+    expect(brk).toMatchObject({ icon: "🎉", cat: "other", allDay: true, subtitle: "Through Fri, Nov 27", start: 16 * 1440 });
+    // Thanksgiving (Nov 26) is inside the break, so it isn't said a second time; Veterans Day still is
+    expect(data.items.some((i) => i.id === "holiday:2026-11-26")).toBe(false);
+    expect(data.items.some((i) => i.id === "holiday:2026-11-11")).toBe(true);
+  });
+
   it("is empty for someone with nothing connected or added, and never makes up steps", async () => {
     const { run } = await makeUser("New Person");
     const data = await run((s) => dayClockData(s, TZ, NOW));

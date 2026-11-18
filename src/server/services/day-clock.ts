@@ -6,7 +6,7 @@ import { series } from "@/server/db/series";
 import { assignments, habitChecks, habits, healthSamples, promises, tasks } from "@/server/db/schema";
 import { getAgenda, type AgendaItem } from "./calendar";
 import { isDueEvent } from "@/lib/next-up";
-import { holidaysBetween } from "@/lib/holidays";
+import { holidaysBetween, isDayOff } from "@/lib/holidays";
 import { summarizeCashflow } from "./finance/cashflow";
 import { expectedPay, upcomingBills } from "./finance/forecast";
 import { bankSeries, listGoals } from "./finance/planning";
@@ -35,20 +35,24 @@ export function toClockItem(a: AgendaItem, tz: string, today: string): ClockItem
   // An emoji at the start of the title is the icon the person picked (a pin), not part of the name.
   const { emoji, rest: title } = splitEmoji(named);
   const at = wallMinutes(a.startsAt, tz, today);
+  // a break or holiday from a connected calendar (Canvas, Google, Outlook) is a day off, never a class (owner, 2026-11-18)
+  const off = a.allDay && a.origin === "event" && isDayOff(a.title);
+  const days = off && a.endsAt ? Math.round((a.endsAt.getTime() - a.startsAt.getTime()) / 86_400_000) : 1;
+  const through = days > 1 ? `Through ${formatIn(new Date(a.endsAt!.getTime() - 43_200_000), tz, "EEE, MMM d")}` : null;
   const start = a.allDay ? Math.floor(at / 1440) * 1440 : at;
   const end = a.allDay || !a.endsAt ? null : Math.max(start + 1, wallMinutes(a.endsAt, tz, today));
   return {
     id: a.key,
     kind: end != null ? "block" : "due",
-    cat: categoryFor(a.kind, a.origin),
-    icon: emoji ?? iconFor(a.title, a.kind, a.origin),
+    cat: off ? "other" : categoryFor(a.kind, a.origin),
+    icon: emoji ?? (off ? "🎉" : iconFor(a.title, a.kind, a.origin)),
     title,
     start,
     end,
     allDay: a.allDay,
     href: a.href,
     source: sourceFor(a.origin, a.sources),
-    subtitle: subtitle ?? a.subtitle,
+    subtitle: subtitle ?? through ?? a.subtitle,
     origin: a.origin,
     ref: a.id,
     ...(a.kind === "exam" && { exam: true }),
@@ -93,21 +97,31 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
   const items = [...agenda, ...ahead.filter((a) => !a.repeats || (times.get(a.id) ?? 0) < 3)].map((a) => toClockItem(a, tz, today));
   const dayAt = (date: string) => daysBetween(today, date) * 1440;
   // public holidays on the line, for a US time zone (owner, 2026-11-18: "is it Thanksgiving break already?")
-  for (const h of holidaysBetween(tz, from, addDaysStr(today, AHEAD_DAYS)))
-    items.push({
-      id: `holiday:${h.date}`,
-      kind: "block",
-      cat: "other",
-      icon: "🎉",
-      title: h.name,
-      start: dayAt(h.date),
-      end: null,
-      allDay: true,
-      href: `/calendar?date=${h.date}`,
-      source: "A public holiday",
-      subtitle: null,
-      origin: "holiday",
+  // a day a connected calendar already marks as off (a Canvas "Thanksgiving Break") says it once, in its own words
+  const offSpans = [...agenda, ...ahead]
+    .filter((a) => a.allDay && a.origin === "event" && isDayOff(a.title))
+    .map((a) => {
+      const first = localDateOf(a.startsAt, tz);
+      const last = a.endsAt ? addDaysStr(localDateOf(a.endsAt, tz), -1) : first;
+      return { first, last: last < first ? first : last };
     });
+  const covered = (date: string) => offSpans.some((o) => date >= o.first && date <= o.last);
+  for (const h of holidaysBetween(tz, from, addDaysStr(today, AHEAD_DAYS)))
+    if (!covered(h.date))
+      items.push({
+        id: `holiday:${h.date}`,
+        kind: "block",
+        cat: "other",
+        icon: "🎉",
+        title: h.name,
+        start: dayAt(h.date),
+        end: null,
+        allDay: true,
+        href: `/calendar?date=${h.date}`,
+        source: "A public holiday",
+        subtitle: null,
+        origin: "holiday",
+      });
   for (const m of story) {
     if (!m.date) continue;
     const { emoji, rest } = splitEmoji(m.title);

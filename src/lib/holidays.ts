@@ -43,3 +43,31 @@ export function holidaysBetween(tz: string, from: string, to: string): { date: s
   for (let y = Number(from.slice(0, 4)); y <= Number(to.slice(0, 4)); y++) for (const h of usHolidaysOf(y)) if (h.date >= from && h.date <= to) out.push(h);
   return out.sort((a, b) => a.date.localeCompare(b.date));
 }
+
+/**
+ * A day off by its title, from any calendar the person connected (a Canvas "Thanksgiving Break - No Classes", a school
+ * calendar's "Spring Break", "Campus closed"): it shows as a day off, never as a class (owner, 2026-11-18: "if a holiday
+ * or smth like that is given from a different calendar like the canvas one it has to be added too").
+ */
+export const isDayOff = (title: string) =>
+  /\b(break|holidays?|no (class(es)?|school)|classes (do not|don't) meet|recess|(campus|university|college|school|office)( is)? closed|closure|day off|reading (day|period|week)|vacation)\b/i.test(
+    title,
+  ) || usHolidayNamed(title) != null;
+
+/** The public holiday a title names ("Thanksgiving Day", "MLK Day"), or null. */
+export function usHolidayNamed(title: string): string | null {
+  const t = title.toLowerCase();
+  const names: [RegExp, string][] = [
+    [/new year/, "New Year's Day"],
+    [/martin luther king|\bmlk\b/, "Martin Luther King Jr. Day"],
+    [/presidents'? day|washington'?s birthday/, "Presidents' Day"],
+    [/memorial day/, "Memorial Day"],
+    [/juneteenth/, "Juneteenth"],
+    [/independence day|fourth of july|4th of july/, "Independence Day"],
+    [/labor day/, "Labor Day"],
+    [/veterans'? day/, "Veterans Day"],
+    [/thanksgiving/, "Thanksgiving"],
+    [/christmas/, "Christmas Day"],
+  ];
+  return names.find(([re]) => re.test(t))?.[1] ?? null;
+}

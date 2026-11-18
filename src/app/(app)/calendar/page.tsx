@@ -13,7 +13,7 @@ import { DragItem, DropDay } from "./drag";
 import { CalendarViewToggle } from "./view-toggle";
 import { EventDialog } from "./event-dialog";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
-import { holidaysBetween } from "@/lib/holidays";
+import { holidaysBetween, isDayOff } from "@/lib/holidays";
 
 export const metadata: Metadata = { title: "Calendar" };
 
@@ -43,6 +43,14 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
     byDay.set(day, [...(byDay.get(day) ?? []), i]);
   }
   const holidays = new Map(holidaysBetween(tz, d.gridStart, d.gridEnd).map((h) => [h.date, h.name]));
+  // a day a connected calendar already marks as off (a Canvas "Thanksgiving Break") shows that, not the holiday again
+  for (const i of d.items) {
+    if (!i.allDay || i.origin !== "event" || !isDayOff(i.title)) continue;
+    const first = localDateOf(i.startsAt, tz);
+    // an all-day event ends at the next midnight; at most 60 days are walked
+    const end = i.endsAt ? localDateOf(i.endsAt, tz) : addDaysStr(first, 1);
+    for (let day = first, n = 0; n === 0 || (day < end && n <= 60); day = addDaysStr(day, 1), n++) holidays.delete(day);
+  }
   const days = Array.from({ length: daysBetween(d.gridStart, d.gridEnd) + 1 }, (_, n) => addDaysStr(d.gridStart, n));
   const prev = monthStart(addDaysStr(d.month, -1)).slice(0, 7);
   const next = monthStart(addDaysStr(monthEnd(d.month), 1)).slice(0, 7);

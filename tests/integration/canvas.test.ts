@@ -15,6 +15,8 @@ import {
 import { getAgenda } from "@/server/services/calendar";
 import { createAssignment, createCourse, listAssignments, listCourses, updateAssignment } from "@/server/services/school";
 import { makeUser } from "../helpers";
+import { eq } from "drizzle-orm";
+import { calendarEvents } from "@/server/db/schema";
 
 afterAll(closeDb);
 const TZ = "America/New_York";
@@ -217,6 +219,39 @@ describe("Canvas", () => {
     expect(after).toHaveLength(2);
     expect(after.find((a) => a.title === "Midterm Exam")!.dueAt!.toISOString()).toBe(`${addDaysStr(today, 8)}T03:59:00.000Z`);
     expect(await run((s) => canvasConnection(s))).toMatchObject({ via: "feed", status: "connected" });
+  });
+});
+
+describe("a break posted on Canvas (owner, 2026-11-18: it has to be added too)", () => {
+  it("comes in as a day off with no class, and one saved as a class before is corrected on the next sync", async () => {
+    const { run } = await makeUser();
+    const FEED = "https://state.instructure.com/feeds/calendars/user_BrEaK123dEf456GhI789j.ics";
+    const today = todayIn(TZ);
+    const ics = (d: string) => d.replace(/-/g, "");
+    const body = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "BEGIN:VEVENT",
+      "UID:event-calendar-event-88",
+      `DTSTART;VALUE=DATE:${ics(addDaysStr(today, 3))}`,
+      `DTEND;VALUE=DATE:${ics(addDaysStr(today, 6))}`,
+      "SUMMARY:Thanksgiving Break - No Classes [BIO 202]",
+      "URL:https://state.instructure.com/calendar?include_contexts=course_101",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+    const f = (async (url: string) => (url === FEED ? new Response(body, { status: 200 }) : new Response("nope", { status: 404 }))) as unknown as typeof fetch;
+    await run((s) => connectCanvasFeed(s, FEED, f));
+    await run((s) => syncCanvas(s, f, TZ));
+    const rows = () =>
+      run((s) => s.tx.select({ kind: calendarEvents.kind, courseId: calendarEvents.courseId, allDay: calendarEvents.allDay }).from(calendarEvents));
+    expect(await rows()).toEqual([{ kind: "other", courseId: null, allDay: true }]);
+    // no class was made up for it either
+    expect(await run((s) => listCourses(s))).toEqual([]);
+    // saved as a class by an older sync: the next sync puts it right
+    await run((s) => s.tx.update(calendarEvents).set({ kind: "class" }).where(eq(calendarEvents.userId, s.userId)));
+    await run((s) => syncCanvas(s, f, TZ));
+    expect(await rows()).toEqual([{ kind: "other", courseId: null, allDay: true }]);
   });
 });
 
