@@ -149,3 +149,28 @@ describe("forecast, goals, paycheck and debt", () => {
     await expect(run((s) => contributeToGoal(s, { goalId: g.id, amountCents: -5_000, date: TODAY }))).rejects.toThrow(/below \$0/);
   });
 });
+
+describe("one story for the next 30 days", () => {
+  it("the card's sums and the heads-up's date come from the same forecast", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      await createManualAccount(s, { name: "Checking", type: "depository", currentBalanceCents: 64_200 });
+      await createRecurring(s, { name: "Rent", amountCents: -60_000, frequency: "monthly", nextDueDate: "2026-11-10", kind: "bill" });
+      await createRecurring(s, { name: "Phone", amountCents: -4_500, frequency: "monthly", nextDueDate: "2026-11-20", kind: "bill" });
+    });
+    const f = await run((s) => cashForecast(s, TODAY, 30));
+    // The card's total is the bills the forecast lists, and what is left is what the day-by-day projection ends on.
+    expect(f.outlook.billsCents).toBe(f.bills.reduce((n, b) => n - b.amountCents, 0));
+    expect(f.outlook.leftCents).toBe(f.points[f.points.length - 1].withoutPayCents);
+    expect(f.outlook.leftCents).toBe(f.startCents - f.outlook.billsCents - f.outlook.usualCents);
+    // No salaried pay here, so the date is the heads-up's, and the heads-up carries the same date.
+    expect(f.outlook.evenWithPay).toBe(false);
+    if (f.outlook.leftCents < 0) {
+      expect(f.outlook.runOutDate).toBe(f.overdraftDateWithoutPay);
+      expect(f.warnings[0]).toContain("run out of money");
+    } else {
+      expect(f.outlook.runOutDate).toBeNull();
+      expect(f.warnings.some((w) => w.includes("run out"))).toBe(false);
+    }
+  });
+});

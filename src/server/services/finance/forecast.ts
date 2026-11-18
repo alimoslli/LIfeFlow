@@ -228,20 +228,30 @@ export async function cashForecast(scope: UserScope, today: string, days = 30) {
     () => expectedPay(scope, today, to, bank),
   );
   const p = projectCash({ startCents: balances.cashCents, today, days, bills, income: pay, dailySpendCents: typical.dailyCents });
-  const warnings: string[] = [];
-  if (p.overdraftDateWithoutPay && p.overdraftDateWithPay)
-    // "even with your expected pay" only when there is expected pay (test students p0001 and p4020: said to people with no salaried paycheck)
-    warnings.push(
-      `You could run out of money around ${nice(p.overdraftDateWithPay)} if you keep spending like usual${pay.length ? ", even with your expected pay" : ""}.`,
-    );
-  else if (p.overdraftDateWithoutPay)
-    warnings.push(
-      pay.length
+  // One calculation behind everything Money says about the next days: the sums and the run-out date below come from the same
+  // projection (`p`), so the card's "$X more than you have" and the heads-up's date can't disagree (student test 2026-11-16:
+  // a heads-up counting pay said Dec 10 beside a card not counting it that said $296 short). Pay is never counted here.
+  const billsCents = bills.reduce((n, b) => n - b.amountCents, 0);
+  const usualCents = Math.max(0, typical.dailyCents * days);
+  // The date is the one the heads-up names: counting expected pay when there is some and it still runs out, otherwise without it.
+  const outlook = {
+    billsCents,
+    usualCents,
+    leftCents: balances.cashCents - billsCents - usualCents,
+    runOutDate: p.overdraftDateWithPay ?? p.overdraftDateWithoutPay,
+    evenWithPay: !!p.overdraftDateWithPay && pay.length > 0,
+  };
+  const runOutWarning = p.overdraftDateWithoutPay
+    ? p.overdraftDateWithPay
+      ? // "even with your expected pay" only when there is expected pay (test students p0001 and p4020: said to people with no salaried paycheck)
+        `You could run out of money around ${nice(p.overdraftDateWithPay)} if you keep spending like usual${pay.length ? ", even with your expected pay" : ""}.`
+      : pay.length
         ? `You could run out of money around ${nice(p.overdraftDateWithoutPay)} if your next paycheck is late or smaller than usual.`
-        : `You could run out of money around ${nice(p.overdraftDateWithoutPay)} if you keep spending like usual.`,
-    );
+        : `You could run out of money around ${nice(p.overdraftDateWithoutPay)} if you keep spending like usual.`
+    : null;
   const lowBill = bills.find((b) => p.points.find((x) => x.date === b.date)!.withPayCents < 0);
-  if (lowBill) warnings.push(`${lowBill.name} (${dollars(-lowBill.amountCents)}) on ${nice(lowBill.date)} may not be covered.`);
+  const lowBillWarning = lowBill ? `${lowBill.name} (${dollars(-lowBill.amountCents)}) on ${nice(lowBill.date)} may not be covered.` : null;
+  const warnings = [runOutWarning, lowBillWarning].filter((w): w is string => !!w);
   return {
     hasAccounts: accounts.length > 0,
     startCents: balances.cashCents,
@@ -251,6 +261,7 @@ export async function cashForecast(scope: UserScope, today: string, days = 30) {
     expectedPay: pay,
     typicalDailySpendCents: typical.dailyCents,
     ...p,
+    outlook,
     warnings,
     assumptions: [
       "Starts from checking and cash balances (savings and cards excluded).",
