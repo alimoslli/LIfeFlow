@@ -29,7 +29,7 @@ async function accounts(s: UserScope) {
 }
 
 describe("bills paid by transfer (A4)", () => {
-  it("finds a car loan and rent by Zelle as bills, and leaves savings transfers and card payments out", async () => {
+  it("finds a car loan as a bill but never rent by Zelle, and leaves savings transfers and card payments out", async () => {
     const { run } = await makeUser();
     await run(async (s) => {
       const a = await accounts(s);
@@ -47,18 +47,13 @@ describe("bills paid by transfer (A4)", () => {
       }
     });
     const found = await run((s) => suggestRecurring(s, TODAY));
-    expect(found.map((c) => [c.kind, c.frequency, c.latestAmountCents]).sort()).toEqual([
-      ["bill", "monthly", -38_900],
-      ["bill", "monthly", -60_000],
-    ]);
-    // They're in the next 30 days of bills too.
-    const { bills } = await run((s) => billsAndPace(s, TODAY, TODAY, addDaysStr(TODAY, 30)));
-    expect(bills.map((b) => [b.date, b.amountCents])).toEqual([
-      [TODAY, -60_000], // Nov 1's rent hasn't gone out yet: a few days late, so still due, dated today
-      // the loan is due the 10th; October 10 was a Saturday, so it went out Monday the 12th and is due the 10th again
-      ["2026-11-10", -38_900],
-      ["2026-12-01", -60_000],
-    ]);
+    // money to a person is never a bill, even rent by Zelle (owner, 2026-11-18: "zelle and venmo etc shouldnt be bills")
+    expect(found.map((c) => [c.kind, c.frequency, c.latestAmountCents])).toEqual([["bill", "monthly", -38_900]]);
+    const { bills, typical } = await run((s) => billsAndPace(s, TODAY, TODAY, addDaysStr(TODAY, 30)));
+    // the loan is due the 10th; October 10 was a Saturday, so it went out Monday the 12th and is due the 10th again
+    expect(bills.map((b) => [b.date, b.amountCents])).toEqual([["2026-11-10", -38_900]]);
+    // but the Zelle still leaves the next 30 days as usual spending: October's $600 over the 8 weeks before today
+    expect(typical.dailyCents).toBeGreaterThanOrEqual(Math.floor(60_000 / 56));
   });
 });
 
@@ -310,7 +305,7 @@ describe("keys saved before the vendor tidy (review: old rules and alerts)", () 
     expect(got.categoryId).toBe(got.utilities);
   });
 
-  it("doesn't send a Zelle rent alert again because its key changed from 'zelle' to who it went to", async () => {
+  it("sends no bill alert for rent paid by Zelle: money to a person is never a bill (owner, 2026-11-18)", async () => {
     const { run } = await makeUser();
     const today = "2026-10-30";
     await run(async (s) => {
@@ -325,25 +320,7 @@ describe("keys saved before the vendor tidy (review: old rules and alerts)", () 
         });
     });
     const now = new Date(`${today}T14:00:00Z`);
-    const due = async () => (await run((s) => DETECTORS.billsDue({ scope: s, tz: TZ, today, now }))).map((m) => m.dedupeKey);
-    expect(await due()).toEqual(["bill_due:found:zelle jordan miller:2026-11-01"]);
-    // An alert for this cycle already went out under the old key ("zelle", how every Zelle payment read after the tidy).
-    await run((s) =>
-      saveMessage(
-        s,
-        {
-          kind: "bill_due",
-          topic: "money",
-          dedupeKey: "bill_due:found:zelle:2026-11-01",
-          facts: { bill: "Zelle", billCents: 60_000, dueIn: "in 2 days", cashCents: 300_000 },
-          priority: 55,
-        },
-        "friend",
-        false,
-        "morning",
-      ),
-    );
-    expect(await due()).toEqual([]);
+    expect((await run((s) => DETECTORS.billsDue({ scope: s, tz: TZ, today, now }))).map((m) => m.dedupeKey)).toEqual([]);
   });
 });
 
@@ -370,7 +347,7 @@ describe("bills under the tidied vendor names (merge with the vendor tidy)", () 
     ]);
   });
 
-  it("keeps rent to a roommate and a share to Mom apart, and named by who they went to, though both now read 'Zelle'", async () => {
+  it("never offers rent to a roommate or a share to Mom as bills, though both repeat", async () => {
     const { run } = await makeUser();
     await run(async (s) => {
       const { checking } = await accounts(s);
@@ -385,11 +362,8 @@ describe("bills under the tidied vendor names (merge with the vendor tidy)", () 
       for (const d of ["2026-08-01", "2026-09-01", "2026-10-01", "2026-11-02"]) await zelle(d, "JORDAN M", 60_000);
       for (const d of ["2026-08-15", "2026-09-15", "2026-10-15"]) await zelle(d, "MOM", 60_000);
     });
-    const found = await run((s) => suggestRecurring(s, TODAY));
-    expect(found.map((c) => [c.name, c.kind, c.latestAmountCents]).sort()).toEqual([
-      ["Zelle to Jordan M", "bill", -60_000],
-      ["Zelle to Mom", "bill", -60_000],
-    ]);
+    // neither is offered as a bill: money to a person never is (owner, 2026-11-18)
+    expect(await run((s) => suggestRecurring(s, TODAY))).toEqual([]);
   });
 });
 

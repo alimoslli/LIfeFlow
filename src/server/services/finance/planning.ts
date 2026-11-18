@@ -1,3 +1,4 @@
+import { personPaymentApp } from "@/lib/vendor";
 import { series } from "@/server/db/series";
 import { and, asc, eq, max, ne } from "drizzle-orm";
 import { z } from "zod";
@@ -394,7 +395,8 @@ async function detectBankSeries(scope: UserScope, today: string) {
   const [tracked, trackedActive] = [ownedBy(existing), ownedBy(existing.filter((e) => e.status === "active"))];
   return {
     tracked: all.filter((c) => tracked.has(c)),
-    untracked: all.filter((c) => !tracked.has(c) && c.confidence >= MIN_CONFIDENCE),
+    // money to or from a person (Zelle, Venmo…) repeats but is never a bill to suggest (owner, 2026-11-18)
+    untracked: all.filter((c) => !tracked.has(c) && c.confidence >= MIN_CONFIDENCE && !personPaymentApp(c.name, c.merchantKey)),
     trackedActive: all.filter((c) => trackedActive.has(c)),
     all,
   };

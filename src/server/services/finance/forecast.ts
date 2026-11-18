@@ -11,6 +11,7 @@ import { bankSeries, budgetStatus, listRecurring, upcomingRecurring, type BankSe
 import { MIN_CONFIDENCE, detectRecurring, merchantKey, merchantKeys, nthOccurrence, occurrencesBetween, type RecurringCandidate } from "./recurring-detect";
 import { queryAllTransactions } from "./transactions";
 import { listEmployers } from "../work";
+import { personPaymentApp } from "@/lib/vendor";
 
 /**
  * Forward-looking money math. Every result carries the inputs it used, so the
@@ -114,7 +115,13 @@ async function typicalDailySpend(scope: UserScope, today: string, billSeries: Re
   // A tracked bill the bank shows no series for yet comes out by its name.
   const billKeys = new Set(recurring.filter((r) => r.amountCents < 0 && !billSeries.some((c) => tracksSeries(r, c))).flatMap((r) => trackedKeys(r)));
   const dayToDay = txns.filter((t) => !billCharges.has(`${merchantKey(t)}|${t.date}|${t.amountCents}`) && !merchantKeys(t).some((k) => billKeys.has(k)));
-  const spent = summarizeCashflow(dayToDay).netSpendingCents;
+  // Money sent to people (Zelle, Venmo…) is never a bill (owner, 2026-11-18) and banks file it as a transfer, so it's
+  // counted here as usual spending; otherwise rent paid by Zelle would leave the next 30 days. A series the person
+  // tracks as a bill already came out above, so it's never counted twice.
+  const toPeople = dayToDay
+    .filter((t) => !t.excluded && t.kind === "transfer" && t.amountCents < 0 && personPaymentApp(t.merchantName, t.description))
+    .reduce((n, t) => n - t.amountCents, 0);
+  const spent = summarizeCashflow(dayToDay).netSpendingCents + toPeople;
   const days = Math.max(1, Math.min(56, txns.length ? daysBetween(txns[txns.length - 1].date, today) : 1));
   return { dailyCents: Math.max(0, Math.round(spent / days)), basedOnDays: days };
 }

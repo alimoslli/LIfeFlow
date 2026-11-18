@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanVendorName, correctedVendorName, looksMessy } from "@/lib/vendor";
+import { cleanVendorName, correctedVendorName, looksMessy, personPaymentApp } from "@/lib/vendor";
 
 describe("cleanVendorName", () => {
   const cases: [string, string][] = [
@@ -134,5 +134,20 @@ describe("names the earlier, broader patterns gave (review: rows renamed by the 
     expect(correctedVendorName("Hulu", "APPLE.COM/BILL HULU")).toBeNull();
     expect(correctedVendorName("Gas bill", "SOUTHWEST GAS CORP PAYMENT")).toBeNull();
     expect(correctedVendorName(null, "SOUTHWEST GAS CORP PAYMENT")).toBeNull();
+  });
+});
+
+describe("personPaymentApp (owner, 2026-11-18: money to a person is never a bill, it reads as its app)", () => {
+  it("names the app money to or from a person moved through", () => {
+    expect(personPaymentApp("Zelle", "ZELLE TO MOM CONF# Q1")).toBe("Zelle");
+    expect(personPaymentApp(null, "VENMO PAYMENT 1023")).toBe("Venmo");
+    expect(personPaymentApp("Cash App", null)).toBe("Cash App");
+    expect(personPaymentApp("PAYPAL *JORDAN")).toBe("PayPal");
+    expect(personPaymentApp("APPLE CASH SENT MONEY")).toBe("Apple Cash");
+  });
+  it("is null for everything else", () => {
+    expect(personPaymentApp("Verizon Wireless", "VERIZON WIRELESS PAYMENT")).toBeNull();
+    expect(personPaymentApp("Apple", "APPLE.COM/BILL")).toBeNull();
+    expect(personPaymentApp(null, undefined)).toBeNull();
   });
 });
