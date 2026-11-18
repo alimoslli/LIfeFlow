@@ -107,13 +107,41 @@ export function ListSkeleton({ label = "Loading" }: { label?: string }) {
 }
 
 /** The skyling's chat: a few message bubbles above the composer. */
+/**
+ * The skyling's page (owner, 2026-11-18: "the skeleton doesn't even match how the page looks"): its name and New chat on
+ * top, the four pills, the skyling's window, a row of clouds under it, and the message bar at the bottom. A laptop also
+ * has the list of earlier chats on the left.
+ */
 export function ChatSkeleton() {
   return (
-    <div className="mx-auto flex h-dvh w-full max-w-3xl flex-col justify-end gap-4 px-4 pb-28" aria-busy="true" aria-label="Loading chat" data-app-loading>
-      <Block className="h-12 w-2/3 self-end rounded-3xl" />
-      <Block className="h-24 w-4/5 rounded-3xl" />
-      <Block className="h-10 w-1/2 self-end rounded-3xl" />
-      <Block className="h-14 rounded-[28px]" />
+    <div className="mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-6xl gap-8" aria-busy="true" aria-label="Loading chat" data-app-loading>
+      <div className="hidden w-72 shrink-0 flex-col gap-5 pt-2 lg:flex">
+        {Array.from({ length: 7 }, (_, i) => (
+          <div key={i} className="flex flex-col gap-2">
+            <Bar className="h-4 w-56" />
+            <Bar className="h-3 w-14" />
+          </div>
+        ))}
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-5">
+        <div className="flex items-center justify-between">
+          <Bar className="h-6 w-16" />
+          <Bar className="h-9 w-28" />
+        </div>
+        <div className="flex gap-2">
+          <Block className="h-11 w-24 rounded-full" />
+          <Block className="h-11 w-28 rounded-full" />
+          <Block className="h-11 w-24 rounded-full max-sm:hidden" />
+          <Block className="h-11 w-28 rounded-full max-sm:hidden" />
+        </div>
+        <Block className="h-60 rounded-[2rem] sm:h-72" />
+        <div className="flex gap-3">
+          <Block className="h-24 flex-1 rounded-2xl" />
+          <Block className="h-24 flex-1 rounded-2xl max-sm:hidden" />
+          <Block className="h-24 flex-1 rounded-2xl max-md:hidden" />
+        </div>
+        <Block className="mt-auto h-16 rounded-full" />
+      </div>
     </div>
   );
 }

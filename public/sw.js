@@ -1,5 +1,5 @@
 /* LifeFlow service worker: app-shell caching, offline reading, push notifications. */
-const VERSION = "lf-v5"; // v5: Money is never kept for offline reading (the lock); a new version also clears pages kept by v4
+const VERSION = "lf-v6"; // v6: the share picture and the tab icon (favicon.ico) carry the pixel sun. v5: Money is never kept for offline reading (the lock); a new version also clears pages kept by v4
 const SHELL = `${VERSION}-shell`;
 const PAGES = `${VERSION}-pages`;
 const STATIC = `${VERSION}-static`;
