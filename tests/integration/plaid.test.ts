@@ -443,6 +443,16 @@ describe("Plaid", () => {
     expect(mapPfc({ primary: "INCOME", detailed: "INCOME_WAGES" }, 50_000, "ACME PAYROLL")).toEqual({ category: "Paycheck", kind: "income" });
   });
 
+  it("a PayPal payout from a client or gig work stays Side Income (owner, 2026-11-18); only Zelle, Venmo, Cash App and Apple Cash are a person", () => {
+    expect(mapPfc({ primary: "TRANSFER_IN", detailed: "TRANSFER_IN_ACCOUNT_TRANSFER" }, 25_000, "PAYPAL TRANSFER 1023456")).toEqual({
+      category: "Side Income",
+      kind: "income",
+    });
+    expect(mapPfc({ primary: "INCOME", detailed: "INCOME_OTHER_INCOME" }, 25_000, "PayPal payout")).toEqual({ category: "Side Income", kind: "income" });
+    for (const text of ["Cash App from J Smith", "Apple Cash received", "VENMO CASHOUT"])
+      expect(mapPfc({ primary: "TRANSFER_IN", detailed: "TRANSFER_IN_ACCOUNT_TRANSFER" }, 2_000, text), text).toEqual({ category: null, kind: "income" });
+  });
+
   it("maps Plaid categories to LifeFlow categories and kinds", () => {
     expect(mapPfc({ primary: "LOAN_PAYMENTS", detailed: "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT" }, -5000)).toEqual({
       category: "Credit Card Payment",

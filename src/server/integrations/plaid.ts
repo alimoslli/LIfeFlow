@@ -18,6 +18,7 @@ import { withUser, type UserScope } from "../db/with-user";
 import { cleanVendorName } from "@/lib/vendor";
 import { fetchWithTimeout } from "./timeout";
 import { tidyForUser } from "../services/finance/tidy";
+import { settleOwnMoves } from "../services/finance/own-moves";
 import { categoryIdByName, keywordCategory, ruleFor } from "../services/finance/categorize";
 import { recordNetWorth } from "../services/finance/investing";
 
@@ -285,8 +286,11 @@ type PlaidTxn = {
 /** Money coming in that's really income: payroll and peer payments, which banks often report as transfers. */
 const INCOMING_HINT = /\b(payroll|direct dep|dir dep|deposit|salary|zelle|venmo|cash ?app|paypal|wages|stipend)\b/i;
 
-/** A payment from a person (Zelle, Venmo, Cash App, PayPal, Apple Cash): family, a friend or a refund of a split bill, never someone's work. */
-const PEER_PAYMENT = /\b(zelle|venmo|cash ?app|paypal|apple cash)\b/i;
+/**
+ * A payment from a person (Zelle, Venmo, Cash App, Apple Cash): family, a friend or a refund of a split bill, never someone's
+ * work. PayPal isn't one (owner, 2026-11-18): payouts from clients and gig work come through it, so they stay Side Income.
+ */
+const PEER_PAYMENT = /\b(zelle|venmo|cash ?app|apple cash)\b/i;
 
 export function mapPfc(pfc: PlaidTxn["personal_finance_category"], amountCents: number, text = ""): { category: string | null; kind: TransactionKind } {
   const p = pfc?.primary ?? "";
@@ -405,6 +409,8 @@ export async function syncItem(scope: UserScope, integrationId: string, tz: stri
   await recordNetWorth(scope, todayIn(tz));
   // Plain vendor names and categories for what just arrived. Never lets a tidy-up problem fail the sync.
   await tidyForUser(scope, "plaid_sync").catch((e) => console.error("[tidy]", e instanceof Error ? e.name : e));
+  // The person's own money moved between their accounts is a transfer, never spending and income (owner, 2026-11-18).
+  await settleOwnMoves(scope, todayIn(tz));
   return result.stats;
 }
 

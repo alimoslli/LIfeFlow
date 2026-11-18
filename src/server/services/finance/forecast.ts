@@ -12,6 +12,7 @@ import { MIN_CONFIDENCE, detectRecurring, merchantKey, merchantKeys, nthOccurren
 import { queryAllTransactions } from "./transactions";
 import { listEmployers } from "../work";
 import { personPaymentApp } from "@/lib/vendor";
+import { ownMoveIds } from "./own-moves";
 
 /**
  * Forward-looking money math. Every result carries the inputs it used, so the
@@ -118,8 +119,10 @@ async function typicalDailySpend(scope: UserScope, today: string, billSeries: Re
   // Money sent to people (Zelle, Venmo…) is never a bill (owner, 2026-11-18) and banks file it as a transfer, so it's
   // counted here as usual spending; otherwise rent paid by Zelle would leave the next 30 days. A series the person
   // tracks as a bill already came out above, so it's never counted twice.
+  // Their own money moved to another of their accounts, or into their own PayPal or Venmo balance, isn't spending.
+  const own = ownMoveIds(txns);
   const toPeople = dayToDay
-    .filter((t) => !t.excluded && t.kind === "transfer" && t.amountCents < 0 && personPaymentApp(t.merchantName, t.description))
+    .filter((t) => !t.excluded && t.kind === "transfer" && t.amountCents < 0 && !own.has(t.id) && personPaymentApp(t.merchantName, t.description))
     .reduce((n, t) => n - t.amountCents, 0);
   const spent = summarizeCashflow(dayToDay).netSpendingCents + toPeople;
   const days = Math.max(1, Math.min(56, txns.length ? daysBetween(txns[txns.length - 1].date, today) : 1));
