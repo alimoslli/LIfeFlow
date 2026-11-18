@@ -87,6 +87,8 @@ test("Bills leads with the charges found in the bank, and its total agrees with 
   await expect(page.getByTestId("bills-monthly")).toHaveText("$806.99");
 
   await page.goto("/money");
+  // the page streams in: wait for the 30-day card before reading it
+  await expect(page.getByText(/Bills and usual spending come to/).first()).toBeAttached();
   await page.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
   const money = await page.locator("body").innerText();
   // Money's 30 days count the same four bills ($807 rounded), and say the same run-out date once as a heads-up and once in the card
