@@ -59,7 +59,7 @@ export default function AboutPage() {
               We built the app <em className="lf-clip-text bg-gradient-to-r from-dawn-cream to-dawn-2 bg-clip-text text-transparent">we needed.</em>
             </h1>
             <p className="animate-rise mt-6 max-w-[46ch] text-[1.0625rem] leading-relaxed text-white/80 sm:text-[1.1875rem]" style={{ animationDelay: "80ms" }}>
-              We&apos;re two students with full lives: classes, work, money and plans, all at once. So we built one place that brings it all together.
+              We&apos;re two students with full lives, and keeping up with all of it was its own job. So we built one place that brings it all together.
             </p>
             <p
               className="animate-rise mt-4 max-w-[46ch] text-[1.0625rem] leading-relaxed text-white/80 sm:text-[1.1875rem]"
