@@ -400,6 +400,9 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               <a href="#faq" className="inline-flex min-h-11 items-center hover:text-ink-night">
                 FAQ
               </a>
+              <Link href="/about" className="inline-flex min-h-11 items-center hover:text-ink-night">
+                About
+              </Link>
               <Link href="/privacy" className="inline-flex min-h-11 items-center hover:text-ink-night">
                 Privacy
               </Link>
