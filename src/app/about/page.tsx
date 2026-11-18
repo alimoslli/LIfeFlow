@@ -56,18 +56,18 @@ export default function AboutPage() {
         <div className="pointer-events-none relative z-10 mx-auto max-w-6xl px-5 pt-10 pb-24 sm:px-8 sm:pt-16 lg:pt-24 lg:pb-36">
           <div className="max-w-[36rem]">
             <h1 className="animate-rise font-display text-[2.75rem] leading-[1.1] font-medium tracking-[-0.045em] text-balance sm:text-[4.25rem]">
-              Seven classes. Thirty hours of work.{" "}
-              <em className="lf-clip-text bg-gradient-to-r from-dawn-cream to-dawn-2 bg-clip-text text-transparent">Nothing connected it.</em>
+              We built the app <em className="lf-clip-text bg-gradient-to-r from-dawn-cream to-dawn-2 bg-clip-text text-transparent">we needed.</em>
             </h1>
             <p className="animate-rise mt-6 max-w-[46ch] text-[1.0625rem] leading-relaxed text-white/80 sm:text-[1.1875rem]" style={{ animationDelay: "80ms" }}>
-              LifeFlow is built by two students. It started with Ali: seven classes a semester, 30 hours a week at a retail job, and side projects and transfer
-              applications at the same time. Every app saw one slice of it, and none of them talked to each other.
+              We&apos;re two students with full lives: classes, work, money and plans, each in a different app that never talked to the others. Things kept
+              slipping through, so we built one place that brings it all together.
             </p>
             <p
               className="animate-rise mt-4 max-w-[46ch] text-[1.0625rem] leading-relaxed text-white/80 sm:text-[1.1875rem]"
               style={{ animationDelay: "140ms" }}
             >
-              So he built the one thing he needed. Now Ali and Tyler are building it for everyone with a full life, from what the people using it ask for.
+              LifeFlow puts your whole week on one simple screen. It connects to the apps you already use, shows what&apos;s coming, and helps you fix a clash
+              or a tight week before it becomes a problem.
             </p>
           </div>
         </div>
