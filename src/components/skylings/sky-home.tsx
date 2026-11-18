@@ -83,7 +83,7 @@ export function SkyHome({ counts, skyling, name }: { counts: SkyCounts; skyling?
   const cw = 72;
   const stand = cy + 2;
   const at = (key: string, x: number, y: number) => has.has(key) && <Pic art={ART[key]} x={x} y={y} />;
-  const kite = { x: ox + 42, y: Math.max(TOP + 1, cy - 30) };
+  const kite = { x: ox + 50, y: Math.max(TOP + 1, cy - 30) };
   const balloon = { x: cx + 1, y: cy - 33 };
   const rope = (x: number, y0: number, y1: number) => y1 > y0 && <rect x={x} y={y0} width={0.5} height={y1 - y0} fill="#8a5a3c" />;
 
