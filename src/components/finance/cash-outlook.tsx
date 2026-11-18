@@ -16,12 +16,11 @@ export function CashOutlook(p: {
   cashCents: number;
   bills: OutlookBill[];
   dailySpendCents: number;
-  days: number;
+  /** The sums and the run-out date, from the one forecast (`cashForecast().outlook`), so this card and the heads-ups never disagree. */
+  outlook: { billsCents: number; usualCents: number; leftCents: number; runOutDate: string | null; evenWithPay: boolean };
   expectedPay: { date: string; amountCents: number }[];
 }) {
-  const billsCents = p.bills.reduce((n, b) => n + -b.amountCents, 0);
-  const usualCents = Math.max(0, p.dailySpendCents * p.days);
-  const leftCents = p.cashCents - billsCents - usualCents;
+  const { billsCents, usualCents, leftCents } = p.outlook;
   const total = Math.max(1, p.cashCents, billsCents + usualCents);
   const pct = (c: number) => `${Math.max(0, (c / total) * 100)}%`;
   const short = leftCents < 0;
@@ -34,6 +33,13 @@ export function CashOutlook(p: {
           <>
             Bills and usual spending come to <b className="tabular font-semibold">{whole(billsCents + usualCents)}</b>, which is{" "}
             <b className="tabular font-semibold text-danger">{whole(-leftCents)} more</b> than you have now.
+            {p.outlook.runOutDate && (
+              <>
+                {" "}
+                At this pace you run out around {formatDateStr(p.outlook.runOutDate, "MMM d")}
+                {p.outlook.evenWithPay ? ", even with your expected pay" : ""}.
+              </>
+            )}
           </>
         ) : (
           <>

@@ -285,16 +285,24 @@ type PlaidTxn = {
 /** Money coming in that's really income: payroll and peer payments, which banks often report as transfers. */
 const INCOMING_HINT = /\b(payroll|direct dep|dir dep|deposit|salary|zelle|venmo|cash ?app|paypal|wages|stipend)\b/i;
 
+/** A payment from a person (Zelle, Venmo, Cash App, PayPal, Apple Cash): family, a friend or a refund of a split bill, never someone's work. */
+const PEER_PAYMENT = /\b(zelle|venmo|cash ?app|paypal|apple cash)\b/i;
+
 export function mapPfc(pfc: PlaidTxn["personal_finance_category"], amountCents: number, text = ""): { category: string | null; kind: TransactionKind } {
   const p = pfc?.primary ?? "";
   const d = pfc?.detailed ?? "";
   const out = amountCents < 0;
-  if (p === "INCOME")
+  if (p === "INCOME") {
+    // Money from a person isn't income from work (a student with no job got "Side Income" for her family's Zelle): it still came in, with no category to guess.
+    if (!out && !d.includes("WAGES") && !d.includes("INTEREST") && PEER_PAYMENT.test(text)) return { category: null, kind: "income" };
     return { category: d.includes("WAGES") ? "Paycheck" : d.includes("INTEREST") ? "Interest Income" : "Side Income", kind: out ? "expense" : "income" };
+  }
   if (p === "TRANSFER_IN" || p === "TRANSFER_OUT") {
     if (d.includes("SAVINGS")) return { category: "Savings Transfer", kind: "transfer" };
     if (d.includes("INVESTMENT")) return { category: "Investment Transfer", kind: "transfer" };
-    // A deposit from payroll or a friend is income; moving your own money between accounts is not.
+    // A deposit from payroll is income; moving your own money between accounts is not. Money from a person came in (it counts as
+    // money in) but isn't "Side Income": nothing says they have a side job, so it is left uncategorised for them to name.
+    if (p === "TRANSFER_IN" && !out && PEER_PAYMENT.test(text) && !d.includes("PAYROLL")) return { category: null, kind: "income" };
     if (p === "TRANSFER_IN" && !out && INCOMING_HINT.test(text)) return { category: d.includes("PAYROLL") ? "Paycheck" : "Side Income", kind: "income" };
     return { category: null, kind: "transfer" };
   }

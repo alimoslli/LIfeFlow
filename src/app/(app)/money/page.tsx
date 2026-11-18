@@ -267,10 +267,10 @@ export default async function MoneyPage() {
             <Title href="/finances/bills">Next 30 days</Title>
             <div data-tilt className="rounded-[1.75rem] bg-surface p-5 shadow-soft">
               <CashOutlook
-                cashCents={o.balances.cashCents}
+                cashCents={forecast.startCents}
                 bills={forecast.bills}
                 dailySpendCents={forecast.typicalDailySpendCents}
-                days={30}
+                outlook={forecast.outlook}
                 expectedPay={forecast.expectedPay}
               />
             </div>

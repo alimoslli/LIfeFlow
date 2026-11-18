@@ -431,6 +431,18 @@ describe("Plaid", () => {
     expect(await run((s) => s.tx.select().from(syncJobs).where(eq(syncJobs.userId, user.id)))).toHaveLength(0);
   });
 
+  it("money from a person is never Side Income (a student with no job got it for her family's Zelle), but still counts as money in", () => {
+    const text = "Zelle payment from Mom";
+    expect(mapPfc({ primary: "TRANSFER_IN", detailed: "TRANSFER_IN_ACCOUNT_TRANSFER" }, 71_313, text)).toEqual({ category: null, kind: "income" });
+    expect(mapPfc({ primary: "INCOME", detailed: "INCOME_OTHER_INCOME" }, 4_000, "Venmo cashout")).toEqual({ category: null, kind: "income" });
+    // Payroll text is not a payment from a person: unchanged.
+    expect(mapPfc({ primary: "TRANSFER_IN", detailed: "TRANSFER_IN_ACCOUNT_TRANSFER" }, 50_000, "ACME PAYROLL")).toEqual({
+      category: "Side Income",
+      kind: "income",
+    });
+    expect(mapPfc({ primary: "INCOME", detailed: "INCOME_WAGES" }, 50_000, "ACME PAYROLL")).toEqual({ category: "Paycheck", kind: "income" });
+  });
+
   it("maps Plaid categories to LifeFlow categories and kinds", () => {
     expect(mapPfc({ primary: "LOAN_PAYMENTS", detailed: "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT" }, -5000)).toEqual({
       category: "Credit Card Payment",
