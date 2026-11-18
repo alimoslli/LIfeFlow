@@ -279,7 +279,8 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
     steps: todaySteps,
     sleepHours,
     spentTodayCents,
-    empty: items.length === 0 && todaySteps == null,
+    // a public holiday alone isn't something on their sky
+    empty: items.every((i) => i.origin === "holiday") && todaySteps == null,
   };
 }
 

@@ -46,7 +46,13 @@ describe("day clock data", () => {
     expect(data.empty).toBe(false);
     expect(data.base).toBe(new Date("2026-11-07T05:00:00Z").getTime());
 
-    const byTitle = Object.fromEntries(data.items.map((i) => [i.title, i]));
+    // US public holidays are on the line from the calendar alone (owner, 2026-11-18): Veterans Day is the Wednesday after
+    expect(data.items.find((i) => i.origin === "holiday" && i.title === "Veterans Day")).toMatchObject({
+      id: "holiday:2026-11-11",
+      allDay: true,
+      start: 4 * 1440,
+    });
+    const byTitle = Object.fromEntries(data.items.filter((i) => i.origin !== "holiday").map((i) => [i.title, i]));
     // The week in full, and plans further out too (the line keeps going): "Too far out" is 13 days ahead.
     expect(Object.keys(byTitle).sort()).toEqual(["Class", "Exam 2", "Run with Sam", "Too far out", "Work"]);
     expect(byTitle["Too far out"]).toMatchObject({ start: 13 * 1440 + 480 });
@@ -246,7 +252,8 @@ describe("day clock data", () => {
   it("is empty for someone with nothing connected or added, and never makes up steps", async () => {
     const { run } = await makeUser("New Person");
     const data = await run((s) => dayClockData(s, TZ, NOW));
-    expect(data.items).toEqual([]);
+    // nothing of theirs, only the public holidays a US time zone has
+    expect(data.items.filter((i) => i.origin !== "holiday")).toEqual([]);
     expect(data.steps).toBeNull();
     expect(data.sleepHours).toBeNull();
     expect(data.spentTodayCents).toBeNull();
