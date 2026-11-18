@@ -80,7 +80,7 @@ export async function integrationStatus(scope: UserScope) {
   return providerCatalog().map((p) => {
     const connections = rows
       .filter((r) => r.provider === p.provider)
-      .map((r) => ({ id: r.id, status: r.status, displayName: r.displayName, lastSyncedAt: r.lastSyncedAt, lastError: r.lastError }));
+      .map((r) => ({ id: r.id, status: r.status, displayName: r.displayName, lastSyncedAt: r.lastSyncedAt, lastError: r.lastError, scopes: r.scopes }));
     return {
       ...p,
       connections,

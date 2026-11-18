@@ -17,6 +17,7 @@ import {
   searchEmail,
   sendEmail,
   syncGoogleCalendar,
+  needsCalendarList,
 } from "@/server/integrations/google";
 import { runJarvisTurn, type JarvisEvent } from "@/server/jarvis/agent";
 import { ScriptedProvider } from "@/server/jarvis/providers/scripted";
@@ -29,13 +30,13 @@ beforeAll(() => {
 });
 
 const SCOPE =
-  "openid email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/calendar.events";
+  "openid email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.calendarlist.readonly";
 const idToken = (email: string) => `x.${Buffer.from(JSON.stringify({ email })).toString("base64url")}.y`;
 const b64 = (s: string) => Buffer.from(s).toString("base64url");
 
 type Call = { url: string; method: string; body?: string; auth?: string };
 /** A tiny stand-in for Google's APIs. */
-function fakeGoogle(opts: { refreshFails?: boolean; events?: object[] } = {}) {
+function fakeGoogle(opts: { refreshFails?: boolean; events?: object[]; followed?: Record<string, object[]> } = {}) {
   const calls: Call[] = [];
   let tokenN = 0;
   const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json" } });
@@ -85,6 +86,9 @@ function fakeGoogle(opts: { refreshFails?: boolean; events?: object[] } = {}) {
     if (url.endsWith("/drafts") && method === "POST") return json({ id: "draft1", message: { id: "m-d", threadId: "th1" } });
     if (url.endsWith("/messages/send") && method === "POST") return json({ id: "sent1", threadId: "th1", labelIds: ["SENT"] });
     if (url.includes("/calendars/primary/events?")) return json({ items: opts.events ?? [] });
+    if (url.includes("/users/me/calendarList?") && opts.followed)
+      return json({ items: [{ id: "me@example.com", primary: true }, ...Object.keys(opts.followed).map((id) => ({ id }))] });
+    for (const [id, items] of Object.entries(opts.followed ?? {})) if (url.includes(`/calendars/${encodeURIComponent(id)}/events?`)) return json({ items });
     if (url.endsWith("/calendars/primary/events") && method === "POST") {
       const b = JSON.parse(body!);
       return json({ ...b, id: "gev-new", htmlLink: "https://calendar.google.com/x" });
@@ -224,5 +228,72 @@ describe("Google Calendar", () => {
     expect(g.calls.some((c) => c.url.includes("/revoke?token=rt-1"))).toBe(true);
     expect(await run((s) => getGoogleConnection(s))).toBeNull();
     expect(await run((s) => s.tx.select().from(calendarEvents).where(eq(calendarEvents.source, "google")))).toHaveLength(0);
+  });
+});
+
+describe("days off from the calendars they follow (owner, 2026-11-18)", () => {
+  const NOW = new Date("2026-11-18T15:00:00Z");
+  const SCHOOL = "school.edu_abc@group.calendar.google.com";
+  const HOLIDAYS = "en.usa#holiday@group.v.calendar.google.com";
+  const followed = (school: object[]) => ({
+    [SCHOOL]: school,
+    [HOLIDAYS]: [
+      { id: "h1", summary: "Thanksgiving Day", start: { date: "2026-11-26" }, end: { date: "2026-11-27" } },
+      { id: "h2", summary: "Valentine's Day", start: { date: "2027-02-14" }, end: { date: "2027-02-15" } },
+    ],
+  });
+  const breakEvent = { id: "b1", summary: "Thanksgiving Break - No Classes", start: { date: "2026-11-25" }, end: { date: "2026-11-30" } };
+  const saved = (run: (fn: (s: import("@/server/db/with-user").UserScope) => Promise<unknown>) => Promise<unknown>) =>
+    run((s) =>
+      s.tx
+        .select({ title: calendarEvents.title, allDay: calendarEvents.allDay, kind: calendarEvents.kind, id: calendarEvents.providerEventId })
+        .from(calendarEvents)
+        .where(eq(calendarEvents.userId, s.userId)),
+    ) as Promise<{ title: string; allDay: boolean; kind: string; id: string }[]>;
+
+  it("adds only all-day breaks and days off, never their other events, and drops what's gone", async () => {
+    const g = fakeGoogle({
+      followed: followed([
+        breakEvent,
+        { id: "s2", summary: "Club fair", start: { date: "2026-11-20" }, end: { date: "2026-11-21" } },
+        { id: "s3", summary: "No classes", start: { dateTime: "2026-11-24T09:00:00-05:00" }, end: { dateTime: "2026-11-24T10:00:00-05:00" } },
+      ]),
+    });
+    const { run } = await connectedUser(g);
+    await run((s) => syncGoogleCalendar(s, TZ, NOW, g.f));
+    const rows = await saved(run);
+    expect(rows.map((r) => [r.title, r.allDay, r.kind]).sort()).toEqual([
+      ["Thanksgiving Break - No Classes", true, "other"],
+      ["Thanksgiving Day", true, "other"],
+    ]);
+    expect(rows.every((r) => r.id.startsWith("followed:"))).toBe(true);
+    // the school takes the break off its calendar: it leaves the sky on the next sync
+    const g2 = fakeGoogle({ followed: followed([]) });
+    await run((s) => syncGoogleCalendar(s, TZ, NOW, g2.f));
+    expect((await saved(run)).map((r) => r.title)).toEqual(["Thanksgiving Day"]);
+  });
+
+  it("keeps what it saved when the list can't be read this time", async () => {
+    const g = fakeGoogle({ followed: followed([breakEvent]) });
+    const { run } = await connectedUser(g);
+    await run((s) => syncGoogleCalendar(s, TZ, NOW, g.f));
+    await run((s) => syncGoogleCalendar(s, TZ, NOW, fakeGoogle().f));
+    expect((await saved(run)).map((r) => r.title).sort()).toEqual(["Thanksgiving Break - No Classes", "Thanksgiving Day"]);
+  });
+
+  it("an older connection without the permission reads nothing more and is asked once to reconnect", async () => {
+    const g = fakeGoogle({ followed: followed([breakEvent]) });
+    const { run } = await connectedUser(g);
+    await run((s) =>
+      s.tx
+        .update(integrations)
+        .set({ scopes: SCOPE.split(" ").filter((x) => !x.includes("calendarlist")) })
+        .where(eq(integrations.userId, s.userId)),
+    );
+    await run((s) => syncGoogleCalendar(s, TZ, NOW, g.f));
+    expect(await saved(run)).toEqual([]);
+    expect(g.calls.some((c) => c.url.includes("calendarList"))).toBe(false);
+    const conn = (await run((s) => getGoogleConnection(s))) as { scopes: string[] };
+    expect(needsCalendarList(conn.scopes)).toBe(true);
   });
 });

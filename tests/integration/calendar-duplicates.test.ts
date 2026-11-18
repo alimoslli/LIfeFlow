@@ -25,7 +25,7 @@ const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { sta
 const idToken = (email: string) => `x.${Buffer.from(JSON.stringify({ email })).toString("base64url")}.y`;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const SCOPE =
-  "openid email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/calendar.events";
+  "openid email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.calendarlist.readonly";
 
 /** A tiny stand-in for Google: token, a calendar list that can change, event create, Gmail list/send. */
 function fakeGoogle(opts: { events?: () => object[]; delayMs?: number } = {}) {

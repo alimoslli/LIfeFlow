@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
-import { and, eq, gte, lte, notInArray } from "drizzle-orm";
+import { and, eq, gte, lte, notInArray, notLike } from "drizzle-orm";
 import { addDaysStr, localDateOf, localToInstant, startOfLocalDay } from "@/lib/dates";
+import { isDayOff } from "@/lib/holidays";
 import { truncate } from "@/lib/utils";
 import { decryptSecret, encryptSecret } from "../crypto";
 import { calendarEvents, connectionRegistry, gmailMessages, integrations } from "../db/schema";
@@ -23,12 +24,20 @@ export type Fetch = typeof fetch;
 /** Short-lived cookie holding the OAuth state + PKCE verifier between start and callback. */
 export const OAUTH_COOKIE = "bf_g_oauth";
 
+/** Lists the calendars the person follows, so breaks and days off on a school's shared calendar reach their sky. */
+export const CALENDAR_LIST_SCOPE = "https://www.googleapis.com/auth/calendar.calendarlist.readonly";
+
+/** A Google connection made before the calendars they follow were read: asked once to reconnect, with the reason. */
+export const needsCalendarList = (scopes: string[] | null | undefined) => !(scopes ?? []).includes(CALENDAR_LIST_SCOPE);
+
 export const GOOGLE_SCOPES = [
   "openid",
   "email",
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/gmail.compose",
   "https://www.googleapis.com/auth/calendar.events",
+  // the calendars they follow (a school's shared calendar, Google's holidays), read only for days off (owner, 2026-11-18)
+  CALENDAR_LIST_SCOPE,
 ];
 
 const AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
@@ -36,6 +45,10 @@ const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 const GMAIL = "https://gmail.googleapis.com/gmail/v1/users/me";
 const CAL = "https://www.googleapis.com/calendar/v3/calendars/primary";
+const CALS = "https://www.googleapis.com/calendar/v3/calendars";
+const CAL_LIST = "https://www.googleapis.com/calendar/v3/users/me/calendarList";
+/** Saved events from a followed calendar carry this before their id, so they never collide with the main calendar's. */
+const FOLLOWED = "followed:";
 
 export class GoogleError extends Error {
   constructor(
@@ -447,7 +460,7 @@ function eventTimes(e: GEvent, tz: string) {
   return { startsAt, endsAt, allDay: false };
 }
 
-export async function listGoogleEvents(scope: UserScope, timeMin: Date, timeMax: Date, f: Fetch = fetch) {
+export async function listGoogleEvents(scope: UserScope, timeMin: Date, timeMax: Date, f: Fetch = fetch, base = CAL) {
   const out: GEvent[] = [];
   let pageToken: string | undefined;
   do {
@@ -459,7 +472,7 @@ export async function listGoogleEvents(scope: UserScope, timeMin: Date, timeMax:
       maxResults: "250",
       ...(pageToken && { pageToken }),
     });
-    const page = await api<{ items?: GEvent[]; nextPageToken?: string }>(scope, `${CAL}/events?${q}`, {}, f);
+    const page = await api<{ items?: GEvent[]; nextPageToken?: string }>(scope, `${base}/events?${q}`, {}, f);
     out.push(...(page.items ?? []).filter((e) => e.status !== "cancelled"));
     pageToken = page.nextPageToken;
   } while (pageToken && out.length < 2000);
@@ -493,6 +506,12 @@ export async function syncGoogleCalendar(scope: UserScope, tz: string, now = new
     if (r.added) added++;
     else updated++;
   }
+  const followed = await syncFollowedDaysOff(scope, tz, from, to, f);
+  if (followed) {
+    ids.push(...followed.ids);
+    added += followed.added;
+    updated += followed.updated;
+  }
   const stale = await scope.tx
     .delete(calendarEvents)
     .where(
@@ -502,6 +521,8 @@ export async function syncGoogleCalendar(scope: UserScope, tz: string, now = new
         gte(calendarEvents.startsAt, from),
         lte(calendarEvents.startsAt, to),
         ...(ids.length ? [notInArray(calendarEvents.providerEventId, ids)] : []),
+        // when the followed calendars couldn't be read this time, what was saved from them stays
+        ...(followed ? [] : [notLike(calendarEvents.providerEventId, `${FOLLOWED}%`)]),
       ),
     )
     .returning({ id: calendarEvents.id });
@@ -510,6 +531,55 @@ export async function syncGoogleCalendar(scope: UserScope, tz: string, now = new
     .set({ lastSyncedAt: now, lastError: null, status: "connected" })
     .where(and(eq(integrations.userId, scope.userId), eq(integrations.provider, "google")));
   return { added, updated, removed: stale.length, total: ids.length };
+}
+
+type GCalendar = { id: string; primary?: boolean; deleted?: boolean; hidden?: boolean; selected?: boolean };
+
+/**
+ * Days off from the calendars the person follows (owner, 2026-11-18): a school's shared calendar, Google's holidays.
+ * Only all-day breaks and days off by the same strict rule as Canvas (`isDayOff`); nothing else from those calendars
+ * reaches the sky. Null when the list can't be read (an older connection without the permission, or Google said no),
+ * so what was saved before stays.
+ */
+async function syncFollowedDaysOff(scope: UserScope, tz: string, from: Date, to: Date, f: Fetch) {
+  const conn = await getGoogleConnection(scope);
+  if (!conn || needsCalendarList(conn.scopes)) return null;
+  let cals: GCalendar[];
+  try {
+    cals = (await api<{ items?: GCalendar[] }>(scope, `${CAL_LIST}?minAccessRole=reader&maxResults=250`, {}, f)).items ?? [];
+  } catch (e) {
+    if (e instanceof GoogleError && e.reauth) throw e;
+    return null;
+  }
+  const ids: string[] = [];
+  let added = 0;
+  let updated = 0;
+  for (const cal of cals.filter((c) => !c.primary && !c.deleted && !c.hidden && c.selected !== false).slice(0, 25)) {
+    let events: GEvent[];
+    try {
+      events = await listGoogleEvents(scope, from, to, f, `${CALS}/${encodeURIComponent(cal.id)}`);
+    } catch (e) {
+      if (e instanceof GoogleError && e.reauth) throw e;
+      return null;
+    }
+    const tag = createHash("sha256").update(cal.id).digest("hex").slice(0, 12);
+    for (const e of events) {
+      if (!e.start?.date || !isDayOff(e.summary ?? "")) continue;
+      const t = eventTimes(e, tz);
+      const id = `${FOLLOWED}${tag}:${e.id}`;
+      ids.push(id);
+      const r = await upsertProviderEvent(
+        scope,
+        "google",
+        id,
+        { title: truncate(e.summary ?? "", 300), description: null, location: null, ...t },
+        { kind: "other" },
+      );
+      if (r.added) added++;
+      else updated++;
+    }
+  }
+  return { ids, added, updated };
 }
 
 /** Adds an event to the user's Google Calendar (after they confirm), then mirrors it locally. */
