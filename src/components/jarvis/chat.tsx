@@ -721,7 +721,9 @@ export function JarvisChat({
                 )}
                 <div
                   className={cn(
-                    "lf-speech absolute z-20 px-3.5 py-3 sm:px-5 sm:py-4",
+                    // on a phone the words sit under the window instead (owner, 2026-11-18: in the window they covered the
+                    // cloud's button and the skyling's things)
+                    "lf-speech absolute z-20 px-3.5 py-3 max-sm:hidden sm:px-5 sm:py-4",
                     cloudHome
                       ? // on a phone above the cloud at the top right; wider, beside it (the cloud keeps the left 23 rem)
                         "top-3 right-3 left-[38%] sm:top-1/2 sm:right-[6%] sm:left-[24rem] sm:-translate-y-1/2"
@@ -740,6 +742,10 @@ export function JarvisChat({
                   </h2>
                 </div>
               </SkyWindow>
+              <div className="mt-4 sm:hidden">
+                <p className="text-[0.6875rem] font-semibold tracking-[0.14em] text-accent uppercase">{assistantName}</p>
+                <h2 className="mt-0.5 font-display text-[1.5rem] leading-[1.1] font-medium tracking-tight">Let&apos;s clear your sky.</h2>
+              </div>
               {!empty ? null : !aiConsent ? (
                 <AiConsentCard name={assistantName} />
               ) : ideas?.length ? (

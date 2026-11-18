@@ -83,7 +83,7 @@ export function SkyHome({ counts, skyling, name }: { counts: SkyCounts; skyling?
   const cw = 72;
   const stand = cy + 2;
   const at = (key: string, x: number, y: number) => has.has(key) && <Pic art={ART[key]} x={x} y={y} />;
-  const kite = { x: ox + 46, y: Math.max(TOP + 1, cy - 27) };
+  const kite = { x: ox + 50, y: Math.max(TOP + 1, cy - 30) };
   const balloon = { x: cx + 1, y: cy - 33 };
   const rope = (x: number, y0: number, y1: number) => y1 > y0 && <rect x={x} y={y0} width={0.5} height={y1 - y0} fill="#8a5a3c" />;
 
@@ -109,17 +109,17 @@ export function SkyHome({ counts, skyling, name }: { counts: SkyCounts; skyling?
           {at("garden", ox + 58, cy - 27)}
           {has.has("kite") && (
             <>
-              <Pic art={ART.kite} x={kite.x} y={kite.y} />
               {Array.from({ length: 12 }, (_, i) => (
                 <rect
                   key={i}
-                  x={kite.x + 4 + ((ox + 49 - kite.x - 4) * i) / 12}
-                  y={kite.y + 17 + ((cy - kite.y - 17) * i) / 12}
+                  x={kite.x + 8 - ((kite.x + 8 - (ox + 38)) * (i + 1)) / 13}
+                  y={kite.y + 6 + ((cy - kite.y - 6) * (i + 1)) / 13}
                   width={0.5}
                   height={0.5}
                   fill="rgb(255 255 255 / 0.75)"
                 />
               ))}
+              <Pic art={ART.kite} x={kite.x} y={kite.y} />
             </>
           )}
           {has.has("balloon") && (

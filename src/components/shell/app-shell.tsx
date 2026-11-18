@@ -191,8 +191,9 @@ export function AppShell({
           <div className="flex min-h-dvh">
             {/* Desktop rail */}
             <aside className={cn("sticky top-0 hidden h-dvh w-[88px] shrink-0 flex-col items-center py-6", settingUp ? "md:hidden" : "md:flex")}>
-              {/* The sun on top is the Today tab itself (owner, 2026-11-11: a logo above Today looked clickable and people
-                  went to it), so nothing in the corner is a second, unnamed way to the same place.
+              {/* Today is the first tab, drawn and spaced like the rest, the same as a phone's dock (owner, 2026-11-18: the big
+                  logo on Today stood far from the other tabs and "looks weird"). Nothing in the corner is a second, unnamed way
+                  to the same place (owner, 2026-11-11).
                   On the sky, no white pill (A-to-Z audit E4): where you are is the accent glyph and a thin accent line */}
               <nav ref={rail} className="relative flex flex-col gap-1 pl-2" aria-label="Main">
                 <span data-indicator className="pointer-events-none absolute top-0 left-0 w-[3px] rounded-full bg-accent opacity-0" />
@@ -208,13 +209,10 @@ export function AppShell({
                       aria-current={active ? "page" : undefined}
                       className={cn(
                         "group relative flex w-16 flex-col items-center gap-1 rounded-2xl py-2.5 text-[0.6875rem] font-medium transition-colors",
-                        item.href === "/" && "mb-3",
                         active ? "text-text" : "text-muted hover:text-text",
                       )}
                     >
-                      {item.href === "/" ? (
-                        <BrandMark className="h-10 w-10" alt="" />
-                      ) : item.href === "/jarvis" ? (
+                      {item.href === "/jarvis" ? (
                         <CompanionGlyph companion={skyling} night={ownsNight(skyling)} className="h-6 w-6" />
                       ) : (
                         <Icon className={cn("h-5 w-5", active && "text-accent")} strokeWidth={active ? 2 : 1.6} />

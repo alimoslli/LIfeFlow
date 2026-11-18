@@ -28,26 +28,30 @@ const SKY_MOMENT = `function(z,t){var F=new Intl.DateTimeFormat("en-US",{timeZon
 
 export const SPLASH_SCRIPT = `try{var q=location.search,s=sessionStorage;if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&(/[?&]splash=1/.test(q)||(!s.getItem("${SESSION_KEY}")&&!navigator.webdriver&&!/[?&]nosplash/.test(q)))){var r=document.documentElement,h=new Date().getHours(),n="";try{n=(localStorage.getItem("${NAME_KEY}")||"").slice(0,24)}catch(e){}try{var z=localStorage.getItem("${TZ_KEY}");if(z)h=+new Intl.DateTimeFormat("en-US",{hour:"numeric",hourCycle:"h23",timeZone:z}).format(new Date())%24}catch(e){}var mo="";try{if(z)mo=(${SKY_MOMENT})(z,new Date().getTime())}catch(e){}mo=mo||(h<5||h>=21?"moon":h<7?"dawn":h<16?"ray":h<17?"goldie":"star");r.setAttribute("data-lf-moment",mo);r.style.setProperty("--lf-greet",JSON.stringify(({dawn:"Rise and shine",ray:"Sun's up",goldie:"Golden hour",star:"Stars are out",moon:"Up with the moon"}[mo]||"Hello")+(n?", "+n:"")));r.classList.add("lf-splash");s.setItem("${SESSION_KEY}","1")}}catch(e){}`;
 
-const MIN_VISIBLE_MS = 1500;
+const MIN_VISIBLE_MS = 1100;
 /** Never longer than this, even on a very slow connection. */
 const MAX_VISIBLE_MS = 8000;
 
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, Math.max(0, ms)));
 
-/** Resolves when the page behind the splash is really there: no loading placeholder left, everything loaded. */
+/**
+ * Resolves when the page behind the splash is really there: the whole page has arrived (its data is in) and no loading
+ * placeholder is left. It doesn't wait for every picture and script to finish downloading (owner, 2026-11-18: "when I open
+ * it, it just takes too long to load"): the sky and the skylings are drawn in code, so nothing on Today depends on them.
+ */
 function pageReady() {
   return new Promise<void>((resolve) => {
-    const ready = () => document.readyState === "complete" && !document.querySelector("[data-app-loading]");
+    const ready = () => document.readyState !== "loading" && !document.querySelector("[data-app-loading]");
     if (ready()) return resolve();
     const check = () => {
       if (!ready()) return;
       observer.disconnect();
-      window.removeEventListener("load", check);
+      document.removeEventListener("DOMContentLoaded", check);
       resolve();
     };
     const observer = new MutationObserver(check);
     observer.observe(document.body, { childList: true, subtree: true });
-    window.addEventListener("load", check);
+    document.addEventListener("DOMContentLoaded", check);
   });
 }
 
@@ -57,7 +61,7 @@ function pageReady() {
  * and the user's first name rise into focus (CSS, set before first paint from the
  * hour in the user's time zone, so no flicker). It stays until the app has really loaded (the
  * page's data is in, no loading placeholder, fonts and images done), so people
- * don't land on a half-loaded screen; at least 1.5s, never more than 8s. A CSS
+ * don't land on a half-loaded screen; at least 1.1s (the sun has risen and the hello is up), never more than 8s. A CSS
  * failsafe hides it after 9.5s even if JavaScript never runs.
  */
 export function Splash() {
@@ -79,9 +83,9 @@ export function Splash() {
       if (gone) return;
       gone = true;
       tl = gsap.timeline({ onComplete: finish });
-      tl.to(el.querySelector(".lf-splash-inner"), { scale: 1.06, opacity: 0, duration: 0.35, ease: "power2.in" }).to(
+      tl.to(el.querySelector(".lf-splash-inner"), { scale: 1.06, opacity: 0, duration: 0.25, ease: "power2.in" }).to(
         el,
-        { opacity: 0, duration: 0.4, ease: MOTION.ease },
+        { opacity: 0, duration: 0.3, ease: MOTION.ease },
         "-=0.15",
       );
     };
