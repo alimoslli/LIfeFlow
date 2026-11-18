@@ -2,7 +2,7 @@
 import { trashAction } from "../trash-actions";
 import { formBool, formObject, mutate, type ActionState } from "@/server/actions";
 import { formatDateStr, localDateOf } from "@/lib/dates";
-import { createEvent, editOccurrence, getEvent, moveAgendaItem, skipOccurrence, updateEvent } from "@/server/services/calendar";
+import { createEvent, editOccurrence, getEvent, moveAgendaItem, skipOccurrence, toggleHandIn, updateEvent } from "@/server/services/calendar";
 
 export async function createEventAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
@@ -57,6 +57,14 @@ export async function updateEventAction(id: string, _p: ActionState, fd: FormDat
     },
     { revalidate: ["/calendar", "/plan", "/"] },
   );
+}
+
+/** A delivery or other one-off hand-in, ticked done from its card on Today (or opened again). */
+export async function toggleHandInAction(id: string): Promise<ActionState> {
+  return mutate("event.done", async (s) => {
+    const r = await toggleHandIn(s, id);
+    return r.done ? `Done: ${r.title}.` : `"${r.title}" is open again.`;
+  });
 }
 
 export async function deleteEventAction(id: string): Promise<ActionState> {

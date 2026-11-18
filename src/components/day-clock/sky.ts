@@ -186,8 +186,11 @@ export function paintStrip(g: Element, defs: Element, o: StripOpts) {
   const grad = (id: string, f: (t: number) => RGB) => {
     const gr = el("linearGradient", { id, x1: o.x0, y1: 0, x2: o.x1, y2: 0, gradientUnits: "userSpaceOnUse" }, defs);
     for (let x = o.x0; x <= o.x1 + 0.1; x += Math.max(6, W / 160)) {
+      // blended over twenty minutes either side, not a fixed width: on a phone an hour is narrow, and a blend by width
+      // pulled the night into the morning (test student p4020: a night sky over the line at 7:20 AM, after sunrise)
       const c: RGB = [0, 0, 0];
-      for (const dx of [-42, -21, 0, 21, 42]) f(o.tAt(x + dx)).forEach((v, i) => (c[i] += v / 5));
+      const t = o.tAt(x);
+      for (const dt of [-20, -10, 0, 10, 20]) f(t + dt).forEach((v, i) => (c[i] += v / 5));
       el("stop", { offset: clamp((x - o.x0) / W, 0, 1).toFixed(4), "stop-color": css(c) }, gr);
     }
   };
@@ -860,6 +863,9 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         if (t < h.a || t > h.b) continue;
         // at night nothing about sunset (COO, 2026-11-16: "Sunset about 4:45 PM" still showed at 9 PM)
         if (night && name === "Sunset") continue;
+        // nor sunrise once the morning is well under way (test student p4020: "Sunrise about 6:45 AM" at 11:55 AM); a
+        // sun moment is said only while it's ahead or just happened
+        if (t < now - 60) continue;
         const [x, y] = wheelAt(t);
         el("circle", { cx: x.toFixed(1), cy: y.toFixed(1), r: 4, class: "dc-rim-sun", opacity: up(t).toFixed(3) }, marks);
         mark(t, `${name} about ${fmt(Math.round(mod(t) / 5) * 5)}`);

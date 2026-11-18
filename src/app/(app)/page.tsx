@@ -29,7 +29,8 @@ import { TodayMiddle, TodayOwner } from "./_today/today-chat";
 import { BirthdayCard } from "./_today/birthday-card";
 import { EmptyNext } from "./_today/empty-next";
 import { ideaClouds } from "@/server/services/idea-clouds";
-import { BRIEF_UNTIL_HOUR, morningBriefLine, nextUpNote } from "@/server/services/next-up";
+import { BRIEF_UNTIL_HOUR, morningBriefLine, nextUpNote, workTodayLine } from "@/server/services/next-up";
+import { stopHref } from "@/lib/today-stop";
 import { formatIn } from "@/lib/dates";
 
 /**
@@ -102,7 +103,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     );
   // A phone's Today shows no idea clouds (owner, 2026-11-16), so a phone doesn't work them out either.
   const phone = /\b(iPhone|iPod|Android.+Mobile)\b/.test((await headers()).get("user-agent") ?? "");
-  const { clock, note, brief, clash, assistantName, setup, hello, clouds, userId } = await withCurrentUser(async (scope, user) => {
+  const { clock, note, brief, work, clash, assistantName, setup, hello, clouds, userId } = await withCurrentUser(async (scope, user) => {
     const tz = user.timezone ?? "UTC";
     // Money (bills due, spent today) joins the clock only while the Money lock is open.
     // Today only reads here, and its parts ask for the same rows (bills, categories, 13 months of transactions) again and
@@ -112,7 +113,8 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     const clock = await dayClockData(scope, tz, now, { money: !locked });
     // the note is the next real thing in the next 24 hours; the briefing's notes only when nothing is that close
     const next = await nextUpNote(scope, tz, now);
-    const brief = Number(formatIn(now, tz, "H")) < BRIEF_UNTIL_HOUR ? await morningBriefLine(scope, tz, now, { money: !locked }) : null;
+    const brief = Number(formatIn(now, tz, "H")) < BRIEF_UNTIL_HOUR ? await morningBriefLine(scope, tz, now, { money: !locked, said: next?.text }) : null;
+    const work = await workTodayLine(scope, tz, now, next?.text);
     const { briefing } = await getBriefing(scope, user);
     const [integrationList, banks] = await series(
       () => integrationStatus(scope),
@@ -133,11 +135,13 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     const far: AssistantNote | null = top
       ? { id: top.id, text: top.text, tone: top.tone, href: top.action?.href, prompt: top.action?.prompt, label: top.action?.label }
       : null;
-    const note: AssistantNote | null = next ? { id: next.key, text: next.text, tone: "heads-up", href: next.href } : far;
+    // a tap opens that thing's own card on the line (test students: the note opened the Calendar's month grid)
+    const note: AssistantNote | null = next ? { id: next.key, text: next.text, tone: "heads-up", href: stopHref(next.key) } : far;
     return {
       clock,
       note,
       brief,
+      work,
       clash: !!top?.id?.startsWith("conflict"),
       assistantName: assistantProfile(user.preferences, user.timezone).name,
       // idea clouds beside the chat bar, from their own data (lib/idea-clouds)
@@ -167,7 +171,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           <div className="max-md:hidden">
             {/* accounts made before the birthday was required are asked once, first (owner, 2026-11-10; not a lockout) */}
             {!me.preferences?.birthDate && <BirthdayCard />}
-            {me.preferences?.birthDate && note && <AssistantLine name={assistantName} note={note} brief={brief} />}
+            {me.preferences?.birthDate && note && <AssistantLine name={assistantName} note={note} brief={brief} work={work} />}
             {/* nothing planned yet: one next step, on the first screen (connect what can be connected, else tell the skyling) */}
             {me.preferences?.birthDate &&
               !note &&
@@ -202,6 +206,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
         <TodayMiddle
           name={assistantName}
           brief={me.preferences?.birthDate ? brief : null}
+          work={me.preferences?.birthDate ? work : null}
           note={
             !me.preferences?.birthDate
               ? null

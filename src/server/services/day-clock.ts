@@ -5,6 +5,8 @@ import type { UserScope } from "@/server/db/with-user";
 import { series } from "@/server/db/series";
 import { assignments, habitChecks, habits, healthSamples, promises, tasks } from "@/server/db/schema";
 import { getAgenda, type AgendaItem } from "./calendar";
+import { isDueEvent } from "@/lib/next-up";
+import { holidaysBetween } from "@/lib/holidays";
 import { summarizeCashflow } from "./finance/cashflow";
 import { expectedPay, upcomingBills } from "./finance/forecast";
 import { bankSeries, listGoals } from "./finance/planning";
@@ -50,6 +52,8 @@ export function toClockItem(a: AgendaItem, tz: string, today: string): ClockItem
     origin: a.origin,
     ref: a.id,
     ...(a.kind === "exam" && { exam: true }),
+    ...(a.origin === "event" && !a.repeats && isDueEvent(a.title) && { handIn: true }),
+    ...(a.done && { done: true }),
   };
 }
 
@@ -88,6 +92,22 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
   for (const a of ahead) if (a.repeats) times.set(a.id, (times.get(a.id) ?? 0) + 1);
   const items = [...agenda, ...ahead.filter((a) => !a.repeats || (times.get(a.id) ?? 0) < 3)].map((a) => toClockItem(a, tz, today));
   const dayAt = (date: string) => daysBetween(today, date) * 1440;
+  // public holidays on the line, for a US time zone (owner, 2026-11-18: "is it Thanksgiving break already?")
+  for (const h of holidaysBetween(tz, from, addDaysStr(today, AHEAD_DAYS)))
+    items.push({
+      id: `holiday:${h.date}`,
+      kind: "block",
+      cat: "other",
+      icon: "🎉",
+      title: h.name,
+      start: dayAt(h.date),
+      end: null,
+      allDay: true,
+      href: `/calendar?date=${h.date}`,
+      source: "A public holiday",
+      subtitle: null,
+      origin: "holiday",
+    });
   for (const m of story) {
     if (!m.date) continue;
     const { emoji, rest } = splitEmoji(m.title);

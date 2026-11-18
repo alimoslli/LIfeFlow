@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { localToInstant } from "@/lib/dates";
-import { isDueEvent, laterText, nextUpText, pickNextUp, type NextUpItem } from "@/lib/next-up";
+import { isDueEvent, laterText, nextUpText, pickNextUp, workDayLine, type NextUpItem } from "@/lib/next-up";
 
 const TZ = "America/Chicago";
 const at = (date: string, time: string) => localToInstant(date, time, TZ);
@@ -98,5 +98,49 @@ describe("Today's note: the next real thing in the next 24 hours", () => {
   it("finished things are never on the agenda, so a passed deadline never shows", () => {
     const now = at("2026-11-16", "12:00");
     expect(pickNextUp([due("Reading quiz", "2026-11-16", "09:00")], now, TZ)).toBeNull();
+  });
+
+  it("says where a class or meeting is, and never names a hand-in that was ticked done (owner, 2026-11-18)", () => {
+    const now = at("2026-11-16", "11:00");
+    const bio = { ...cls("BIO 418", "2026-11-16", "12:00", "13:15"), location: "Arts 247" };
+    expect(nextUpText(pickNextUp([bio], now, TZ)!, TZ, now)).toBe("Next: BIO 418 at 12:00 PM, Arts 247");
+    const long = { ...bio, location: "Northside Coffee Roasters, 2210 North Clark Street, Chicago" };
+    expect(nextUpText(pickNextUp([long], now, TZ)!, TZ, now)).toBe("Next: BIO 418 at 12:00 PM, Northside Coffee Roasters, 2210 North…");
+    // a shift is at its employer already
+    const shift = item({
+      title: "Work · Target",
+      origin: "shift",
+      kind: "work",
+      startsAt: at("2026-11-16", "16:00"),
+      endsAt: at("2026-11-16", "21:00"),
+      location: "Store 112",
+    });
+    expect(nextUpText(pickNextUp([shift], now, TZ)!, TZ, now)).toBe("Next: Target shift at 4:00 PM");
+    const delivery = item({ title: "Deliver Rivera wedding gallery", allDay: true, kind: "work", startsAt: at("2026-11-16", "00:00"), blocksTime: false });
+    expect(pickNextUp([{ ...delivery, done: true }], now, TZ)).toBeNull();
+    expect(laterText([{ ...delivery, done: true }], now, TZ)).toBeNull();
+  });
+
+  it("on a usual work day says the shift, or that there's no work today (owner, 2026-11-18)", () => {
+    const shift = (date: string, from: string, to: string, next = false) => ({
+      startsAt: at(date, from),
+      endsAt: next ? at(addDay(date), to) : at(date, to),
+      employer: "Target",
+    });
+    const addDay = (d: string) => `2026-11-${String(Number(d.slice(8)) + 1).padStart(2, "0")}`;
+    const now = at("2026-11-16", "08:00"); // a Monday
+    const today = [shift("2026-11-16", "16:00", "21:00")];
+    expect(workDayLine(today, [], now, TZ)).toBe("Work today: Target, 4:00 to 9:00 PM");
+    // the note already names it
+    expect(workDayLine(today, [], now, TZ, "Next: Target shift at 4:00 PM")).toBeNull();
+    // a night shift says both halves of the day
+    expect(workDayLine([shift("2026-11-16", "22:00", "06:30", true)], [], now, TZ)).toBe("Work today: Target, 10:00 PM to 6:30 AM");
+    // over: nothing
+    expect(workDayLine(today, [], at("2026-11-16", "21:30"), TZ)).toBeNull();
+    // no shift on a Monday they usually work (two of the last four Mondays)
+    const pastMondays = [at("2026-11-09", "16:00"), at("2026-11-02", "16:00")];
+    expect(workDayLine([], pastMondays, now, TZ)).toBe("No work today");
+    // one Monday is not a habit; a Tuesday shift says nothing about Mondays
+    expect(workDayLine([], [at("2026-11-09", "16:00"), at("2026-11-10", "16:00")], now, TZ)).toBeNull();
   });
 });

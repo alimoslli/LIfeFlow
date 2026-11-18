@@ -8,6 +8,7 @@ import { getAssignment, listAssignments, updateAssignment } from "./school";
 import { getTask, listTasks, updateTask } from "./tasks";
 import { listShifts } from "./work";
 import { mergeCrossSource, sourceLabel } from "./calendar-merge";
+import { isDueEvent } from "@/lib/next-up";
 
 export const EVENT_KINDS = ["personal", "class", "exam", "work", "study", "appointment", "reminder", "other"] as const;
 
@@ -207,6 +208,22 @@ export async function getEvent(scope: UserScope, id: string) {
   return row;
 }
 
+/**
+ * Ticks a one-off hand-in on the calendar done, or opens it again (owner, 2026-11-18: a test student delivering client
+ * photos had no way to mark "Deliver: Rivera and Chen sneak peeks" done). Only a single event that reads as a hand-in
+ * (`isDueEvent`): a class or a repeating event is never "done".
+ */
+export async function toggleHandIn(scope: UserScope, id: string) {
+  const e = await getEvent(scope, id);
+  if (e.recurrence || !isDueEvent(e.title)) throw new ServiceError("Only a one-off hand-in can be ticked done.", "invalid");
+  const doneAt = e.doneAt ? null : new Date();
+  await scope.tx
+    .update(calendarEvents)
+    .set({ doneAt })
+    .where(and(eq(calendarEvents.id, id), eq(calendarEvents.userId, scope.userId)));
+  return { title: e.title, done: !!doneAt };
+}
+
 // ---------------------------------------------------------------- recurrence (pure)
 
 type EventLike = { startsAt: Date; endsAt: Date; allDay: boolean; recurrence: Recurrence | null };
@@ -260,6 +277,10 @@ export type AgendaItem = {
   repeats?: boolean;
   /** Where this event lives, when more than one place has it (e.g. "Google + Outlook"). */
   sources?: string[];
+  /** Where it happens (an event's location: a room, an address), said in Today's note (owner, 2026-11-18). */
+  location?: string | null;
+  /** A one-off hand-in the person ticked done (calendar_events.done_at). */
+  done?: boolean;
 };
 
 export async function listEventsInRange(scope: UserScope, tz: string, from: string, to: string) {
@@ -326,6 +347,8 @@ export async function getAgenda(
         blocksTime: !e.allDay,
         repeats: !!e.recurrence,
         sources: e.sources,
+        location: e.location,
+        ...(e.doneAt && { done: true }),
       });
     }
   }

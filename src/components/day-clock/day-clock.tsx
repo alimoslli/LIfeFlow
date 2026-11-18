@@ -15,6 +15,8 @@ import { PinSheet } from "./pin-sheet";
 import { toast } from "@/components/ui/toaster";
 import { toggleTaskAction } from "@/app/(app)/tasks/actions";
 import { toggleAssignmentAction } from "@/app/(app)/school/actions";
+import { toggleHandInAction } from "@/app/(app)/calendar/actions";
+import { SHOW_STOP } from "@/lib/today-stop";
 import { blockForEditAction } from "@/app/(app)/_today/actions";
 import { BlockSheet, type Block } from "@/app/(app)/plan/block-editor";
 import "./day-clock.css";
@@ -89,7 +91,12 @@ export function DayClock({
       // Done right on the card: the same actions as To-dos and School; the line refreshes in place.
       onDone: async (it, at) => {
         if (!it.ref) return;
-        const r = it.origin === "assignment" ? await toggleAssignmentAction(it.ref) : await toggleTaskAction(it.ref);
+        const r =
+          it.origin === "assignment"
+            ? await toggleAssignmentAction(it.ref)
+            : it.origin === "event"
+              ? await toggleHandInAction(it.ref)
+              : await toggleTaskAction(it.ref);
         if (r?.ok) {
           // the moment it's done: sparks from where it was done, and the skyling on the line jumps for joy
           celebrate(at, "small");
@@ -127,6 +134,22 @@ export function DayClock({
   useEffect(() => {
     if (data !== first.current) engine.current?.update(data);
   }, [data]);
+  // Today's note opens its own stop on the line (showStop in lib/today-stop.ts), and so does a link to /?stop=<id>
+  useEffect(() => {
+    if (isExample) return;
+    const onShow = (e: Event) => engine.current?.show((e as CustomEvent<string>).detail);
+    window.addEventListener(SHOW_STOP, onShow);
+    const id = new URLSearchParams(window.location.search).get("stop");
+    let t: ReturnType<typeof setTimeout> | undefined;
+    if (id) {
+      window.history.replaceState(window.history.state, "", window.location.pathname);
+      t = setTimeout(() => engine.current?.show(id), 400);
+    }
+    return () => {
+      window.removeEventListener(SHOW_STOP, onShow);
+      clearTimeout(t);
+    };
+  }, [isExample]);
   useEffect(() => {
     if (open === undefined) return;
     // a beat after the sky appears, so the pour reads as a moment

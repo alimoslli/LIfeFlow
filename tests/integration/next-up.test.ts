@@ -67,5 +67,11 @@ describe("Today's note from real records", () => {
       "Problem set 9 (Calculus I) due today, Return library books and 1 more. $420.00 available now",
     );
     expect(await u.run((s) => morningBriefLine(s, TZ, now, { money: false }))).toBe("Problem set 9 (Calculus I) due today, Return library books and 1 more");
+    // never what the note above it already says (owner, 2026-11-18): only the rest of the list and the money
+    const said = "Next: MATH 101 at 9:00 AM · Problem set 9 due today 11:59 PM";
+    expect(await u.run((s) => morningBriefLine(s, TZ, now, { money: true, said }))).toBe("Return library books, Shift at Target. $420.00 available now");
+    const allSaid = "Due today: Problem set 9, Return library books, Shift at Target";
+    expect(await u.run((s) => morningBriefLine(s, TZ, now, { money: true, said: allSaid }))).toBe("$420.00 available now");
+    expect(await u.run((s) => morningBriefLine(s, TZ, now, { money: false, said: allSaid }))).toBeNull();
   });
 });

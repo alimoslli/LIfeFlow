@@ -30,11 +30,14 @@ export type ClockItem = {
   /** A money amount, positive (only when money is shown): a bill or a trial's first charge, a money goal, expected pay. */
   amountCents?: number;
   /** Where it lives, and its id there: a to-do (or its reminder) or an assignment can be marked done right on its card. */
-  origin?: "event" | "shift" | "assignment" | "task" | "reminder" | "goal" | "milestone" | "bill" | "trial" | "money_goal" | "pay" | "promise" | "day";
+  origin?:
+    "event" | "shift" | "assignment" | "task" | "reminder" | "goal" | "milestone" | "bill" | "trial" | "money_goal" | "pay" | "promise" | "day" | "holiday";
   /** Already done (a to-do or assignment ticked off, a promise kept): it sits where it was done, a star, never late. */
   done?: boolean;
   /** A done thing placed at its due time (it had one), not at when it was done. */
   atDue?: boolean;
+  /** A one-off hand-in on the calendar (a client delivery): its card can tick it done (owner, 2026-11-18). */
+  handIn?: boolean;
   ref?: string;
   /** No date yet: it waits at the far end of the line, under "Someday". */
   someday?: boolean;
