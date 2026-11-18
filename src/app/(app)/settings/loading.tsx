@@ -1,5 +1,5 @@
-import { ListSkeleton } from "@/components/skeletons";
+import { SettingsSkeleton } from "@/components/skeletons";
 
 export default function Loading() {
-  return <ListSkeleton />;
+  return <SettingsSkeleton />;
 }

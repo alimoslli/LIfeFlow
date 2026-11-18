@@ -1,5 +1,5 @@
-import { ListSkeleton } from "@/components/skeletons";
+import { TasksSkeleton } from "@/components/skeletons";
 
 export default function Loading() {
-  return <ListSkeleton />;
+  return <TasksSkeleton />;
 }
