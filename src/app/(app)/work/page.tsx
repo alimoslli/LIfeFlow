@@ -6,7 +6,7 @@ import { AskJarvisButton } from "@/components/shell/app-shell";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Money } from "@/components/ui/surface";
-import { addDaysStr, currentInstant, formatDateStr, formatIn, isValidDateStr, localDateOf, todayIn, weekStart } from "@/lib/dates";
+import { addDaysStr, currentInstant, formatDateStr, formatIn, isValidDateStr, localDateOf, timeRangeIn, todayIn, weekStart } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { MySkyling } from "@/components/skylings/sprite";
@@ -58,6 +58,10 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
     const day = localDateOf(t, tz);
     return day === today ? "Today" : day === addDaysStr(today, 1) ? "Tomorrow" : formatDateStr(day, "MMM d");
   };
+  // The coming 7 days of shifts, on the front (owner, 2026-11-18, after a test student needed four taps to learn she works
+  // Thanksgiving night): today and the six days after, in order, not cancelled, not already over.
+  const lastDay = addDaysStr(today, 6);
+  const coming = d.ahead.filter((x) => x.status !== "cancelled" && x.endsAt.getTime() > now && localDateOf(x.startsAt, tz) <= lastDay);
   const week = Array.from({ length: 7 }, (_, i) => {
     const day = addDaysStr(weekStart(today), i);
     const on = live.filter((x) => localDateOf(x.startsAt, tz) === day);
@@ -174,6 +178,30 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
       </section>
 
       {clientWork}
+
+      <section className="animate-rise" aria-label="Next 7 days" data-testid="work-coming">
+        <h2 className="mb-3 font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Next 7 days</h2>
+        {coming.length === 0 ? (
+          <p className="px-1 text-sm text-muted">No shifts in the next 7 days.</p>
+        ) : (
+          <ul className="lf-tiles">
+            {coming.map((x) => {
+              const day = localDateOf(x.startsAt, tz);
+              return (
+                <li key={x.id} className="flex min-h-14 items-center justify-between gap-3 px-4 py-3">
+                  <span className="min-w-0">
+                    <span className="block text-[0.9375rem] font-semibold">
+                      {day === today ? "Today" : day === addDaysStr(today, 1) ? "Tomorrow" : formatDateStr(day, "EEE, MMM d")}
+                    </span>
+                    {d.employers.length > 1 && <span className="block truncate text-[0.8125rem] text-muted">{empName.get(x.employerId)}</span>}
+                  </span>
+                  <span className="tabular shrink-0 text-[0.9375rem] text-text-2">{timeRangeIn(x.startsAt, x.endsAt, tz)}</span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
 
       <section className="animate-rise" style={{ animationDelay: "60ms" }} aria-label="This week">
         <h2 className="mb-3 font-display text-[1.3125rem] leading-tight font-medium tracking-tight">This week</h2>
@@ -349,10 +377,10 @@ function EmployerForm() {
     <ActionForm action={createEmployerAction} className="mx-auto w-full max-w-md">
       <div className="grid grid-cols-2 gap-3">
         <Field label="Employer" htmlFor="e-name">
-          <Input id="e-name" name="name" required placeholder="Campus Library" />
+          <Input id="e-name" name="name" required />
         </Field>
         <Field label="Position" htmlFor="e-pos">
-          <Input id="e-pos" name="position" placeholder="Barista" />
+          <Input id="e-pos" name="position" />
         </Field>
         <Field label="Pay type" htmlFor="e-type">
           <Select id="e-type" name="payType" defaultValue="hourly">
@@ -361,7 +389,7 @@ function EmployerForm() {
           </Select>
         </Field>
         <Field label="Hourly rate ($)" htmlFor="e-rate">
-          <Input id="e-rate" name="hourlyRate" inputMode="decimal" placeholder="16.50" />
+          <Input id="e-rate" name="hourlyRate" inputMode="decimal" />
         </Field>
       </div>
       <WorkHoursField />
