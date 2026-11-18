@@ -87,12 +87,15 @@ test("Bills leads with the charges found in the bank, and its total agrees with 
   await expect(page.getByTestId("bills-monthly")).toHaveText("$806.99");
 
   await page.goto("/money");
-  // the page streams in: wait for the 30-day card before reading it
-  await expect(page.getByText(/Bills and usual spending come to/).first()).toBeAttached();
-  await page.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
-  const money = await page.locator("body").innerText();
+  // the page streams in (a part waits hidden until it's swapped in), so read it again until the 30-day card is there
+  const read = () =>
+    page.evaluate(() => {
+      document.querySelectorAll("details").forEach((d) => (d.open = true));
+      return document.body.innerText;
+    });
   // Money's 30 days count the same four bills ($807 rounded), and say the same run-out date once as a heads-up and once in the card
-  expect(money).toMatch(/Bills and usual spending come to \$807/);
+  await expect.poll(read).toMatch(/Bills and usual spending come to \$807/);
+  const money = await read();
   const heads = money.match(/run out of money around \w{3}, (\w{3} \d+)/);
   const card = money.match(/you run out around (\w{3} \d+)/);
   expect(heads?.[1]).toBeTruthy();

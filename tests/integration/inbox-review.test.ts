@@ -658,7 +658,7 @@ describe("round 2: accounts, unrelated names, several candidates, Undo after a l
     expect(other.filed.map((f) => f.kind)).toContain("recurring");
   });
 
-  it("H2: rent paid by Zelle is not overwritten by a loan email of a similar size; it is a card", async () => {
+  it("H2: rent paid by Zelle is not overwritten by a loan email of a similar size; the loan is its own bill", async () => {
     const { run, file } = await setup();
     await run(async (s) => {
       const a = await createManualAccount(s, { name: "Checking", type: "depository", currentBalanceCents: 900_000 });
@@ -672,13 +672,10 @@ describe("round 2: accounts, unrelated names, several candidates, Undo after a l
         });
       await createRecurring(s, { name: "Rent", amountCents: -120000, frequency: "monthly", nextDueDate: dayN(1, -1), kind: "bill" });
     });
+    // Money sent to a person is never a bill (owner, 2026-11-18), so the Zelle can't be the loan: no card, the loan is
+    // its own bill and Rent stays at $1,200.
     const loan = await file(billEx("Nelnet", 1180, dayN(3, -1)), { messageId: "loan@nelnet" });
-    expect(loan.status).toBe("needs_review");
-    expect(asked(loan)).toBeDefined();
-    expect(loan.filed).toEqual([]);
-    expect(await bills(run)).toEqual([["Rent", -120000, dayN(1, -1)]]);
-    // No keeps both: the loan becomes its own bill and Rent stays at $1,200.
-    await run((s) => answerQuestion(s, TZ, today, loan.id, false));
+    expect(asked(loan)).toBeUndefined();
     expect(await bills(run)).toEqual([
       ["Nelnet", -118000, dayN(3, -1)],
       ["Rent", -120000, dayN(1, -1)],

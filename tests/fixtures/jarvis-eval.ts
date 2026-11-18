@@ -65,11 +65,11 @@ export const EVAL: EvalCase[] = [
       '"availableNow":842.17',
       '"name":"Rent Campus Edge Apts"',
       '"amount":118.4',
-      '"averageDailySpending":27.8',
-      '"availableAfter":-498',
+      '"averageDailySpending":30.62',
+      '"availableAfter":-514.92',
     ],
     answer:
-      "Not this weekend. You have $842.17 in checking, but rent ($950) usually comes out around the 1st and I don't see it yet. Progressive ($118.40) is due Thursday, plus a few small subscriptions. With your usual $27.80 a day, you'd be about $498 short by Sunday, even before the $60. Check that rent went through, and wait until your next paycheck lands.",
+      "Not this weekend. You have $842.17 in checking, but rent ($950) usually comes out around the 1st and I don't see it yet. Progressive ($118.40) is due Thursday, plus a few small subscriptions. With your usual $30.62 a day (what you send people by Zelle and Venmo counts too), you'd be about $515 short by Sunday, even before the $60. Check that rent went through, and wait until your next paycheck lands.",
   },
   {
     id: "spending",
