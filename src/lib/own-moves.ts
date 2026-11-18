@@ -9,6 +9,8 @@ export type MoveRow = {
   amountCents: number;
   merchantName: string | null;
   description: string;
+  kind: string;
+  categoryId?: string | null;
   excluded?: boolean;
 };
 
@@ -18,24 +20,46 @@ export const OWN_MOVE_DAYS = 3;
 /** Apps a person moves their own money through (owner, 2026-11-18). PayPal is left out: its payouts are work. */
 const OWN_MOVE_APPS = new Set(["Zelle", "Cash App", "Apple Cash", "Venmo"]);
 
+const SELF_WORDS = /\b(self|own account|my account|to savings|from savings|to checking|from checking)\b/i;
+
 /**
- * The person's own money moved between two of their accounts through a person-to-person app (owner, 2026-11-18): a Zelle
- * out of one bank and the same amount into another of their accounts within 3 days. Both halves are their own transfer,
- * never spending going out or money coming in. Each row pairs once; the closest dates pair first. Returns the ids of
- * both halves of every pair.
+ * The line says the money is the person's own (QA, 2026-11-18: a Venmo to a friend and a sister's Zelle of the same amount
+ * are not a move): it names the person (first and last name) or says self / own account. Anything else is left alone.
  */
-export function ownMovePairs(rows: MoveRow[]): Set<string> {
-  const viaApp = (r: MoveRow) => !r.excluded && OWN_MOVE_APPS.has(personPaymentApp(r.merchantName, r.description) ?? "");
-  const outs = rows.filter((r) => r.amountCents < 0 && viaApp(r));
-  const ins = rows.filter((r) => r.amountCents > 0 && viaApp(r));
-  const candidates: { out: MoveRow; in: MoveRow; gap: number }[] = [];
+export function namesSelf(description: string, ownName: string | null | undefined): boolean {
+  if (SELF_WORDS.test(description)) return true;
+  const parts = (ownName ?? "")
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((p) => p.length > 1);
+  if (parts.length < 2) return false;
+  const words = new Set(description.toLowerCase().split(/[^a-z0-9']+/));
+  return words.has(parts[0]) && words.has(parts[parts.length - 1]);
+}
+
+/**
+ * The person's own money moved between two of their accounts through a person-to-person app (owner, 2026-11-18): money out of
+ * one account and the same amount into another of theirs within 3 days, by the same app, with a line that says it's their own
+ * (`namesSelf`). Both halves are their own transfer, never spending going out or money coming in. Pairs are one-to-one across
+ * runs (QA F3): an incoming half already settled as a transfer keeps the out it pairs with before any new pair is made, and
+ * the closest dates pair first. Rows the person categorized never pair (QA F1). Returns the ids of both halves of every pair.
+ */
+export function ownMovePairs(rows: MoveRow[], ownName: string | null | undefined): Set<string> {
+  const app = (r: MoveRow) => {
+    const a = personPaymentApp(r.merchantName, r.description);
+    return a && OWN_MOVE_APPS.has(a) ? a : null;
+  };
+  const usable = (r: MoveRow) => !r.excluded && !r.categoryId && app(r) && namesSelf(r.description, ownName);
+  const outs = rows.filter((r) => r.amountCents < 0 && usable(r));
+  const ins = rows.filter((r) => r.amountCents > 0 && usable(r));
+  const candidates: { out: MoveRow; in: MoveRow; gap: number; settled: boolean }[] = [];
   for (const o of outs)
     for (const i of ins) {
-      if (i.accountId === o.accountId || i.amountCents !== -o.amountCents) continue;
+      if (i.accountId === o.accountId || i.amountCents !== -o.amountCents || app(i) !== app(o)) continue;
       const gap = Math.abs(daysBetween(o.date, i.date));
-      if (gap <= OWN_MOVE_DAYS) candidates.push({ out: o, in: i, gap });
+      if (gap <= OWN_MOVE_DAYS) candidates.push({ out: o, in: i, gap, settled: i.kind === "transfer" });
     }
-  candidates.sort((a, b) => a.gap - b.gap || a.out.date.localeCompare(b.out.date));
+  candidates.sort((a, b) => Number(b.settled) - Number(a.settled) || a.gap - b.gap || a.out.date.localeCompare(b.out.date) || a.in.id.localeCompare(b.in.id));
   const paired = new Set<string>();
   for (const c of candidates) {
     if (paired.has(c.out.id) || paired.has(c.in.id)) continue;

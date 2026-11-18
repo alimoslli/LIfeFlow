@@ -19,6 +19,7 @@ import { cleanVendorName } from "@/lib/vendor";
 import { fetchWithTimeout } from "./timeout";
 import { tidyForUser } from "../services/finance/tidy";
 import { settleOwnMoves } from "../services/finance/own-moves";
+import { personPaymentApp } from "@/lib/vendor";
 import { categoryIdByName, keywordCategory, ruleFor } from "../services/finance/categorize";
 import { recordNetWorth } from "../services/finance/investing";
 
@@ -414,6 +415,10 @@ export async function syncItem(scope: UserScope, integrationId: string, tz: stri
   return result.stats;
 }
 
+/** A person-app row we settled as their own transfer: the bank still calls it money in or out, and keeps sending that. */
+const keepsOwnTransfer = (existing: { kind: string; merchantName: string | null }, values: { kind: string; description: string }) =>
+  existing.kind === "transfer" && values.kind !== "transfer" && !!personPaymentApp(existing.merchantName, values.description);
+
 /**
  * Syncs in its own transaction. If it fails, the failure is recorded in a
  * separate transaction (the sync's own writes roll back), so the user sees
@@ -567,7 +572,8 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
             // Keep a name the user (or a tidy-up) already chose; refresh the rest from the bank.
             merchantName: existing.merchantName ?? values.merchantName,
             categoryId: existing.categoryId ?? values.categoryId,
-            kind: existing.categoryId ? existing.kind : values.kind,
+            // and a move between their own accounts that `settleOwnMoves` made a transfer stays one (QA, 2026-11-18)
+            kind: existing.categoryId || keepsOwnTransfer(existing, values) ? existing.kind : values.kind,
           })
           .where(eq(transactions.id, existing.id));
         stats.modified++;

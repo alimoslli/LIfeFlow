@@ -257,6 +257,31 @@ describe("Plaid", () => {
     expect(syncCalls.map((c) => c.body.cursor)).toEqual([undefined, "c1", "c2"]);
   });
 
+  it("a move between their own accounts stays a transfer when the bank sends it again (QA, 2026-11-18)", async () => {
+    const zIn = txn("z-in", -400, {
+      account_id: "acc-card",
+      name: "ZELLE FROM SELF",
+      date: "2026-10-21",
+      personal_finance_category: { primary: "TRANSFER_IN", detailed: "TRANSFER_IN_ACCOUNT_TRANSFER" },
+    });
+    const zOut = txn("z-out", 400, {
+      name: "ZELLE TO SELF",
+      personal_finance_category: { primary: "TRANSFER_OUT", detailed: "TRANSFER_OUT_ACCOUNT_TRANSFER" },
+    });
+    const pages = [
+      { added: [zOut, zIn], modified: [], removed: [], next_cursor: "c1", has_more: false },
+      { added: [], modified: [zIn], removed: [], next_cursor: "c2", has_more: false },
+    ];
+    const fake = fakePlaid({ pages, noInvestments: true });
+    const { user, run, item } = await connected(fake);
+    const kindOf = async () =>
+      (await run((s) => s.tx.select().from(transactions).where(eq(transactions.userId, user.id)))).find((t) => t.providerTransactionId === "z-in")?.kind;
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    expect(await kindOf()).toBe("transfer");
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    expect(await kindOf()).toBe("transfer");
+  });
+
   it("marks a connection that needs the user to sign in again, and keeps that status", async () => {
     const good = fakePlaid();
     const { user, run, item } = await connected(good);

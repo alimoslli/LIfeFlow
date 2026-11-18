@@ -12,7 +12,7 @@ import { MIN_CONFIDENCE, detectRecurring, merchantKey, merchantKeys, nthOccurren
 import { queryAllTransactions } from "./transactions";
 import { listEmployers } from "../work";
 import { personPaymentApp } from "@/lib/vendor";
-import { ownMoveIds } from "./own-moves";
+import { ownMoveIds, ownName } from "./own-moves";
 
 /**
  * Forward-looking money math. Every result carries the inputs it used, so the
@@ -107,9 +107,10 @@ const trackedBills = (bank: BankSeries) => bank.trackedActive.filter((c) => c.la
 /** Average daily day-to-day spending over the last 8 weeks, leaving out bills (they're counted on their dates). */
 async function typicalDailySpend(scope: UserScope, today: string, billSeries: RecurringCandidate[] = []) {
   const from = addDaysStr(today, -56);
-  const [txns, recurring] = await series(
+  const [txns, recurring, name] = await series(
     () => queryAllTransactions(scope, { from, to: addDaysStr(today, -1) }),
     () => listRecurring(scope),
+    () => ownName(scope),
   );
   // A bill's own charges come out, never the rest of what that merchant sells: Prime is a bill, the other Amazon orders aren't.
   const billCharges = new Set(billSeries.flatMap((c) => c.charges.map((x) => `${c.merchantKey}|${x.date}|${x.amountCents}`)));
@@ -120,7 +121,7 @@ async function typicalDailySpend(scope: UserScope, today: string, billSeries: Re
   // counted here as usual spending; otherwise rent paid by Zelle would leave the next 30 days. A series the person
   // tracks as a bill already came out above, so it's never counted twice.
   // Their own money moved to another of their accounts, or into their own PayPal or Venmo balance, isn't spending.
-  const own = ownMoveIds(txns);
+  const own = ownMoveIds(txns, name);
   const toPeople = dayToDay
     .filter((t) => !t.excluded && t.kind === "transfer" && t.amountCents < 0 && !own.has(t.id) && personPaymentApp(t.merchantName, t.description))
     .reduce((n, t) => n - t.amountCents, 0);
