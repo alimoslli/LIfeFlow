@@ -59,15 +59,14 @@ export default function AboutPage() {
               We built the app <em className="lf-clip-text bg-gradient-to-r from-dawn-cream to-dawn-2 bg-clip-text text-transparent">we needed.</em>
             </h1>
             <p className="animate-rise mt-6 max-w-[46ch] text-[1.0625rem] leading-relaxed text-white/80 sm:text-[1.1875rem]" style={{ animationDelay: "80ms" }}>
-              We&apos;re two students with full lives: classes, work, money and plans, each in a different app that never talked to the others. Things kept
-              slipping through, so we built one place that brings it all together.
+              We&apos;re two students with full lives: classes, work, money and plans, all at once. So we built one place that brings it all together.
             </p>
             <p
               className="animate-rise mt-4 max-w-[46ch] text-[1.0625rem] leading-relaxed text-white/80 sm:text-[1.1875rem]"
               style={{ animationDelay: "140ms" }}
             >
-              LifeFlow puts your whole week on one simple screen. It connects to the apps you already use, shows what&apos;s coming, and helps you fix a clash
-              or a tight week before it becomes a problem.
+              LifeFlow shows your whole life on one simple sky. It connects to the apps you already use, shows what&apos;s coming and what&apos;s done, and
+              helps you stay on top of all of it, from your next assignment to your next bill.
             </p>
           </div>
         </div>
