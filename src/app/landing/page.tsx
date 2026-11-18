@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Check, ChevronDown } from "lucide-react";
 import { BrandLockup } from "@/components/brand/brand-mark";
 import { CanvasLogo, GmailLogo, GoogleCalendarLogo, MicrosoftLogo } from "@/components/landing/logos";
+import { PixelHills } from "@/components/landing/pixel-hills";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
 import { CastCards } from "@/components/skylings/cast-cards";
 import { NightSky } from "@/components/skylings/night-sky";
@@ -101,20 +102,6 @@ function InstagramIcon({ className }: { className?: string }) {
       <rect x="3" y="3" width="18" height="18" rx="5" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
-/** Pixel hills for the sunrise, stepped like the skylings' world. */
-function PixelHills({ className, fill }: { className?: string; /** a fill-* class */ fill: string }) {
-  const steps = Array.from({ length: 61 }, (_, i) => {
-    const x = i * 2;
-    const y = Math.round(18 + 7 * Math.sin(i / 6.5) + 3 * Math.sin(i / 2.3 + 1));
-    return `${x},${y} ${x + 2},${y}`;
-  }).join(" ");
-  return (
-    <svg viewBox="0 0 120 40" preserveAspectRatio="none" shapeRendering="crispEdges" className={className} aria-hidden>
-      <polygon points={`0,40 ${steps} 122,40`} className={fill} />
     </svg>
   );
 }
@@ -400,6 +387,9 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               <a href="#faq" className="inline-flex min-h-11 items-center hover:text-ink-night">
                 FAQ
               </a>
+              <Link href="/about" className="inline-flex min-h-11 items-center hover:text-ink-night">
+                About
+              </Link>
               <Link href="/privacy" className="inline-flex min-h-11 items-center hover:text-ink-night">
                 Privacy
               </Link>

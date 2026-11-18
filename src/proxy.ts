@@ -13,6 +13,7 @@ const PUBLIC = [
   "/reset-password",
   "/api/auth",
   "/privacy",
+  "/about",
   "/integrity",
   "/api/sms/inbound",
   "/api/errors",
