@@ -133,7 +133,7 @@ test("shifts: blank form can't create a shift, edit and delete work, past shifts
   await page.getByRole("dialog", { name: "Ends" }).getByRole("button", { name: "1:00 PM" }).click();
   await edit.getByRole("button", { name: "Save shift" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Shift saved." })).toBeVisible();
-  await expect(page.getByText("8:00 to 1:00 PM")).toBeVisible();
+  await expect(page.getByText("8:00 AM to 1:00 PM")).toBeVisible();
 
   // A shift that already ended asks for actual hours instead of staying "Scheduled".
   await queryAsUser(email, "update work_shifts set starts_at = now() - interval '30 hours', ends_at = now() - interval '26 hours'");
