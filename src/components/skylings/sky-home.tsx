@@ -11,20 +11,22 @@ import { SkylingSprite } from "./sprite";
 const S = 4;
 /** The scene is drawn this many cells wide and centred in a wider window. */
 const COMP = 89;
-/** Rows above the scene the speech bubble keeps (it sits at the top right). */
+/** Rows above the scene the speech bubble keeps (it sits at the top right). A phone has no bubble in the window (the words sit
+ * under it, owner 2026-11-18), so only the cloud's button needs room there and the window is shorter. */
 const TOP = 26;
+const TOP_PHONE = 16;
 
 /** Where the cloud's top row is and how tall the window is, from what's on the cloud (cells). */
-function layout(has: Set<string>) {
+function layout(has: Set<string>, top = TOP) {
   // the planet and the garden float above the skyling's head, under the bubble; everything else fits lower
-  const cy = has.has("planet") || has.has("garden") ? TOP + 33 : TOP + 20;
+  const cy = has.has("planet") || has.has("garden") ? top + 33 : top + 20;
   const under = has.has("swing") || has.has("hammock") || has.has("slide");
   return { cy, rows: cy + (under ? 20 : 9) };
 }
 
 /** How tall the skyling's window is with its cloud (px). */
-export function homeHeight(counts: SkyCounts) {
-  return layout(unlocked(counts)).rows * S;
+export function homeHeight(counts: SkyCounts, phone = false) {
+  return layout(unlocked(counts), phone ? TOP_PHONE : TOP).rows * S;
 }
 
 function Pic({ art, x, y, ghost }: { art: string[]; x: number; y: number; ghost?: string }) {
@@ -75,15 +77,17 @@ export function SkyHome({ counts, skyling, name }: { counts: SkyCounts; skyling?
   }, []);
 
   const has = unlocked(counts);
-  const { cy, rows } = layout(has);
   const W = Math.floor(width / S);
+  // under 640 px wide the window is a phone's (the same line as Tailwind's sm)
+  const top = width > 0 && width < 640 ? TOP_PHONE : TOP;
+  const { cy, rows } = layout(has, top);
   // a phone centres it under the bubble; a wide window keeps it on the left with the bubble beside it
   const ox = W >= 150 ? 4 : Math.max(0, Math.floor((W - COMP) / 2));
   const cx = ox + 3;
   const cw = 72;
   const stand = cy + 2;
   const at = (key: string, x: number, y: number) => has.has(key) && <Pic art={ART[key]} x={x} y={y} />;
-  const kite = { x: ox + 50, y: Math.max(TOP + 1, cy - 30) };
+  const kite = { x: ox + 50, y: Math.max(top + 1, cy - 30) };
   const balloon = { x: cx + 1, y: cy - 33 };
   const rope = (x: number, y0: number, y1: number) => y1 > y0 && <rect x={x} y={y0} width={0.5} height={y1 - y0} fill="#8a5a3c" />;
 
@@ -105,7 +109,7 @@ export function SkyHome({ counts, skyling, name }: { counts: SkyCounts; skyling?
               <stop offset="1" stopColor="#ffdc6e" stopOpacity="0" />
             </radialGradient>
           </defs>
-          {has.has("planet") && <Pic art={ART.planet} x={ox + 18} y={TOP + 2} />}
+          {has.has("planet") && <Pic art={ART.planet} x={ox + 18} y={top + 2} />}
           {at("garden", ox + 58, cy - 27)}
           {has.has("kite") && (
             <>

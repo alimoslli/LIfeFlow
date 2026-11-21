@@ -704,8 +704,8 @@ export function JarvisChat({
                   "Let's clear your sky."; never put into the prompt as a script). Tap it and it hops. */}
               <SkyWindow
                 tz={tz}
-                className={cn("w-full rounded-[2rem] text-left", cloudHome ? "" : compact ? "h-36" : "h-44 sm:h-52")}
-                style={cloudHome ? { height: homeHeight(cloudHome) } : undefined}
+                className={cn("w-full rounded-[2rem] text-left", cloudHome ? "h-(--home-p) sm:h-(--home)" : compact ? "h-36" : "h-44 sm:h-52")}
+                style={cloudHome ? ({ "--home": `${homeHeight(cloudHome)}px`, "--home-p": `${homeHeight(cloudHome, true)}px` } as CSSProperties) : undefined}
               >
                 {cloudHome ? (
                   // its cloud, with what its stars and suns unlocked (owner, 2026-11-11: the cloud is the skyling's own)

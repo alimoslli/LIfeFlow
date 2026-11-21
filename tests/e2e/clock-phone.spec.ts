@@ -147,7 +147,10 @@ test("things at the same moment stack into one stop that lists them", async ({ p
   await page.getByRole("button", { name: /^Today\. Now / }).click();
   await expect(clock).toHaveAttribute("data-state", "timeline");
   const stack = page.getByRole("button", { name: /^3 assignments due, .*11:59 PM$/ }).first();
-  await stack.click();
+  // In the evening tonight's pile sits under the tap that opened the line, and the line opens with that stack's card already
+  // up (by design, test student p4020); at other hours it doesn't. Tapping it then would put the card away again, so tap
+  // the stack only when its card isn't already open.
+  if (!(await stack.evaluate((el) => el.classList.contains("dc-sel")))) await stack.click();
   const card = page.locator("[data-dc=detail]");
   await expect(card).toContainText("3 assignments");
   await expect(card.locator(".dc-d-row")).toHaveCount(3);
