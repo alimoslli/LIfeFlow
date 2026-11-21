@@ -1,7 +1,14 @@
 "use server";
 
+import { after } from "next/server";
+import { redirect, unstable_rethrow } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { getAccountUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
+import { withUser } from "@/server/db/with-user";
+import { audit } from "@/server/services/audit";
+import { afterAgeLock, saveBirthday } from "@/server/services/onboarding";
+import { ServiceError } from "@/server/services/errors";
 import { confirmEmailCode, sendConfirmCode } from "@/server/services/email-confirm";
 import { recordError } from "@/server/services/error-reports";
 import { maskEmail } from "@/server/auth/two-factor";
@@ -37,4 +44,34 @@ export async function confirmEmail(_prev: ConfirmState, fd: FormData): Promise<C
     too_many: "You've tried too many times today. Try again tomorrow.",
   }[r.reason];
   return { error, at: Date.now() };
+}
+
+export type BirthdayState = { ok?: boolean; confirm?: string; error?: string; at: number } | null;
+
+/**
+ * The birthday, asked first on the waitlist (owner, 2026-11-21: sign-up goes straight to the waitlist; LifeFlow is for 13 and
+ * older, as the Terms say). The same rules as setup's step (`saveBirthday`): someone still in setup has nothing to lose and is
+ * locked at once under 13; an account that finished setup earlier is read the date back first. Open to people waiting.
+ */
+export async function saveWaitlistBirthday(birthDate: string, confirmed = false): Promise<BirthdayState> {
+  const user = await getAccountUser();
+  if (!user) return { error: "Please sign in again.", at: Date.now() };
+  let blocked = false;
+  try {
+    const r = await withUser(user.id, async (s) => {
+      const out = await saveBirthday(s, user.timezone || "UTC", String(birthDate).slice(0, 10), { confirmed });
+      if (!out.confirm) await audit(s, "user", out.blocked ? "profile.age_blocked" : "profile.birthday");
+      return out;
+    });
+    if (r.confirm) return { confirm: r.confirm, at: Date.now() };
+    blocked = r.blocked;
+    // the lock is committed: close their bank and Google links where they live (retried by the sync cron if this fails)
+    if (blocked) after(() => afterAgeLock(getDb(), user.id));
+    revalidatePath("/waitlist");
+  } catch (e) {
+    unstable_rethrow(e);
+    return { error: e instanceof ServiceError ? e.message : "Couldn't save. Try again.", at: Date.now() };
+  }
+  if (blocked) redirect("/welcome");
+  return { ok: true, at: Date.now() };
 }

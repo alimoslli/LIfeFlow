@@ -13,14 +13,15 @@ import { getDb } from "@/server/db/client";
 import { inviteCodeFor } from "@/server/services/invites";
 import { canUseApp, waitlistPage } from "@/server/services/waitlist";
 import { assistantProfile } from "@/lib/assistant";
+import { DEFAULT_LAUNCH } from "@/lib/launch";
 import { ConfirmEmail } from "./confirm-email";
+import { WaitlistBirthday } from "./waitlist-birthday";
 import { SkyExplainer } from "./sky-explainer";
 import { InviteShare } from "../../(app)/settings/invite/invite-share";
 import "./waitlist.css";
 
 export const metadata: Metadata = { title: "Your place in line" };
 
-const DEFAULT_LAUNCH = "We're aiming for the App Store in January 2027. That date may still move.";
 const glass = "relative overflow-hidden rounded-[1.75rem] bg-white/[0.06] p-5 ring-1 ring-white/12 backdrop-blur-md sm:p-6";
 const h2 = "font-display text-[1.75rem] leading-[1.15] font-medium tracking-[-0.03em]";
 
@@ -58,6 +59,8 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
   const waiting = w.waiting;
   const mine = companionOf(user.preferences?.companion);
   const contact = process.env.LEGAL_CONTACT_EMAIL?.trim() || null;
+  // the birthday comes first (owner, 2026-11-21: sign-up lands here, and LifeFlow is for 13 and older); the rest follows once it's saved
+  const askBirthday = !preview && !user.preferences?.birthDate;
 
   return (
     <div className="min-h-dvh overflow-x-clip bg-night-0 text-white">
@@ -97,38 +100,43 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
       </section>
 
       <main className="relative z-10 mx-auto flex w-full max-w-2xl flex-col gap-4 px-5 pt-6 pb-16">
-        {!w.emailVerified && !preview && <ConfirmEmail invited={w.invited} className={`${glass} wl-ticket`} />}
+        {askBirthday && <WaitlistBirthday className={`${glass} wl-ticket`} />}
+        {!askBirthday && !w.emailVerified && !preview && <ConfirmEmail invited={w.invited} className={`${glass} wl-ticket`} />}
 
-        {/* one way to move up, said plainly (owner, 2026-11-17: "its not obvious that if your friend joins u move up, too many boxes") */}
-        <section className={`${glass} wl-ticket`} aria-labelledby="wl-move">
-          <h2 id="wl-move" className={h2}>
-            Every friend who joins moves you up.
-          </h2>
-          {place && place > 1 && (
-            <p className="mt-4 flex items-center gap-3 font-display text-[2rem] leading-[1.1] tracking-[-0.03em]" aria-hidden>
-              <span className="tabular text-white/55">#{place}</span>
-              <PixelIcon name="arrow" className="h-6 w-6 text-star-gold" />
-              <span className="tabular text-star-gold">#{place - 1}</span>
-            </p>
-          )}
-          <p className="mt-3 text-[0.9375rem] leading-relaxed text-white/75">
-            Send your link. When a friend signs up and confirms their email, you move up one spot.
-          </p>
-          <InviteShare link={link} firstName={firstName} dark simple />
-          <p className="mt-4 text-sm text-white/60">
-            {w.friends > 0 ? (
-              <>
-                <span className="tabular font-medium text-white" data-testid="wl-friends">
-                  {w.friends}
-                </span>{" "}
-                {w.friends === 1 ? "friend has" : "friends have"} moved you up so far.{" "}
-              </>
-            ) : null}
-            {place === 1 ? "You\u2019re first, so there\u2019s no one left to pass." : "Up to 10 spots a day."}
-          </p>
-        </section>
+        {!askBirthday && (
+          <>
+            {/* one way to move up, said plainly (owner, 2026-11-17: "its not obvious that if your friend joins u move up, too many boxes") */}
+            <section className={`${glass} wl-ticket`} aria-labelledby="wl-move">
+              <h2 id="wl-move" className={h2}>
+                Every friend who joins moves you up.
+              </h2>
+              {place && place > 1 && (
+                <p className="mt-4 flex items-center gap-3 font-display text-[2rem] leading-[1.1] tracking-[-0.03em]" aria-hidden>
+                  <span className="tabular text-white/55">#{place}</span>
+                  <PixelIcon name="arrow" className="h-6 w-6 text-star-gold" />
+                  <span className="tabular text-star-gold">#{place - 1}</span>
+                </p>
+              )}
+              <p className="mt-3 text-[0.9375rem] leading-relaxed text-white/75">
+                Send your link. When a friend signs up and confirms their email, you move up one spot.
+              </p>
+              <InviteShare link={link} firstName={firstName} dark simple />
+              <p className="mt-4 text-sm text-white/60">
+                {w.friends > 0 ? (
+                  <>
+                    <span className="tabular font-medium text-white" data-testid="wl-friends">
+                      {w.friends}
+                    </span>{" "}
+                    {w.friends === 1 ? "friend has" : "friends have"} moved you up so far.{" "}
+                  </>
+                ) : null}
+                {place === 1 ? "You\u2019re first, so there\u2019s no one left to pass." : "Up to 10 spots a day."}
+              </p>
+            </section>
 
-        <SkyExplainer name={assistantProfile(user.preferences, user.timezone).name} tz={user.timezone ?? "UTC"} companion={user.preferences?.companion} />
+            <SkyExplainer name={assistantProfile(user.preferences, user.timezone).name} tz={user.timezone ?? "UTC"} companion={user.preferences?.companion} />
+          </>
+        )}
 
         <p className="mt-2 text-center text-[0.9375rem] leading-relaxed text-star-gold/90">{w.launchNote ?? DEFAULT_LAUNCH}</p>
         {/* a real way to reach us (owner, 2026-11-17: "how will they contact the team??") */}

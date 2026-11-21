@@ -17,13 +17,15 @@ const ACCOUNT_PAGES = ["/settings/profile", "/settings/security", "/settings/dat
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser({ account: true });
   const path = (await headers()).get("x-lf-path") ?? "";
-  if (user.preferences?.onboarding === "pending") {
+  // On the waitlist (the owner's switch on): only their account, security and privacy pages; the rest waits. Sign-up comes
+  // straight here (owner, 2026-11-21), so this is checked before setup. The pages' own data calls refuse them too; this only
+  // sends them to their place in line.
+  if (await waitingNow(user)) {
+    if (!ACCOUNT_PAGES.some((p) => path === p || path.startsWith(`${p}/`))) redirect("/waitlist");
+  } else if (user.preferences?.onboarding === "pending") {
     // setup happens on Today itself (owner, 2026-11-12), so the rest of the app waits
     if (path && path !== "/") redirect("/");
   }
-  // On the waitlist (the owner's switch on, setup done): only their account, security and privacy pages; the rest waits.
-  // The pages' own data calls refuse them too; this only sends them to their place in line.
-  if ((await waitingNow(user)) && !ACCOUNT_PAGES.some((p) => path === p || path.startsWith(`${p}/`))) redirect("/waitlist");
   // two reads on their own connections (neither is inside the other's transaction): asked together, not one after the other
   const [unread, announcement] = await Promise.all([withUser(user.id, (s) => unreadCount(s)).catch(() => 0), activeAnnouncement(getDb())]);
   const renderedAt = currentInstant().getTime();

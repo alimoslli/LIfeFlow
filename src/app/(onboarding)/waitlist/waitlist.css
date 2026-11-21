@@ -91,3 +91,15 @@
     }
   }
 }
+
+/* the birthday picks on the night (owner, 2026-11-21): the app's selects, in the page's glass */
+.wl-birthday select {
+  background-color: rgb(255 255 255 / 0.1);
+  color: #fff;
+  border-color: rgb(255 255 255 / 0.22);
+  /* three picks side by side in a phone's card: room for "Day" and "Year" beside the chevron */
+  padding-inline: 0.625rem 1.5rem;
+}
+.wl-birthday select option {
+  color: #152643;
+}

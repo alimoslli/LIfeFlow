@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ownsNight } from "@/lib/companions";
+import Image from "next/image";
 import Link from "next/link";
 import { Check, ChevronDown } from "lucide-react";
 import { BrandLockup } from "@/components/brand/brand-mark";
@@ -12,11 +13,15 @@ import { SkyLink } from "@/components/skylings/sky-button";
 import type { CompanionKey } from "@/lib/companions";
 import { getDb } from "@/server/db/client";
 import { inviterFor } from "@/server/services/invites";
+import { accessSettings } from "@/server/services/waitlist";
+import { DEFAULT_LAUNCH } from "@/lib/launch";
 
 /**
  * The front page for anyone who isn't signed in (signed-in visitors never see it, see proxy.ts). Remade 2026-11-09 at the
- * owner's word: the page is one night turning into morning. It opens on the skylings. night (all five, together), meets the
- * cast, shows what a skyling does before you ask, and the sun comes up over the trust and the questions.
+ * owner's word: the page is one night turning into morning. It opens on the skylings' night (all five, together), meets the
+ * cast, shows what a skyling does before you ask, and the sun comes up over the people behind it, the trust, the waitlist
+ * and the questions. It is the whole website on one page (owner, 2026-11-21: "I want it all on one page"; /about lands on
+ * #about), and its buttons say "Join the waitlist" while the owner's waitlist switch is on.
  */
 export const metadata: Metadata = {
   title: { absolute: "LifeFlow: Your whole life, in flow." },
@@ -54,10 +59,22 @@ const TRUST = [
   ["It asks first", "before it deletes or sends anything. It never moves your money."],
 ];
 
+const PEOPLE = [
+  { name: "Ali Moslli", role: "CEO & Developer", photo: "/about/ali-moslli.webp" },
+  { name: "Tyler Kardy", role: "CMO", photo: "/about/tyler-kardy.webp" },
+];
+
+/** How the line works, said only while the waitlist is on. Every line is how the app really does it (services/waitlist.ts). */
+const LINE_STEPS = [
+  ["Sign up", "Your place in line is saved the moment you join."],
+  ["Bring a friend", "Confirm your email and send your link. Every friend who joins moves you up one spot, up to 10 a day."],
+  ["Your sky opens", "We let people in by their place in line, and we email you the moment yours is ready."],
+];
+
 const WHY = [
   ["One job", "Your life, connected, and nothing else. Every feature exists to help you run your week."],
   ["Always connected", "Classes, shifts, money, calendar and health at the same time, so it sees how they affect each other."],
-  ["Built by someone living it", "Made by a person with your schedule, who keeps asking what you need."],
+  ["Built by people living it", "Made by two students with full weeks, who keep asking what you need."],
 ];
 
 const INSTAGRAM = "https://www.instagram.com/lifeflowweb";
@@ -112,6 +129,8 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
   const code = invite?.trim().toLowerCase() ?? "";
   const inviter = code ? await inviterFor(getDb(), code) : null;
   const signupHref = inviter ? `/signup?invite=${encodeURIComponent(code)}` : "/signup";
+  const { waitlistOn, launchNote } = await accessSettings(getDb());
+  const join = waitlistOn ? "Join the waitlist" : "Get started";
   return (
     <div className="min-h-dvh overflow-x-clip bg-night-0 text-white">
       {/* ---------- The night: all five skylings, together ---------- */}
@@ -126,9 +145,16 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
         <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
           <BrandLockup markClassName="h-8 w-8" priority light />
           <nav className="flex items-center gap-1.5" aria-label="Account">
-            <a href="#skylings" className="lf-sb-link hidden px-3 text-[0.9375rem] text-white/75 hover:text-white lg:inline-flex">
-              Meet the skylings
-            </a>
+            {[
+              ["#skylings", "Meet the skylings"],
+              ["#moments", "What it does"],
+              ["#about", "About us"],
+              ["#faq", "Questions"],
+            ].map(([href, label]) => (
+              <a key={href} href={href} className="lf-sb-link hidden px-3 text-[0.9375rem] text-white/75 hover:text-white lg:inline-flex">
+                {label}
+              </a>
+            ))}
             <Link
               href="/login"
               className="inline-flex min-h-11 items-center rounded-full px-3 text-[0.9375rem] text-white/80 transition-colors hover:text-white"
@@ -136,7 +162,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               Sign in
             </Link>
             <SkyLink href={signupHref} size="sm" chip={false} cheer>
-              Get started
+              {join}
             </SkyLink>
           </nav>
         </header>
@@ -187,7 +213,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               className="animate-rise mt-6 flex flex-wrap gap-x-4 gap-y-1.5 pb-10 text-sm text-white/65 max-lg:order-7 lg:pb-0"
               style={{ animationDelay: "240ms" }}
             >
-              {["Set up in minutes", "Never moves your money", "Made by a student"].map((t) => (
+              {["Set up in minutes", "Never moves your money", "Made by students"].map((t) => (
                 <li key={t} className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 bg-star-gold" aria-hidden />
                   {t}
@@ -296,18 +322,43 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
 
       {/* ---------- Morning: why, trust, questions ---------- */}
       <div className="bg-morning text-ink-night">
-        <section id="why" className="scroll-mt-4 px-5 pt-10 pb-16 sm:px-8 lg:pb-24">
-          <div className="mx-auto grid max-w-6xl items-center gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-12">
-            <blockquote className="font-display text-[1.875rem] leading-[1.12] font-medium tracking-[-0.03em] text-balance sm:text-[2.625rem]">
-              Built by a student solving <em className="text-ember">his own problem</em>, for everyone with a full life.
-            </blockquote>
-            <div className="space-y-3 text-[1.0625rem] leading-relaxed text-ink-night/75">
-              <p>Seven classes. Working 30 hours a week. Side projects. Applications. Nothing connected any of it, so I built the one thing I needed.</p>
-              <p>
-                It has one job: serve you. It isn&apos;t made for research or websites. It&apos;s made to find the dots across your whole week and help you make
-                the most of your time.
-              </p>
+        {/* ---------- About us: why it exists and who made it (it was /about until 2026-11-21) ---------- */}
+        <section id="about" aria-labelledby="about-h" className="scroll-mt-4 px-5 pt-10 pb-16 sm:px-8 lg:pb-24">
+          <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-14">
+            <div>
+              <h2 id="about-h" className={h2}>
+                We built the app <em className="text-ember">we needed.</em>
+              </h2>
+              <div className="mt-5 space-y-3 text-[1.0625rem] leading-relaxed text-ink-night/75">
+                <p>
+                  We&apos;re two students with full lives, and keeping up with all of it was its own job. So we built one place that brings it all together.
+                </p>
+                <p>
+                  LifeFlow shows your whole life on one simple sky. It connects to the apps you already use, shows what&apos;s coming and what&apos;s done, and
+                  helps you stay on top of all of it, from your next assignment to your next bill.
+                </p>
+              </div>
             </div>
+            <ul className="grid grid-cols-2 gap-4 sm:gap-6" aria-label="The people behind it">
+              {PEOPLE.map((p) => (
+                <li key={p.name}>
+                  <figure className="overflow-hidden rounded-[1.75rem] bg-white shadow-[0_24px_60px_-28px_rgb(16_32_64/0.45)] ring-1 ring-ink-night/5">
+                    <Image
+                      src={p.photo}
+                      alt={`${p.name}, ${p.role}`}
+                      width={720}
+                      height={900}
+                      sizes="(min-width: 1024px) 18rem, 50vw"
+                      className="aspect-[4/5] w-full object-cover"
+                    />
+                    <figcaption className="px-4 py-4 sm:px-5">
+                      <p className="font-display text-[1.25rem] leading-[1.15] font-medium tracking-[-0.02em] sm:text-[1.5rem]">{p.name}</p>
+                      <p className="mt-1 text-[0.6875rem] font-semibold tracking-[0.12em] text-ember uppercase">{p.role}</p>
+                    </figcaption>
+                  </figure>
+                </li>
+              ))}
+            </ul>
           </div>
           <ul className="mx-auto mt-10 grid max-w-6xl gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
             {TRUST.map(([b, t]) => (
@@ -330,6 +381,32 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
             ))}
           </ul>
         </section>
+
+        {/* ---------- How the waitlist works (only while the owner's switch is on) ---------- */}
+        {waitlistOn && (
+          <section id="waitlist" aria-labelledby="waitlist-h" className="scroll-mt-4 border-t border-ink-night/10 px-5 py-16 sm:px-8 lg:py-24">
+            <div className="mx-auto max-w-6xl">
+              <h2 id="waitlist-h" className={`max-w-[16ch] ${h2}`}>
+                How the waitlist works.
+              </h2>
+              <ol className="mt-10 grid gap-7 md:grid-cols-3">
+                {LINE_STEPS.map(([t, b], i) => (
+                  <li key={t} className="border-t-2 border-dawn-3 pt-3.5">
+                    <p className="font-mono text-[0.75rem] tracking-[0.16em] text-ember uppercase">Step {i + 1}</p>
+                    <h3 className="mt-1 font-display text-[1.5rem] font-medium tracking-[-0.02em]">{t}</h3>
+                    <p className="mt-1.5 text-[0.96875rem] text-ink-night/70">{b}</p>
+                  </li>
+                ))}
+              </ol>
+              <p className="mt-8 text-[1.0625rem] text-ink-night/75">{launchNote ?? DEFAULT_LAUNCH}</p>
+              <div className="mt-6">
+                <SkyLink href={signupHref} skyling="dawn" cheer>
+                  Join the waitlist
+                </SkyLink>
+              </div>
+            </div>
+          </section>
+        )}
 
         <section id="faq" className="scroll-mt-4 border-t border-ink-night/10 px-5 py-16 sm:px-8 lg:py-24">
           <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
@@ -365,10 +442,14 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               <h2 className="max-w-[14ch] font-display text-[2.5rem] leading-[1.1] font-medium tracking-[-0.04em] text-balance sm:text-[3.75rem]">
                 They&apos;re ready when you are.
               </h2>
-              <p className="mt-4 max-w-[40ch] text-white/80">Set up in minutes. Add everything yourself, or connect it later.</p>
+              <p className="mt-4 max-w-[40ch] text-white/80">
+                {waitlistOn
+                  ? "Save your place in line today. Setting up takes minutes once you're in."
+                  : "Set up in minutes. Add everything yourself, or connect it later."}
+              </p>
               <div className="pointer-events-auto mt-7">
                 <SkyLink href={signupHref} skyling="goldie" cheer>
-                  Get started
+                  {join}
                 </SkyLink>
               </div>
             </div>
@@ -387,9 +468,9 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               <a href="#faq" className="inline-flex min-h-11 items-center hover:text-ink-night">
                 FAQ
               </a>
-              <Link href="/about" className="inline-flex min-h-11 items-center hover:text-ink-night">
-                About
-              </Link>
+              <a href="#about" className="inline-flex min-h-11 items-center hover:text-ink-night">
+                About us
+              </a>
               <Link href="/privacy" className="inline-flex min-h-11 items-center hover:text-ink-night">
                 Privacy
               </Link>

@@ -3,8 +3,8 @@ import { Pool } from "pg";
 
 export const pool = new Pool({ connectionString: process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" });
 
-/** Where sign-up lands: Today, where a new account sets up. */
-export const afterSignUp = (u: URL) => u.pathname === "/";
+/** Sign-up lands on Today, or on the waitlist while the owner's switch is on (owner, 2026-11-21). */
+export const afterSignUp = (u: URL) => u.pathname === "/" || u.pathname === "/waitlist";
 
 /**
  * Tests that aren't about setup skip it directly: the account's setup is marked done (the birthday is on the account already).

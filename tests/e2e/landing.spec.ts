@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { whatUsersSee } from "./helpers";
+import { pool, whatUsersSee } from "./helpers";
 
 // Signed-out visitors land on the front page at "/", not the sign-in form.
 test("a signed-out visitor sees the landing page and can get started", async ({ page }) => {
@@ -56,4 +56,38 @@ test("the landing and legal pages never call the skyling Jarvis or an assistant"
   }
   await page.goto("/");
   await expect(page.getByText(/skyling/i).first()).toBeVisible();
+});
+
+// The whole website is one page (owner, 2026-11-21: "I want it all on one page"; docs/backlog/2026-11-21-one-page-website.md).
+test("about us is on the front page, and old About links land on it", async ({ page }) => {
+  await page.goto("/");
+  const about = page.getByRole("region", { name: "We built the app we needed." });
+  await expect(about.getByRole("list", { name: "The people behind it" }).getByRole("listitem")).toHaveCount(2);
+  await expect(about.getByRole("img", { name: "Ali Moslli, CEO & Developer" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Footer" }).getByRole("link", { name: "About us" })).toHaveAttribute("href", "#about");
+  await page.goto("/about");
+  await page.waitForURL((u) => u.pathname === "/" && u.hash === "#about");
+  await expect(about.getByRole("heading", { level: 2 })).toBeInViewport();
+});
+
+test("while the waitlist is on, the page says how the line works and every button joins it", async ({ page }) => {
+  await pool.query("update app_access set waitlist_on = true");
+  try {
+    await page.goto("/");
+    const line = page.getByRole("region", { name: "How the waitlist works." });
+    await expect(line.getByRole("listitem")).toHaveCount(3);
+    await expect(line).toContainText("up to 10 a day");
+    await expect(page.getByRole("link", { name: "Get started" })).toHaveCount(0);
+    await expect(page.getByRole("navigation", { name: "Account" }).getByRole("link", { name: "Join the waitlist" })).toHaveAttribute("href", "/signup");
+    await page.screenshot({ path: "test-results/landing-waitlist.png", fullPage: true });
+    // a phone's width: the same page, nothing sideways
+    await page.setViewportSize({ width: 393, height: 852 });
+    await page.goto("/");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+    await page.screenshot({ path: "test-results/landing-waitlist-phone.png", fullPage: true });
+  } finally {
+    await pool.query("update app_access set waitlist_on = false");
+  }
+  await page.goto("/");
+  await expect(page.getByRole("region", { name: "How the waitlist works." })).toHaveCount(0);
 });
