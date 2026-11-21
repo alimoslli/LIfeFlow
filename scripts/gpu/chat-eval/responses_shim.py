@@ -18,10 +18,15 @@ ap.add_argument("--reasoning-effort", default=None, help="for gpt-oss: low, medi
 ap.add_argument("--temperature", type=float, default=0.2)
 ap.add_argument("--system-append", default=None, help="a text file added to the system prompt sent to the model (our own-model house rules); "
                 "the --dump keeps the app's original prompt, so a student trained on the dump learns the behaviour without the rules")
+ap.add_argument("--remind", default=None, help="a text file of short reminders put at the very end of what the model reads, where it follows them best: "
+                "parts split by a line of ---: before the first tool call of a message, after tool results ({n} and {used} are filled in), "
+                "and at the tool-call limit. Like --system-append, only what is sent changes; the --dump keeps the app's messages")
+ap.add_argument("--tool-limit", type=int, default=3, help="tool calls per message after which the third reminder is used")
 ap.add_argument("--log", default="shim.jsonl")
 ap.add_argument("--dump", default=None, help="write each tagged request (X-Conv-Id header) and reply in chat format, for training data")
 ARGS = ap.parse_args()
 APPEND = open(ARGS.system_append).read() if ARGS.system_append else ""
+REMIND = [p.strip() for p in open(ARGS.remind).read().split("\n---\n")] if ARGS.remind else []
 LOCK = threading.Lock()  # requests run on threads; one writer at a time
 
 
@@ -68,9 +73,32 @@ def to_tools(tools):
     return out
 
 
+def remind(sent):
+    """Adds the reminder for this step to the last message the model reads (the person's message, or the last tool result)."""
+    if not REMIND or not sent:
+        return
+    last = sent[-1]
+    if last["role"] == "user":
+        note = REMIND[0]
+    elif last["role"] == "tool":
+        used = []
+        for m in reversed(sent):
+            if m["role"] == "user":
+                break
+            if m["role"] == "assistant":
+                used = [c["function"]["name"] for c in m.get("tool_calls") or []] + used
+        part = REMIND[2] if len(used) >= ARGS.tool_limit and len(REMIND) > 2 else REMIND[1] if len(REMIND) > 1 else ""
+        note = part.replace("{n}", str(len(used))).replace("{used}", ", ".join(used))
+    else:
+        return
+    if note:
+        last["content"] = (last["content"] or "") + "\n\n<house_reminder>\n" + note + "\n</house_reminder>"
+
+
 def call_upstream(body):
     original = to_messages(body)
     sent = [dict(m) for m in original]
+    remind(sent)
     if APPEND:
         if sent and sent[0]["role"] == "system":
             sent[0]["content"] = sent[0]["content"] + "\n" + APPEND
