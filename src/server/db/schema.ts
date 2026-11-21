@@ -1806,7 +1806,9 @@ export const aiHolds = pgTable(
   "ai_holds",
   {
     holdId: uuid("hold_id").notNull(),
-    key: text("key").notNull(),
+    key: text("key")
+      .notNull()
+      .references(() => aiBudgets.key, { onDelete: "cascade" }),
     amount: bigint("amount", { mode: "number" }).notNull(),
     kind: text("kind").notNull(),
     expiresAt: tstz("expires_at").notNull(),
