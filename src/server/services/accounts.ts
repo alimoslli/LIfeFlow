@@ -9,7 +9,7 @@ import { ServiceError } from "./errors";
 import { hashPassword, verifyPassword } from "../auth/password";
 import { revokeRememberedDevices } from "../auth/remembered-devices";
 import type { Database } from "../db/client";
-import { loginChallenges, ownerInbox, users, type UserPreferences } from "../db/schema";
+import { loginChallenges, oauthIdentities, ownerInbox, users, type UserPreferences } from "../db/schema";
 import { withUser } from "../db/with-user";
 import { lockQueue } from "./waitlist";
 import { fingerprintAdminLogEmail, forgetFriend } from "./referrals";
@@ -223,6 +223,19 @@ export const hasPassword = (passwordHash: string) => passwordHash.startsWith("sc
 export async function accountHasPassword(db: Database, userId: string) {
   const [u] = await db.select({ h: users.passwordHash }).from(users).where(eq(users.id, userId));
   return !!u && hasPassword(u.h);
+}
+
+/**
+ * Signed in with Apple before Apple's token was kept (2026-11-09): deleting can't end Apple's access for them, so the delete
+ * screen asks them to remove LifeFlow in their Apple ID settings too (owner, 2026-11-21: "go for it").
+ */
+export async function appleAccessNotRevocable(db: Database, userId: string) {
+  const [row] = await db
+    .select({ id: oauthIdentities.id })
+    .from(oauthIdentities)
+    .where(and(eq(oauthIdentities.userId, userId), eq(oauthIdentities.provider, "apple"), sql`${oauthIdentities.encryptedRefreshToken} is null`))
+    .limit(1);
+  return !!row;
 }
 
 export async function changePassword(db: Database, userId: string, current: string, next: string) {
