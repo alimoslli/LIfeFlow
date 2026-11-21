@@ -64,7 +64,8 @@ describe("the waitlist page", () => {
   it("the page says what really happens: a confirmed friend moves you up one spot, and at first place there's nobody to pass", async () => {
     await db.update(users).set({ access: "in" }).where(eq(users.access, "waiting"));
     const a = (await makeUser("A")).user;
-    h.user = asSession(a);
+    // a saved birthday: without one the page asks for it first and shows nothing else (owner, 2026-11-21)
+    h.user = { ...asSession(a), preferences: { birthDate: "2000-01-15" } };
     const [before] = await db.select().from(appAccess);
     await db.update(appAccess).set({ waitlistOn: true });
     let html = "";
@@ -76,6 +77,7 @@ describe("the waitlist page", () => {
     expect(html).toContain("When a friend signs up and confirms their email, you move up one spot.");
     // first in line: nobody left to pass, so the page doesn't promise a move
     expect(html).toContain("there’s no one left to pass");
+    expect(html).not.toContain("First, when&#x27;s your birthday?");
     expect(html).not.toContain("puts you ahead of the person just above");
   });
 
@@ -88,5 +90,25 @@ describe("the waitlist page", () => {
     expect(html).toContain('tabindex="-1"');
     expect(html).toContain("Confirm your email");
     expect(html).not.toContain("so your friend");
+  });
+});
+
+describe("the waitlist page before a birthday is saved", () => {
+  it("asks the birthday first and holds the invite and the try-it sky until it's saved", async () => {
+    await db.update(users).set({ access: "in" }).where(eq(users.access, "waiting"));
+    const a = (await makeUser("NoBirthday")).user;
+    h.user = asSession(a);
+    const [before] = await db.select().from(appAccess);
+    await db.update(appAccess).set({ waitlistOn: true });
+    let html = "";
+    try {
+      html = await render();
+    } finally {
+      await db.update(appAccess).set({ waitlistOn: before?.waitlistOn ?? false });
+    }
+    expect(html).toContain("First, when&#x27;s your birthday?");
+    expect(html).toMatch(/data-testid="wl-place"[^>]*>#1</);
+    expect(html).not.toContain("Every friend who joins moves you up.");
+    expect(html).not.toContain("Confirm your email");
   });
 });

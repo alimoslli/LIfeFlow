@@ -56,7 +56,7 @@ export function WaitlistBirthday({ className }: { className: string }) {
               send(false);
             }}
           >
-            <BirthdayField value={date} onChange={setDate} className="min-w-0 flex-1 grid-cols-[1.25fr_1fr_1.1fr]" />
+            <BirthdayField value={date} onChange={setDate} className="min-w-0 flex-1" />
             <button type="submit" disabled={!date || pending} className="lf-sb lf-sb-sun lf-sb-sm min-h-11 disabled:opacity-60">
               Save
             </button>

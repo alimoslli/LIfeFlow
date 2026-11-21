@@ -100,6 +100,10 @@
   /* three picks side by side in a phone's card: room for "Day" and "Year" beside the chevron */
   padding-inline: 0.625rem 1.5rem;
 }
+/* the day pick gets a little more of the row, so "Day" is never cut on a phone */
+.wl-birthday [role="group"] {
+  grid-template-columns: 1.25fr 1fr 1.1fr;
+}
 .wl-birthday select option {
   color: #152643;
 }
