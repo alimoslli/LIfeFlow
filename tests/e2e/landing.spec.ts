@@ -85,6 +85,13 @@ test("while the waitlist is on, the page says how the line works and every butto
     await page.goto("/");
     expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
     await page.screenshot({ path: "test-results/landing-waitlist-phone.png", fullPage: true });
+    // the header keeps "Sign in" on one line beside the longer button, down to a small phone
+    const signIn = page.getByRole("navigation", { name: "Account" }).getByRole("link", { name: "Sign in" });
+    for (const width of [393, 360]) {
+      await page.setViewportSize({ width, height: 800 });
+      expect((await signIn.boundingBox())!.height, `${width}px`).toBeLessThanOrEqual(48);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), `${width}px`).toBeLessThanOrEqual(0);
+    }
   } finally {
     await pool.query("update app_access set waitlist_on = false");
   }

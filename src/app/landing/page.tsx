@@ -157,7 +157,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
             ))}
             <Link
               href="/login"
-              className="inline-flex min-h-11 items-center rounded-full px-3 text-[0.9375rem] text-white/80 transition-colors hover:text-white"
+              className="inline-flex min-h-11 items-center rounded-full px-2 text-[0.9375rem] whitespace-nowrap sm:px-3 text-white/80 transition-colors hover:text-white"
             >
               Sign in
             </Link>
