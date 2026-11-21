@@ -24,6 +24,7 @@ ap.add_argument("--meta", required=True)
 ap.add_argument("--dump", required=True)
 ap.add_argument("--out", required=True)
 ap.add_argument("--report", required=True)
+ap.add_argument("--no-cap", action="store_true", help="keep every passing answer (for measuring a model, not for building a training set)")
 a = ap.parse_args()
 
 meta = {}
@@ -171,7 +172,7 @@ for conv_turn, rs in steps.items():
 NO_TOOL_SHARE = 0.12
 no_tool = [r for r in kept if r["meta"]["kind"] == "answer_no_tools"]
 others = [r for r in kept if r["meta"]["kind"] != "answer_no_tools"]
-cap = int(NO_TOOL_SHARE * len(others) / (1 - NO_TOOL_SHARE))
+cap = len(no_tool) if a.no_cap else int(NO_TOOL_SHARE * len(others) / (1 - NO_TOOL_SHARE))
 random_ = __import__("random").Random(3)
 random_.shuffle(no_tool)
 dropped_no_tool = max(0, len(no_tool) - cap)

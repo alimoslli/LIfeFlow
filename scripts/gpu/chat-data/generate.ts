@@ -24,6 +24,8 @@ const arg = (n: string, d?: string) => {
 const LIVES = arg("lives")!;
 const QUESTIONS = arg("questions")!;
 const PER_LIFE = Number(arg("per-life", "6"));
+/** Shifts which questions are asked, so a later run (a holdout check, a second batch) asks ones no earlier run did. */
+const OFFSET = Number(arg("offset", "0"));
 const WORKER = Number(arg("worker", "0"));
 const WORKERS = Number(arg("workers", "1"));
 const OUT = arg("out")!;
@@ -74,14 +76,15 @@ async function main() {
     // skill is asked (a seeded random per life clustered on 6 of 37 skills, 2026-11-21) and no life gets a question twice.
     const base = allLives.indexOf(life) * PER_LIFE;
     for (let k = 0; k < PER_LIFE; k++) {
-      const q = questions[((base + k) * 7919) % questions.length];
+      const q = questions[((base + k + OFFSET) * 7919) % questions.length];
       // The testing allowance (30 messages a day, ADR 0035) would end a long run; this is a throwaway test database.
       await withUser(loaded.session.id, (s) => s.tx.execute(sql`delete from ai_budgets where key like ${`u:${loaded.session.id}:%`}`));
       let conversationId: string | null = null;
-      const turns: { text: string; answer: string; outcome: string; error?: string }[] = [];
+      const turns: { text: string; answer: string; outcome: string; ms: number; error?: string }[] = [];
       for (const [t, text] of [q.text, ...(q.followUp ? [q.followUp] : [])].entries()) {
         convId = `${life}~${k}~${t}`;
         let answer = "";
+        const t0 = Date.now();
         let error: string | undefined;
         try {
           const r = await runJarvisTurn({
@@ -99,7 +102,7 @@ async function main() {
         } catch (e) {
           error = `threw: ${(e as Error).message}`.slice(0, 300);
         }
-        turns.push({ text, answer: answer.trim(), outcome: error ? "error" : "ok", ...(error && { error }) });
+        turns.push({ text, answer: answer.trim(), outcome: error ? "error" : "ok", ms: Date.now() - t0, ...(error && { error }) });
         if (error) break;
       }
       appendFileSync(
