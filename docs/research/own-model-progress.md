@@ -17,4 +17,6 @@ Owner's go-ahead (2026-11-21, 04:05 UTC): start steps 1 and 2 from the pilot rep
 - Box: L40S `2daac4f5`, 71 credits an hour, rented 04:18 UTC. Setup on `/workspace` (kept): `/workspace/vllm-venv` (vLLM 0.34), `/workspace/node`, `/workspace/chateval/LIfeFlow` (branch clone, npm ci done). Postgres and gcc are apt installs (lost when the box stops).
 - Done: Qwen3-8B thinking off, 20 questions: 2 pass. Right tools 13/20, facts 3/20. Results `/workspace/chateval/out-qwen3-8b/`.
 - Harness fixes: answer checks for the 2 newer questions (zelle, catchup); the test student's AI counters reset before each question (the 30-a-day testing limit cut the first run short); ai_usage counted as bookkeeping.
-- Running: Qwen3-8B thinking on (`out-qwen3-8b-think`). Next: gpt-oss-20b (downloaded) if credits allow. Stop the box before 120 credits.
+- Done: Qwen3-8B thinking on, 4 of 20 (5 in two tries); gpt-oss-20b, 4 of 20 (5 in two tries). Box stopped 05:29 UTC, 84.39 credits. Report: `docs/research/2026-11-21-open-chat-model-eval.md`. Raw results: `/workspace/chateval/out-*` on the GPU storage.
+
+**Steps 1 and 2 are finished.** Nothing is left for the 11 AM pickup except the summary.

@@ -1,0 +1,3010 @@
+[
+ {
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "method": "describe",
+  "train": "none",
+  "test": "heldout",
+  "right": 28,
+  "n": 43,
+  "ms": 7.2845391499981815,
+  "conf": [
+   [
+    [
+     "daily-planner",
+     "reminders-follow-up"
+    ],
+    2
+   ],
+   [
+    [
+     "smart-scheduler",
+     "weekly-review"
+    ],
+    2
+   ],
+   [
+    [
+     "app-operator",
+     "habit-builder"
+    ],
+    1
+   ],
+   [
+    [
+     "budget-coach",
+     "purchase-advisor"
+    ],
+    1
+   ],
+   [
+    [
+     "budget-coach",
+     "weekly-review"
+    ],
+    1
+   ],
+   [
+    [
+     "comparison",
+     "purchase-advisor"
+    ],
+    1
+   ]
+  ]
+ },
+ {
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "method": "describe",
+  "train": "none",
+  "test": "fresh",
+  "right": 37,
+  "n": 74,
+  "ms": 7.2845391499981815,
+  "conf": [
+   [
+    [
+     "message-drafter",
+     "daily-planner"
+    ],
+    2
+   ],
+   [
+    [
+     "savings-goals",
+     "purchase-advisor"
+    ],
+    2
+   ],
+   [
+    [
+     "app-operator",
+     "layover-planner"
+    ],
+    1
+   ],
+   [
+    [
+     "app-operator",
+     "habit-builder"
+    ],
+    1
+   ],
+   [
+    [
+     "budget-coach",
+     "student-perks"
+    ],
+    1
+   ],
+   [
+    [
+     "budget-coach",
+     "meal-planner"
+    ],
+    1
+   ]
+  ]
+ },
+ {
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "method": "knn",
+  "train": "seeds",
+  "train_rows": 153,
+  "embed_secs": 0.3,
+  "test": "heldout",
+  "right": 24,
+  "n": 43,
+  "ms": 7.2845391499981815,
+  "conf": [
+   [
+    [
+     "app-operator",
+     "health-basics"
+    ],
+    1
+   ],
+   [
+    [
+     "budget-coach",
+     "shift-manager"
+    ],
+    1
+   ],
+   [
+    [
+     "career-helper",
+     "get-to-know-you"
+    ],
+    1
+   ],
+   [
+    [
+     "comparison",
+     "reminders-follow-up"
+    ],
+    1
+   ],
+   [
+    [
+     "exam-prep",
+     "study-coach"
+    ],
+    1
+   ],
+   [
+    [
+     "health-basics",
+     "weekly-review"
+    ],
+    1
+   ]
+  ],
+  "rows": [
+   {
+    "text": "Remove the gym habit",
+    "gold": "app-operator",
+    "pred": "health-basics"
+   },
+   {
+    "text": "How's my budget this month?",
+    "gold": "budget-coach",
+    "pred": "shift-manager"
+   },
+   {
+    "text": "Where did my money go last month?",
+    "gold": "budget-coach",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "What questions will they ask in a job interview?",
+    "gold": "career-helper",
+    "pred": "get-to-know-you"
+   },
+   {
+    "text": "Pros and cons of renting vs living in a dorm",
+    "gold": "comparison",
+    "pred": "reminders-follow-up"
+   },
+   {
+    "text": "Can you time-block my day?",
+    "gold": "daily-planner",
+    "pred": "daily-planner"
+   },
+   {
+    "text": "Give me my morning brief",
+    "gold": "daily-planner",
+    "pred": "daily-planner"
+   },
+   {
+    "text": "What should I study each day before the test?",
+    "gold": "exam-prep",
+    "pred": "study-coach"
+   },
+   {
+    "text": "Is it true that we only use 10% of our brain?",
+    "gold": "fact-checker",
+    "pred": "fact-checker"
+   },
+   {
+    "text": "Get to know me better",
+    "gold": "get-to-know-you",
+    "pred": "get-to-know-you"
+   },
+   {
+    "text": "I read two chapters for my reading goal",
+    "gold": "goal-checkin",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "Start a new habit for me",
+    "gold": "habit-builder",
+    "pred": "habit-builder"
+   },
+   {
+    "text": "How did I sleep this week?",
+    "gold": "health-basics",
+    "pred": "weekly-review"
+   },
+   {
+    "text": "How much time do I have between flights?",
+    "gold": "layover-planner",
+    "pred": "layover-planner"
+   },
+   {
+    "text": "Book a doctor's appointment reminder",
+    "gold": "life-admin",
+    "pred": "reminders-follow-up"
+   },
+   {
+    "text": "How do I get from the airport to downtown by train?",
+    "gold": "local-transport",
+    "pred": "local-transport"
+   },
+   {
+    "text": "Meal plan on a $40 budget",
+    "gold": "meal-planner",
+    "pred": "meal-planner"
+   },
+   {
+    "text": "Help me prepare for the group meeting",
+    "gold": "meeting-prep",
+    "pred": "meeting-prep"
+   },
+   {
+    "text": "Update my memory: I moved to Austin",
+    "gold": "memory-manager",
+    "pred": "local-transport"
+   },
+   {
+    "text": "Write an email to my landlord",
+    "gold": "message-drafter",
+    "pred": "reminders-follow-up"
+   },
+   {
+    "text": "Do I need a visa for Japan?",
+    "gold": "packing-prep",
+    "pred": "layover-planner"
+   },
+   {
+    "text": "How should I use my pay this week?",
+    "gold": "paycheck-planner",
+    "pred": "paycheck-planner"
+   },
+   {
+    "text": "Should I buy these shoes for $90?",
+    "gold": "purchase-advisor",
+    "pred": "purchase-advisor"
+   },
+   {
+    "text": "Follow up with me about the scholarship next week",
+    "gold": "reminders-follow-up",
+    "pred": "student-perks"
+   },
+   {
+    "text": "Ping me before my shift",
+    "gold": "reminders-follow-up",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "Help me save for a trip",
+    "gold": "savings-goals",
+    "pred": "packing-prep"
+   },
+   {
+    "text": "Lunch is unpaid on my 9 hour shifts, so I get paid 8 hours",
+    "gold": "shift-manager",
+    "pred": "shift-manager"
+   },
+   {
+    "text": "Move my Saturday shift to Sunday",
+    "gold": "shift-manager",
+    "pred": "shift-manager"
+   },
+   {
+    "text": "I'm behind, help me catch up this week",
+    "gold": "smart-scheduler",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "Which day this week is going to be the hardest?",
+    "gold": "smart-scheduler",
+    "pred": "study-coach"
+   },
+   {
+    "text": "Best student deals on laptops",
+    "gold": "student-perks",
+    "pred": "web-research"
+   },
+   {
+    "text": "Quiz me on my biology notes",
+    "gold": "study-coach",
+    "pred": "summarizer"
+   },
+   {
+    "text": "Help me study for my exam",
+    "gold": "study-coach",
+    "pred": "study-coach"
+   },
+   {
+    "text": "Find my recurring charges",
+    "gold": "subscription-hunter",
+    "pred": "subscription-hunter"
+   },
+   {
+    "text": "Summarize this document",
+    "gold": "summarizer",
+    "pred": "summarizer"
+   },
+   {
+    "text": "Put every deadline from this syllabus in my calendar",
+    "gold": "syllabus-parser",
+    "pred": "syllabus-parser"
+   },
+   {
+    "text": "This task is too big, where do I start?",
+    "gold": "task-breakdown",
+    "pred": "task-breakdown"
+   },
+   {
+    "text": "Show me the transactions you're not sure about so I can categorize them.",
+    "gold": "transaction-review",
+    "pred": "transaction-review"
+   },
+   {
+    "text": "I don't understand photosynthesis",
+    "gold": "tutor",
+    "pred": "exam-prep"
+   },
+   {
+    "text": "Research cheap phone plans",
+    "gold": "web-research",
+    "pred": "paycheck-planner"
+   },
+   {
+    "text": "Review my week",
+    "gold": "weekly-review",
+    "pred": "weekly-review"
+   },
+   {
+    "text": "I think I'm burning out",
+    "gold": "wellbeing-check-in",
+    "pred": "wellbeing-check-in"
+   },
+   {
+    "text": "Proofread this paragraph",
+    "gold": "writing-helper",
+    "pred": "tutor"
+   }
+  ]
+ },
+ {
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "method": "logreg",
+  "train": "seeds",
+  "train_rows": 153,
+  "embed_secs": 0.3,
+  "test": "heldout",
+  "right": 28,
+  "n": 43,
+  "ms": 7.2845391499981815,
+  "conf": [
+   [
+    [
+     "app-operator",
+     "health-basics"
+    ],
+    1
+   ],
+   [
+    [
+     "daily-planner",
+     "smart-scheduler"
+    ],
+    1
+   ],
+   [
+    [
+     "exam-prep",
+     "smart-scheduler"
+    ],
+    1
+   ],
+   [
+    [
+     "goal-checkin",
+     "habit-builder"
+    ],
+    1
+   ],
+   [
+    [
+     "health-basics",
+     "weekly-review"
+    ],
+    1
+   ],
+   [
+    [
+     "life-admin",
+     "reminders-follow-up"
+    ],
+    1
+   ]
+  ],
+  "rows": [
+   {
+    "text": "Remove the gym habit",
+    "gold": "app-operator",
+    "pred": "health-basics"
+   },
+   {
+    "text": "How's my budget this month?",
+    "gold": "budget-coach",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "Where did my money go last month?",
+    "gold": "budget-coach",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "What questions will they ask in a job interview?",
+    "gold": "career-helper",
+    "pred": "career-helper"
+   },
+   {
+    "text": "Pros and cons of renting vs living in a dorm",
+    "gold": "comparison",
+    "pred": "comparison"
+   },
+   {
+    "text": "Can you time-block my day?",
+    "gold": "daily-planner",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "Give me my morning brief",
+    "gold": "daily-planner",
+    "pred": "daily-planner"
+   },
+   {
+    "text": "What should I study each day before the test?",
+    "gold": "exam-prep",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "Is it true that we only use 10% of our brain?",
+    "gold": "fact-checker",
+    "pred": "fact-checker"
+   },
+   {
+    "text": "Get to know me better",
+    "gold": "get-to-know-you",
+    "pred": "get-to-know-you"
+   },
+   {
+    "text": "I read two chapters for my reading goal",
+    "gold": "goal-checkin",
+    "pred": "habit-builder"
+   },
+   {
+    "text": "Start a new habit for me",
+    "gold": "habit-builder",
+    "pred": "habit-builder"
+   },
+   {
+    "text": "How did I sleep this week?",
+    "gold": "health-basics",
+    "pred": "weekly-review"
+   },
+   {
+    "text": "How much time do I have between flights?",
+    "gold": "layover-planner",
+    "pred": "layover-planner"
+   },
+   {
+    "text": "Book a doctor's appointment reminder",
+    "gold": "life-admin",
+    "pred": "reminders-follow-up"
+   },
+   {
+    "text": "How do I get from the airport to downtown by train?",
+    "gold": "local-transport",
+    "pred": "local-transport"
+   },
+   {
+    "text": "Meal plan on a $40 budget",
+    "gold": "meal-planner",
+    "pred": "meal-planner"
+   },
+   {
+    "text": "Help me prepare for the group meeting",
+    "gold": "meeting-prep",
+    "pred": "meeting-prep"
+   },
+   {
+    "text": "Update my memory: I moved to Austin",
+    "gold": "memory-manager",
+    "pred": "memory-manager"
+   },
+   {
+    "text": "Write an email to my landlord",
+    "gold": "message-drafter",
+    "pred": "message-drafter"
+   },
+   {
+    "text": "Do I need a visa for Japan?",
+    "gold": "packing-prep",
+    "pred": "layover-planner"
+   },
+   {
+    "text": "How should I use my pay this week?",
+    "gold": "paycheck-planner",
+    "pred": "shift-manager"
+   },
+   {
+    "text": "Should I buy these shoes for $90?",
+    "gold": "purchase-advisor",
+    "pred": "purchase-advisor"
+   },
+   {
+    "text": "Follow up with me about the scholarship next week",
+    "gold": "reminders-follow-up",
+    "pred": "student-perks"
+   },
+   {
+    "text": "Ping me before my shift",
+    "gold": "reminders-follow-up",
+    "pred": "message-drafter"
+   },
+   {
+    "text": "Help me save for a trip",
+    "gold": "savings-goals",
+    "pred": "packing-prep"
+   },
+   {
+    "text": "Lunch is unpaid on my 9 hour shifts, so I get paid 8 hours",
+    "gold": "shift-manager",
+    "pred": "shift-manager"
+   },
+   {
+    "text": "Move my Saturday shift to Sunday",
+    "gold": "shift-manager",
+    "pred": "shift-manager"
+   },
+   {
+    "text": "I'm behind, help me catch up this week",
+    "gold": "smart-scheduler",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "Which day this week is going to be the hardest?",
+    "gold": "smart-scheduler",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "Best student deals on laptops",
+    "gold": "student-perks",
+    "pred": "web-research"
+   },
+   {
+    "text": "Quiz me on my biology notes",
+    "gold": "study-coach",
+    "pred": "study-coach"
+   },
+   {
+    "text": "Help me study for my exam",
+    "gold": "study-coach",
+    "pred": "study-coach"
+   },
+   {
+    "text": "Find my recurring charges",
+    "gold": "subscription-hunter",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "Summarize this document",
+    "gold": "summarizer",
+    "pred": "summarizer"
+   },
+   {
+    "text": "Put every deadline from this syllabus in my calendar",
+    "gold": "syllabus-parser",
+    "pred": "syllabus-parser"
+   },
+   {
+    "text": "This task is too big, where do I start?",
+    "gold": "task-breakdown",
+    "pred": "task-breakdown"
+   },
+   {
+    "text": "Show me the transactions you're not sure about so I can categorize them.",
+    "gold": "transaction-review",
+    "pred": "transaction-review"
+   },
+   {
+    "text": "I don't understand photosynthesis",
+    "gold": "tutor",
+    "pred": "tutor"
+   },
+   {
+    "text": "Research cheap phone plans",
+    "gold": "web-research",
+    "pred": "comparison"
+   },
+   {
+    "text": "Review my week",
+    "gold": "weekly-review",
+    "pred": "weekly-review"
+   },
+   {
+    "text": "I think I'm burning out",
+    "gold": "wellbeing-check-in",
+    "pred": "wellbeing-check-in"
+   },
+   {
+    "text": "Proofread this paragraph",
+    "gold": "writing-helper",
+    "pred": "tutor"
+   }
+  ]
+ },
+ {
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "method": "knn",
+  "train": "seeds",
+  "train_rows": 153,
+  "embed_secs": 0.3,
+  "test": "fresh",
+  "right": 47,
+  "n": 74,
+  "ms": 7.2845391499981815,
+  "conf": [
+   [
+    [
+     "app-operator",
+     "reminders-follow-up"
+    ],
+    1
+   ],
+   [
+    [
+     "app-operator",
+     "health-basics"
+    ],
+    1
+   ],
+   [
+    [
+     "budget-coach",
+     "meal-planner"
+    ],
+    1
+   ],
+   [
+    [
+     "career-helper",
+     "comparison"
+    ],
+    1
+   ],
+   [
+    [
+     "comparison",
+     "meal-planner"
+    ],
+    1
+   ],
+   [
+    [
+     "exam-prep",
+     "smart-scheduler"
+    ],
+    1
+   ]
+  ],
+  "rows": [
+   {
+    "text": "can u move my dentist thing to friday at 4",
+    "gold": "app-operator",
+    "pred": "reminders-follow-up"
+   },
+   {
+    "text": "mark the laundry one as done and get rid of the gym event tmrw",
+    "gold": "app-operator",
+    "pred": "health-basics"
+   },
+   {
+    "text": "where is all my money going lol i'm broke again and it's only the 12th",
+    "gold": "budget-coach",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "did i go over on food this month",
+    "gold": "budget-coach",
+    "pred": "meal-planner"
+   },
+   {
+    "text": "i have a phone screen with target on thurs and idk what they're gonna ask",
+    "gold": "career-helper",
+    "pred": "comparison"
+   },
+   {
+    "text": "does my cv look ok for an internship, i feel like it's too empty",
+    "gold": "career-helper",
+    "pred": "career-helper"
+   },
+   {
+    "text": "dell xps or the thinkpad, which one makes more sense for a cs major",
+    "gold": "comparison",
+    "pred": "comparison"
+   },
+   {
+    "text": "torn between the meal plan with 14 swipes and the unlimited one, pros and cons?",
+    "gold": "comparison",
+    "pred": "meal-planner"
+   },
+   {
+    "text": "ok what does my wednesday look like, what do i tackle first",
+    "gold": "daily-planner",
+    "pred": "daily-planner"
+   },
+   {
+    "text": "i just woke up and have a million things, give me an order for today",
+    "gold": "daily-planner",
+    "pred": "daily-planner"
+   },
+   {
+    "text": "orgo final is dec 14 and i havent started, what do i cover each day till then",
+    "gold": "exam-prep",
+    "pred": "exam-prep"
+   },
+   {
+    "text": "two finals the same week (stats and bio), map out the days before",
+    "gold": "exam-prep",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "my roommate swears cracking your knuckles gives you arthritis, is that real",
+    "gold": "fact-checker",
+    "pred": "reminders-follow-up"
+   },
+   {
+    "text": "saw a tiktok saying you lose most of your body heat through your head. legit or nah",
+    "gold": "fact-checker",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "you barely know anything about me yet, wanna ask me stuff?",
+    "gold": "get-to-know-you",
+    "pred": "get-to-know-you"
+   },
+   {
+    "text": "quiz me about myself so your suggestions get less generic",
+    "gold": "get-to-know-you",
+    "pred": "get-to-know-you"
+   },
+   {
+    "text": "update on the marathon thing: ran 4 miles this morning before class",
+    "gold": "goal-checkin",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "didn't touch my spanish goal today tbh, log that",
+    "gold": "goal-checkin",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "i want to make reading 10 pages every night a thing i actually stick with",
+    "gold": "habit-builder",
+    "pred": "habit-builder"
+   },
+   {
+    "text": "am i still on a streak for drinking water",
+    "gold": "habit-builder",
+    "pred": "habit-builder"
+   },
+   {
+    "text": "i keep going to bed at 3am, help me fix my sleep",
+    "gold": "health-basics",
+    "pred": "wellbeing-check-in"
+   },
+   {
+    "text": "what's a simple gym routine for 3 days a week for a beginner",
+    "gold": "health-basics",
+    "pred": "health-basics"
+   },
+   {
+    "text": "6 hrs in istanbul between flights, is that enough to see anything",
+    "gold": "layover-planner",
+    "pred": "layover-planner"
+   },
+   {
+    "text": "connecting through frankfurt with 5 hours, when do i need to be back at the gate if i go into town",
+    "gold": "layover-planner",
+    "pred": "layover-planner"
+   },
+   {
+    "text": "my passport expires in march, what do i need to do",
+    "gold": "life-admin",
+    "pred": "life-admin"
+   },
+   {
+    "text": "i have to fill out the fafsa verification form and it's confusing",
+    "gold": "life-admin",
+    "pred": "life-admin"
+   },
+   {
+    "text": "whats the cheapest way to get across town to the stadium, bus or subway",
+    "gold": "local-transport",
+    "pred": "local-transport"
+   },
+   {
+    "text": "is there a night bus from campus to the central station after midnight",
+    "gold": "local-transport",
+    "pred": "local-transport"
+   },
+   {
+    "text": "i have $35 for food till friday, what can i cook",
+    "gold": "meal-planner",
+    "pred": "meal-planner"
+   },
+   {
+    "text": "need dinner ideas for the week and what to buy, i only have a microwave and a rice cooker",
+    "gold": "meal-planner",
+    "pred": "meal-planner"
+   },
+   {
+    "text": "seeing my advisor tomorrow about switching majors, what should i bring up",
+    "gold": "meeting-prep",
+    "pred": "study-coach"
+   },
+   {
+    "text": "group project sync at 5, help me get my points together",
+    "gold": "meeting-prep",
+    "pred": "message-drafter"
+   },
+   {
+    "text": "you still think i work at starbucks, i quit last month. fix that",
+    "gold": "memory-manager",
+    "pred": "paycheck-planner"
+   },
+   {
+    "text": "forget that i'm vegetarian, not anymore",
+    "gold": "memory-manager",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "write something to my landlord saying rent will be 3 days late",
+    "gold": "message-drafter",
+    "pred": "reminders-follow-up"
+   },
+   {
+    "text": "need to tell prof kim i'll miss lab on tuesday, can you word it nicely",
+    "gold": "message-drafter",
+    "pred": "syllabus-parser"
+   },
+   {
+    "text": "going to iceland for 5 days in february, what do i need to bring",
+    "gold": "packing-prep",
+    "pred": "packing-prep"
+   },
+   {
+    "text": "do i need a visa or anything for a week in japan, and what goes in my carry on",
+    "gold": "packing-prep",
+    "pred": "packing-prep"
+   },
+   {
+    "text": "$812 just hit from work, how should i divide it up between rent, phone and savings",
+    "gold": "paycheck-planner",
+    "pred": "paycheck-planner"
+   },
+   {
+    "text": "payday friday, figure out where each dollar goes before i blow it",
+    "gold": "paycheck-planner",
+    "pred": "paycheck-planner"
+   },
+   {
+    "text": "airpods are $179 rn, is that dumb with rent coming up",
+    "gold": "purchase-advisor",
+    "pred": "purchase-advisor"
+   },
+   {
+    "text": "thinking about getting a $60 jacket, do i have room for that",
+    "gold": "purchase-advisor",
+    "pred": "purchase-advisor"
+   },
+   {
+    "text": "ping me sunday night to submit the lab report",
+    "gold": "reminders-follow-up",
+    "pred": "exam-prep"
+   },
+   {
+    "text": "i keep forgetting to email the registrar, bug me about it tomorrow at 9",
+    "gold": "reminders-follow-up",
+    "pred": "message-drafter"
+   },
+   {
+    "text": "i want $1500 for a spring break trip by march, how much do i put away each week",
+    "gold": "savings-goals",
+    "pred": "savings-goals"
+   },
+   {
+    "text": "how close am i to the laptop fund",
+    "gold": "savings-goals",
+    "pred": "savings-goals"
+   },
+   {
+    "text": "boss gave me sat 9-5 and sun 12-8 with a 30 min unpaid lunch, put those in",
+    "gold": "shift-manager",
+    "pred": "shift-manager"
+   },
+   {
+    "text": "am i working too much next week? feels like a lot of closing shifts",
+    "gold": "shift-manager",
+    "pred": "shift-manager"
+   },
+   {
+    "text": "my lab got moved and now it overlaps with work on thursday, sort it out",
+    "gold": "smart-scheduler",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "squeeze in two hours for the essay somewhere before friday",
+    "gold": "smart-scheduler",
+    "pred": "study-coach"
+   },
+   {
+    "text": "is there any deal on spotify or adobe if i have a .edu email",
+    "gold": "student-perks",
+    "pred": "subscription-hunter"
+   },
+   {
+    "text": "when is the deadline for financial aid and does campus have free tutoring",
+    "gold": "student-perks",
+    "pred": "web-research"
+   },
+   {
+    "text": "make me flashcard style questions from my bio notes and space them out over the week",
+    "gold": "study-coach",
+    "pred": "study-coach"
+   },
+   {
+    "text": "i need a system for getting through psych chapter 4 to 9, quiz me as we go",
+    "gold": "study-coach",
+    "pred": "syllabus-parser"
+   },
+   {
+    "text": "what am i getting charged for every month that i forgot about",
+    "gold": "subscription-hunter",
+    "pred": "subscription-hunter"
+   },
+   {
+    "text": "am i paying for both hulu and disney plus? kill whatever i dont use",
+    "gold": "subscription-hunter",
+    "pred": "subscription-hunter"
+   },
+   {
+    "text": "tldr of this 20 page reading pls",
+    "gold": "summarizer",
+    "pred": "summarizer"
+   },
+   {
+    "text": "this email thread from my group is so long, what did they actually decide",
+    "gold": "summarizer",
+    "pred": "message-drafter"
+   },
+   {
+    "text": "just uploaded the course outline for econ 201, pull out all the assignment dates",
+    "gold": "syllabus-parser",
+    "pred": "syllabus-parser"
+   },
+   {
+    "text": "here's a pic of my chem syllabus, put the exams and homework in my calendar",
+    "gold": "syllabus-parser",
+    "pred": "syllabus-parser"
+   },
+   {
+    "text": "my capstone feels impossible, chop it into small pieces with how long each takes",
+    "gold": "task-breakdown",
+    "pred": "task-breakdown"
+   },
+   {
+    "text": "moving out of my dorm next month, what are all the steps",
+    "gold": "task-breakdown",
+    "pred": "task-breakdown"
+   },
+   {
+    "text": "there's a $23.40 charge from SQ *BLUEBIRD, idk what category that is, lets go thru the weird ones",
+    "gold": "transaction-review",
+    "pred": "subscription-hunter"
+   },
+   {
+    "text": "some of my purchases are labeled wrong, can we sort the unclear ones together",
+    "gold": "transaction-review",
+    "pred": "transaction-review"
+   },
+   {
+    "text": "can someone please tell me what a p-value actually means, i'm lost",
+    "gold": "tutor",
+    "pred": "tutor"
+   },
+   {
+    "text": "mitosis vs meiosis, i keep mixing them up, help me get it",
+    "gold": "tutor",
+    "pred": "exam-prep"
+   },
+   {
+    "text": "find out which banks have no fee checking accounts for students right now, with sources",
+    "gold": "web-research",
+    "pred": "student-perks"
+   },
+   {
+    "text": "search for the best budget noise cancelling headphones this year",
+    "gold": "web-research",
+    "pred": "subscription-hunter"
+   },
+   {
+    "text": "so how'd i do these past 7 days overall",
+    "gold": "weekly-review",
+    "pred": "daily-planner"
+   },
+   {
+    "text": "sunday recap time, what did i finish and what slipped",
+    "gold": "weekly-review",
+    "pred": "weekly-review"
+   },
+   {
+    "text": "honestly i'm burnt out and cant get out of bed today",
+    "gold": "wellbeing-check-in",
+    "pred": "wellbeing-check-in"
+   },
+   {
+    "text": "feeling kinda low and anxious lately, nothing's wrong exactly",
+    "gold": "wellbeing-check-in",
+    "pred": "wellbeing-check-in"
+   },
+   {
+    "text": "is my thesis statement strong enough? here's my intro paragraph",
+    "gold": "writing-helper",
+    "pred": "writing-helper"
+   },
+   {
+    "text": "check if my APA citations are right and tell me where my argument is weak",
+    "gold": "writing-helper",
+    "pred": "writing-helper"
+   }
+  ]
+ },
+ {
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "method": "logreg",
+  "train": "seeds",
+  "train_rows": 153,
+  "embed_secs": 0.3,
+  "test": "fresh",
+  "right": 53,
+  "n": 74,
+  "ms": 7.2845391499981815,
+  "conf": [
+   [
+    [
+     "meeting-prep",
+     "smart-scheduler"
+    ],
+    2
+   ],
+   [
+    [
+     "app-operator",
+     "reminders-follow-up"
+    ],
+    1
+   ],
+   [
+    [
+     "app-operator",
+     "health-basics"
+    ],
+    1
+   ],
+   [
+    [
+     "career-helper",
+     "app-operator"
+    ],
+    1
+   ],
+   [
+    [
+     "daily-planner",
+     "smart-scheduler"
+    ],
+    1
+   ],
+   [
+    [
+     "exam-prep",
+     "smart-scheduler"
+    ],
+    1
+   ]
+  ],
+  "rows": [
+   {
+    "text": "can u move my dentist thing to friday at 4",
+    "gold": "app-operator",
+    "pred": "reminders-follow-up"
+   },
+   {
+    "text": "mark the laundry one as done and get rid of the gym event tmrw",
+    "gold": "app-operator",
+    "pred": "health-basics"
+   },
+   {
+    "text": "where is all my money going lol i'm broke again and it's only the 12th",
+    "gold": "budget-coach",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "did i go over on food this month",
+    "gold": "budget-coach",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "i have a phone screen with target on thurs and idk what they're gonna ask",
+    "gold": "career-helper",
+    "pred": "app-operator"
+   },
+   {
+    "text": "does my cv look ok for an internship, i feel like it's too empty",
+    "gold": "career-helper",
+    "pred": "career-helper"
+   },
+   {
+    "text": "dell xps or the thinkpad, which one makes more sense for a cs major",
+    "gold": "comparison",
+    "pred": "comparison"
+   },
+   {
+    "text": "torn between the meal plan with 14 swipes and the unlimited one, pros and cons?",
+    "gold": "comparison",
+    "pred": "comparison"
+   },
+   {
+    "text": "ok what does my wednesday look like, what do i tackle first",
+    "gold": "daily-planner",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "i just woke up and have a million things, give me an order for today",
+    "gold": "daily-planner",
+    "pred": "daily-planner"
+   },
+   {
+    "text": "orgo final is dec 14 and i havent started, what do i cover each day till then",
+    "gold": "exam-prep",
+    "pred": "exam-prep"
+   },
+   {
+    "text": "two finals the same week (stats and bio), map out the days before",
+    "gold": "exam-prep",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "my roommate swears cracking your knuckles gives you arthritis, is that real",
+    "gold": "fact-checker",
+    "pred": "fact-checker"
+   },
+   {
+    "text": "saw a tiktok saying you lose most of your body heat through your head. legit or nah",
+    "gold": "fact-checker",
+    "pred": "fact-checker"
+   },
+   {
+    "text": "you barely know anything about me yet, wanna ask me stuff?",
+    "gold": "get-to-know-you",
+    "pred": "get-to-know-you"
+   },
+   {
+    "text": "quiz me about myself so your suggestions get less generic",
+    "gold": "get-to-know-you",
+    "pred": "get-to-know-you"
+   },
+   {
+    "text": "update on the marathon thing: ran 4 miles this morning before class",
+    "gold": "goal-checkin",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "didn't touch my spanish goal today tbh, log that",
+    "gold": "goal-checkin",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "i want to make reading 10 pages every night a thing i actually stick with",
+    "gold": "habit-builder",
+    "pred": "habit-builder"
+   },
+   {
+    "text": "am i still on a streak for drinking water",
+    "gold": "habit-builder",
+    "pred": "habit-builder"
+   },
+   {
+    "text": "i keep going to bed at 3am, help me fix my sleep",
+    "gold": "health-basics",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "what's a simple gym routine for 3 days a week for a beginner",
+    "gold": "health-basics",
+    "pred": "health-basics"
+   },
+   {
+    "text": "6 hrs in istanbul between flights, is that enough to see anything",
+    "gold": "layover-planner",
+    "pred": "layover-planner"
+   },
+   {
+    "text": "connecting through frankfurt with 5 hours, when do i need to be back at the gate if i go into town",
+    "gold": "layover-planner",
+    "pred": "layover-planner"
+   },
+   {
+    "text": "my passport expires in march, what do i need to do",
+    "gold": "life-admin",
+    "pred": "life-admin"
+   },
+   {
+    "text": "i have to fill out the fafsa verification form and it's confusing",
+    "gold": "life-admin",
+    "pred": "life-admin"
+   },
+   {
+    "text": "whats the cheapest way to get across town to the stadium, bus or subway",
+    "gold": "local-transport",
+    "pred": "local-transport"
+   },
+   {
+    "text": "is there a night bus from campus to the central station after midnight",
+    "gold": "local-transport",
+    "pred": "local-transport"
+   },
+   {
+    "text": "i have $35 for food till friday, what can i cook",
+    "gold": "meal-planner",
+    "pred": "meal-planner"
+   },
+   {
+    "text": "need dinner ideas for the week and what to buy, i only have a microwave and a rice cooker",
+    "gold": "meal-planner",
+    "pred": "meal-planner"
+   },
+   {
+    "text": "seeing my advisor tomorrow about switching majors, what should i bring up",
+    "gold": "meeting-prep",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "group project sync at 5, help me get my points together",
+    "gold": "meeting-prep",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "you still think i work at starbucks, i quit last month. fix that",
+    "gold": "memory-manager",
+    "pred": "shift-manager"
+   },
+   {
+    "text": "forget that i'm vegetarian, not anymore",
+    "gold": "memory-manager",
+    "pred": "memory-manager"
+   },
+   {
+    "text": "write something to my landlord saying rent will be 3 days late",
+    "gold": "message-drafter",
+    "pred": "reminders-follow-up"
+   },
+   {
+    "text": "need to tell prof kim i'll miss lab on tuesday, can you word it nicely",
+    "gold": "message-drafter",
+    "pred": "message-drafter"
+   },
+   {
+    "text": "going to iceland for 5 days in february, what do i need to bring",
+    "gold": "packing-prep",
+    "pred": "packing-prep"
+   },
+   {
+    "text": "do i need a visa or anything for a week in japan, and what goes in my carry on",
+    "gold": "packing-prep",
+    "pred": "packing-prep"
+   },
+   {
+    "text": "$812 just hit from work, how should i divide it up between rent, phone and savings",
+    "gold": "paycheck-planner",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "payday friday, figure out where each dollar goes before i blow it",
+    "gold": "paycheck-planner",
+    "pred": "paycheck-planner"
+   },
+   {
+    "text": "airpods are $179 rn, is that dumb with rent coming up",
+    "gold": "purchase-advisor",
+    "pred": "purchase-advisor"
+   },
+   {
+    "text": "thinking about getting a $60 jacket, do i have room for that",
+    "gold": "purchase-advisor",
+    "pred": "purchase-advisor"
+   },
+   {
+    "text": "ping me sunday night to submit the lab report",
+    "gold": "reminders-follow-up",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "i keep forgetting to email the registrar, bug me about it tomorrow at 9",
+    "gold": "reminders-follow-up",
+    "pred": "life-admin"
+   },
+   {
+    "text": "i want $1500 for a spring break trip by march, how much do i put away each week",
+    "gold": "savings-goals",
+    "pred": "savings-goals"
+   },
+   {
+    "text": "how close am i to the laptop fund",
+    "gold": "savings-goals",
+    "pred": "savings-goals"
+   },
+   {
+    "text": "boss gave me sat 9-5 and sun 12-8 with a 30 min unpaid lunch, put those in",
+    "gold": "shift-manager",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "am i working too much next week? feels like a lot of closing shifts",
+    "gold": "shift-manager",
+    "pred": "shift-manager"
+   },
+   {
+    "text": "my lab got moved and now it overlaps with work on thursday, sort it out",
+    "gold": "smart-scheduler",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "squeeze in two hours for the essay somewhere before friday",
+    "gold": "smart-scheduler",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "is there any deal on spotify or adobe if i have a .edu email",
+    "gold": "student-perks",
+    "pred": "subscription-hunter"
+   },
+   {
+    "text": "when is the deadline for financial aid and does campus have free tutoring",
+    "gold": "student-perks",
+    "pred": "student-perks"
+   },
+   {
+    "text": "make me flashcard style questions from my bio notes and space them out over the week",
+    "gold": "study-coach",
+    "pred": "study-coach"
+   },
+   {
+    "text": "i need a system for getting through psych chapter 4 to 9, quiz me as we go",
+    "gold": "study-coach",
+    "pred": "syllabus-parser"
+   },
+   {
+    "text": "what am i getting charged for every month that i forgot about",
+    "gold": "subscription-hunter",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "am i paying for both hulu and disney plus? kill whatever i dont use",
+    "gold": "subscription-hunter",
+    "pred": "subscription-hunter"
+   },
+   {
+    "text": "tldr of this 20 page reading pls",
+    "gold": "summarizer",
+    "pred": "summarizer"
+   },
+   {
+    "text": "this email thread from my group is so long, what did they actually decide",
+    "gold": "summarizer",
+    "pred": "message-drafter"
+   },
+   {
+    "text": "just uploaded the course outline for econ 201, pull out all the assignment dates",
+    "gold": "syllabus-parser",
+    "pred": "syllabus-parser"
+   },
+   {
+    "text": "here's a pic of my chem syllabus, put the exams and homework in my calendar",
+    "gold": "syllabus-parser",
+    "pred": "syllabus-parser"
+   },
+   {
+    "text": "my capstone feels impossible, chop it into small pieces with how long each takes",
+    "gold": "task-breakdown",
+    "pred": "task-breakdown"
+   },
+   {
+    "text": "moving out of my dorm next month, what are all the steps",
+    "gold": "task-breakdown",
+    "pred": "task-breakdown"
+   },
+   {
+    "text": "there's a $23.40 charge from SQ *BLUEBIRD, idk what category that is, lets go thru the weird ones",
+    "gold": "transaction-review",
+    "pred": "subscription-hunter"
+   },
+   {
+    "text": "some of my purchases are labeled wrong, can we sort the unclear ones together",
+    "gold": "transaction-review",
+    "pred": "transaction-review"
+   },
+   {
+    "text": "can someone please tell me what a p-value actually means, i'm lost",
+    "gold": "tutor",
+    "pred": "tutor"
+   },
+   {
+    "text": "mitosis vs meiosis, i keep mixing them up, help me get it",
+    "gold": "tutor",
+    "pred": "exam-prep"
+   },
+   {
+    "text": "find out which banks have no fee checking accounts for students right now, with sources",
+    "gold": "web-research",
+    "pred": "web-research"
+   },
+   {
+    "text": "search for the best budget noise cancelling headphones this year",
+    "gold": "web-research",
+    "pred": "web-research"
+   },
+   {
+    "text": "so how'd i do these past 7 days overall",
+    "gold": "weekly-review",
+    "pred": "weekly-review"
+   },
+   {
+    "text": "sunday recap time, what did i finish and what slipped",
+    "gold": "weekly-review",
+    "pred": "weekly-review"
+   },
+   {
+    "text": "honestly i'm burnt out and cant get out of bed today",
+    "gold": "wellbeing-check-in",
+    "pred": "wellbeing-check-in"
+   },
+   {
+    "text": "feeling kinda low and anxious lately, nothing's wrong exactly",
+    "gold": "wellbeing-check-in",
+    "pred": "wellbeing-check-in"
+   },
+   {
+    "text": "is my thesis statement strong enough? here's my intro paragraph",
+    "gold": "writing-helper",
+    "pred": "writing-helper"
+   },
+   {
+    "text": "check if my APA citations are right and tell me where my argument is weak",
+    "gold": "writing-helper",
+    "pred": "writing-helper"
+   }
+  ]
+ },
+ {
+  "model": "BAAI/bge-small-en-v1.5",
+  "method": "describe",
+  "train": "none",
+  "test": "heldout",
+  "right": 23,
+  "n": 43,
+  "ms": 12.08870075000732,
+  "conf": [
+   [
+    [
+     "budget-coach",
+     "weekly-review"
+    ],
+    2
+   ],
+   [
+    [
+     "app-operator",
+     "habit-builder"
+    ],
+    1
+   ],
+   [
+    [
+     "comparison",
+     "student-perks"
+    ],
+    1
+   ],
+   [
+    [
+     "daily-planner",
+     "smart-scheduler"
+    ],
+    1
+   ],
+   [
+    [
+     "daily-planner",
+     "meeting-prep"
+    ],
+    1
+   ],
+   [
+    [
+     "fact-checker",
+     "memory-manager"
+    ],
+    1
+   ]
+  ]
+ },
+ {
+  "model": "BAAI/bge-small-en-v1.5",
+  "method": "describe",
+  "train": "none",
+  "test": "fresh",
+  "right": 38,
+  "n": 74,
+  "ms": 12.08870075000732,
+  "conf": [
+   [
+    [
+     "app-operator",
+     "life-admin"
+    ],
+    1
+   ],
+   [
+    [
+     "app-operator",
+     "reminders-follow-up"
+    ],
+    1
+   ],
+   [
+    [
+     "budget-coach",
+     "student-perks"
+    ],
+    1
+   ],
+   [
+    [
+     "budget-coach",
+     "meal-planner"
+    ],
+    1
+   ],
+   [
+    [
+     "career-helper",
+     "purchase-advisor"
+    ],
+    1
+   ],
+   [
+    [
+     "comparison",
+     "student-perks"
+    ],
+    1
+   ]
+  ]
+ },
+ {
+  "model": "BAAI/bge-small-en-v1.5",
+  "method": "knn",
+  "train": "seeds",
+  "train_rows": 153,
+  "embed_secs": 0.4,
+  "test": "heldout",
+  "right": 23,
+  "n": 43,
+  "ms": 12.08870075000732,
+  "conf": [
+   [
+    [
+     "app-operator",
+     "health-basics"
+    ],
+    1
+   ],
+   [
+    [
+     "budget-coach",
+     "shift-manager"
+    ],
+    1
+   ],
+   [
+    [
+     "career-helper",
+     "get-to-know-you"
+    ],
+    1
+   ],
+   [
+    [
+     "comparison",
+     "task-breakdown"
+    ],
+    1
+   ],
+   [
+    [
+     "exam-prep",
+     "study-coach"
+    ],
+    1
+   ],
+   [
+    [
+     "health-basics",
+     "weekly-review"
+    ],
+    1
+   ]
+  ],
+  "rows": [
+   {
+    "text": "Remove the gym habit",
+    "gold": "app-operator",
+    "pred": "health-basics"
+   },
+   {
+    "text": "How's my budget this month?",
+    "gold": "budget-coach",
+    "pred": "shift-manager"
+   },
+   {
+    "text": "Where did my money go last month?",
+    "gold": "budget-coach",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "What questions will they ask in a job interview?",
+    "gold": "career-helper",
+    "pred": "get-to-know-you"
+   },
+   {
+    "text": "Pros and cons of renting vs living in a dorm",
+    "gold": "comparison",
+    "pred": "task-breakdown"
+   },
+   {
+    "text": "Can you time-block my day?",
+    "gold": "daily-planner",
+    "pred": "daily-planner"
+   },
+   {
+    "text": "Give me my morning brief",
+    "gold": "daily-planner",
+    "pred": "daily-planner"
+   },
+   {
+    "text": "What should I study each day before the test?",
+    "gold": "exam-prep",
+    "pred": "study-coach"
+   },
+   {
+    "text": "Is it true that we only use 10% of our brain?",
+    "gold": "fact-checker",
+    "pred": "fact-checker"
+   },
+   {
+    "text": "Get to know me better",
+    "gold": "get-to-know-you",
+    "pred": "get-to-know-you"
+   },
+   {
+    "text": "I read two chapters for my reading goal",
+    "gold": "goal-checkin",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "Start a new habit for me",
+    "gold": "habit-builder",
+    "pred": "habit-builder"
+   },
+   {
+    "text": "How did I sleep this week?",
+    "gold": "health-basics",
+    "pred": "weekly-review"
+   },
+   {
+    "text": "How much time do I have between flights?",
+    "gold": "layover-planner",
+    "pred": "layover-planner"
+   },
+   {
+    "text": "Book a doctor's appointment reminder",
+    "gold": "life-admin",
+    "pred": "reminders-follow-up"
+   },
+   {
+    "text": "How do I get from the airport to downtown by train?",
+    "gold": "local-transport",
+    "pred": "layover-planner"
+   },
+   {
+    "text": "Meal plan on a $40 budget",
+    "gold": "meal-planner",
+    "pred": "meal-planner"
+   },
+   {
+    "text": "Help me prepare for the group meeting",
+    "gold": "meeting-prep",
+    "pred": "meeting-prep"
+   },
+   {
+    "text": "Update my memory: I moved to Austin",
+    "gold": "memory-manager",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "Write an email to my landlord",
+    "gold": "message-drafter",
+    "pred": "message-drafter"
+   },
+   {
+    "text": "Do I need a visa for Japan?",
+    "gold": "packing-prep",
+    "pred": "packing-prep"
+   },
+   {
+    "text": "How should I use my pay this week?",
+    "gold": "paycheck-planner",
+    "pred": "paycheck-planner"
+   },
+   {
+    "text": "Should I buy these shoes for $90?",
+    "gold": "purchase-advisor",
+    "pred": "purchase-advisor"
+   },
+   {
+    "text": "Follow up with me about the scholarship next week",
+    "gold": "reminders-follow-up",
+    "pred": "student-perks"
+   },
+   {
+    "text": "Ping me before my shift",
+    "gold": "reminders-follow-up",
+    "pred": "message-drafter"
+   },
+   {
+    "text": "Help me save for a trip",
+    "gold": "savings-goals",
+    "pred": "packing-prep"
+   },
+   {
+    "text": "Lunch is unpaid on my 9 hour shifts, so I get paid 8 hours",
+    "gold": "shift-manager",
+    "pred": "paycheck-planner"
+   },
+   {
+    "text": "Move my Saturday shift to Sunday",
+    "gold": "shift-manager",
+    "pred": "shift-manager"
+   },
+   {
+    "text": "I'm behind, help me catch up this week",
+    "gold": "smart-scheduler",
+    "pred": "weekly-review"
+   },
+   {
+    "text": "Which day this week is going to be the hardest?",
+    "gold": "smart-scheduler",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "Best student deals on laptops",
+    "gold": "student-perks",
+    "pred": "web-research"
+   },
+   {
+    "text": "Quiz me on my biology notes",
+    "gold": "study-coach",
+    "pred": "get-to-know-you"
+   },
+   {
+    "text": "Help me study for my exam",
+    "gold": "study-coach",
+    "pred": "exam-prep"
+   },
+   {
+    "text": "Find my recurring charges",
+    "gold": "subscription-hunter",
+    "pred": "transaction-review"
+   },
+   {
+    "text": "Summarize this document",
+    "gold": "summarizer",
+    "pred": "summarizer"
+   },
+   {
+    "text": "Put every deadline from this syllabus in my calendar",
+    "gold": "syllabus-parser",
+    "pred": "syllabus-parser"
+   },
+   {
+    "text": "This task is too big, where do I start?",
+    "gold": "task-breakdown",
+    "pred": "task-breakdown"
+   },
+   {
+    "text": "Show me the transactions you're not sure about so I can categorize them.",
+    "gold": "transaction-review",
+    "pred": "transaction-review"
+   },
+   {
+    "text": "I don't understand photosynthesis",
+    "gold": "tutor",
+    "pred": "tutor"
+   },
+   {
+    "text": "Research cheap phone plans",
+    "gold": "web-research",
+    "pred": "paycheck-planner"
+   },
+   {
+    "text": "Review my week",
+    "gold": "weekly-review",
+    "pred": "weekly-review"
+   },
+   {
+    "text": "I think I'm burning out",
+    "gold": "wellbeing-check-in",
+    "pred": "wellbeing-check-in"
+   },
+   {
+    "text": "Proofread this paragraph",
+    "gold": "writing-helper",
+    "pred": "summarizer"
+   }
+  ]
+ },
+ {
+  "model": "BAAI/bge-small-en-v1.5",
+  "method": "logreg",
+  "train": "seeds",
+  "train_rows": 153,
+  "embed_secs": 0.4,
+  "test": "heldout",
+  "right": 28,
+  "n": 43,
+  "ms": 12.08870075000732,
+  "conf": [
+   [
+    [
+     "app-operator",
+     "health-basics"
+    ],
+    1
+   ],
+   [
+    [
+     "daily-planner",
+     "smart-scheduler"
+    ],
+    1
+   ],
+   [
+    [
+     "health-basics",
+     "weekly-review"
+    ],
+    1
+   ],
+   [
+    [
+     "life-admin",
+     "reminders-follow-up"
+    ],
+    1
+   ],
+   [
+    [
+     "memory-manager",
+     "budget-coach"
+    ],
+    1
+   ],
+   [
+    [
+     "packing-prep",
+     "layover-planner"
+    ],
+    1
+   ]
+  ],
+  "rows": [
+   {
+    "text": "Remove the gym habit",
+    "gold": "app-operator",
+    "pred": "health-basics"
+   },
+   {
+    "text": "How's my budget this month?",
+    "gold": "budget-coach",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "Where did my money go last month?",
+    "gold": "budget-coach",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "What questions will they ask in a job interview?",
+    "gold": "career-helper",
+    "pred": "career-helper"
+   },
+   {
+    "text": "Pros and cons of renting vs living in a dorm",
+    "gold": "comparison",
+    "pred": "comparison"
+   },
+   {
+    "text": "Can you time-block my day?",
+    "gold": "daily-planner",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "Give me my morning brief",
+    "gold": "daily-planner",
+    "pred": "daily-planner"
+   },
+   {
+    "text": "What should I study each day before the test?",
+    "gold": "exam-prep",
+    "pred": "exam-prep"
+   },
+   {
+    "text": "Is it true that we only use 10% of our brain?",
+    "gold": "fact-checker",
+    "pred": "fact-checker"
+   },
+   {
+    "text": "Get to know me better",
+    "gold": "get-to-know-you",
+    "pred": "get-to-know-you"
+   },
+   {
+    "text": "I read two chapters for my reading goal",
+    "gold": "goal-checkin",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "Start a new habit for me",
+    "gold": "habit-builder",
+    "pred": "habit-builder"
+   },
+   {
+    "text": "How did I sleep this week?",
+    "gold": "health-basics",
+    "pred": "weekly-review"
+   },
+   {
+    "text": "How much time do I have between flights?",
+    "gold": "layover-planner",
+    "pred": "layover-planner"
+   },
+   {
+    "text": "Book a doctor's appointment reminder",
+    "gold": "life-admin",
+    "pred": "reminders-follow-up"
+   },
+   {
+    "text": "How do I get from the airport to downtown by train?",
+    "gold": "local-transport",
+    "pred": "local-transport"
+   },
+   {
+    "text": "Meal plan on a $40 budget",
+    "gold": "meal-planner",
+    "pred": "meal-planner"
+   },
+   {
+    "text": "Help me prepare for the group meeting",
+    "gold": "meeting-prep",
+    "pred": "meeting-prep"
+   },
+   {
+    "text": "Update my memory: I moved to Austin",
+    "gold": "memory-manager",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "Write an email to my landlord",
+    "gold": "message-drafter",
+    "pred": "message-drafter"
+   },
+   {
+    "text": "Do I need a visa for Japan?",
+    "gold": "packing-prep",
+    "pred": "layover-planner"
+   },
+   {
+    "text": "How should I use my pay this week?",
+    "gold": "paycheck-planner",
+    "pred": "paycheck-planner"
+   },
+   {
+    "text": "Should I buy these shoes for $90?",
+    "gold": "purchase-advisor",
+    "pred": "purchase-advisor"
+   },
+   {
+    "text": "Follow up with me about the scholarship next week",
+    "gold": "reminders-follow-up",
+    "pred": "student-perks"
+   },
+   {
+    "text": "Ping me before my shift",
+    "gold": "reminders-follow-up",
+    "pred": "message-drafter"
+   },
+   {
+    "text": "Help me save for a trip",
+    "gold": "savings-goals",
+    "pred": "packing-prep"
+   },
+   {
+    "text": "Lunch is unpaid on my 9 hour shifts, so I get paid 8 hours",
+    "gold": "shift-manager",
+    "pred": "paycheck-planner"
+   },
+   {
+    "text": "Move my Saturday shift to Sunday",
+    "gold": "shift-manager",
+    "pred": "shift-manager"
+   },
+   {
+    "text": "I'm behind, help me catch up this week",
+    "gold": "smart-scheduler",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "Which day this week is going to be the hardest?",
+    "gold": "smart-scheduler",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "Best student deals on laptops",
+    "gold": "student-perks",
+    "pred": "web-research"
+   },
+   {
+    "text": "Quiz me on my biology notes",
+    "gold": "study-coach",
+    "pred": "summarizer"
+   },
+   {
+    "text": "Help me study for my exam",
+    "gold": "study-coach",
+    "pred": "exam-prep"
+   },
+   {
+    "text": "Find my recurring charges",
+    "gold": "subscription-hunter",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "Summarize this document",
+    "gold": "summarizer",
+    "pred": "summarizer"
+   },
+   {
+    "text": "Put every deadline from this syllabus in my calendar",
+    "gold": "syllabus-parser",
+    "pred": "syllabus-parser"
+   },
+   {
+    "text": "This task is too big, where do I start?",
+    "gold": "task-breakdown",
+    "pred": "task-breakdown"
+   },
+   {
+    "text": "Show me the transactions you're not sure about so I can categorize them.",
+    "gold": "transaction-review",
+    "pred": "transaction-review"
+   },
+   {
+    "text": "I don't understand photosynthesis",
+    "gold": "tutor",
+    "pred": "tutor"
+   },
+   {
+    "text": "Research cheap phone plans",
+    "gold": "web-research",
+    "pred": "comparison"
+   },
+   {
+    "text": "Review my week",
+    "gold": "weekly-review",
+    "pred": "weekly-review"
+   },
+   {
+    "text": "I think I'm burning out",
+    "gold": "wellbeing-check-in",
+    "pred": "wellbeing-check-in"
+   },
+   {
+    "text": "Proofread this paragraph",
+    "gold": "writing-helper",
+    "pred": "writing-helper"
+   }
+  ]
+ },
+ {
+  "model": "BAAI/bge-small-en-v1.5",
+  "method": "knn",
+  "train": "seeds",
+  "train_rows": 153,
+  "embed_secs": 0.4,
+  "test": "fresh",
+  "right": 49,
+  "n": 74,
+  "ms": 12.08870075000732,
+  "conf": [
+   [
+    [
+     "app-operator",
+     "reminders-follow-up"
+    ],
+    1
+   ],
+   [
+    [
+     "budget-coach",
+     "wellbeing-check-in"
+    ],
+    1
+   ],
+   [
+    [
+     "career-helper",
+     "goal-checkin"
+    ],
+    1
+   ],
+   [
+    [
+     "exam-prep",
+     "daily-planner"
+    ],
+    1
+   ],
+   [
+    [
+     "fact-checker",
+     "habit-builder"
+    ],
+    1
+   ],
+   [
+    [
+     "health-basics",
+     "smart-scheduler"
+    ],
+    1
+   ]
+  ],
+  "rows": [
+   {
+    "text": "can u move my dentist thing to friday at 4",
+    "gold": "app-operator",
+    "pred": "reminders-follow-up"
+   },
+   {
+    "text": "mark the laundry one as done and get rid of the gym event tmrw",
+    "gold": "app-operator",
+    "pred": "app-operator"
+   },
+   {
+    "text": "where is all my money going lol i'm broke again and it's only the 12th",
+    "gold": "budget-coach",
+    "pred": "wellbeing-check-in"
+   },
+   {
+    "text": "did i go over on food this month",
+    "gold": "budget-coach",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "i have a phone screen with target on thurs and idk what they're gonna ask",
+    "gold": "career-helper",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "does my cv look ok for an internship, i feel like it's too empty",
+    "gold": "career-helper",
+    "pred": "career-helper"
+   },
+   {
+    "text": "dell xps or the thinkpad, which one makes more sense for a cs major",
+    "gold": "comparison",
+    "pred": "comparison"
+   },
+   {
+    "text": "torn between the meal plan with 14 swipes and the unlimited one, pros and cons?",
+    "gold": "comparison",
+    "pred": "comparison"
+   },
+   {
+    "text": "ok what does my wednesday look like, what do i tackle first",
+    "gold": "daily-planner",
+    "pred": "daily-planner"
+   },
+   {
+    "text": "i just woke up and have a million things, give me an order for today",
+    "gold": "daily-planner",
+    "pred": "daily-planner"
+   },
+   {
+    "text": "orgo final is dec 14 and i havent started, what do i cover each day till then",
+    "gold": "exam-prep",
+    "pred": "daily-planner"
+   },
+   {
+    "text": "two finals the same week (stats and bio), map out the days before",
+    "gold": "exam-prep",
+    "pred": "exam-prep"
+   },
+   {
+    "text": "my roommate swears cracking your knuckles gives you arthritis, is that real",
+    "gold": "fact-checker",
+    "pred": "habit-builder"
+   },
+   {
+    "text": "saw a tiktok saying you lose most of your body heat through your head. legit or nah",
+    "gold": "fact-checker",
+    "pred": "fact-checker"
+   },
+   {
+    "text": "you barely know anything about me yet, wanna ask me stuff?",
+    "gold": "get-to-know-you",
+    "pred": "get-to-know-you"
+   },
+   {
+    "text": "quiz me about myself so your suggestions get less generic",
+    "gold": "get-to-know-you",
+    "pred": "get-to-know-you"
+   },
+   {
+    "text": "update on the marathon thing: ran 4 miles this morning before class",
+    "gold": "goal-checkin",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "didn't touch my spanish goal today tbh, log that",
+    "gold": "goal-checkin",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "i want to make reading 10 pages every night a thing i actually stick with",
+    "gold": "habit-builder",
+    "pred": "habit-builder"
+   },
+   {
+    "text": "am i still on a streak for drinking water",
+    "gold": "habit-builder",
+    "pred": "habit-builder"
+   },
+   {
+    "text": "i keep going to bed at 3am, help me fix my sleep",
+    "gold": "health-basics",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "what's a simple gym routine for 3 days a week for a beginner",
+    "gold": "health-basics",
+    "pred": "health-basics"
+   },
+   {
+    "text": "6 hrs in istanbul between flights, is that enough to see anything",
+    "gold": "layover-planner",
+    "pred": "layover-planner"
+   },
+   {
+    "text": "connecting through frankfurt with 5 hours, when do i need to be back at the gate if i go into town",
+    "gold": "layover-planner",
+    "pred": "layover-planner"
+   },
+   {
+    "text": "my passport expires in march, what do i need to do",
+    "gold": "life-admin",
+    "pred": "life-admin"
+   },
+   {
+    "text": "i have to fill out the fafsa verification form and it's confusing",
+    "gold": "life-admin",
+    "pred": "life-admin"
+   },
+   {
+    "text": "whats the cheapest way to get across town to the stadium, bus or subway",
+    "gold": "local-transport",
+    "pred": "local-transport"
+   },
+   {
+    "text": "is there a night bus from campus to the central station after midnight",
+    "gold": "local-transport",
+    "pred": "local-transport"
+   },
+   {
+    "text": "i have $35 for food till friday, what can i cook",
+    "gold": "meal-planner",
+    "pred": "meal-planner"
+   },
+   {
+    "text": "need dinner ideas for the week and what to buy, i only have a microwave and a rice cooker",
+    "gold": "meal-planner",
+    "pred": "meal-planner"
+   },
+   {
+    "text": "seeing my advisor tomorrow about switching majors, what should i bring up",
+    "gold": "meeting-prep",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "group project sync at 5, help me get my points together",
+    "gold": "meeting-prep",
+    "pred": "task-breakdown"
+   },
+   {
+    "text": "you still think i work at starbucks, i quit last month. fix that",
+    "gold": "memory-manager",
+    "pred": "paycheck-planner"
+   },
+   {
+    "text": "forget that i'm vegetarian, not anymore",
+    "gold": "memory-manager",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "write something to my landlord saying rent will be 3 days late",
+    "gold": "message-drafter",
+    "pred": "reminders-follow-up"
+   },
+   {
+    "text": "need to tell prof kim i'll miss lab on tuesday, can you word it nicely",
+    "gold": "message-drafter",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "going to iceland for 5 days in february, what do i need to bring",
+    "gold": "packing-prep",
+    "pred": "packing-prep"
+   },
+   {
+    "text": "do i need a visa or anything for a week in japan, and what goes in my carry on",
+    "gold": "packing-prep",
+    "pred": "packing-prep"
+   },
+   {
+    "text": "$812 just hit from work, how should i divide it up between rent, phone and savings",
+    "gold": "paycheck-planner",
+    "pred": "paycheck-planner"
+   },
+   {
+    "text": "payday friday, figure out where each dollar goes before i blow it",
+    "gold": "paycheck-planner",
+    "pred": "paycheck-planner"
+   },
+   {
+    "text": "airpods are $179 rn, is that dumb with rent coming up",
+    "gold": "purchase-advisor",
+    "pred": "web-research"
+   },
+   {
+    "text": "thinking about getting a $60 jacket, do i have room for that",
+    "gold": "purchase-advisor",
+    "pred": "purchase-advisor"
+   },
+   {
+    "text": "ping me sunday night to submit the lab report",
+    "gold": "reminders-follow-up",
+    "pred": "message-drafter"
+   },
+   {
+    "text": "i keep forgetting to email the registrar, bug me about it tomorrow at 9",
+    "gold": "reminders-follow-up",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "i want $1500 for a spring break trip by march, how much do i put away each week",
+    "gold": "savings-goals",
+    "pred": "paycheck-planner"
+   },
+   {
+    "text": "how close am i to the laptop fund",
+    "gold": "savings-goals",
+    "pred": "savings-goals"
+   },
+   {
+    "text": "boss gave me sat 9-5 and sun 12-8 with a 30 min unpaid lunch, put those in",
+    "gold": "shift-manager",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "am i working too much next week? feels like a lot of closing shifts",
+    "gold": "shift-manager",
+    "pred": "shift-manager"
+   },
+   {
+    "text": "my lab got moved and now it overlaps with work on thursday, sort it out",
+    "gold": "smart-scheduler",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "squeeze in two hours for the essay somewhere before friday",
+    "gold": "smart-scheduler",
+    "pred": "reminders-follow-up"
+   },
+   {
+    "text": "is there any deal on spotify or adobe if i have a .edu email",
+    "gold": "student-perks",
+    "pred": "message-drafter"
+   },
+   {
+    "text": "when is the deadline for financial aid and does campus have free tutoring",
+    "gold": "student-perks",
+    "pred": "student-perks"
+   },
+   {
+    "text": "make me flashcard style questions from my bio notes and space them out over the week",
+    "gold": "study-coach",
+    "pred": "study-coach"
+   },
+   {
+    "text": "i need a system for getting through psych chapter 4 to 9, quiz me as we go",
+    "gold": "study-coach",
+    "pred": "syllabus-parser"
+   },
+   {
+    "text": "what am i getting charged for every month that i forgot about",
+    "gold": "subscription-hunter",
+    "pred": "subscription-hunter"
+   },
+   {
+    "text": "am i paying for both hulu and disney plus? kill whatever i dont use",
+    "gold": "subscription-hunter",
+    "pred": "subscription-hunter"
+   },
+   {
+    "text": "tldr of this 20 page reading pls",
+    "gold": "summarizer",
+    "pred": "summarizer"
+   },
+   {
+    "text": "this email thread from my group is so long, what did they actually decide",
+    "gold": "summarizer",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "just uploaded the course outline for econ 201, pull out all the assignment dates",
+    "gold": "syllabus-parser",
+    "pred": "syllabus-parser"
+   },
+   {
+    "text": "here's a pic of my chem syllabus, put the exams and homework in my calendar",
+    "gold": "syllabus-parser",
+    "pred": "exam-prep"
+   },
+   {
+    "text": "my capstone feels impossible, chop it into small pieces with how long each takes",
+    "gold": "task-breakdown",
+    "pred": "wellbeing-check-in"
+   },
+   {
+    "text": "moving out of my dorm next month, what are all the steps",
+    "gold": "task-breakdown",
+    "pred": "task-breakdown"
+   },
+   {
+    "text": "there's a $23.40 charge from SQ *BLUEBIRD, idk what category that is, lets go thru the weird ones",
+    "gold": "transaction-review",
+    "pred": "app-operator"
+   },
+   {
+    "text": "some of my purchases are labeled wrong, can we sort the unclear ones together",
+    "gold": "transaction-review",
+    "pred": "transaction-review"
+   },
+   {
+    "text": "can someone please tell me what a p-value actually means, i'm lost",
+    "gold": "tutor",
+    "pred": "tutor"
+   },
+   {
+    "text": "mitosis vs meiosis, i keep mixing them up, help me get it",
+    "gold": "tutor",
+    "pred": "tutor"
+   },
+   {
+    "text": "find out which banks have no fee checking accounts for students right now, with sources",
+    "gold": "web-research",
+    "pred": "web-research"
+   },
+   {
+    "text": "search for the best budget noise cancelling headphones this year",
+    "gold": "web-research",
+    "pred": "web-research"
+   },
+   {
+    "text": "so how'd i do these past 7 days overall",
+    "gold": "weekly-review",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "sunday recap time, what did i finish and what slipped",
+    "gold": "weekly-review",
+    "pred": "weekly-review"
+   },
+   {
+    "text": "honestly i'm burnt out and cant get out of bed today",
+    "gold": "wellbeing-check-in",
+    "pred": "wellbeing-check-in"
+   },
+   {
+    "text": "feeling kinda low and anxious lately, nothing's wrong exactly",
+    "gold": "wellbeing-check-in",
+    "pred": "wellbeing-check-in"
+   },
+   {
+    "text": "is my thesis statement strong enough? here's my intro paragraph",
+    "gold": "writing-helper",
+    "pred": "writing-helper"
+   },
+   {
+    "text": "check if my APA citations are right and tell me where my argument is weak",
+    "gold": "writing-helper",
+    "pred": "writing-helper"
+   }
+  ]
+ },
+ {
+  "model": "BAAI/bge-small-en-v1.5",
+  "method": "logreg",
+  "train": "seeds",
+  "train_rows": 153,
+  "embed_secs": 0.4,
+  "test": "fresh",
+  "right": 49,
+  "n": 74,
+  "ms": 12.08870075000732,
+  "conf": [
+   [
+    [
+     "savings-goals",
+     "budget-coach"
+    ],
+    2
+   ],
+   [
+    [
+     "app-operator",
+     "reminders-follow-up"
+    ],
+    1
+   ],
+   [
+    [
+     "career-helper",
+     "smart-scheduler"
+    ],
+    1
+   ],
+   [
+    [
+     "daily-planner",
+     "smart-scheduler"
+    ],
+    1
+   ],
+   [
+    [
+     "exam-prep",
+     "smart-scheduler"
+    ],
+    1
+   ],
+   [
+    [
+     "get-to-know-you",
+     "memory-manager"
+    ],
+    1
+   ]
+  ],
+  "rows": [
+   {
+    "text": "can u move my dentist thing to friday at 4",
+    "gold": "app-operator",
+    "pred": "reminders-follow-up"
+   },
+   {
+    "text": "mark the laundry one as done and get rid of the gym event tmrw",
+    "gold": "app-operator",
+    "pred": "app-operator"
+   },
+   {
+    "text": "where is all my money going lol i'm broke again and it's only the 12th",
+    "gold": "budget-coach",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "did i go over on food this month",
+    "gold": "budget-coach",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "i have a phone screen with target on thurs and idk what they're gonna ask",
+    "gold": "career-helper",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "does my cv look ok for an internship, i feel like it's too empty",
+    "gold": "career-helper",
+    "pred": "career-helper"
+   },
+   {
+    "text": "dell xps or the thinkpad, which one makes more sense for a cs major",
+    "gold": "comparison",
+    "pred": "comparison"
+   },
+   {
+    "text": "torn between the meal plan with 14 swipes and the unlimited one, pros and cons?",
+    "gold": "comparison",
+    "pred": "comparison"
+   },
+   {
+    "text": "ok what does my wednesday look like, what do i tackle first",
+    "gold": "daily-planner",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "i just woke up and have a million things, give me an order for today",
+    "gold": "daily-planner",
+    "pred": "daily-planner"
+   },
+   {
+    "text": "orgo final is dec 14 and i havent started, what do i cover each day till then",
+    "gold": "exam-prep",
+    "pred": "exam-prep"
+   },
+   {
+    "text": "two finals the same week (stats and bio), map out the days before",
+    "gold": "exam-prep",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "my roommate swears cracking your knuckles gives you arthritis, is that real",
+    "gold": "fact-checker",
+    "pred": "fact-checker"
+   },
+   {
+    "text": "saw a tiktok saying you lose most of your body heat through your head. legit or nah",
+    "gold": "fact-checker",
+    "pred": "fact-checker"
+   },
+   {
+    "text": "you barely know anything about me yet, wanna ask me stuff?",
+    "gold": "get-to-know-you",
+    "pred": "memory-manager"
+   },
+   {
+    "text": "quiz me about myself so your suggestions get less generic",
+    "gold": "get-to-know-you",
+    "pred": "get-to-know-you"
+   },
+   {
+    "text": "update on the marathon thing: ran 4 miles this morning before class",
+    "gold": "goal-checkin",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "didn't touch my spanish goal today tbh, log that",
+    "gold": "goal-checkin",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "i want to make reading 10 pages every night a thing i actually stick with",
+    "gold": "habit-builder",
+    "pred": "habit-builder"
+   },
+   {
+    "text": "am i still on a streak for drinking water",
+    "gold": "habit-builder",
+    "pred": "habit-builder"
+   },
+   {
+    "text": "i keep going to bed at 3am, help me fix my sleep",
+    "gold": "health-basics",
+    "pred": "habit-builder"
+   },
+   {
+    "text": "what's a simple gym routine for 3 days a week for a beginner",
+    "gold": "health-basics",
+    "pred": "health-basics"
+   },
+   {
+    "text": "6 hrs in istanbul between flights, is that enough to see anything",
+    "gold": "layover-planner",
+    "pred": "layover-planner"
+   },
+   {
+    "text": "connecting through frankfurt with 5 hours, when do i need to be back at the gate if i go into town",
+    "gold": "layover-planner",
+    "pred": "layover-planner"
+   },
+   {
+    "text": "my passport expires in march, what do i need to do",
+    "gold": "life-admin",
+    "pred": "life-admin"
+   },
+   {
+    "text": "i have to fill out the fafsa verification form and it's confusing",
+    "gold": "life-admin",
+    "pred": "life-admin"
+   },
+   {
+    "text": "whats the cheapest way to get across town to the stadium, bus or subway",
+    "gold": "local-transport",
+    "pred": "local-transport"
+   },
+   {
+    "text": "is there a night bus from campus to the central station after midnight",
+    "gold": "local-transport",
+    "pred": "local-transport"
+   },
+   {
+    "text": "i have $35 for food till friday, what can i cook",
+    "gold": "meal-planner",
+    "pred": "meal-planner"
+   },
+   {
+    "text": "need dinner ideas for the week and what to buy, i only have a microwave and a rice cooker",
+    "gold": "meal-planner",
+    "pred": "meal-planner"
+   },
+   {
+    "text": "seeing my advisor tomorrow about switching majors, what should i bring up",
+    "gold": "meeting-prep",
+    "pred": "exam-prep"
+   },
+   {
+    "text": "group project sync at 5, help me get my points together",
+    "gold": "meeting-prep",
+    "pred": "task-breakdown"
+   },
+   {
+    "text": "you still think i work at starbucks, i quit last month. fix that",
+    "gold": "memory-manager",
+    "pred": "shift-manager"
+   },
+   {
+    "text": "forget that i'm vegetarian, not anymore",
+    "gold": "memory-manager",
+    "pred": "memory-manager"
+   },
+   {
+    "text": "write something to my landlord saying rent will be 3 days late",
+    "gold": "message-drafter",
+    "pred": "reminders-follow-up"
+   },
+   {
+    "text": "need to tell prof kim i'll miss lab on tuesday, can you word it nicely",
+    "gold": "message-drafter",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "going to iceland for 5 days in february, what do i need to bring",
+    "gold": "packing-prep",
+    "pred": "packing-prep"
+   },
+   {
+    "text": "do i need a visa or anything for a week in japan, and what goes in my carry on",
+    "gold": "packing-prep",
+    "pred": "packing-prep"
+   },
+   {
+    "text": "$812 just hit from work, how should i divide it up between rent, phone and savings",
+    "gold": "paycheck-planner",
+    "pred": "paycheck-planner"
+   },
+   {
+    "text": "payday friday, figure out where each dollar goes before i blow it",
+    "gold": "paycheck-planner",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "airpods are $179 rn, is that dumb with rent coming up",
+    "gold": "purchase-advisor",
+    "pred": "comparison"
+   },
+   {
+    "text": "thinking about getting a $60 jacket, do i have room for that",
+    "gold": "purchase-advisor",
+    "pred": "purchase-advisor"
+   },
+   {
+    "text": "ping me sunday night to submit the lab report",
+    "gold": "reminders-follow-up",
+    "pred": "message-drafter"
+   },
+   {
+    "text": "i keep forgetting to email the registrar, bug me about it tomorrow at 9",
+    "gold": "reminders-follow-up",
+    "pred": "reminders-follow-up"
+   },
+   {
+    "text": "i want $1500 for a spring break trip by march, how much do i put away each week",
+    "gold": "savings-goals",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "how close am i to the laptop fund",
+    "gold": "savings-goals",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "boss gave me sat 9-5 and sun 12-8 with a 30 min unpaid lunch, put those in",
+    "gold": "shift-manager",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "am i working too much next week? feels like a lot of closing shifts",
+    "gold": "shift-manager",
+    "pred": "shift-manager"
+   },
+   {
+    "text": "my lab got moved and now it overlaps with work on thursday, sort it out",
+    "gold": "smart-scheduler",
+    "pred": "smart-scheduler"
+   },
+   {
+    "text": "squeeze in two hours for the essay somewhere before friday",
+    "gold": "smart-scheduler",
+    "pred": "writing-helper"
+   },
+   {
+    "text": "is there any deal on spotify or adobe if i have a .edu email",
+    "gold": "student-perks",
+    "pred": "subscription-hunter"
+   },
+   {
+    "text": "when is the deadline for financial aid and does campus have free tutoring",
+    "gold": "student-perks",
+    "pred": "student-perks"
+   },
+   {
+    "text": "make me flashcard style questions from my bio notes and space them out over the week",
+    "gold": "study-coach",
+    "pred": "study-coach"
+   },
+   {
+    "text": "i need a system for getting through psych chapter 4 to 9, quiz me as we go",
+    "gold": "study-coach",
+    "pred": "exam-prep"
+   },
+   {
+    "text": "what am i getting charged for every month that i forgot about",
+    "gold": "subscription-hunter",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "am i paying for both hulu and disney plus? kill whatever i dont use",
+    "gold": "subscription-hunter",
+    "pred": "subscription-hunter"
+   },
+   {
+    "text": "tldr of this 20 page reading pls",
+    "gold": "summarizer",
+    "pred": "summarizer"
+   },
+   {
+    "text": "this email thread from my group is so long, what did they actually decide",
+    "gold": "summarizer",
+    "pred": "message-drafter"
+   },
+   {
+    "text": "just uploaded the course outline for econ 201, pull out all the assignment dates",
+    "gold": "syllabus-parser",
+    "pred": "syllabus-parser"
+   },
+   {
+    "text": "here's a pic of my chem syllabus, put the exams and homework in my calendar",
+    "gold": "syllabus-parser",
+    "pred": "syllabus-parser"
+   },
+   {
+    "text": "my capstone feels impossible, chop it into small pieces with how long each takes",
+    "gold": "task-breakdown",
+    "pred": "wellbeing-check-in"
+   },
+   {
+    "text": "moving out of my dorm next month, what are all the steps",
+    "gold": "task-breakdown",
+    "pred": "task-breakdown"
+   },
+   {
+    "text": "there's a $23.40 charge from SQ *BLUEBIRD, idk what category that is, lets go thru the weird ones",
+    "gold": "transaction-review",
+    "pred": "budget-coach"
+   },
+   {
+    "text": "some of my purchases are labeled wrong, can we sort the unclear ones together",
+    "gold": "transaction-review",
+    "pred": "transaction-review"
+   },
+   {
+    "text": "can someone please tell me what a p-value actually means, i'm lost",
+    "gold": "tutor",
+    "pred": "tutor"
+   },
+   {
+    "text": "mitosis vs meiosis, i keep mixing them up, help me get it",
+    "gold": "tutor",
+    "pred": "tutor"
+   },
+   {
+    "text": "find out which banks have no fee checking accounts for students right now, with sources",
+    "gold": "web-research",
+    "pred": "web-research"
+   },
+   {
+    "text": "search for the best budget noise cancelling headphones this year",
+    "gold": "web-research",
+    "pred": "web-research"
+   },
+   {
+    "text": "so how'd i do these past 7 days overall",
+    "gold": "weekly-review",
+    "pred": "goal-checkin"
+   },
+   {
+    "text": "sunday recap time, what did i finish and what slipped",
+    "gold": "weekly-review",
+    "pred": "weekly-review"
+   },
+   {
+    "text": "honestly i'm burnt out and cant get out of bed today",
+    "gold": "wellbeing-check-in",
+    "pred": "wellbeing-check-in"
+   },
+   {
+    "text": "feeling kinda low and anxious lately, nothing's wrong exactly",
+    "gold": "wellbeing-check-in",
+    "pred": "wellbeing-check-in"
+   },
+   {
+    "text": "is my thesis statement strong enough? here's my intro paragraph",
+    "gold": "writing-helper",
+    "pred": "writing-helper"
+   },
+   {
+    "text": "check if my APA citations are right and tell me where my argument is weak",
+    "gold": "writing-helper",
+    "pred": "writing-helper"
+   }
+  ]
+ }
+]
