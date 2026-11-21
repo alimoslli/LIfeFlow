@@ -22,6 +22,11 @@ export type OpenAIConfig = {
 const noRetention = new Set<string>();
 /** Small models that refused our request this run: their turns go to the main model (see startTurn). */
 const smallRefused = new Set<string>();
+/**
+ * How long the small model gets to start answering before the main model takes over (COO review 2, 2026-11-12: a plain
+ * lookup shouldn't end in "try again" because the small model had a bad moment). The main model keeps the SDK's own retries.
+ */
+export const SMALL_START_MS = 20_000;
 const refusedRetention = (e: unknown) => e instanceof OpenAI.APIError && e.status === 400 && /prompt_cache_retention/.test(e.message);
 
 const toToolDefs = (tools: ToolSpec[]): Tool[] =>
@@ -124,7 +129,12 @@ export class OpenAIProvider implements ModelProvider {
     const small = effort === "low" && config.smallModel && !smallRefused.has(config.smallModel) ? config.smallModel : undefined;
     let model = small ?? config.model;
     const fixed = config.reasoningEffort && config.reasoningEffort !== "auto" ? config.reasoningEffort : undefined;
-    const reasoningEffort = fixed ?? effort;
+    let reasoningEffort = fixed ?? effort;
+    /** The main model takes over: it thinks at its own level, never the small model's "low" (COO review 4). */
+    const toMainModel = () => {
+      model = config.model;
+      if (!fixed && reasoningEffort === "low") reasoningEffort = "medium";
+    };
     let first = true;
 
     const bodyFor = (model: string): ResponseCreateParamsStreaming => {
@@ -148,55 +158,104 @@ export class OpenAIProvider implements ModelProvider {
     const send = async (model: string) => {
       const body = bodyFor(model);
       const retention = config.cacheRetention && !noRetention.has(model) ? config.cacheRetention : undefined;
+      // the small model's first request gets no retries and a short start: on any trouble the main model answers instead
+      const opts = first && model === small ? { signal: startSignal(), maxRetries: 0, timeout: SMALL_START_MS } : { signal };
       try {
-        return await client.responses.create(retention ? { ...body, prompt_cache_retention: retention } : body, { signal });
+        return await client.responses.create(retention ? { ...body, prompt_cache_retention: retention } : body, opts);
       } catch (e) {
         if (!retention || !refusedRetention(e)) throw e;
         noRetention.add(model);
-        return client.responses.create(body, { signal });
+        return client.responses.create(body, opts);
       }
     };
+    // The small model's first request also has to send its first event within SMALL_START_MS: a stream that opens and
+    // then says nothing is cut off, and the main model answers (COO review 4).
+    let starting: { ctl: AbortController; timer: ReturnType<typeof setTimeout> } | null = null;
+    const startSignal = () => {
+      const ctl = new AbortController();
+      starting = { ctl, timer: setTimeout(() => ctl.abort(new Error("The small model didn't start in time.")), SMALL_START_MS) };
+      return signal ? AbortSignal.any([signal, ctl.signal]) : ctl.signal;
+    };
+    const started = () => {
+      if (starting) clearTimeout(starting.timer);
+      starting = null;
+    };
+    /** Reads one streamed response, passing text on as it comes; `said` turns true at the first word. */
+    async function* read(stream: Awaited<ReturnType<typeof send>>, said: { any: boolean }) {
+      try {
+        return yield* readAll(stream, said);
+      } finally {
+        // also when the consumer closes the stream early: no timer is left behind (COO review 5)
+        started();
+      }
+    }
+    async function* readAll(stream: Awaited<ReturnType<typeof send>>, said: { any: boolean }) {
+      let text = "";
+      let output: ResponseOutputItem[] | null = null;
+      let usage: TokenUsage | undefined;
+      let incomplete: "max_output_tokens" | "other" | undefined;
+      for await (const event of stream) {
+        started();
+        if (event.type === "response.output_text.delta") {
+          text += event.delta;
+          said.any = true;
+          yield { type: "text_delta", delta: event.delta } satisfies StepEvent;
+        } else if (event.type === "response.completed" || event.type === "response.incomplete") {
+          output = event.response.output;
+          usage = toUsage(event.response.usage);
+          // The model ran out of room (reasoning counts inside the output cap) or was cut off: say so, never pass it off as finished.
+          if (event.type === "response.incomplete")
+            incomplete = event.response.incomplete_details?.reason === "max_output_tokens" ? "max_output_tokens" : "other";
+        } else if (event.type === "response.failed") {
+          throw new Error(event.response.error?.message ?? "The model request failed.");
+        } else if (event.type === "error") {
+          throw new Error(event.message);
+        }
+      }
+      if (!output) throw new Error("The model stream ended without a response.");
+      return { text, output, usage, incomplete };
+    }
 
     return {
       get model() {
         return model;
       },
-      async *step(toolResults, nextTools) {
+      async *step(toolResults, nextTools, opts) {
         for (const r of toolResults ?? []) input.push({ type: "function_call_output", call_id: r.callId, output: r.output });
         if (nextTools) toolDefs = toToolDefs(nextTools);
-        let stream;
-        try {
-          stream = await send(model);
-        } catch (e) {
-          // only before the small model has said anything in this turn: later steps carry its own reasoning items
-          const status = (e as { status?: number })?.status;
-          if (!(first && small && model === small && (status === 400 || status === 404))) throw e;
-          smallRefused.add(small);
-          model = config.model;
-          stream = await send(model);
-        }
-        first = false;
-        let text = "";
-        let output: ResponseOutputItem[] | null = null;
-        let usage: TokenUsage | undefined;
-        let incomplete: "max_output_tokens" | "other" | undefined;
-        for await (const event of stream) {
-          if (event.type === "response.output_text.delta") {
-            text += event.delta;
-            yield { type: "text_delta", delta: event.delta } satisfies StepEvent;
-          } else if (event.type === "response.completed" || event.type === "response.incomplete") {
-            output = event.response.output;
-            usage = toUsage(event.response.usage);
-            // The model ran out of room (reasoning counts inside the output cap) or was cut off: say so, never pass it off as finished.
-            if (event.type === "response.incomplete")
-              incomplete = event.response.incomplete_details?.reason === "max_output_tokens" ? "max_output_tokens" : "other";
-          } else if (event.type === "response.failed") {
-            throw new Error(event.response.error?.message ?? "The model request failed.");
-          } else if (event.type === "error") {
-            throw new Error(event.message);
+        // Money never stays on the small model (COO review, 2026-11-12): once money tools are loaded the main model takes
+        // the rest of the turn. The small model's reasoning items belong to it, so they are left out; its tool calls and
+        // their results stay, so nothing is looked up or saved twice.
+        if (opts?.mainModel && small && model === small) {
+          toMainModel();
+          // Its function_call and message items lose their ids too (call_id stays): with store=false, an item id from a
+          // reasoning model ties the item to the reasoning item that came with it, and the API refuses a function_call
+          // whose reasoning item is missing ("was provided without its required 'reasoning' item"). Not yet proven
+          // against the real API (COO review 3: no paid call for it).
+          for (let k = input.length - 1; k >= 0; k--) {
+            const item = input[k] as { type?: string; id?: string };
+            if (item.type === "reasoning") input.splice(k, 1);
+            else if ((item.type === "function_call" || item.type === "message") && item.id) delete item.id;
           }
         }
-        if (!output) throw new Error("The model stream ended without a response.");
+        const said = { any: false };
+        let result;
+        try {
+          result = yield* read(await send(model), said);
+        } catch (e) {
+          started();
+          // Only on the small model's first step and before it said a word (later steps carry its own reasoning items):
+          // a refusal (400/404) sets it aside for this run; a 5xx, a timeout or a broken stream is a bad moment, and the
+          // main model answers this turn. Never after the user stopped it.
+          if (!(first && small && model === small && !said.any) || signal?.aborted) throw e;
+          const status = (e as { status?: number })?.status;
+          if (status === 400 || status === 404) smallRefused.add(small);
+          else if (status !== undefined && status < 500 && status !== 408 && status !== 429) throw e;
+          toMainModel();
+          result = yield* read(await send(model), said);
+        }
+        first = false;
+        const { text, output, usage, incomplete } = result;
         const toolCalls: ToolCall[] = [];
         for (const item of output) {
           if (item.type === "function_call") toolCalls.push({ callId: item.call_id, name: item.name, arguments: item.arguments });

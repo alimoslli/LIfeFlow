@@ -20,8 +20,11 @@ export type StepEvent =
 export interface ModelTurn {
   /** The model answering this turn, when the provider picked a different one than its default (a small model). */
   readonly model?: string;
-  /** `tools` replaces the tool list from this step on (after load_tools added a group). */
-  step(toolResults?: { callId: string; output: string }[], tools?: ToolSpec[]): AsyncGenerator<StepEvent>;
+  /**
+   * `tools` replaces the tool list from this step on (after load_tools added a group). `mainModel` moves a turn that
+   * started on the small model to the main one from this step on (money tools were loaded mid-answer).
+   */
+  step(toolResults?: { callId: string; output: string }[], tools?: ToolSpec[], opts?: { mainModel?: boolean }): AsyncGenerator<StepEvent>;
 }
 
 /** How hard a reasoning model thinks on this turn (chosen per turn, see effort.ts). */
