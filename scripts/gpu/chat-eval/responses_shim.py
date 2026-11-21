@@ -5,7 +5,7 @@ message and function_call items and token usage). Stdlib only. Made for the step
 
   python responses_shim.py --upstream http://127.0.0.1:8000/v1 --port 8100 [--no-think]
 """
-import argparse, json, sys, threading, time, uuid, urllib.request, urllib.error
+import argparse, json, re, sys, threading, time, uuid, urllib.request, urllib.error
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 ap = argparse.ArgumentParser()
@@ -19,9 +19,11 @@ ap.add_argument("--temperature", type=float, default=0.2)
 ap.add_argument("--system-append", default=None, help="a text file added to the system prompt sent to the model (our own-model house rules); "
                 "the --dump keeps the app's original prompt, so a student trained on the dump learns the behaviour without the rules")
 ap.add_argument("--remind", default=None, help="a text file of short reminders put at the very end of what the model reads, where it follows them best: "
-                "parts split by a line of ---: before the first tool call of a message, after tool results ({n} and {used} are filled in), "
-                "and at the tool-call limit. Like --system-append, only what is sent changes; the --dump keeps the app's messages")
-ap.add_argument("--tool-limit", type=int, default=3, help="tool calls per message after which the third reminder is used")
+                "parts split by a line of ---: before the first tool call of a message, then one part per number of tool calls made so far "
+                "({n} and {used} are filled in; the last part serves every higher count). Like --system-append, only what is sent changes; the --dump keeps the app's messages")
+ap.add_argument("--guard", action="store_true", help="our own checks around the model, the same idea as the app's (the code decides, not the model): "
+                "a saving tool called when the person only asked a question is sent back once; an answer with an amount that is in no "
+                "tool result is sent back once; bold marks and long dashes are taken out of the answer")
 ap.add_argument("--log", default="shim.jsonl")
 ap.add_argument("--dump", default=None, help="write each tagged request (X-Conv-Id header) and reply in chat format, for training data")
 ARGS = ap.parse_args()
@@ -73,26 +75,122 @@ def to_tools(tools):
     return out
 
 
+def used_calls(sent):
+    """Names of the tools called since the person's last message."""
+    used = []
+    for m in reversed(sent):
+        if m["role"] == "user":
+            break
+        if m["role"] == "assistant":
+            used = [c["function"]["name"] for c in m.get("tool_calls") or []] + used
+    return used
+
+
 def remind(sent):
-    """Adds the reminder for this step to the last message the model reads (the person's message, or the last tool result)."""
+    """Adds the reminder for this step to the last message the model reads (the person's message, or the last tool result).
+    Parts of the file: [0] before the first tool call, [k] after k tool calls (the last part serves every higher count)."""
     if not REMIND or not sent:
         return
     last = sent[-1]
+    asked = last_user(sent)
+    extra = []
     if last["role"] == "user":
         note = REMIND[0]
     elif last["role"] == "tool":
-        used = []
-        for m in reversed(sent):
-            if m["role"] == "user":
-                break
-            if m["role"] == "assistant":
-                used = [c["function"]["name"] for c in m.get("tool_calls") or []] + used
-        part = REMIND[2] if len(used) >= ARGS.tool_limit and len(REMIND) > 2 else REMIND[1] if len(REMIND) > 1 else ""
+        used = used_calls(sent)
+        part = REMIND[min(len(used), len(REMIND) - 1)] if len(REMIND) > 1 else ""
         note = part.replace("{n}", str(len(used))).replace("{used}", ", ".join(used))
+        # Our code reads the person's words; the model is told, not asked, what they did and did not ask for.
+        if ORDER_TO_BOOK.search(asked) and not only_a_question(asked) and "find_free_time" in used and not any(WRITE_TOOL.match(u) for u in used):
+            extra.append("They asked you to find the time for them, so finish the job: pick the best slot in the result and save it now with create_events (one call), then say what you booked with its day and time.")
     else:
         return
+    if only_a_question(asked):
+        extra.append("They only asked whether it would fit or work. Look, answer, and save nothing; offer to save it.")
+    note = "\n".join([note] + ["- " + e for e in extra]).strip()
     if note:
         last["content"] = (last["content"] or "") + "\n\n<house_reminder>\n" + note + "\n</house_reminder>"
+
+
+ORDER_TO_BOOK = re.compile(r"\b(find me|book (it|me|a|an|the|that|this|one)|block (out|off|me|a|an|the|some|it)|schedule (it|me|a|an|the|that|this)|put (it|this|that|them) on (my|the) calendar)\b", re.I)
+WRITE_TOOL = re.compile(r"^(create|update|delete|add|set|move|mark|log|save|record|remember|make|resolve|complete|schedule|book|cancel|archive|contribute|shift|split)_")
+# The person asked someone to do something: an order ("add ...", "find me ...", "block ..."), or "can you / please / go ahead".
+ASKS = re.compile(r"\b(can you|could you|will you|would you|please|go ahead|do it|do that|yes|yeah|sure|ok|okay|find me|get me|give me|help me (add|book|block|plan|schedule|set)|i need you to|i want you to|remind me|add|create|put|schedule|book|block|move|reschedule|delete|remove|cancel|set up|log|save|track|mark|update|change|rename|split|record|remember|note|sign me up)\b", re.I)
+# ...unless the whole message is only a question about whether something would fit or work.
+ONLY_ASKS_IF = re.compile(r"\b(does|would|will|could|can|is|should|do)\s+(that|this|it|i)\b[^.?!]*\?\s*$", re.I)
+MONEY = re.compile(r"\$\s?(\d[\d,]*(?:\.\d{1,2})?)")
+DECIMAL = re.compile(r"(?<![\d.$,])(\d+\.\d+)(?![\d.])")
+
+
+def last_user(msgs):
+    for m in reversed(msgs):
+        if m["role"] == "user":
+            return m["content"] or ""
+    return ""
+
+
+def only_a_question(text):
+    """True when the person asked whether something fits or works and did not ask for anything to be saved."""
+    t = text.strip()
+    if not ONLY_ASKS_IF.search(t):
+        return False
+    return not re.search(r"\b(can you|could you|will you|would you|please|go ahead|add it|book it|put it|schedule it|set it up|block it|save it)\b", t, re.I)
+
+
+def num(s):
+    try:
+        return f"{float(s.replace(',', '')):.2f}"
+    except ValueError:
+        return None
+
+
+def known_numbers(msgs):
+    seen = set()
+    for m in msgs:
+        if m["role"] not in ("tool", "user"):
+            continue
+        text = m["content"] if isinstance(m["content"], str) else json.dumps(m["content"])
+        for x in re.findall(r"\d[\d,]*(?:\.\d+)?", text or ""):
+            v = num(x)
+            if v:
+                seen.add(v)
+        for c in re.findall(r"[Cc]ents\"?:\s*(-?\d+)", text or ""):
+            seen.add(f"{abs(int(c)) / 100:.2f}")
+    return seen
+
+
+def guard_note(original, msg):
+    """What is wrong with this reply, as one note to send back to the model; None when it is fine."""
+    calls = [c["function"]["name"] for c in msg.get("tool_calls") or []]
+    writes = [c for c in calls if WRITE_TOOL.match(c)]
+    if writes and only_a_question(last_user(original)):
+        return ("They only asked whether it would fit or work. They did not ask you to save anything, so do not call " + ", ".join(writes) +
+                ". Answer the question from what you have and offer to save it.")
+    if calls:
+        return None
+    text = (msg.get("content") or "").split("</think>")[-1]
+    if not any(m["role"] == "tool" for m in original):
+        return None
+    known = known_numbers(original)
+    bad = [m.group(0) for m in MONEY.finditer(text) if num(m.group(1)) not in known] + [m.group(1) for m in DECIMAL.finditer(text) if num(m.group(1)) not in known]
+    if bad:
+        return ("These figures are not in any result: " + ", ".join(sorted(set(bad))[:6]) + ". Write the answer again using only figures copied exactly "
+                "from the results, with cents. Do not add, subtract, round or estimate.")
+    return None
+
+
+def clean(text):
+    """The skyling never writes bold marks or long dashes; taking them out is safer than hoping."""
+    text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
+    text = re.sub(r"\s*\u2014\s*", ", ", text)
+    return text.replace("\u202f", " ").replace("\u00a0", " ").replace("\u2011", "-")
+
+
+def post(req):
+    data = json.dumps(req).encode()
+    r = urllib.request.Request(ARGS.upstream + "/chat/completions", data=data, headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(r, timeout=900) as resp:
+        return json.loads(resp.read())
 
 
 def call_upstream(body):
@@ -116,10 +214,29 @@ def call_upstream(body):
         req["chat_template_kwargs"] = {"enable_thinking": think == "on"}
     if ARGS.reasoning_effort:
         req["reasoning_effort"] = ARGS.reasoning_effort
-    data = json.dumps(req).encode()
-    r = urllib.request.Request(ARGS.upstream + "/chat/completions", data=data, headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(r, timeout=900) as resp:
-        return {**req, "messages": original}, json.loads(resp.read())
+    chat = post(req)
+    if ARGS.guard:
+        note = guard_note(original, chat["choices"][0]["message"])
+        if note:
+            again = [dict(m) for m in sent]
+            again[-1]["content"] = (again[-1]["content"] or "") + "\n\n<house_check>\n" + note + "\n</house_check>"
+            second = post({**req, "messages": again})
+            # keep the second reply only if it is clean; otherwise the first stands (never loop)
+            if not guard_note(original, second["choices"][0]["message"]):
+                for k in ("prompt_tokens", "completion_tokens", "total_tokens"):
+                    second.setdefault("usage", {})[k] = (second.get("usage") or {}).get(k, 0) + (chat.get("usage") or {}).get(k, 0)
+                chat = second
+                chat["guard"] = note[:80]
+        m = chat["choices"][0]["message"]
+        # One tool call per step: the model then reads each result (and the reminder with the count) before it may call again.
+        if len(m.get("tool_calls") or []) > 1:
+            m["tool_calls"] = m["tool_calls"][:1]
+        # Words written next to a tool call are narration ("Let me check"); the skyling never narrates.
+        if m.get("tool_calls"):
+            m["content"] = ""
+        if m.get("content"):
+            m["content"] = clean(m["content"])
+    return {**req, "messages": original}, chat
 
 
 def to_response(body, chat, rid):
@@ -202,7 +319,7 @@ class H(BaseHTTPRequestHandler):
         self.wfile.flush()
         append(ARGS.log, {"rid": rid, "secs": round(time.time() - t0, 2), "in": resp["usage"]["input_tokens"],
                           "out": resp["usage"]["output_tokens"], "tools": [o["name"] for o in resp["output"] if o["type"] == "function_call"],
-                          "text": text[:300]})
+                          "text": text[:300], **({"guard": chat["guard"]} if chat.get("guard") else {})})
 
 
 if __name__ == "__main__":
