@@ -88,6 +88,33 @@ def used_calls(sent):
     return used
 
 
+def house_math(sent):
+    """Arithmetic our code does so the model never has to (it slips: 8 subscriptions became "7, $84.44 a month"). From the
+    tool results of this message: a yearly total as a monthly one, and how many items of each kind a list holds."""
+    lines = []
+    for m in reversed(sent):
+        if m["role"] == "user":
+            break
+        if m["role"] != "tool":
+            continue
+        try:
+            data = json.loads(m["content"] or "")
+        except ValueError:
+            continue
+        data = data.get("data", data) if isinstance(data, dict) else data
+        if not isinstance(data, dict):
+            continue
+        for k, v in data.items():
+            if isinstance(v, (int, float)) and not isinstance(v, bool) and re.search(r"yearly$", k, re.I) and v:
+                lines.append(f"{k} {v:,.2f} a year is {v / 12:,.2f} a month")
+            if isinstance(v, list) and len(v) > 1 and all(isinstance(i, dict) and isinstance(i.get("kind"), str) for i in v):
+                kinds = {}
+                for i in v:
+                    kinds[i["kind"]] = kinds.get(i["kind"], 0) + 1
+                lines.append(f"{k}: " + ", ".join(f"{n} of kind {kind}" for kind, n in kinds.items()))
+    return lines
+
+
 def remind(sent):
     """Adds the reminder for this step to the last message the model reads (the person's message, or the last tool result).
     Parts of the file: [0] before the first tool call, [k] after k tool calls (the last part serves every higher count)."""
@@ -109,6 +136,9 @@ def remind(sent):
         return
     if only_a_question(asked):
         extra.append("They only asked whether it would fit or work. Look, answer, and save nothing; offer to save it.")
+    math = house_math(sent) if last["role"] == "tool" else []
+    if math:
+        extra.append("Worked out by LifeFlow from the results, use these figures as they are: " + "; ".join(math) + ".")
     note = "\n".join([note] + ["- " + e for e in extra]).strip()
     if note:
         last["content"] = (last["content"] or "") + "\n\n<house_reminder>\n" + note + "\n</house_reminder>"
@@ -170,10 +200,13 @@ def guard_note(original, msg):
                 ". Answer the question from what you have and offer to save it.")
     if calls:
         return None
-    text = (msg.get("content") or "").split("</think>")[-1]
+    text = (msg.get("content") or "").split("</think>")[-1].strip()
+    # A model sometimes stops in the middle of a sentence ("... due Wednesday at 11:59 PM, and B"): ask for it whole.
+    if text and not re.search(r"[.?!)\"'\u201d\u2019*:]$", text):
+        return "Your answer stopped in the middle of a sentence. Write the whole answer again, complete."
     if not any(m["role"] == "tool" for m in original):
         return None
-    known = known_numbers(original)
+    known = known_numbers(original + [{"role": "tool", "content": " ".join(house_math(original))}])
     bad = [m.group(0) for m in MONEY.finditer(text) if num(m.group(1)) not in known] + [m.group(1) for m in DECIMAL.finditer(text) if num(m.group(1)) not in known]
     if bad:
         return ("These figures are not in any result: " + ", ".join(sorted(set(bad))[:6]) + ". Write the answer again using only figures copied exactly "

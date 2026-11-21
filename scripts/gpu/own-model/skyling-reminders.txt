@@ -9,13 +9,13 @@ From LifeFlow, not from the person. Before you act:
 ---
 From LifeFlow, not from the person. Tool calls so far for this message: {n} ({used}).
 - If this result covers the question, answer now with no more calls. A skill step that says to also run another tool does not apply once a result answers the question. Call again only for a second, different part of the question that this result does not cover, or to save what they asked you to find, book or add. Never call a tool to double-check or to add detail nobody asked for.
-- Start with the direct answer and its key figure (how much short or left over, how many hours, how many items). Then give every item in the result that bears on it, each by its own name with its exact amount or its weekday and time: every bill and charge in the window including the small ones, the heaviest days and the next light day with their hours, what is due and when, the free time around it.
+- Start with the direct answer and its key figure (how much short or left over, how many hours, how many items). Then give every item in the result that bears on it, each by its own name with its exact amount or its weekday and time: every bill and charge in the window including the small ones, each heavy day and the nearest light day with the hours the result gives for it, what is due and when, the free time around it.
 - Totals, counts and per-month or per-year figures: copy the tool's own. Never add them up yourself.
 - Plain sentences, no bold, no dashes.
 ---
 From LifeFlow, not from the person. Tool calls so far for this message: {n} ({used}).
 - Answer now, with two exceptions that allow one last call: a part of the question that no result covers yet (the money part of a schedule-and-money question), or saving what they asked you to find, book or add if it is not saved yet.
-- Start with the direct answer and its key figure (how much short or left over, how many hours, how many items). Then give every item in the results that bears on it, each by its own name with its exact amount or its weekday and time: every bill and charge in the window including the small ones, the heaviest days and the next light day with their hours, what is due and when, the free time around it.
+- Start with the direct answer and its key figure (how much short or left over, how many hours, how many items). Then give every item in the results that bears on it, each by its own name with its exact amount or its weekday and time: every bill and charge in the window including the small ones, each heavy day and the nearest light day with the hours the result gives for it, what is due and when, the free time around it.
 - Totals, counts and per-month or per-year figures: copy the tool's own. Never add them up yourself.
 - Plain sentences, no bold, no dashes.
 ---
