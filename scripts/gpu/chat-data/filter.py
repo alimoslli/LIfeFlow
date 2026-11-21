@@ -9,8 +9,9 @@ turns, its own tool calls and the tool results) plus its final answer, and the t
   - the turn finished cleanly (no error, a final answer, not cut off) and no tool failed;
   - every money amount and decimal in the answer is in the tool results or the person's own words (no invented numbers);
   - every weekday named next to a date is that date's real weekday;
-  - it follows the house rules users see: no em dash, never "assistant", "AI assistant" or "Jarvis";
-  - it is short enough for a phone (at most 1,200 characters).
+  - it follows the skyling's own rules (src/server/jarvis/prompt.ts, "how you sound"): at most about 100 words, no
+    headings, no app paths ("/work"), no drama words, no narrating ("Let me check"), no em dash, never "assistant",
+    "companion" or "Jarvis". Bold markers are taken out rather than dropping the answer (the teacher overuses them).
 """
 import argparse, collections, datetime as dt, glob, json, re
 
@@ -37,7 +38,11 @@ DECIMAL = re.compile(r"(?<![\d.])(\d+\.\d+)(?![\d.])")
 DAYS = {"mon": 0, "tue": 1, "wed": 2, "thu": 3, "fri": 4, "sat": 5, "sun": 6}
 MONTHS = {m: i + 1 for i, m in enumerate(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"])}
 DAY_DATE = re.compile(r"\b(mon|tue|wed|thu|fri|sat|sun)[a-z]*\.?,?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})\b", re.I)
-BANNED = [re.compile(p, re.I) for p in (r"\bassistant\b", r"\bjarvis\b")]
+BANNED = [re.compile(p, re.I) for p in (r"\bassistant\b", r"\bjarvis\b", r"\bcompanion\b")]
+DRAMA = re.compile(r"\b(surgical|bleeding|damage control|crisis|stabiliz\w*)\b", re.I)
+NARRATE = re.compile(r"\b(let me (check|look|see|pull)|i'll (look|check) (that|it) up|one moment)\b", re.I)
+APP_PATH = re.compile(r"(?<![\w.])/(finances|work|tasks|calendar|school|goals|money|plan|jarvis|settings|habits|milestones|today|health)\b")
+HEADING = re.compile(r"^\s*#{1,6}\s", re.M)
 
 
 def norm_num(s):
@@ -78,6 +83,7 @@ def check(meta_row, last, year):
         reasons.append("turn error")
     reply = last["reply"]
     text = (reply.get("content") or "").split("</think>")[-1].strip()
+    text = re.sub(r"\*\*(.+?)\*\*", r"\1", text).replace("__", "")
     if reply.get("tool_calls") or not text:
         reasons.append("no final answer")
     if last.get("finish") not in (None, "stop"):
@@ -107,8 +113,16 @@ def check(meta_row, last, year):
         reasons.append("em dash")
     if any(b.search(text) for b in BANNED):
         reasons.append("banned word")
-    if len(text) > 1200:
+    if len(text.split()) > 100:
         reasons.append("too long")
+    if HEADING.search(text):
+        reasons.append("heading")
+    if APP_PATH.search(text):
+        reasons.append("app path")
+    if DRAMA.search(text):
+        reasons.append("drama word")
+    if NARRATE.search(text):
+        reasons.append("narrating")
     return reasons, text
 
 
