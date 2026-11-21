@@ -93,6 +93,9 @@ async function questions(): Promise<Q[]> {
     todo: ["advisor", "fri|nov 6"],
     goal: ["350", "1000", "335\\.36"],
     study: ["bio", "tue|wed|mon"],
+    // Added after the first comparison, from their perfect answers in the fixture.
+    zelle: ["jul(y)? 18|7/18", "40"],
+    catchup: ["essay", "10:50", "exam", "thu"],
   };
   const altTools: Record<string, string[][]> = { due: [["list_assignments"], ["get_daily_briefing"]] };
   const evalQs: Q[] = EVAL.map((c) => ({
@@ -410,6 +413,9 @@ async function runModel(modelId: string) {
   const save = () => writeFileSync(outFile, JSON.stringify({ candidate: cand, results }, null, 1));
 
   const attempt = async (q: Q, n: number): Promise<RunRecord> => {
+    // A full run sends more than the testing allowance (30 messages a day, ADR 0035): reset the eval student's own
+    // counters in this throwaway test database before each question, so the limit can't stand in for the model's answer.
+    await run((s) => s.tx.execute(sql`delete from ai_budgets where key like ${`u:${st.session.id}:%`}`));
     const since = ((await run((s) => s.tx.execute(sql`select now()::text as n`))).rows[0] as { n: string }).n;
     const before = await snapshot();
     let conversationId: string | null = null;

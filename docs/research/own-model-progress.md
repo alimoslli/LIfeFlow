@@ -7,12 +7,14 @@ Owner's go-ahead (2026-11-21, 04:05 UTC): start steps 1 and 2 from the pilot rep
 ## Step 1: simple router on a CPU (no GPU money)
 
 - Script: `scripts/gpu/router/embedding_router.py`. Results: `scripts/gpu/router/embedding_router_results.json`.
-- Done: seeds only (153 rows). Best on fresh: all-MiniLM-L6-v2 + small linear classifier, 53/74 (72%), 7 ms a message on a CPU.
-- To do: the same with the pilot's 5,284 teacher rows (`data/train.json.gz`, copied from `/workspace/router/out/train.json` on the GPU storage).
+- Done. Best: all-MiniLM-L6-v2 + small linear classifier on seeds plus the 5,284 teacher rows: fresh 65/74 (88%), held-out 33/43 (77%), 6 ms a message on a CPU. Seeds only: 53/74. Run on the GPU box's CPU (the teacher rows live on the GPU storage, `/workspace/chateval/train.json.gz`).
 
 ## Step 2: an untuned open chat model on the Jarvis eval
 
 - Harness: `scripts/compare-models.ts` (the real skyling loop, the eval student, 18 questions, automatic checks for facts, tools, budget and writes).
 - Plan: on one rented H100, serve the model with vLLM (chat format), put a small translator in front that speaks the Responses format the app uses, run Node and a throwaway Postgres on the box, run the harness.
 - Models: Qwen3-8B first (on the GPU storage already), then gpt-oss-20b if credits allow.
-- Status: not started on a GPU yet.
+- Box: L40S `2daac4f5`, 71 credits an hour, rented 04:18 UTC. Setup on `/workspace` (kept): `/workspace/vllm-venv` (vLLM 0.34), `/workspace/node`, `/workspace/chateval/LIfeFlow` (branch clone, npm ci done). Postgres and gcc are apt installs (lost when the box stops).
+- Done: Qwen3-8B thinking off, 20 questions: 2 pass. Right tools 13/20, facts 3/20. Results `/workspace/chateval/out-qwen3-8b/`.
+- Harness fixes: answer checks for the 2 newer questions (zelle, catchup); the test student's AI counters reset before each question (the 30-a-day testing limit cut the first run short); ai_usage counted as bookkeeping.
+- Running: Qwen3-8B thinking on (`out-qwen3-8b-think`). Next: gpt-oss-20b (downloaded) if credits allow. Stop the box before 120 credits.
