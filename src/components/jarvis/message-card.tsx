@@ -54,7 +54,7 @@ export function JarvisMessageCard({ m, name, compact }: { m: CardMessage; name: 
       if (r === "do" && m.action?.type === "open" && m.action.href) return router.push(m.action.href);
       if (r === "do" && m.action?.type === "ask" && m.action.prompt) return openJarvis(m.action.prompt, { send: true });
       if (res.message) toast(res.message);
-      router.refresh();
+      // the answer already carries the refreshed page (the action revalidates): no second request for it
     });
   const open = m.status === "new" || m.status === "snoozed";
   return (

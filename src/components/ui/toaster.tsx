@@ -90,7 +90,8 @@ function ToastItem({ t }: { t: Toast }) {
             const r = await restoreAction(t.undo!);
             dismiss(t.id);
             toast(r?.ok ? (r.message ?? "Restored.") : (r?.error ?? "Couldn't undo."), { tone: r?.ok ? "success" : "danger" });
-            router.refresh();
+            // an undo that worked has already brought the refreshed page back with its answer; only a failed one asks again
+            if (!r?.ok) router.refresh();
           }}
           className="flex items-center gap-1 rounded-full bg-bg/15 px-3 py-1 font-medium disabled:opacity-60"
         >
