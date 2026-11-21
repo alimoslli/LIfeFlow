@@ -16,7 +16,7 @@ $L/venv/bin/pip install -q peft > $T/pip-peft.log 2>&1
 while [ ! -f $W/done ]; do sleep 10; done
 
 step refilter
-cd $REPO && git pull -q --depth 3 origin claude/skill-router-pilot || true
+cd $REPO && git fetch -q --depth 3 origin claude/skill-router-pilot && git reset -q --hard FETCH_HEAD; git log --oneline -1
 python3 scripts/gpu/chat-data/filter.py --meta "$W/meta-*.jsonl" --dump $W/dump.jsonl --out $T/train.jsonl --report $T/filter-report.json > $T/filter.log 2>&1
 cat $T/filter.log
 
