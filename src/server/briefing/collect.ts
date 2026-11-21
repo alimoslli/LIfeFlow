@@ -15,7 +15,7 @@ import { listTasks } from "../services/tasks";
 import type { LifeSnapshot, MoneySnapshot } from "./types";
 
 /** Reads everything the briefing needs, in one RLS-scoped pass. */
-export async function collectSnapshot(s: UserScope, user: SessionUser, now = new Date()): Promise<LifeSnapshot> {
+export async function collectSnapshot(s: UserScope, user: Pick<SessionUser, "timezone" | "name" | "preferences">, now = new Date()): Promise<LifeSnapshot> {
   const tz = user.timezone;
   const today = todayIn(tz, now);
   const weekEnd = addDaysStr(today, 6);

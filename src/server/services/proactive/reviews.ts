@@ -20,7 +20,11 @@ import { listShifts } from "../work";
 import { lifeLoad } from "../life-load";
 import type { Candidate, DetectContext, Detector } from "./detectors";
 
-type Section = { heading: string; lines: string[] };
+/**
+ * One part of a review's sheet. `money` marks what's about money (spending, money goals, spending patterns), set here where
+ * the review is made, so the Money lock drops the whole part on every screen (`lockSafeText`), with or without a "$" in it.
+ */
+type Section = { heading: string; lines: string[]; money?: true };
 
 // ------------------------------------------------------------------ patterns
 
@@ -99,7 +103,7 @@ export const morningBrief: Detector = async (ctx) => {
         oneThing,
         sections: [
           { heading: "Due", lines: due.length ? due.slice(0, 6) : ["Nothing due today."] },
-          ...(moneyLine ? [{ heading: "Money", lines: [moneyLine] }] : []),
+          ...(moneyLine ? [{ heading: "Money", lines: [moneyLine], money: true as const }] : []),
           ...(oneThing ? [{ heading: "The one thing", lines: [oneThing] }] : []),
         ],
       },
@@ -177,6 +181,7 @@ export const weeklyReview: Detector = async (ctx) => {
   const lastMinute = await lastMinutePattern(ctx);
   const over = budgets.filter((b) => b.percent > 100).sort((a, b) => a.remainingCents - b.remainingCents)[0];
   // gentle (owner, 2026-11-12): the habit itself is never named; only the change it suggests
+  const changeIsMoney = !!weekend?.fix || (!lastMinute?.fix && !!over);
   const change =
     weekend?.fix ??
     lastMinute?.fix ??
@@ -210,13 +215,15 @@ export const weeklyReview: Detector = async (ctx) => {
           {
             heading: "Spending",
             lines: [weeklyBudget ? `${usd(spent)} spent of about ${usd(weeklyBudget)} budgeted for the week` : `${usd(spent)} spent this week`],
+            money: true as const,
           },
         ]
       : []),
-    ...(goalLines.length ? [{ heading: "Goals", lines: goalLines }] : []),
-    ...(weekend ? [{ heading: "Patterns", lines: [weekend.text] }] : []),
+    // these are money goals (financial_goals), behind the lock like the Goals money page
+    ...(goalLines.length ? [{ heading: "Goals", lines: goalLines, money: true as const }] : []),
+    ...(weekend ? [{ heading: "Patterns", lines: [weekend.text], money: true as const }] : []),
     ...(nextLines.length ? [{ heading: "Next week", lines: nextLines }] : []),
-    ...(change ? [{ heading: "One change for next week", lines: [change] }] : []),
+    ...(change ? [{ heading: "One change for next week", lines: [change], ...(changeIsMoney ? { money: true as const } : {}) }] : []),
   ];
   return [
     {

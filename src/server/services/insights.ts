@@ -5,6 +5,7 @@ import type { UserPreferences } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { cloudFacts } from "./cloud-facts";
 import { insightFacts } from "./insight-facts";
+import { skyProducer } from "./insights/sky";
 
 /**
  * Insights (owner, 2026-11-12): everything the app can notice about the person's own week, as one shape (lib/insights.ts).
@@ -21,7 +22,7 @@ export const noticing: InsightProducer = async (scope, tz, prefs, now) => {
   return (await insightFacts(scope, tz, have, now)).map((f) => insightOf(f, skyling));
 };
 
-export const PRODUCERS: InsightProducer[] = [noticing];
+export const PRODUCERS: InsightProducer[] = [noticing, skyProducer];
 
 export async function listInsights(scope: UserScope, tz: string, prefs: UserPreferences | undefined, now: Date = new Date()): Promise<Insight[]> {
   const locked = prefs?.moneyLock?.enabled === true;

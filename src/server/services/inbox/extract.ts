@@ -12,6 +12,8 @@ import { monthOpensOn } from "../ai-limits";
 
 /** How a document the limits refused starts its reason: it was kept, not read, and a mailbox look tries it again later. */
 export const NOT_READ_YET = "Saved, but not read";
+/** A reason worded for the person (ours, never a provider's): the only kind of error whose text an inbox row keeps. */
+export class PlainReason extends Error {}
 
 /**
  * Reads one forwarded email, upload or share (text, PDFs, photos) and returns
@@ -102,7 +104,7 @@ export function extractionClient(): { client: OpenAI; model: string } | null {
 }
 
 export async function extractDocument(input: ExtractInput, ctx: AiContext, llm = extractionClient()): Promise<Extraction> {
-  if (!llm) throw new Error("Reading documents isn't available right now.");
+  if (!llm) throw new PlainReason("Reading documents isn't available right now.");
   const content: ResponseInputContent[] = [
     {
       type: "input_text",
@@ -121,7 +123,7 @@ export async function extractDocument(input: ExtractInput, ctx: AiContext, llm =
     hold = await reserveAi(subject, { feature: "document", estimateMicros: documentEstimate(llm.model, input.text?.length ?? 0, input.files.length) });
   } catch (e) {
     if (!(e instanceof AiRefusedError)) throw e;
-    throw new Error(
+    throw new PlainReason(
       e.refusal.scope === "company"
         ? `${NOT_READ_YET}: ${nameAtStart(subject.name)} isn't available right now.`
         : `${NOT_READ_YET} yet: this month's skyling allowance is used up. It opens up again on ${monthOpensOn(subject, new Date())}.`,
