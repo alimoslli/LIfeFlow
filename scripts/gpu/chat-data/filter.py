@@ -4,6 +4,10 @@ clean examples, and writes them in chat format for fine-tuning. Made-up data onl
   python3 scripts/gpu/chat-data/filter.py --meta '/workspace/chatdata/meta-*.jsonl' --dump /workspace/chatdata/dump.jsonl \
       --out /workspace/chatdata/train.jsonl --report /workspace/chatdata/filter-report.json
 
+Earlier runs can be added: an `also.txt` beside the dump lists "<run folder> <most per skill>" per line; their kept
+examples fill each skill up to that number, after this run's own (so an earlier run skewed to a few skills can't
+dominate).
+
 An example is one skyling turn: the exact messages the model was sent on the turn's last step (system prompt, earlier
 turns, its own tool calls and the tool results) plus its final answer, and the tools it was offered. Kept only if:
   - the turn finished cleanly (no error, a final answer, not cut off) and no tool failed;
@@ -154,10 +158,29 @@ for conv_turn, rs in steps.items():
                                                                        "source": m["question"]["source"], "steps": len(rs)}})
     by_source[m["question"]["source"]] += 1
 
+import os
+also = os.path.join(os.path.dirname(a.dump), "also.txt")
+added = collections.Counter()
+if os.path.exists(also):
+    for line in open(also):
+        if not line.strip():
+            continue
+        run_dir, cap = line.split()[0], int(line.split()[1])
+        sub = os.path.join(run_dir, "also-kept.jsonl")
+        os.system(f'python3 "{__file__}" --meta "{run_dir}/meta-*.jsonl" --dump "{run_dir}/dump.jsonl" --out "{sub}" --report "{run_dir}/also-report.json" > /dev/null')
+        have = collections.Counter(r["meta"]["skill"] for r in kept)
+        for l2 in open(sub):
+            r = json.loads(l2)
+            sk = r["meta"]["skill"]
+            if have[sk] < cap:
+                have[sk] += 1
+                added[sk] += 1
+                r["meta"]["from"] = run_dir
+                kept.append(r)
 with open(a.out, "w") as f:
     for r in kept:
         f.write(json.dumps(r) + "\n")
-report = {"turns": len(steps), "kept": len(kept), "dropped_reasons": why.most_common(), "kept_by_source": by_source.most_common(),
+report = {"turns": len(steps), "kept": len(kept), "added_from_earlier_runs": sum(added.values()), "dropped_reasons": why.most_common(), "kept_by_source": by_source.most_common(),
           "kept_by_persona": collections.Counter(r["meta"]["persona"] for r in kept).most_common()}
 json.dump(report, open(a.report, "w"), indent=1)
-print(json.dumps({k: report[k] for k in ("turns", "kept", "dropped_reasons")}, indent=1))
+print(json.dumps({k: report[k] for k in ("turns", "kept", "added_from_earlier_runs", "dropped_reasons")}, indent=1))
