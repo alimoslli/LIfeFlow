@@ -31,7 +31,22 @@ export type ClockItem = {
   amountCents?: number;
   /** Where it lives, and its id there: a to-do (or its reminder) or an assignment can be marked done right on its card. */
   origin?:
-    "event" | "shift" | "assignment" | "task" | "reminder" | "goal" | "milestone" | "bill" | "trial" | "money_goal" | "pay" | "promise" | "day" | "holiday";
+    | "event"
+    | "shift"
+    | "assignment"
+    | "task"
+    | "reminder"
+    | "goal"
+    | "milestone"
+    | "bill"
+    | "trial"
+    | "money_goal"
+    | "pay"
+    | "promise"
+    | "day"
+    | "holiday"
+    | "spend"
+    | "spent";
   /** Already done (a to-do or assignment ticked off, a promise kept): it sits where it was done, a star, never late. */
   done?: boolean;
   /** A done thing placed at its due time (it had one), not at when it was done. */
@@ -135,12 +150,13 @@ const SOURCE_WORDS: Record<string, string> = {
   canvas: "Canvas",
   ukg: "your work schedule",
   schedule: "your schedule",
+  email: "your email",
 };
 
 /** "From Google Calendar", "From your work schedule", "Added in LifeFlow". */
 export function sourceFor(origin: AgendaOrigin, sources: string[] | undefined): string {
   if (origin === "shift") return "From your work schedule";
-  if (origin === "assignment") return "From your classes";
+  if (origin === "assignment") return sources?.includes("email") ? "From your email" : "From your classes";
   if (origin === "task") return "From your to-dos";
   const named = [...new Set((sources ?? []).map((s) => SOURCE_WORDS[s]).filter((x): x is string => !!x))];
   return named.length ? `From ${named.join(" and ")}` : "Added in LifeFlow";

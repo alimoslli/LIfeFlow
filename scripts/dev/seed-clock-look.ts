@@ -6,9 +6,9 @@
  *   DATABASE_URL=postgresql://…@localhost:5432/budgetflow_e2e npx tsx scripts/dev/seed-clock-look.ts e2e-…@example.com
  */
 import { eq } from "drizzle-orm";
-import { addDaysStr, todayIn } from "@/lib/dates";
+import { addDaysStr, localToInstant, todayIn } from "@/lib/dates";
 import { closeDb, getDb } from "@/server/db/client";
-import { users } from "@/server/db/schema";
+import { financialAccounts, transactions, users } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
 import { createEvent } from "@/server/services/calendar";
 import { createManualAccount } from "@/server/services/finance/accounts";
@@ -114,6 +114,31 @@ async function main() {
       await updateSubscription(s, sub.id, { trialEndsOn: d(10) });
       await createRecurring(s, { name: "Rent", amountCents: -90000, frequency: "monthly", nextDueDate: d(5), kind: "bill" });
       await createGoal(s, { name: "Spring break trip", targetCents: 80000, savedCents: 20000, targetDate: d(90) });
+      // purchases on the line (owner, 2026-11-12): some with the bank's own time (a mark each), some without (in the day's total)
+      const [bank] = await s.tx.select({ id: financialAccounts.id }).from(financialAccounts).where(eq(financialAccounts.userId, s.userId));
+      for (const [description, amountCents, day, time] of [
+        ["Blue Bottle Coffee", -650, -1, "08:15"],
+        ["Chipotle", -1285, -1, "12:40"],
+        ["Campus bookstore", -3499, -1, null],
+        ["Trader Joe's", -4210, -2, "19:30"],
+        ["Spotify", -1199, -2, null],
+      ] as const) {
+        const t = await createTransaction(s, {
+          accountId: bank.id,
+          date: d(day),
+          description,
+          merchantName: description,
+          amountCents,
+          kind: "expense",
+          categoryId: null,
+          pending: false,
+        });
+        if (time)
+          await s.tx
+            .update(transactions)
+            .set({ authorizedAt: localToInstant(d(day), time, TZ) })
+            .where(eq(transactions.id, t.id));
+      }
       for (const title of [
         "Email advisor",
         "Buy a desk lamp",

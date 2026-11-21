@@ -1,12 +1,23 @@
 import { aiAllowed } from "@/lib/ai-consent";
 import { createHash, randomBytes, randomInt } from "node:crypto";
 import { and, desc, eq, ne, sql } from "drizzle-orm";
-import { addDaysStr, DATE_RE, formatDateStr, localDateOf, TIME_RE } from "@/lib/dates";
+import { addDaysStr, DATE_RE, formatDateStr, localDateOf, localToInstant, TIME_RE } from "@/lib/dates";
 
 const fmtDay = (d: string) => formatDateStr(d, "EEE, MMM d");
 import type { Database } from "../../db/client";
 import { normalizeText } from "@/lib/utils";
-import { assignments, attachments, inboxItems, inboxSenders, oauthIdentities, tasks, users, type Frequency, type InboxFiled } from "../../db/schema";
+import {
+  assignments,
+  attachments,
+  inboxItems,
+  inboxSenders,
+  oauthIdentities,
+  tasks,
+  transactions,
+  users,
+  type Frequency,
+  type InboxFiled,
+} from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { emailConfig, sendEmail } from "../../integrations/email";
 import { ServiceError } from "../errors";
@@ -17,7 +28,10 @@ import { createEvent, deleteEvent } from "../calendar";
 import { createTask, deleteTask } from "../tasks";
 import { addPaycheck, deletePaycheck, listEmployers } from "../work";
 import { restoreMerged } from "./cleanup";
-import { extractDocument, type ExtractInput, type Extraction } from "./extract";
+import { extractDocument, PlainReason, type ExtractInput, type Extraction } from "./extract";
+
+/** Why a document wasn't read when the reason isn't one of ours: fixed words, never an error's own text. */
+export const READ_FAILED = "Couldn't read it this time.";
 import type { AiDoor } from "../ai-usage";
 import {
   attachReceipt,
@@ -200,9 +214,16 @@ export async function fileExtraction(
   tz: string,
   ex: Extraction,
   today: string,
-  ctx: { from?: string | null; authenticated?: boolean; decision?: { sameAs?: string; separate?: boolean; seriesKey?: string; exam?: Ask["exam"] } } = {},
+  ctx: {
+    from?: string | null;
+    authenticated?: boolean;
+    decision?: { sameAs?: string; separate?: boolean; seriesKey?: string; exam?: Ask["exam"] };
+    /** Where it came from: an email's finds are marked "From your email" on the sky. */
+    channel?: "email" | "upload" | "share";
+  } = {},
 ): Promise<{ filed: InboxFiled[]; review?: string; ask?: Ask }> {
   const filed: InboxFiled[] = [];
+  const source = ctx.channel === "email" ? ("email" as const) : ("manual" as const);
   // Changing something the user already has (a bill, an exam, a bank charge's note) needs an email that passed the sender
   // check (SPF/DKIM). Otherwise the change is only suggested; nothing is touched.
   const auth = ctx.authenticated === true;
@@ -344,6 +365,12 @@ export async function fileExtraction(
         { accountId: account.id, date: day, description: r.merchant.slice(0, 200), merchantName: r.merchant.slice(0, 120), amountCents: -amount },
         "manual",
       );
+      // the time printed on the receipt, so it sits on the line when it happened (never a made-up time)
+      if (r.time && TIME_RE.test(r.time) && r.date)
+        await scope.tx
+          .update(transactions)
+          .set({ authorizedAt: localToInstant(day, r.time, tz) })
+          .where(eq(transactions.id, t.id));
       filed.push({
         kind: "transaction",
         id: t.id,
@@ -443,7 +470,7 @@ export async function fileExtraction(
           dueDate: date(s.due_date),
           dueTime: s.due_time && TIME_RE.test(s.due_time) ? s.due_time : null,
         },
-        "manual",
+        source,
       );
       if (r.status === "duplicate") return { filed, review: `${s.title} is already in ${course.name}.` };
       filed.push({
@@ -463,16 +490,21 @@ export async function fileExtraction(
         const [date, time] = [i.start.slice(0, 10), i.start.slice(11, 16) || null];
         const [endDate, endTime] = i.end ? [i.end.slice(0, 10), i.end.slice(11, 16) || null] : [null, null];
         const label = `${i.kind[0].toUpperCase()}${i.kind.slice(1)}: ${i.title}`.slice(0, 300);
-        const ev = await createEvent(scope, tz, {
-          title: label,
-          date,
-          startTime: time,
-          endTime: endDate === date ? endTime : null,
-          endDate: endDate && endDate !== date ? endDate : null,
-          allDay: !time,
-          location: i.location ?? null,
-          description: i.confirmation ? `Confirmation ${i.confirmation}` : null,
-        });
+        const ev = await createEvent(
+          scope,
+          tz,
+          {
+            title: label,
+            date,
+            startTime: time,
+            endTime: endDate === date ? endTime : null,
+            endDate: endDate && endDate !== date ? endDate : null,
+            allDay: !time,
+            location: i.location ?? null,
+            description: i.confirmation ? `Confirmation ${i.confirmation}` : null,
+          },
+          source,
+        );
         filed.push({ kind: "event", id: ev.id, label: `${label}${i.confirmation ? ` (${i.confirmation})` : ""}, ${fmtDay(date)}`, href: `/plan?date=${date}` });
       }
       return { filed };
@@ -492,6 +524,20 @@ export async function fileExtraction(
         "manual",
       );
       filed.push({ kind: "paycheck", id: pc.id, label: `Paycheck from ${job.name}: $${(net / 100).toFixed(2)} net on ${fmtDay(p.pay_date)}`, href: "/work" });
+      return { filed };
+    }
+    case "delivery": {
+      const d = ex.delivery;
+      const day = date(d?.expected_date ?? null);
+      if (!d || !day) return { filed, review: "Couldn't read the day it's expected." };
+      const title = `Package: ${d.item}`.slice(0, 120);
+      const ev = await createEvent(
+        scope,
+        tz,
+        { title, date: day, allDay: true, kind: "other", description: d.carrier ? `By ${d.carrier.slice(0, 80)}` : null },
+        source,
+      );
+      filed.push({ kind: "event", id: ev.id, label: `${title}, expected ${fmtDay(day)}`, href: `/plan?date=${day}` });
       return { filed };
     }
     case "class_schedule":
@@ -606,12 +652,14 @@ export async function processDocument(
   let ex: Extraction;
   try {
     const [owner] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId));
-    if (!aiAllowed(owner?.preferences)) throw new Error("Saved. Let your skyling help with your data (in Settings) to have it read and filed automatically.");
+    if (!aiAllowed(owner?.preferences))
+      throw new PlainReason("Saved. Let your skyling help with your data (in Settings) to have it read and filed automatically.");
     ex = await extract({ ...doc, today }, { userId: scope.userId, door: opts.door ?? (doc.channel === "email" ? "email_in" : doc.channel) });
   } catch (e) {
     const [failed] = await scope.tx
       .update(inboxItems)
-      .set({ status: "failed", reason: e instanceof Error ? e.message.slice(0, 300) : "Couldn't read it." })
+      // only our own plain reasons are kept; a provider's error text never reaches the row (COO review, 2026-11-12)
+      .set({ status: "failed", reason: e instanceof PlainReason ? e.message.slice(0, 300) : READ_FAILED })
       .where(eq(inboxItems.id, row.id))
       .returning();
     return failed;
@@ -690,7 +738,11 @@ export async function processDocument(
       .returning();
     return sug;
   }
-  const { filed, review, ask } = await fileExtraction(scope, tz, ex, today, { from: doc.from, authenticated: doc.authenticated ?? doc.channel !== "email" });
+  const { filed, review, ask } = await fileExtraction(scope, tz, ex, today, {
+    from: doc.from,
+    authenticated: doc.authenticated ?? doc.channel !== "email",
+    channel: doc.channel,
+  });
   const [done] = await scope.tx
     .update(inboxItems)
     .set({
@@ -746,7 +798,11 @@ export async function fileSuggestion(scope: UserScope, tz: string, today: string
     if (twin) return markDuplicate(scope, row.id, twin.id);
   }
   // The person's tap is the approval, so this is the authenticated path (it may update what they already have).
-  const { filed, review, ask } = await fileExtraction(scope, tz, row.extracted as unknown as Extraction, today, { from: row.fromAddress, authenticated: true });
+  const { filed, review, ask } = await fileExtraction(scope, tz, row.extracted as unknown as Extraction, today, {
+    from: row.fromAddress,
+    authenticated: true,
+    channel: row.channel,
+  });
   const [done] = await scope.tx
     .update(inboxItems)
     .set({ status: filed.length ? "filed" : "needs_review", filed, reason: review ?? null, ...(ask && { extracted: { ...row.extracted, ask } }) })
@@ -870,6 +926,7 @@ export async function answerQuestion(scope: UserScope, tz: string, today: string
   const { filed, review } = await fileExtraction(scope, tz, ex as unknown as Extraction, today, {
     from: row.fromAddress,
     authenticated: true, // the person's tap is the approval
+    channel: row.channel,
     decision: same ? (sameAs ? { sameAs, exam: ask.exam } : { seriesKey: ask.seriesKey }) : { separate: true },
   });
   const [done] = await scope.tx

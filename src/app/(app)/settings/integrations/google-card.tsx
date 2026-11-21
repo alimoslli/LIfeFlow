@@ -13,7 +13,7 @@ export function GoogleCard({
 }: {
   configured: boolean;
   connection: { email: string; status: string; lastSynced: string | null; error: string | null; needsCalendars?: boolean } | null;
-  /** Jarvis files new school, bill and work emails each morning. */
+  /** Each morning the skyling puts what it finds in email on the sky (on unless turned off). */
   filing?: boolean;
 }) {
   return (
@@ -33,7 +33,10 @@ export function GoogleCard({
         </Badge>
       </div>
       <p className="mt-3 text-sm text-text-2">
-        <AssistantName start /> reads and drafts email. Sending always asks you first.
+        Once Google is connected, <AssistantName /> reads your new email automatically each morning for due dates, exam changes, bills, receipts, deliveries and
+        bookings, and puts them on your sky, marked &ldquo;From your email&rdquo;, with Undo. Only mail Gmail confirms came from its sender. Each email it reads
+        is sent to our AI provider to read; we keep what was found (details such as amounts, dates, confirmation numbers and the last digits of a card or
+        account), the sender and the subject, never the email itself. The switch below turns the reading off. It never sends anything without asking you.
       </p>
 
       {!configured ? (
@@ -57,9 +60,11 @@ export function GoogleCard({
             className="flex min-h-11 items-center justify-between gap-3 rounded-2xl bg-surface-2 px-4 py-2 text-left text-sm"
           >
             <span>
-              <span className="block font-medium">File school, bill and work emails</span>
+              <span className="block font-medium">Put what&apos;s in my email on my sky</span>
               <span className="text-xs text-muted">
-                Each morning <AssistantName /> checks new mail for due dates, bills and shifts and files them, with Undo.
+                {filing
+                  ? "On: your email is read automatically. The first look goes back 30 days (up to 50 emails), then each morning checks new mail."
+                  : "Off: your email isn't read unless you ask."}
               </span>
             </span>
             <span className={filing ? "font-medium text-accent" : "text-muted"}>{filing ? "On" : "Off"}</span>

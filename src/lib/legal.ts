@@ -6,7 +6,7 @@
  */
 export const LEGAL_EFFECTIVE_DATE = "October 28, 2026";
 /** The Privacy Policy's last change (birthday, school and work, 2026-11-10); the Terms keep the date above. */
-export const PRIVACY_UPDATED_DATE = "November 10, 2026";
+export const PRIVACY_UPDATED_DATE = "November 12, 2026";
 
 export function legalDetails(env: Record<string, string | undefined> = process.env) {
   const name = env.LEGAL_OPERATOR_NAME?.trim();

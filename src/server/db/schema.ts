@@ -722,7 +722,7 @@ export const syncJobs = pgTable(
 // ---------------------------------------------------------------------------
 // finance
 
-export type DataSource = "manual" | "jarvis" | "import" | "demo" | "plaid" | "canvas" | "ukg" | "google" | "outlook" | "apple_health" | "schedule";
+export type DataSource = "manual" | "jarvis" | "import" | "demo" | "plaid" | "canvas" | "ukg" | "google" | "outlook" | "apple_health" | "schedule" | "email";
 
 /** Regular hours for a job (e.g. full-time Mon–Fri 08:00–17:00). Days are 0 = Sunday … 6 = Saturday. */
 export type WorkSchedule = { days: number[]; start: string; end: string; breakMinutes?: number; breakRules?: BreakRule[] };
@@ -811,6 +811,8 @@ export const transactions = pgTable(
       .references(() => financialAccounts.id, { onDelete: "cascade" }),
     date: date("date", { mode: "string" }).notNull(),
     authorizedDate: date("authorized_date", { mode: "string" }),
+    /** When the purchase happened, to the minute, when the bank says (Plaid's authorized_datetime or datetime). Never guessed. */
+    authorizedAt: tstz("authorized_at"),
     description: text("description").notNull(),
     merchantName: text("merchant_name"),
     amountCents: cents("amount_cents").notNull(),

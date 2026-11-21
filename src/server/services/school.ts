@@ -55,6 +55,21 @@ export async function createCourse(scope: UserScope, input: z.input<typeof cours
 
 export async function updateCourse(scope: UserScope, id: string, patch: Partial<z.input<typeof courseInputSchema>>) {
   const data = parsePatch(courseInputSchema.partial(), patch);
+  // A class made from Canvas's feed is found again on the next sync by the label the feed sends ("23543"), held in its name
+  // until it's renamed and in its code after. So when it's renamed, or saved, without a code of its own (the form sends an
+  // empty box as null, the skyling may send ""), the label stays as the code; without that the next sync makes a second
+  // class (owner, 2026-11-12; COO review M1). Kept whole, at the name's own cap, so a long label still matches (L2).
+  const ownCode = typeof data.code === "string" && data.code.trim() !== "";
+  if (!ownCode && (data.name !== undefined || data.code !== undefined)) {
+    const [was] = await scope.tx
+      .select({ name: courses.name, code: courses.code, source: courses.source })
+      .from(courses)
+      .where(and(eq(courses.id, id), eq(courses.userId, scope.userId)));
+    if (was?.source === "canvas") {
+      const label = was.code?.trim() || (data.name !== undefined && data.name !== was.name ? was.name.trim() : "");
+      if (label) data.code = label.slice(0, 200);
+    }
+  }
   const [row] = await scope.tx
     .update(courses)
     .set(data)
@@ -301,7 +316,8 @@ export type ImportItem = z.input<typeof importItemSchema>;
 
 export type ImportOutcome = {
   created: { id: string; title: string; course: string; dueAt: Date | null }[];
-  duplicates: { id: string; title: string; course: string }[];
+  /** Already saved: `title` is the saved one; `asked` is the title the import gave, when it was matched to it by its words. */
+  duplicates: { id: string; title: string; course: string; asked?: string }[];
   needsCourse: { title: string; courseName: string | null; candidates: { id: string; name: string; code: string | null }[] }[];
   errors: { title: string; error: string }[];
   warnings: string[];
@@ -312,6 +328,46 @@ export type ImportOutcome = {
  * Never guesses a course: unmatched or ambiguous items are returned in
  * `needsCourse` so the user can choose. Duplicates are skipped, not doubled.
  */
+const titleWords = (t: string) =>
+  new Set(
+    t
+      .toLowerCase()
+      .split(/[^\p{L}\p{N}]+/u)
+      .filter(Boolean),
+  );
+
+/**
+ * The same piece of work said another way, in this class and due the same day: the titles may differ only by words that
+ * don't name a different piece of work ("Argument essay" and "Argument essay draft"). Anything else stays apart, because a
+ * skipped item is a missed deadline (COO review, 2026-11-12): titles that differ by a number ("Quiz" and "Quiz 2",
+ * "Reading 1" and "Reading 2"), by any other word ("Reading 1 response", "Lab 4 retake", "Essay final"), or whose
+ * shorter one is a single word.
+ */
+// closed list (COO review): not "a" or "an", a letter label names other work ("Midterm Form A", "Lab 4 A")
+const SAME_WORK_WORDS = new Set(["draft", "the", "my", "for", "due", "assignment", "submission"]);
+async function resemblingAssignment(scope: UserScope, tz: string, courseId: string, title: string, dueDate: string) {
+  const mine = titleWords(title);
+  if (!mine.size) return null;
+  const rows = await scope.tx
+    .select({ id: assignments.id, title: assignments.title })
+    .from(assignments)
+    .where(
+      and(
+        eq(assignments.userId, scope.userId),
+        eq(assignments.courseId, courseId),
+        gte(assignments.dueAt, startOfLocalDay(dueDate, tz)),
+        lt(assignments.dueAt, startOfLocalDay(addDaysStr(dueDate, 1), tz)),
+      ),
+    );
+  const same = (a: Set<string>, b: Set<string>) => {
+    const [short, long] = a.size <= b.size ? [a, b] : [b, a];
+    if (![...short].every((w) => long.has(w))) return false;
+    if (short.size < 2 && short.size !== long.size) return false;
+    return [...long].every((w) => short.has(w) || SAME_WORK_WORDS.has(w));
+  };
+  return rows.find((r) => same(mine, titleWords(r.title))) ?? null;
+}
+
 export async function importAssignments(
   scope: UserScope,
   tz: string,
@@ -344,6 +400,13 @@ export async function importAssignments(
     }
     if (item.dueDate && item.dueDate < addDaysStr(today, -30)) {
       out.warnings.push(`"${item.title}" is due ${item.dueDate}, more than 30 days ago. Check the year.`);
+    }
+    // the same piece of work said another way ("Argument essay" for "Argument essay draft", same class, same day) is the one
+    // already there, never a second copy (it once saved a duplicate essay on a "write my intro" request, 2026-11-07/12)
+    const twin = item.dueDate ? await resemblingAssignment(scope, tz, course.id, item.title, item.dueDate) : null;
+    if (twin) {
+      out.duplicates.push({ id: twin.id, title: twin.title, course: course.name, asked: item.title });
+      continue;
     }
     try {
       const res = await createAssignment(scope, tz, { ...item, courseId: course.id }, opts.source ?? "manual");
