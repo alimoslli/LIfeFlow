@@ -10,6 +10,7 @@ import { formatCents } from "@/lib/money";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { listRecurring, suggestRecurring } from "@/server/services/finance/planning";
+import { billsSummary, isFoundBill } from "@/server/services/finance/bills-summary";
 import { subscriptionsOverview } from "@/server/services/finance/subscriptions";
 import { createRecurringAction, setRecurringStatusAction } from "../actions";
 import { keepSubscriptionAction, markCancelledAction, notUsingAction, remindRenewalAction, setTrialAction } from "../subscriptions/actions";
@@ -45,10 +46,11 @@ export default async function BillsPage() {
   const live = d.items.filter((i) => i.status !== "cancelled");
   const out = live.filter((i) => i.amountCents < 0).sort((a, b) => (a.nextDueDate ?? "9999").localeCompare(b.nextDueDate ?? "9999"));
   const pay = live.filter((i) => i.amountCents > 0);
-  const monthly = out.filter((i) => i.status === "active").reduce((sum, i) => sum - i.amountCents * PER_MONTH[i.frequency], 0);
   const subOf = new Map(d.subs.subscriptions.map((x) => [x.id, x]));
-  // found in the bank and not tracked: only money going out, and not pennies (interest paid in isn't a bill)
-  const found = d.detected.filter((c) => c.latestAmountCents <= -100 && c.kind !== "income").slice(0, 6);
+  // found in the bank and not tracked: only money going out, and not pennies (interest paid in isn't a bill). The top total
+  // counts every one of them (the same ones Money counts), the list shows them all.
+  const sum = billsSummary(live, d.detected);
+  const found = d.detected.filter(isFoundBill);
 
   const view = (i: (typeof live)[number]): BillView => {
     const sub = subOf.get(i.id);
@@ -104,10 +106,10 @@ export default async function BillsPage() {
         <div className="relative min-h-[11rem] px-6 pt-6 pb-6">
           <p className="text-sm text-white/80">Every month</p>
           <p className="lf-sw-num tabular mt-1 font-display text-[3rem] leading-none font-medium tracking-tight" data-testid="bills-monthly">
-            {whole(Math.round(monthly))}
+            {whole(sum.monthlyCents)}
           </p>
           <p className="mt-2 max-w-[62%] text-sm text-white/80">
-            {whole(Math.round(monthly * 12))} a year · {out.length} {out.length === 1 ? "thing" : "things"} you pay regularly
+            {whole(sum.yearlyCents)} a year · {sum.count} {sum.count === 1 ? "thing" : "things"} you pay regularly
           </p>
           <div className="absolute right-5 bottom-0 flex flex-col items-center">
             <MySkyling className="relative z-10 -mb-1.5 h-16 w-16 cursor-pointer" />
@@ -162,20 +164,50 @@ export default async function BillsPage() {
         </section>
       )}
 
+      {found.length > 0 && (
+        <section aria-label="Found in your bank" className="flex flex-col gap-2">
+          <h2 className="font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Found in your bank</h2>
+          <p className="-mt-1 text-sm text-text-2">Regular charges from your bank. Tap Confirm to keep one here; you can change it after.</p>
+          <ul className="lf-tiles">
+            {found.map((c) => (
+              <li key={c.seriesKey} className="flex items-center gap-3 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[0.9375rem] font-semibold">{c.name}</p>
+                  <p className="text-[0.8125rem] text-muted">
+                    {usd(c.latestAmountCents)} every {EVERY[c.frequency] ?? c.frequency} · next around {formatDateStr(c.nextExpectedDate, "MMM d")}
+                  </p>
+                </div>
+                <ActionForm action={createRecurringAction} className="contents">
+                  <input type="hidden" name="name" value={c.name} />
+                  <input type="hidden" name="amount" value={(Math.abs(c.latestAmountCents) / 100).toFixed(2)} />
+                  <input type="hidden" name="frequency" value={c.frequency} />
+                  <input type="hidden" name="nextDueDate" value={c.nextExpectedDate ?? addDaysStr(d.today, 30)} />
+                  <input type="hidden" name="kind" value={c.kind} />
+                  <input type="hidden" name="detected" value="1" />
+                  <SubmitButton variant="sun">Confirm</SubmitButton>
+                </ActionForm>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section aria-label="Coming up" className="flex flex-col gap-2">
         <div className="flex items-end justify-between gap-3">
           <h2 className="font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Coming up</h2>
           <AddBill action={createRecurringAction} today={d.today} />
         </div>
         {out.length === 0 ? (
-          <div className="flex items-center gap-3 rounded-[1.5rem] bg-surface p-4 shadow-soft">
-            <span className="lf-chip-night h-10 w-10 shrink-0 rounded-[0.75rem]" aria-hidden>
-              <PixelIcon name="repeat" className="h-4 w-4" />
-            </span>
-            <p className="text-[0.9375rem] text-text-2">
-              {d.subs.historyDays === 0 ? "Nothing yet. Connect your bank and they show up." : "Nothing yet. Tap one below to add it."}
-            </p>
-          </div>
+          found.length > 0 ? null : (
+            <div className="flex items-center gap-3 rounded-[1.5rem] bg-surface p-4 shadow-soft">
+              <span className="lf-chip-night h-10 w-10 shrink-0 rounded-[0.75rem]" aria-hidden>
+                <PixelIcon name="repeat" className="h-4 w-4" />
+              </span>
+              <p className="text-[0.9375rem] text-text-2">
+                {d.subs.historyDays === 0 ? "Nothing yet. Connect your bank and they show up." : "Nothing yet. Tap one below to add it."}
+              </p>
+            </div>
+          )
         ) : (
           <ul className="flex flex-col gap-2">
             {out.map((i) => (
@@ -194,34 +226,6 @@ export default async function BillsPage() {
             {pay.map((i) => (
               <li key={i.id}>
                 <BillRow b={view(i)} acts={acts(i.id, false)} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {found.length > 0 && (
-        <section aria-label="Found in your bank" className="flex flex-col gap-2">
-          <h2 className="font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Found in your bank</h2>
-          <p className="-mt-1 text-sm text-text-2">Regular charges you aren&apos;t tracking yet.</p>
-          <ul className="lf-tiles">
-            {found.map((c) => (
-              <li key={c.seriesKey} className="flex items-center gap-3 px-4 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[0.9375rem] font-semibold">{c.name}</p>
-                  <p className="text-[0.8125rem] text-muted">
-                    {usd(c.latestAmountCents)} every {EVERY[c.frequency] ?? c.frequency} · next around {formatDateStr(c.nextExpectedDate, "MMM d")}
-                  </p>
-                </div>
-                <ActionForm action={createRecurringAction} className="contents">
-                  <input type="hidden" name="name" value={c.name} />
-                  <input type="hidden" name="amount" value={(Math.abs(c.latestAmountCents) / 100).toFixed(2)} />
-                  <input type="hidden" name="frequency" value={c.frequency} />
-                  <input type="hidden" name="nextDueDate" value={c.nextExpectedDate ?? addDaysStr(d.today, 30)} />
-                  <input type="hidden" name="kind" value={c.kind} />
-                  <input type="hidden" name="detected" value="1" />
-                  <SubmitButton variant="sun">Track</SubmitButton>
-                </ActionForm>
               </li>
             ))}
           </ul>

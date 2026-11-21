@@ -69,6 +69,15 @@ export function formatIn(instant: Date | string, tz: string, pattern: string): s
   return format(new TZDate(d, tz), pattern);
 }
 
+/**
+ * A shift's hours as one line: "9:00 to 5:30 PM" when both ends share AM/PM, "10:00 PM to 6:30 AM" when they don't (a night shift
+ * must never read "10:00 to 6:30 AM", which looks like ten in the morning; test student p1027).
+ */
+export function timeRangeIn(start: Date, end: Date, tz: string): string {
+  const from = formatIn(start, tz, "a") === formatIn(end, tz, "a") ? formatIn(start, tz, "h:mm") : formatIn(start, tz, "h:mm a");
+  return `${from} to ${formatIn(end, tz, "h:mm a")}`;
+}
+
 /** "Good morning" and so on for the hour in the user's time zone (never the device's or server's clock). */
 export function greetingIn(tz: string, now: Date = new Date()): string {
   const hour = Number(formatIn(now, tz, "H"));

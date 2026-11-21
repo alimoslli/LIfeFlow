@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { isChatPage } from "@/lib/app-routes";
+import { showStop } from "@/lib/today-stop";
 import { SkylingIcon } from "@/components/skylings/sprite";
 import { useShell } from "@/components/shell/app-shell";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
@@ -11,7 +12,7 @@ export type AssistantNote = { id?: string; text: string; tone: "attention" | "he
  * Under the clock: the one thing the skyling noticed by joining the dots (an exam and tonight's study,
  * a shift and a class too close), with its one next step. Nothing to say means nothing shown.
  */
-export function AssistantLine({ name, note, brief }: { name: string; note: AssistantNote | null; brief?: string | null }) {
+export function AssistantLine({ name, note, brief, work }: { name: string; note: AssistantNote | null; brief?: string | null; work?: string | null }) {
   const { openJarvis } = useShell();
   if (!note) return null;
   const body = (
@@ -21,6 +22,11 @@ export function AssistantLine({ name, note, brief }: { name: string; note: Assis
       <span className="min-w-0 flex-1">
         <span className="block text-xs font-medium text-muted">{name}</span>
         <span className="mt-0.5 block text-[0.9375rem] leading-snug">{note.text}</span>
+        {work && (
+          <span className="mt-1 block text-sm text-text-2" data-testid="work-today">
+            {work}
+          </span>
+        )}
         {brief && (
           <span className="mt-1 block text-sm text-text-2" data-testid="morning-brief">
             <span className="font-medium">Morning brief:</span> {brief}
@@ -35,7 +41,16 @@ export function AssistantLine({ name, note, brief }: { name: string; note: Assis
   return (
     <section aria-label={note.tone === "attention" ? "Heads up" : "From your skyling"}>
       {note.href ? (
-        <Link href={note.href} prefetch={isChatPage(note.href) ? false : undefined} className={cls} data-testid="assistant-line">
+        <Link
+          href={note.href}
+          prefetch={isChatPage(note.href) ? false : undefined}
+          className={cls}
+          data-testid="assistant-line"
+          onClick={(e) => {
+            // on Today the note opens its own stop on the line instead of leaving the page
+            if (showStop(note.href)) e.preventDefault();
+          }}
+        >
           {body}
         </Link>
       ) : (

@@ -6,7 +6,7 @@ import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { DateField, TimeField } from "@/components/ui/pickers";
 import { Sheet } from "@/components/ui/sheet";
-import { formatIn, localDateOf, localTimeOf } from "@/lib/dates";
+import { formatIn, localDateOf, localTimeOf, timeRangeIn } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { cancelShiftAction, deleteShiftAction, markWorkedAction, recordHoursAction, updateShiftAction } from "./actions";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
@@ -65,17 +65,13 @@ export function ShiftList({
                     <span className="block font-display text-2xl leading-tight">{formatIn(s.startsAt, tz, "d")}</span>
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[0.9375rem]">
-                      {startOf(s.startsAt, s.endsAt, tz)} to {formatIn(s.endsAt, tz, "h:mm a")}
-                    </span>
+                    <span className="block text-[0.9375rem]">{timeRangeIn(s.startsAt, s.endsAt, tz)}</span>
                     <span className="block text-sm text-muted">
                       {name.get(s.employerId) ?? "Job"}
                       {s.breakMinutes ? ` · ${s.breakMinutes} min break` : ""}
                     </span>
                     {s.recordedStart && s.recordedEnd && (
-                      <span className="mt-0.5 block text-sm text-text-2">
-                        Clocked {startOf(s.recordedStart, s.recordedEnd, tz)} to {formatIn(s.recordedEnd, tz, "h:mm a")}
-                      </span>
+                      <span className="mt-0.5 block text-sm text-text-2">Clocked {timeRangeIn(s.recordedStart, s.recordedEnd, tz)}</span>
                     )}
                     {needsHours && (
                       <span className="mt-1 flex items-center gap-1 text-sm text-warning">
@@ -198,9 +194,4 @@ export function ShiftList({
       </Sheet>
     </>
   );
-}
-
-/** A start time drops its AM/PM only when the end shares it: a night shift reads "10:00 PM to 6:30 AM" (test student p1027). */
-function startOf(start: Date, end: Date, tz: string) {
-  return formatIn(start, tz, "a") === formatIn(end, tz, "a") ? formatIn(start, tz, "h:mm") : formatIn(start, tz, "h:mm a");
 }

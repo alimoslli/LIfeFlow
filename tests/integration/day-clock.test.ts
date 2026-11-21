@@ -46,7 +46,13 @@ describe("day clock data", () => {
     expect(data.empty).toBe(false);
     expect(data.base).toBe(new Date("2026-11-07T05:00:00Z").getTime());
 
-    const byTitle = Object.fromEntries(data.items.map((i) => [i.title, i]));
+    // US public holidays are on the line from the calendar alone (owner, 2026-11-18): Veterans Day is the Wednesday after
+    expect(data.items.find((i) => i.origin === "holiday" && i.title === "Veterans Day")).toMatchObject({
+      id: "holiday:2026-11-11",
+      allDay: true,
+      start: 4 * 1440,
+    });
+    const byTitle = Object.fromEntries(data.items.filter((i) => i.origin !== "holiday").map((i) => [i.title, i]));
     // The week in full, and plans further out too (the line keeps going): "Too far out" is 13 days ahead.
     expect(Object.keys(byTitle).sort()).toEqual(["Class", "Exam 2", "Run with Sam", "Too far out", "Work"]);
     expect(byTitle["Too far out"]).toMatchObject({ start: 13 * 1440 + 480 });
@@ -243,10 +249,25 @@ describe("day clock data", () => {
     expect(hidden.items.some((i) => i.origin === "trial" || i.origin === "money_goal" || i.origin === "bill" || i.origin === "pay")).toBe(false);
   });
 
+  it("shows a break from a connected calendar once, as a day off with its last day, in place of the public holiday", async () => {
+    const { run } = await makeUser("Break Owner");
+    const data = await run(async (s) => {
+      // Canvas posted Thanksgiving week; saved as a class before the day-off rule, it still reads as a day off on the sky
+      await createEvent(s, TZ, { title: "Thanksgiving Break - No Classes", date: "2026-11-23", endDate: "2026-11-27", allDay: true, kind: "class" }, "canvas");
+      return dayClockData(s, TZ, NOW);
+    });
+    const brk = data.items.find((i) => i.title === "Thanksgiving Break - No Classes");
+    expect(brk).toMatchObject({ icon: "🎉", cat: "other", allDay: true, subtitle: "Through Fri, Nov 27", start: 16 * 1440 });
+    // Thanksgiving (Nov 26) is inside the break, so it isn't said a second time; Veterans Day still is
+    expect(data.items.some((i) => i.id === "holiday:2026-11-26")).toBe(false);
+    expect(data.items.some((i) => i.id === "holiday:2026-11-11")).toBe(true);
+  });
+
   it("is empty for someone with nothing connected or added, and never makes up steps", async () => {
     const { run } = await makeUser("New Person");
     const data = await run((s) => dayClockData(s, TZ, NOW));
-    expect(data.items).toEqual([]);
+    // nothing of theirs, only the public holidays a US time zone has
+    expect(data.items.filter((i) => i.origin !== "holiday")).toEqual([]);
     expect(data.steps).toBeNull();
     expect(data.sleepHours).toBeNull();
     expect(data.spentTodayCents).toBeNull();

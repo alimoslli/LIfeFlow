@@ -21,7 +21,7 @@ beforeAll(() => {
 });
 
 const SCOPE =
-  "openid email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/calendar.events";
+  "openid email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.calendarlist.readonly";
 const b64 = (s: string) => Buffer.from(s).toString("base64url");
 const H = (Name: string, Value: string) => ({ Name, Value });
 

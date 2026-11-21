@@ -217,3 +217,24 @@ export function cleanVendorName(raw: string | null | undefined): string {
 export function looksMessy(name: string) {
   return /\d{3,}|\*|#/.test(name) || (name.length > 14 && name === name.toUpperCase());
 }
+
+const PERSON_APPS: [RegExp, string][] = [
+  [/\bzelle\b/i, "Zelle"],
+  [/\bvenmo\b/i, "Venmo"],
+  [/\bcash ?app\b/i, "Cash App"],
+  [/\bpaypal\b/i, "PayPal"],
+  [/\bapple cash\b/i, "Apple Cash"],
+];
+
+/**
+ * The app money moved through when it went to or came from a person (Zelle, Venmo, Cash App, PayPal, Apple Cash), or
+ * null. Such a payment is never a bill, even when it repeats (owner, 2026-11-18: "zelle and venmo etc shouldnt be bills,
+ * just put them as zelle"), and with no category of its own it reads as its app.
+ */
+export function personPaymentApp(name: string | null | undefined, bankLine?: string | null): string | null {
+  // the cleaned name says who it went to: "PAYPAL *SPOTIFY" is cleaned to Spotify, a shop paid through PayPal (QA,
+  // 2026-11-18); the bank's own line is read only when there is no name, and never a "PAYPAL *<shop>" line
+  const text = name?.trim() ? name : bankLine && !/\bpaypal\s*\*/i.test(bankLine) ? bankLine : "";
+  for (const [re, app] of PERSON_APPS) if (re.test(text)) return app;
+  return null;
+}

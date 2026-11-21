@@ -4,9 +4,10 @@ import { mapPfc } from "@/server/integrations/plaid";
 const pfc = (primary: string, detailed = "") => ({ primary, detailed });
 
 describe("Plaid money mapping", () => {
-  it("counts payroll and peer payments as income, and own-account moves as transfers", () => {
+  it("counts payroll and peer payments as money in, and own-account moves as transfers", () => {
     expect(mapPfc(pfc("INCOME", "INCOME_WAGES"), 150_000)).toEqual({ category: "Paycheck", kind: "income" });
-    expect(mapPfc(pfc("TRANSFER_IN", "TRANSFER_IN_ACCOUNT_TRANSFER"), 40_000, "ZELLE FROM ALEX")).toEqual({ category: "Side Income", kind: "income" });
+    // money from a person came in, but nothing says it is pay for work: no category to guess (student test, 2026-11-16)
+    expect(mapPfc(pfc("TRANSFER_IN", "TRANSFER_IN_ACCOUNT_TRANSFER"), 40_000, "ZELLE FROM ALEX")).toEqual({ category: null, kind: "income" });
     expect(mapPfc(pfc("TRANSFER_IN", "TRANSFER_IN_DEPOSIT"), 150_000, "ACME CO DIRECT DEP PAYROLL").kind).toBe("income");
     expect(mapPfc(pfc("TRANSFER_IN", "TRANSFER_IN_ACCOUNT_TRANSFER"), 50_000, "TRANSFER FROM SAVINGS 1234")).toEqual({ category: null, kind: "transfer" });
     expect(mapPfc(pfc("TRANSFER_OUT", "TRANSFER_OUT_SAVINGS"), -50_000)).toEqual({ category: "Savings Transfer", kind: "transfer" });

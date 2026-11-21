@@ -1,5 +1,6 @@
 import { and, eq, ne, sql } from "drizzle-orm";
 import { addDaysStr, localToInstant, startOfLocalDay, todayIn } from "@/lib/dates";
+import { isDayOff } from "@/lib/holidays";
 import { parseIcs, type IcsTime } from "@/lib/ics";
 import { decryptSecret, encryptSecret } from "../crypto";
 import { assignments, calendarEvents, connectionRegistry, courseMaterials, courses, integrations, notes, tasks, type AssignmentKind } from "../db/schema";
@@ -469,8 +470,16 @@ async function syncFeed(scope: UserScope, creds: Creds & { feedUrl: string }, f:
         allDay: !e.start.time,
         location: e.location?.slice(0, 300) ?? null,
       };
-      const initial = { kind: "class" as const, courseId: label || ref ? await courseFor(ref, label) : null };
-      const r = await upsertProviderEvent(scope, "canvas", providerEventId, fields, initial);
+      // a break or holiday posted on Canvas ("Thanksgiving Break - No Classes", all day) is saved as a day off, never a
+      // class (owner, 2026-11-18). Only when it's first saved (QA, 2026-11-18: never undo what the person set later), and
+      // only for all-day events, so a class whose title mentions a holiday keeps its class
+      const r = await upsertProviderEvent(
+        scope,
+        "canvas",
+        providerEventId,
+        fields,
+        !e.start.time && isDayOff(title) ? { kind: "other", courseId: null } : { kind: "class", courseId: label || ref ? await courseFor(ref, label) : null },
+      );
       if (r.added) added++;
     }
   }

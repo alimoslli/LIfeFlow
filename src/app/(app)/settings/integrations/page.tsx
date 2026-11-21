@@ -8,6 +8,7 @@ import { healthSummary, listHealthTokens } from "@/server/services/health";
 import { integrationStatus } from "@/server/services/integrations";
 import { AppleHealthCard } from "./apple-health-card";
 import { GoogleCard } from "./google-card";
+import { needsCalendarList } from "@/server/integrations/google";
 import { MicrosoftCard } from "./microsoft-card";
 import { microsoftConfig } from "@/server/integrations/microsoft";
 import { BankConnections } from "@/components/finance/bank-connections";
@@ -98,6 +99,7 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
                   status: google.connections[0].status,
                   lastSynced: google.connections[0].lastSyncedAt ? formatIn(google.connections[0].lastSyncedAt, d.tz, "MMM d, h:mm a") : null,
                   error: google.connections[0].lastError,
+                  needsCalendars: needsCalendarList(google.connections[0].scopes),
                 }
               : null
           }

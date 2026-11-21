@@ -20,6 +20,10 @@ export type NextUpItem = {
   work?: boolean;
   /** an assignment's course code or name, said before its title ("ECON 257 Quiz 10") */
   subtitle?: string | null;
+  /** where a class or meeting happens, said after its time ("BIO 418 at 12:00 PM, Arts 247") */
+  location?: string | null;
+  /** a hand-in the person ticked done: never next, never due */
+  done?: boolean;
 };
 
 /** `dues` are the deadlines the line names: every one due in the same part of the day as the one it says (the test
@@ -44,7 +48,8 @@ function dueBy(i: NextUpItem, tz: string) {
   return i.allDay ? startOfLocalDay(addDaysStr(localDateOf(i.startsAt, tz), 1), tz) : i.startsAt;
 }
 
-export function pickNextUp(items: NextUpItem[], now: Date, tz: string): NextUp | null {
+export function pickNextUp(all: NextUpItem[], now: Date, tz: string): NextUp | null {
+  const items = all.filter((i) => !i.done);
   const end = now.getTime() + NEXT_UP_HOURS * 3_600_000;
   const t = now.getTime();
   const deadlines = items
@@ -89,6 +94,14 @@ function titleOf(i: NextUpItem) {
   return course && !i.title.toLowerCase().startsWith(course.toLowerCase()) ? `${course} ${i.title}` : i.title;
 }
 
+/** Where a class or meeting is, after its time (test students, 2026-11-16: "put the room in the Next line"); a shift is at
+ * its employer already, and a long address is cut at a word so the note stays one or two lines. */
+function placeOf(i: NextUpItem) {
+  const p = i.origin === "event" ? i.location?.replace(/\s+/g, " ").trim() : "";
+  if (!p) return "";
+  return `, ${p.length > 40 ? `${p.slice(0, 40).replace(/[\s,]+\S*$/, "")}…` : p}`;
+}
+
 /** Which part of the day a deadline is due in, in words: "today", "tonight" or "tomorrow". */
 function dueSlot(i: NextUpItem, tz: string, now: Date) {
   const word = dayWord(i.startsAt, tz, now);
@@ -110,10 +123,10 @@ export function nextUpText(n: NextUp, tz: string, now: Date) {
   const i = n.item;
   let head: string;
   if (n.due) head = deadlineWords(i, tz, now, n.dues);
-  else if (n.state === "now") head = `Now: ${titleOf(i)} until ${time(i.endsAt ?? i.startsAt, tz)}`;
+  else if (n.state === "now") head = `Now: ${titleOf(i)} until ${time(i.endsAt ?? i.startsAt, tz)}${placeOf(i)}`;
   else {
     const word = dayWord(i.startsAt, tz, now);
-    head = `Next: ${titleOf(i)} ${word === "tomorrow" ? "tomorrow at" : "at"} ${time(i.startsAt, tz)}`;
+    head = `Next: ${titleOf(i)} ${word === "tomorrow" ? "tomorrow at" : "at"} ${time(i.startsAt, tz)}${placeOf(i)}`;
   }
   return n.also ? `${head} · ${deadlineWords(n.also, tz, now, n.dues)}` : head;
 }
@@ -127,6 +140,7 @@ export function nextUpText(n: NextUp, tz: string, now: Date) {
 export function laterText(items: NextUpItem[], now: Date, tz: string): { text: string; item: NextUpItem } | null {
   const t = now.getTime();
   const later = items
+    .filter((i) => !i.done)
     .filter((i) => (isDeadline(i) ? dueBy(i, tz).getTime() > t : !i.allDay && i.blocksTime && i.startsAt.getTime() > t))
     .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0];
   if (!later) return null;
@@ -137,4 +151,32 @@ export function laterText(items: NextUpItem[], now: Date, tz: string): { text: s
       : `${titleOf(later)} due ${day} ${time(later.startsAt, tz)}`
     : `${titleOf(later)} ${day} ${time(later.startsAt, tz)}`;
   return { text: `Nothing in the next 24 hours · Next: ${what}`, item: later };
+}
+
+export type WorkShift = { startsAt: Date; endsAt: Date; employer: string };
+
+/**
+ * On a day someone usually works, Today says whether they do (owner, 2026-11-18, from a test student who went through
+ * More and Work twice to learn she wasn't working): "Work today: Target, 4:00 PM to 9:00 PM", or "No work today" when the
+ * weekday is a usual work day (a shift on it in two or more of the last four weeks) and none is on the schedule. Nothing
+ * when the note already names the shift, when the day's shift is over, or for someone with no job; never a guess at pay.
+ */
+export function workDayLine(today: WorkShift[], past: Date[], now: Date, tz: string, note?: string | null): string | null {
+  const day = todayIn(tz, now);
+  const mine = today.filter((s) => localDateOf(s.startsAt, tz) === day);
+  if (mine.length) {
+    const left = mine.filter((s) => s.endsAt.getTime() > now.getTime());
+    if (!left.length || /\bshift\b/i.test(note ?? "")) return null;
+    const s = left[0];
+    const meridiem = formatIn(s.startsAt, tz, "a") === formatIn(s.endsAt, tz, "a");
+    return `Work today: ${s.employer}, ${formatIn(s.startsAt, tz, meridiem ? "h:mm" : "h:mm a")} to ${formatIn(s.endsAt, tz, "h:mm a")}`;
+  }
+  const weekday = formatIn(now, tz, "EEE");
+  const weeks = new Set(
+    past
+      .filter((d) => d.getTime() < startOfLocalDay(day, tz).getTime() && d.getTime() >= startOfLocalDay(addDaysStr(day, -28), tz).getTime())
+      .filter((d) => formatIn(d, tz, "EEE") === weekday)
+      .map((d) => localDateOf(d, tz)),
+  );
+  return weeks.size >= 2 ? "No work today" : null;
 }

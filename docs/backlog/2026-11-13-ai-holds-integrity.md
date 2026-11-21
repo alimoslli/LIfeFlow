@@ -1,6 +1,6 @@
 # AI holds integrity: migration 0070 on production-shaped data (2026-11-13)
 
-Branch `fix/ai-reserve-race`. Migration `drizzle/0070_ai_holds_integrity.sql`, journal `when` 1798900000000. It was first 0069; the plans branch took 0069 (`0069_student_verifications`, 1798800000000), so ours is 0070 and sorts after it. The 0067 functions and every limit number are untouched. Nothing here ran against production; the copy below is made-up data in a scratch schema of the test database.
+Branch `fix/ai-reserve-race`. Migration `drizzle/0071_ai_holds_integrity.sql`, journal `when` 1799000000000 (renumbered 2026-11-21: `0070_event_done` reached main first). It was first 0069; the plans branch took 0069 (`0069_student_verifications`, 1798800000000), so ours is 0070 and sorts after it. The 0067 functions and every limit number are untouched. Nothing here ran against production; the copy below is made-up data in a scratch schema of the test database.
 
 ## What it does to real counter rows, in order
 

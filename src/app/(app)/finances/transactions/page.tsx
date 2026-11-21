@@ -1,3 +1,4 @@
+import { personPaymentApp } from "@/lib/vendor";
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -246,7 +247,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                       <span className="min-w-0 flex-1">
                         <span className="line-clamp-2 break-words text-[0.9375rem]">{t.merchantName ?? t.description}</span>
                         <span className="line-clamp-2 break-words text-xs text-muted">
-                          {t.categoryName ?? "Uncategorized"}
+                          {t.categoryName ?? personPaymentApp(t.merchantName, t.description) ?? "Uncategorized"}
                           {t.kind !== "expense" && t.kind !== "income" && KIND_LABELS[t.kind] ? ` · ${KIND_LABELS[t.kind]}` : ""}
                           {t.pending ? " · Pending" : ""}
                           {t.excluded ? " · Hidden" : ""}

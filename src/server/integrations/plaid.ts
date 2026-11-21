@@ -18,6 +18,8 @@ import { withUser, type UserScope } from "../db/with-user";
 import { cleanVendorName } from "@/lib/vendor";
 import { fetchWithTimeout } from "./timeout";
 import { tidyForUser } from "../services/finance/tidy";
+import { settleOwnMoves } from "../services/finance/own-moves";
+import { personPaymentApp } from "@/lib/vendor";
 import { categoryIdByName, keywordCategory, ruleFor } from "../services/finance/categorize";
 import { recordNetWorth } from "../services/finance/investing";
 
@@ -285,16 +287,27 @@ type PlaidTxn = {
 /** Money coming in that's really income: payroll and peer payments, which banks often report as transfers. */
 const INCOMING_HINT = /\b(payroll|direct dep|dir dep|deposit|salary|zelle|venmo|cash ?app|paypal|wages|stipend)\b/i;
 
+/**
+ * A payment from a person (Zelle, Venmo, Cash App, Apple Cash): family, a friend or a refund of a split bill, never someone's
+ * work. PayPal isn't one (owner, 2026-11-18): payouts from clients and gig work come through it, so they stay Side Income.
+ */
+const PEER_PAYMENT = /\b(zelle|venmo|cash ?app|apple cash)\b/i;
+
 export function mapPfc(pfc: PlaidTxn["personal_finance_category"], amountCents: number, text = ""): { category: string | null; kind: TransactionKind } {
   const p = pfc?.primary ?? "";
   const d = pfc?.detailed ?? "";
   const out = amountCents < 0;
-  if (p === "INCOME")
+  if (p === "INCOME") {
+    // Money from a person isn't income from work (a student with no job got "Side Income" for her family's Zelle): it still came in, with no category to guess.
+    if (!out && !d.includes("WAGES") && !d.includes("INTEREST") && PEER_PAYMENT.test(text)) return { category: null, kind: "income" };
     return { category: d.includes("WAGES") ? "Paycheck" : d.includes("INTEREST") ? "Interest Income" : "Side Income", kind: out ? "expense" : "income" };
+  }
   if (p === "TRANSFER_IN" || p === "TRANSFER_OUT") {
     if (d.includes("SAVINGS")) return { category: "Savings Transfer", kind: "transfer" };
     if (d.includes("INVESTMENT")) return { category: "Investment Transfer", kind: "transfer" };
-    // A deposit from payroll or a friend is income; moving your own money between accounts is not.
+    // A deposit from payroll is income; moving your own money between accounts is not. Money from a person came in (it counts as
+    // money in) but isn't "Side Income": nothing says they have a side job, so it is left uncategorised for them to name.
+    if (p === "TRANSFER_IN" && !out && PEER_PAYMENT.test(text) && !d.includes("PAYROLL")) return { category: null, kind: "income" };
     if (p === "TRANSFER_IN" && !out && INCOMING_HINT.test(text)) return { category: d.includes("PAYROLL") ? "Paycheck" : "Side Income", kind: "income" };
     return { category: null, kind: "transfer" };
   }
@@ -397,8 +410,14 @@ export async function syncItem(scope: UserScope, integrationId: string, tz: stri
   await recordNetWorth(scope, todayIn(tz));
   // Plain vendor names and categories for what just arrived. Never lets a tidy-up problem fail the sync.
   await tidyForUser(scope, "plaid_sync").catch((e) => console.error("[tidy]", e instanceof Error ? e.name : e));
+  // The person's own money moved between their accounts is a transfer, never spending and income (owner, 2026-11-18).
+  await settleOwnMoves(scope, todayIn(tz));
   return result.stats;
 }
+
+/** A person-app row we settled as their own transfer: the bank still calls it money in or out, and keeps sending that. */
+const keepsOwnTransfer = (existing: { kind: string; merchantName: string | null }, values: { kind: string; description: string }) =>
+  existing.kind === "transfer" && values.kind !== "transfer" && !!personPaymentApp(existing.merchantName, values.description);
 
 /**
  * Syncs in its own transaction. If it fails, the failure is recorded in a
@@ -553,7 +572,8 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
             // Keep a name the user (or a tidy-up) already chose; refresh the rest from the bank.
             merchantName: existing.merchantName ?? values.merchantName,
             categoryId: existing.categoryId ?? values.categoryId,
-            kind: existing.categoryId ? existing.kind : values.kind,
+            // and a move between their own accounts that `settleOwnMoves` made a transfer stays one (QA, 2026-11-18)
+            kind: existing.categoryId || keepsOwnTransfer(existing, values) ? existing.kind : values.kind,
           })
           .where(eq(transactions.id, existing.id));
         stats.modified++;

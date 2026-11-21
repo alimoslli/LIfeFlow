@@ -38,6 +38,8 @@ export type DayClockOptions = {
 
 export type DayClockHandle = {
   update: (data: ClockData) => void;
+  /** Opens the line on one stop by its item's id (Today's note), or shows it when the line is open. */
+  show: (id: string) => void;
   destroy: () => void;
   /** Where "Pin something" pins: the time in the middle of the line in view (never earlier than now, today). */
   pinTime: () => number;
@@ -1000,9 +1002,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
             ? "You kept it"
             : `You said you'd do it by ${fmt(it.start)}`
           : it.done
-            ? it.atDue
-              ? `Due ${fmt(it.start)} · done`
-              : `Done at ${fmt(it.start)}`
+            ? it.allDay
+              ? "Done"
+              : it.atDue
+                ? `Due ${fmt(it.start)} · done`
+                : `Done at ${fmt(it.start)}`
             : it.origin === "milestone"
               ? agoOf(-dayOf(t))
               : it.origin === "goal" || it.origin === "money_goal"
@@ -1022,7 +1026,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
                           : `Due ${fmt(it.start)}`;
     const sub = [it.subtitle, it.source].filter(Boolean).join(" · ");
     const place = it.subtitle ?? "";
-    const canDo = (it.origin === "task" || it.origin === "reminder" || it.origin === "assignment") && !!it.ref && !it.done;
+    const canDo = (it.origin === "task" || it.origin === "reminder" || it.origin === "assignment" || !!it.handIn) && !!it.ref && !it.done;
     const inPlace = it.origin === "event" || it.origin === "shift" || it.origin === "assignment";
     const onPage = it.origin === "task" || it.origin === "reminder" || it.origin === "goal" || it.origin === "milestone";
     const acts = opts.example
@@ -1113,6 +1117,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     root.dataset.state = st;
   };
   let pendingPile: string[] | null = null;
+  // a stop to show once the line is open (Today's note: test students tapped "Next: BIO 105 …" and got the Calendar's month)
+  let pendingStop: string | null = null;
   function finishOpen() {
     S.open = true;
     drawStrip();
@@ -1122,6 +1128,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     markSel();
     const ids = pendingPile;
     pendingPile = null;
+    if (pendingStop) {
+      const id = pendingStop;
+      pendingStop = null;
+      return showStop(id);
+    }
     if (!ids?.length) return;
     // the pile on the closed sky groups by where its tiles sit, the line by time, so the line may not have the same stack:
     // the card lists exactly what the pile held (test student p4020: a "+2" opened one to-do's card instead)
@@ -1131,6 +1142,14 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     select(`pile:${ids.join(",")}`);
   }
   let pileIds: string[] = [];
+  /** Selects a stop by its item's id and brings it into view (its stack's list when it shares the moment). */
+  function showStop(id: string) {
+    const n = nodeOf(id);
+    if (!n) return;
+    S.sel = null;
+    select(n.group && pileOf(n.group) ? n.id : id);
+    trackWrap.scrollTo({ left: clamp(n.x - VW() / 2, 0, TM.total - VW()), behavior: reduce ? "auto" : "smooth" });
+  }
   function animateTo(target: number, ms: number, ease: (t: number) => number, done?: () => void) {
     const from = S.p;
     const start = performance.now();
@@ -1675,6 +1694,12 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       if (!S.open && S.p === 0 && p > 0) prepMorph();
       S.p = clamp(p, 0, 1);
       render();
+    },
+    /** Opens the line on one stop (Today's note), or shows it when the line is already open. */
+    show(id: string) {
+      if (S.open) return showStop(id);
+      pendingStop = id;
+      open();
     },
     setOpen(o: boolean) {
       if (o) open();

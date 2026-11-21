@@ -447,7 +447,14 @@
       "idx": 65,
       "version": "7",
       "when": 1798900000000,
-      "tag": "0070_ai_holds_integrity",
+      "tag": "0070_event_done",
+      "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1799000000000,
+      "tag": "0071_ai_holds_integrity",
       "breakpoints": true
     }
   ]

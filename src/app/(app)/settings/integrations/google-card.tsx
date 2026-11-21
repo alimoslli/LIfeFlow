@@ -12,7 +12,7 @@ export function GoogleCard({
   filing = false,
 }: {
   configured: boolean;
-  connection: { email: string; status: string; lastSynced: string | null; error: string | null } | null;
+  connection: { email: string; status: string; lastSynced: string | null; error: string | null; needsCalendars?: boolean } | null;
   /** Jarvis files new school, bill and work emails each morning. */
   filing?: boolean;
 }) {
@@ -47,6 +47,11 @@ export function GoogleCard({
             </span>
           </p>
           {connection.error && <p className="text-sm text-danger">{connection.error}</p>}
+          {connection.needsCalendars && connection.status !== "error" && (
+            <p className="text-sm text-text-2" data-testid="google-reconnect-calendars">
+              Reconnect once so <AssistantName /> can see school breaks and days off from the calendars you follow.
+            </p>
+          )}
           <ActionButton
             action={setGmailFilingAction.bind(null, !filing)}
             className="flex min-h-11 items-center justify-between gap-3 rounded-2xl bg-surface-2 px-4 py-2 text-left text-sm"
@@ -60,7 +65,7 @@ export function GoogleCard({
             <span className={filing ? "font-medium text-accent" : "text-muted"}>{filing ? "On" : "Off"}</span>
           </ActionButton>
           <div className="flex flex-wrap gap-2">
-            {connection.status === "error" ? (
+            {connection.status === "error" || connection.needsCalendars ? (
               <a href="/api/integrations/google/start" className="lf-sb lf-sb-sun lf-sb-xs lf-touch">
                 Reconnect Google
               </a>

@@ -13,6 +13,7 @@ import { DragItem, DropDay } from "./drag";
 import { CalendarViewToggle } from "./view-toggle";
 import { EventDialog } from "./event-dialog";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
+import { holidaysBetween, isDayOff } from "@/lib/holidays";
 
 export const metadata: Metadata = { title: "Calendar" };
 
@@ -40,6 +41,15 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   for (const i of d.items) {
     const day = localDateOf(i.startsAt, tz);
     byDay.set(day, [...(byDay.get(day) ?? []), i]);
+  }
+  const holidays = new Map(holidaysBetween(tz, d.gridStart, d.gridEnd).map((h) => [h.date, h.name]));
+  // a day a connected calendar already marks as off (a Canvas "Thanksgiving Break") shows that, not the holiday again
+  for (const i of d.items) {
+    if (!i.allDay || i.origin !== "event" || !isDayOff(i.title)) continue;
+    const first = localDateOf(i.startsAt, tz);
+    // an all-day event ends at the next midnight; at most 60 days are walked
+    const end = i.endsAt ? localDateOf(i.endsAt, tz) : addDaysStr(first, 1);
+    for (let day = first, n = 0; n === 0 || (day < end && n <= 60); day = addDaysStr(day, 1), n++) holidays.delete(day);
   }
   const days = Array.from({ length: daysBetween(d.gridStart, d.gridEnd) + 1 }, (_, n) => addDaysStr(d.gridStart, n));
   const prev = monthStart(addDaysStr(d.month, -1)).slice(0, 7);
@@ -98,12 +108,13 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
               const inMonth = day.slice(0, 7) === d.month.slice(0, 7);
               const isToday = day === d.today;
               const isSelected = day === d.selected;
+              const holiday = holidays.get(day);
               return (
                 <DropDay
                   key={day}
                   date={day}
                   href={href(d.month.slice(0, 7), day)}
-                  aria-label={`${formatDateStr(day, "EEEE, MMMM d")}: ${items.length} item${items.length === 1 ? "" : "s"}`}
+                  aria-label={`${formatDateStr(day, "EEEE, MMMM d")}${holiday ? `, ${holiday}` : ""}: ${items.length} item${items.length === 1 ? "" : "s"}`}
                   aria-current={isSelected ? "date" : undefined}
                   className={cn(
                     "flex min-h-14 flex-col items-center gap-1 rounded-2xl py-1.5 transition-colors sm:min-h-24 sm:items-stretch sm:px-1.5",
@@ -119,6 +130,11 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                   >
                     {Number(day.slice(8))}
                   </span>
+                  {holiday && (
+                    <span data-testid="holiday" className="hidden truncate px-1 text-[0.6875rem] leading-5 text-muted sm:block">
+                      🎉 {holiday}
+                    </span>
+                  )}
                   {/* Phones: colored dots */}
                   <span className="flex h-1.5 gap-0.5 sm:hidden">
                     {items.slice(0, 3).map((i) => (
@@ -151,6 +167,11 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
             <div>
               <p className="text-sm text-muted">{d.selected === d.today ? "Today" : formatDateStr(d.selected, "EEEE")}</p>
               <h2 className="font-display text-2xl font-medium">{formatDateStr(d.selected, "MMMM d")}</h2>
+              {holidays.get(d.selected) && (
+                <p data-testid="holiday-day" className="text-sm text-muted">
+                  {holidays.get(d.selected)}
+                </p>
+              )}
             </div>
             <EventDialog action={createEventAction} defaultDate={d.selected} courses={d.courses} />
           </div>
@@ -165,7 +186,9 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           )}
 
           {dayItems.length === 0 ? (
-            <p className="rounded-3xl bg-surface px-5 py-8 text-center text-[0.9375rem] text-muted shadow-soft">Nothing planned.</p>
+            <p className="rounded-3xl bg-surface px-5 py-8 text-center text-[0.9375rem] text-muted shadow-soft">
+              {holidays.get(d.selected) ? "A holiday, nothing planned." : "Nothing planned."}
+            </p>
           ) : (
             <ul className="flex flex-col gap-1.5">
               {dayItems.map((i) => (

@@ -257,6 +257,31 @@ describe("Plaid", () => {
     expect(syncCalls.map((c) => c.body.cursor)).toEqual([undefined, "c1", "c2"]);
   });
 
+  it("a move between their own accounts stays a transfer when the bank sends it again (QA, 2026-11-18)", async () => {
+    const zIn = txn("z-in", -400, {
+      account_id: "acc-card",
+      name: "ZELLE FROM SELF",
+      date: "2026-10-21",
+      personal_finance_category: { primary: "TRANSFER_IN", detailed: "TRANSFER_IN_ACCOUNT_TRANSFER" },
+    });
+    const zOut = txn("z-out", 400, {
+      name: "ZELLE TO SELF",
+      personal_finance_category: { primary: "TRANSFER_OUT", detailed: "TRANSFER_OUT_ACCOUNT_TRANSFER" },
+    });
+    const pages = [
+      { added: [zOut, zIn], modified: [], removed: [], next_cursor: "c1", has_more: false },
+      { added: [], modified: [zIn], removed: [], next_cursor: "c2", has_more: false },
+    ];
+    const fake = fakePlaid({ pages, noInvestments: true });
+    const { user, run, item } = await connected(fake);
+    const kindOf = async () =>
+      (await run((s) => s.tx.select().from(transactions).where(eq(transactions.userId, user.id)))).find((t) => t.providerTransactionId === "z-in")?.kind;
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    expect(await kindOf()).toBe("transfer");
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    expect(await kindOf()).toBe("transfer");
+  });
+
   it("marks a connection that needs the user to sign in again, and keeps that status", async () => {
     const good = fakePlaid();
     const { user, run, item } = await connected(good);
@@ -429,6 +454,28 @@ describe("Plaid", () => {
     expect(fake.calls.length).toBe(calls); // Plaid isn't even asked
     expect(await run((s) => s.tx.select().from(financialAccounts).where(eq(financialAccounts.userId, user.id)))).toHaveLength(0);
     expect(await run((s) => s.tx.select().from(syncJobs).where(eq(syncJobs.userId, user.id)))).toHaveLength(0);
+  });
+
+  it("money from a person is never Side Income (a student with no job got it for her family's Zelle), but still counts as money in", () => {
+    const text = "Zelle payment from Mom";
+    expect(mapPfc({ primary: "TRANSFER_IN", detailed: "TRANSFER_IN_ACCOUNT_TRANSFER" }, 71_313, text)).toEqual({ category: null, kind: "income" });
+    expect(mapPfc({ primary: "INCOME", detailed: "INCOME_OTHER_INCOME" }, 4_000, "Venmo cashout")).toEqual({ category: null, kind: "income" });
+    // Payroll text is not a payment from a person: unchanged.
+    expect(mapPfc({ primary: "TRANSFER_IN", detailed: "TRANSFER_IN_ACCOUNT_TRANSFER" }, 50_000, "ACME PAYROLL")).toEqual({
+      category: "Side Income",
+      kind: "income",
+    });
+    expect(mapPfc({ primary: "INCOME", detailed: "INCOME_WAGES" }, 50_000, "ACME PAYROLL")).toEqual({ category: "Paycheck", kind: "income" });
+  });
+
+  it("a PayPal payout from a client or gig work stays Side Income (owner, 2026-11-18); only Zelle, Venmo, Cash App and Apple Cash are a person", () => {
+    expect(mapPfc({ primary: "TRANSFER_IN", detailed: "TRANSFER_IN_ACCOUNT_TRANSFER" }, 25_000, "PAYPAL TRANSFER 1023456")).toEqual({
+      category: "Side Income",
+      kind: "income",
+    });
+    expect(mapPfc({ primary: "INCOME", detailed: "INCOME_OTHER_INCOME" }, 25_000, "PayPal payout")).toEqual({ category: "Side Income", kind: "income" });
+    for (const text of ["Cash App from J Smith", "Apple Cash received", "VENMO CASHOUT"])
+      expect(mapPfc({ primary: "TRANSFER_IN", detailed: "TRANSFER_IN_ACCOUNT_TRANSFER" }, 2_000, text), text).toEqual({ category: null, kind: "income" });
   });
 
   it("maps Plaid categories to LifeFlow categories and kinds", () => {

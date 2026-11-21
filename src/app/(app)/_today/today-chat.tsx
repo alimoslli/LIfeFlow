@@ -1,4 +1,5 @@
 "use client";
+import { showStop } from "@/lib/today-stop";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useSyncExternalStore } from "react";
@@ -359,11 +360,14 @@ export function TodayMiddle({
   name,
   note,
   brief,
+  work,
   children,
 }: {
   name: string;
   /** This morning's brief in one line, until noon (services/next-up.ts). */
   brief?: string | null;
+  /** The day's shift, or "No work today" on a usual work day (services/next-up.ts `workTodayLine`). */
+  work?: string | null;
   /** The skyling's one note: a link, a question it sends, or words it puts in the bar. */
   note: { text: string; href?: string; prompt?: string; fill?: string; attention?: boolean } | null;
   /** Something that must come first (the birthday question). */
@@ -398,12 +402,19 @@ export function TodayMiddle({
           <button
             type="button"
             data-testid="assistant-line"
-            onClick={() => (note.href ? router.push(note.href) : note.prompt ? void askOnToday(note.prompt, refresh) : fillBar(note.fill ?? note.text))}
+            onClick={() =>
+              note.href ? showStop(note.href) || router.push(note.href) : note.prompt ? void askOnToday(note.prompt, refresh) : fillBar(note.fill ?? note.text)
+            }
             className="line-clamp-3 min-h-11 max-w-[22rem] shrink-0 text-center text-[0.9375rem] leading-snug font-medium text-text"
           >
             {note.text}
           </button>
         </section>
+      )}
+      {work && (
+        <p className="max-w-[22rem] shrink-0 text-center text-sm font-medium text-text-2" data-testid="work-today">
+          {work}
+        </p>
       )}
       {brief && (
         <p className="max-w-[22rem] shrink-0 text-center text-sm text-text-2" data-testid="morning-brief">

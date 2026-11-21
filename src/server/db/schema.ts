@@ -1134,6 +1134,8 @@ export const calendarEvents = pgTable(
     courseId: uuid("course_id").references(() => courses.id, { onDelete: "set null" }),
     source: text("source").$type<DataSource>().notNull().default("manual"),
     providerEventId: text("provider_event_id"),
+    /** A one-off hand-in (a client delivery, "… due") the person ticked done (owner, 2026-11-18). */
+    doneAt: tstz("done_at"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

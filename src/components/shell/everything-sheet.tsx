@@ -20,15 +20,25 @@ export function EverythingSheet() {
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<EverythingDoors | null>(null);
   useEffect(() => {
-    const show = () => {
-      setOpen(true);
-      // fresh every time: the numbers on the doors are live
+    const load = () =>
       everythingDoorsAction()
         .then(setData)
         .catch(() => {});
+    const show = () => {
+      setOpen(true);
+      // fresh every time: the numbers on the doors are live (the last ones show meanwhile)
+      load();
     };
     window.addEventListener(OPEN, show);
-    return () => window.removeEventListener(OPEN, show);
+    // read once when the page is quiet, so the doors are already there on the first tap: the page's server actions run
+    // one at a time, and on a busy Today the first More › Work tap waited behind them (test student, 2026-11-18)
+    const idle = window.requestIdleCallback ?? ((f: () => void) => window.setTimeout(f, 1500));
+    const cancel = window.cancelIdleCallback ?? window.clearTimeout;
+    const id = idle(load, { timeout: 4000 });
+    return () => {
+      window.removeEventListener(OPEN, show);
+      cancel(id);
+    };
   }, []);
   const close = () => setOpen(false);
   return (
