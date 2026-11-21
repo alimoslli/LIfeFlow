@@ -20,3 +20,10 @@ Owner's go-ahead (2026-11-21, 04:05 UTC): start steps 1 and 2 from the pilot rep
 - Done: Qwen3-8B thinking on, 4 of 20 (5 in two tries); gpt-oss-20b, 4 of 20 (5 in two tries). Box stopped 05:29 UTC, 84.39 credits. Report: `docs/research/2026-11-21-open-chat-model-eval.md`. Raw results: `/workspace/chateval/out-*` on the GPU storage.
 
 **Steps 1 and 2 are finished.** Nothing is left for the 11 AM pickup except the summary.
+
+## Step 3: training examples for our own model (owner, 2026-11-21: "lets get those examples ... lets push to get a stable model")
+
+- **Done, no GPU:** the weekday fix (every local date a tool returns gets `<field>Weekday`; `src/server/jarvis/serialize-result.ts`, tests `tests/unit/serialize-weekdays.test.ts`; full check passes, 1,807 tests). The generator: `scripts/gpu/chat-data/` (make_lives.py, load-life.ts, build_questions.py, generate.ts, filter.py, run_box.sh), tested end to end here with a stand-in model.
+- **Found:** the test database must not run as a Postgres superuser (it skips row-level security). That caused 81 false test failures here and makes the step 2 scores provisional. Fixed in run_box.sh.
+- **GPU run 1, H100 `6ba06976`, 05:52 to 06:39 UTC, 94.83 credits, no examples.** On a fresh box, vLLM installed on /workspace (a network volume) never finished starting: its Python files read at about 0.2 MB a second. The teacher (gpt-oss-120b, 61 GB) is downloaded on the GPU storage. run_box.sh now installs vLLM, Node and the app on the box's own disk.
+- **Next:** run 1 more time with the new run_box.sh (estimate about 100 credits on one H100: 12 min setup, 5 min teacher test, 30 min examples). Waiting on the owner's budget for it: the cap set for this step was 150 and 95 is spent.
