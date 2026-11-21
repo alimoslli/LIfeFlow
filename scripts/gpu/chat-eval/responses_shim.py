@@ -5,7 +5,7 @@ message and function_call items and token usage). Stdlib only. Made for the step
 
   python responses_shim.py --upstream http://127.0.0.1:8000/v1 --port 8100 [--no-think]
 """
-import argparse, json, sys, time, uuid, urllib.request, urllib.error
+import argparse, json, sys, threading, time, uuid, urllib.request, urllib.error
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 ap = argparse.ArgumentParser()
@@ -14,7 +14,14 @@ ap.add_argument("--port", type=int, default=8100)
 ap.add_argument("--no-think", action="store_true", help="ask Qwen3-style templates to skip thinking")
 ap.add_argument("--max-tokens", type=int, default=2048, help="used when the request has no max_output_tokens")
 ap.add_argument("--log", default="shim.jsonl")
+ap.add_argument("--dump", default=None, help="write each tagged request (X-Conv-Id header) and reply in chat format, for training data")
 ARGS = ap.parse_args()
+LOCK = threading.Lock()  # requests run on threads; one writer at a time
+
+
+def append(path, obj):
+    with LOCK, open(path, "a") as f:
+        f.write(json.dumps(obj) + "\n")
 
 
 def text_of(content):
@@ -68,7 +75,7 @@ def call_upstream(body):
     data = json.dumps(req).encode()
     r = urllib.request.Request(ARGS.upstream + "/chat/completions", data=data, headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(r, timeout=600) as resp:
-        return json.loads(resp.read())
+        return req, json.loads(resp.read())
 
 
 def to_response(body, chat, rid):
@@ -116,7 +123,7 @@ class H(BaseHTTPRequestHandler):
         rid = uuid.uuid4().hex[:16]
         t0 = time.time()
         try:
-            chat = call_upstream(body)
+            req, chat = call_upstream(body)
         except urllib.error.HTTPError as e:
             msg = e.read().decode(errors="replace")[:2000]
             self.send_response(e.code)
@@ -125,9 +132,16 @@ class H(BaseHTTPRequestHandler):
             self.send_header("Content-Length", str(len(out)))
             self.end_headers()
             self.wfile.write(out)
-            open(ARGS.log, "a").write(json.dumps({"rid": rid, "error": msg[:500]}) + "\n")
+            append(ARGS.log, {"rid": rid, "error": msg[:500]})
             return
         text, resp = to_response(body, chat, rid)
+        conv = self.headers.get("X-Conv-Id")
+        if ARGS.dump and conv:
+            m = chat["choices"][0]["message"]
+            reply = {"role": "assistant", "content": m.get("content") or "", "tool_calls": m.get("tool_calls") or []}
+            append(ARGS.dump, {"conv": conv, "rid": rid, "messages": req["messages"], "tools": req.get("tools", []), "reply": reply,
+                               "reasoning": m.get("reasoning_content") or m.get("reasoning"), "finish": chat["choices"][0].get("finish_reason"),
+                               "usage": chat.get("usage")})
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream")
         self.send_header("Transfer-Encoding", "chunked")
@@ -142,9 +156,9 @@ class H(BaseHTTPRequestHandler):
         self.sse({"type": "response.incomplete" if resp["status"] == "incomplete" else "response.completed", "sequence_number": seq, "response": resp})
         self.wfile.write(b"0\r\n\r\n")
         self.wfile.flush()
-        open(ARGS.log, "a").write(json.dumps({"rid": rid, "secs": round(time.time() - t0, 2), "in": resp["usage"]["input_tokens"],
-                                              "out": resp["usage"]["output_tokens"], "tools": [o["name"] for o in resp["output"] if o["type"] == "function_call"],
-                                              "text": text[:300]}) + "\n")
+        append(ARGS.log, {"rid": rid, "secs": round(time.time() - t0, 2), "in": resp["usage"]["input_tokens"],
+                          "out": resp["usage"]["output_tokens"], "tools": [o["name"] for o in resp["output"] if o["type"] == "function_call"],
+                          "text": text[:300]})
 
 
 if __name__ == "__main__":
