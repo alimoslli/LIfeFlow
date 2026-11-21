@@ -108,7 +108,10 @@ async function connectedUser(g = fakeGoogle()) {
 describe("Google sign-in", () => {
   it("connects when the person unticks the followed-calendars box, but not when they untick Gmail or Calendar (owner, 2026-11-21)", async () => {
     const tokenWith = (scope: string) =>
-      (async () => json({ access_token: "at", refresh_token: "rt", expires_in: 3600, scope, id_token: idToken("a@b.c") })) as unknown as typeof fetch;
+      (async () =>
+        new Response(JSON.stringify({ access_token: "at", refresh_token: "rt", expires_in: 3600, scope, id_token: idToken("a@b.c") }), {
+          headers: { "content-type": "application/json" },
+        })) as unknown as typeof fetch;
     const noList = SCOPE.split(" ")
       .filter((x) => !x.includes("calendarlist"))
       .join(" ");
