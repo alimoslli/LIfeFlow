@@ -2,7 +2,7 @@
 
 Step 2 of the own-model plan (owner, 2026-11-21: "you can start with 1 and 2"). The question: how far is an open model we could host ourselves from doing the skyling's real job today, untuned? Made-up data only (the eval student, Maya Chen, in a throwaway test database; ADR 0023). No app code changed. Nothing here ships.
 
-> **Correction, 2026-11-21 06:00 UTC: these scores are provisional.** The test database ran as a Postgres superuser, and a superuser skips row-level security, so the tools may have returned rows of more than one copy of the test student (each run seeded a new copy into the same database). Some wrong counts below may come from that, not the model. The runs are being repeated with a normal database user; this section will be replaced with the clean numbers.
+> **Correction, 2026-11-21: these scores are provisional.** The test database ran as a Postgres superuser, and a superuser skips row-level security, so the tools may have returned rows of more than one copy of the test student. Clean reruns (normal database user) so far: Qwen3-8B thinking off 4 of 20 (here 2), gpt-oss-120b 6 of 20 (`docs/research/2026-11-21-own-skyling-model-training.md`). The Qwen3-8B thinking-on and gpt-oss-20b numbers below have not been rerun yet.
 
 ## Short answer
 
