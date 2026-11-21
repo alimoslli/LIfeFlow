@@ -42,6 +42,8 @@ BANNED = [re.compile(p, re.I) for p in (r"\bassistant\b", r"\bjarvis\b", r"\bcom
 DRAMA = re.compile(r"\b(surgical|bleeding|damage control|crisis|stabiliz\w*)\b", re.I)
 NARRATE = re.compile(r"\b(let me (check|look|see|pull)|i'll (look|check) (that|it) up|one moment)\b", re.I)
 APP_PATH = re.compile(r"(?<![\w.])/(finances|work|tasks|calendar|school|goals|money|plan|jarvis|settings|habits|milestones|today|health)\b")
+WRITE_TOOL = re.compile(r"^(create|update|delete|add|set|move|mark|log|save|record|remember|make|resolve|complete|schedule|book|cancel|archive|contribute|shift|split)_")
+ASKS_TO_ACT = re.compile(r"\b(add|create|make|put|schedule|book|block|move|reschedule|delete|remove|cancel|set|remind|log|save|track|mark|update|change|rename|plan|split|record|remember|note|enter|fill|sign me up|do (it|that)|go ahead|yes)\b")
 HEADING = re.compile(r"^\s*#{1,6}\s", re.M)
 
 
@@ -86,6 +88,8 @@ def check(meta_row, last, year):
     text = re.sub(r"\*\*(.+?)\*\*", r"\1", text).replace("__", "")
     # The teacher writes em dashes; the skyling never does. A comma keeps the answer (361 of 1,620 were lost to this).
     text = re.sub(r"\s*\u2014\s*", ", ", text)
+    # The teacher writes narrow no-break spaces and no-break hyphens; plain ones read the same and are what people type.
+    text = text.replace("\u202f", " ").replace("\u00a0", " ").replace("\u2011", "-")
     if reply.get("tool_calls") or not text:
         reasons.append("no final answer")
     if last.get("finish") not in (None, "stop"):
@@ -115,6 +119,12 @@ def check(meta_row, last, year):
         reasons.append("em dash")
     if any(b.search(text) for b in BANNED):
         reasons.append("banned word")
+    # Never change things nobody asked for (the teacher once added a to-do for "any tips?").
+    user_text = " ".join(m["content"] for m in msgs if m["role"] == "user" and isinstance(m["content"], str)).lower()
+    wrote = [c["function"]["name"] for m in msgs if m["role"] == "assistant" for c in (m.get("tool_calls") or [])
+             if WRITE_TOOL.match(c["function"]["name"])]
+    if wrote and not ASKS_TO_ACT.search(user_text):
+        reasons.append("unasked write")
     if len(text.split()) > 100:
         reasons.append("too long")
     if HEADING.search(text):

@@ -32,12 +32,6 @@ const MODEL = arg("model", "teacher")!;
 
 type Q = { text: string; skill?: string; source: string; followUp?: string };
 
-/** A small seeded random, so a rerun asks the same questions of the same lives. */
-function rng(seed: number) {
-  let s = seed >>> 0 || 1;
-  return () => (s = (s * 1664525 + 1013904223) >>> 0) / 2 ** 32;
-}
-
 async function main() {
   const url = process.env.TEST_DATABASE_URL;
   if (!url || !/_test/.test(url)) throw new Error("TEST_DATABASE_URL must be a *_test database");
@@ -54,10 +48,10 @@ async function main() {
   ]);
 
   const questions = JSON.parse(readFileSync(QUESTIONS, "utf8")) as Q[];
-  const lives = readdirSync(LIVES)
+  const allLives = readdirSync(LIVES)
     .filter((d) => !d.startsWith("."))
-    .sort()
-    .filter((_, i) => i % WORKERS === WORKER);
+    .sort();
+  const lives = allLives.filter((_, i) => i % WORKERS === WORKER);
   let convId = "";
   const provider = new OpenAIProvider({
     apiKey: "not-a-real-key",
@@ -76,9 +70,11 @@ async function main() {
       appendFileSync(OUT, JSON.stringify({ life, error: `load: ${(e as Error).message}`.slice(0, 300) }) + "\n");
       continue;
     }
-    const pick = rng([...life].reduce((a, ch) => a * 31 + ch.charCodeAt(0), 7));
+    // Spread the bank evenly: each (life, k) takes its own question, stepping by a prime through the whole bank, so every
+    // skill is asked (a seeded random per life clustered on 6 of 37 skills, 2026-11-21) and no life gets a question twice.
+    const base = allLives.indexOf(life) * PER_LIFE;
     for (let k = 0; k < PER_LIFE; k++) {
-      const q = questions[Math.floor(pick() * questions.length)];
+      const q = questions[((base + k) * 7919) % questions.length];
       // The testing allowance (30 messages a day, ADR 0035) would end a long run; this is a throwaway test database.
       await withUser(loaded.session.id, (s) => s.tx.execute(sql`delete from ai_budgets where key like ${`u:${loaded.session.id}:%`}`));
       let conversationId: string | null = null;
