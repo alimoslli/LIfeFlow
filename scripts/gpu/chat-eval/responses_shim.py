@@ -13,9 +13,15 @@ ap.add_argument("--upstream", default="http://127.0.0.1:8000/v1")
 ap.add_argument("--port", type=int, default=8100)
 ap.add_argument("--no-think", action="store_true", help="ask Qwen3-style templates to skip thinking")
 ap.add_argument("--max-tokens", type=int, default=2048, help="used when the request has no max_output_tokens")
+ap.add_argument("--think", choices=["on", "off", "default"], default="default", help="thinking for templates with a switch (Qwen3, Gemma 4)")
+ap.add_argument("--reasoning-effort", default=None, help="for gpt-oss: low, medium or high")
+ap.add_argument("--temperature", type=float, default=0.2)
+ap.add_argument("--system-append", default=None, help="a text file added to the system prompt sent to the model (our own-model house rules); "
+                "the --dump keeps the app's original prompt, so a student trained on the dump learns the behaviour without the rules")
 ap.add_argument("--log", default="shim.jsonl")
 ap.add_argument("--dump", default=None, help="write each tagged request (X-Conv-Id header) and reply in chat format, for training data")
 ARGS = ap.parse_args()
+APPEND = open(ARGS.system_append).read() if ARGS.system_append else ""
 LOCK = threading.Lock()  # requests run on threads; one writer at a time
 
 
@@ -63,19 +69,29 @@ def to_tools(tools):
 
 
 def call_upstream(body):
-    req = {"model": body["model"], "messages": to_messages(body), "max_tokens": body.get("max_output_tokens") or ARGS.max_tokens, "temperature": 0.2}
+    original = to_messages(body)
+    sent = [dict(m) for m in original]
+    if APPEND:
+        if sent and sent[0]["role"] == "system":
+            sent[0]["content"] = sent[0]["content"] + "\n" + APPEND
+        else:
+            sent.insert(0, {"role": "system", "content": APPEND.strip()})
+    req = {"model": body["model"], "messages": sent, "max_tokens": body.get("max_output_tokens") or ARGS.max_tokens, "temperature": ARGS.temperature}
     tools = to_tools(body.get("tools"))
     if tools:
         req["tools"] = tools
         req["tool_choice"] = "auto"
         if body.get("parallel_tool_calls") is not None:
             req["parallel_tool_calls"] = bool(body["parallel_tool_calls"])
-    if ARGS.no_think:
-        req["chat_template_kwargs"] = {"enable_thinking": False}
+    think = "off" if ARGS.no_think else ARGS.think
+    if think != "default":
+        req["chat_template_kwargs"] = {"enable_thinking": think == "on"}
+    if ARGS.reasoning_effort:
+        req["reasoning_effort"] = ARGS.reasoning_effort
     data = json.dumps(req).encode()
     r = urllib.request.Request(ARGS.upstream + "/chat/completions", data=data, headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(r, timeout=600) as resp:
-        return req, json.loads(resp.read())
+    with urllib.request.urlopen(r, timeout=900) as resp:
+        return {**req, "messages": original}, json.loads(resp.read())
 
 
 def to_response(body, chat, rid):

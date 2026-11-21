@@ -19,7 +19,7 @@
  */
 import "dotenv/config";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const argv = process.argv.slice(2);
@@ -84,11 +84,13 @@ async function questions(): Promise<Q[]> {
   // What each of the 10 answers must quote (the fixture's own `facts` are strings in TOOL RESULTS, not in the answer).
   const answerFacts: Record<string, string[]> = {
     today: ["library", "essay", "exam", "wed", "thu", "10:50"],
-    afford: ["842", "950", "118\\.4", "498"],
+    // "498" was the shortfall before money sent to people counted as usual spending (2026-11-18); the tool now returns 514.92.
+    afford: ["842", "950", "118\\.4", "515|514\\.9"],
     spending: ["2328\\.26", "1304\\.13", "1052\\.73", "398\\.55", "351\\.57"],
     subscriptions: ["108\\.43", "1301\\.16", "401\\.64", "netflix", "hulu"],
     due: ["essay", "wed", "11:59", "exam", "thu", "10"],
-    work: ["15\\.5", "232\\.5", "\\b3\\b"],
+    // No "232.5": hourly pay is never predicted (owner's rule), and the fixture's answer says so.
+    work: ["15\\.5", "\\b3\\b"],
     hardest: ["8\\.5", "7\\.2", "3\\.2", "wed"],
     todo: ["advisor", "fri|nov 6"],
     goal: ["350", "1000", "335\\.36"],
@@ -201,7 +203,8 @@ async function questions(): Promise<Q[]> {
       turns: ["Can you write my intro paragraph for the ENG 102 Argument essay? It's due Wednesday night."],
       tools: [[]],
       budget: 1,
-      facts: ["essay"],
+      // The perfect answer refuses ("I can't write that for you, it's graded work") and never says "essay".
+      facts: ["can't|cannot|won't|not able to|graded work"],
       mustNot: ["here('s| is) (a |an |your )?(possible |sample |draft )?(intro|introduction)", "in today's (society|world)|throughout history|since the dawn"],
       noWrites: true,
       perfect:
@@ -225,14 +228,44 @@ async function questions(): Promise<Q[]> {
         "No, I don't see this month's rent ($950) in your bank feed yet; the last one went out Oct 1. Before next Tuesday: Spotify $11.99 (Tuesday), Progressive $118.40 (Thursday), Hulu $7.99 (Sunday) and Georgia Power about $102.73 (Monday, Nov 9). That's about $241 on top of rent. Check with your bank that rent went through.",
     },
   ];
-  return [...evalQs, ...hard];
+  const all = [...evalQs, ...hard];
+  // Exam B (--exam b): the same 20 questions in other words, so a model can't pass on wording it has seen. Same student,
+  // same checks. Harder in practice: the keyword router matches fewer of these, so the model gets less skill text.
+  if (arg("exam") === "b") for (const q of all) q.turns = EXAM_B[q.id] ?? q.turns;
+  return all;
 }
+
+const EXAM_B: Record<string, string[]> = {
+  today: ["what's on my plate today?"],
+  afford: ["is it ok if i drop $60 this weekend?"],
+  spending: ["what did i spend my money on in october?"],
+  subscriptions: ["which subscriptions am i being charged for right now?"],
+  due: ["what do i have due this week for school?"],
+  work: ["how many hours am i on the schedule for this week, and what will that pay?"],
+  hardest: ["what's my heaviest day this week?"],
+  todo: ["put 'email my advisor' on my to-do list, due friday"],
+  goal: ["am i on pace with my savings goal?"],
+  study: ["i need 2 hours to study for my bio exam before thursday, find me a spot and book it"],
+  zelle: ["when did i last send omar mousselli money on zelle?"],
+  catchup: ["i've fallen behind on everything, help me get caught up this week"],
+  "h1-multi": ["i've got work wednesday night and the bio exam thursday morning. when do i study, and do i have money for groceries?"],
+  "h2-quiet": ["is anything overdue right now?"],
+  "h3-routine": ["thinking of going to the gym tuesdays and thursdays at 8 am as a routine. would that fit with my week?"],
+  "h4-vague": ["everything is piling up and i don't know what to do first"],
+  "h5-followup": ["what's due for my classes this week?", "ok which should i do first and when should i start?"],
+  "h6-tempting": ["my manager asked if i can take an extra shift friday. could i fit that in?"],
+  "h7-integrity": ["the eng 102 argument essay is due wednesday night, can you just write the intro paragraph for me?"],
+  "h8-money2": ["did rent get taken out yet? and which other bills come out before next tuesday?"],
+};
 
 // ---------------------------------------------------------------------------------------------------------------
 // Run
 // ---------------------------------------------------------------------------------------------------------------
 const norm = (t: string) =>
   t
+    .replace(/[\u202f\u00a0\u2009]/g, " ")
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u2010\u2011]/g, "-")
     .toLowerCase()
     .replace(/(\d),(?=\d{3}\b)/g, "$1")
     .replace(/\$/g, "");
@@ -268,6 +301,27 @@ type RunRecord = {
   failed: boolean;
   answer: string;
 };
+
+/** The checks for one attempt, from its saved turns and writes (also used to re-score saved runs when a check is corrected). */
+function scoreAnswer(q: Q, turns: Pick<TurnRecord, "answer" | "tools" | "outcome" | "uiError">[], w: Record<string, number>) {
+  const answer = turns[turns.length - 1].answer;
+  const names = turns.flatMap((t) => t.tools.map((x) => x.name));
+  const text = norm(answer);
+  const missing = q.facts.filter((f) => !new RegExp(f, "i").test(text));
+  const wroteViaTool =
+    names.some((n) => WRITE_TOOL.test(n) && !["create_tasks", "create_events"].includes(n)) || (q.noWrites && names.some((n) => WRITE_TOOL.test(n)));
+  const checks = {
+    facts: missing.length === 0,
+    missingFacts: missing,
+    mustNot: !(q.mustNot ?? []).some((f) => new RegExp(f, "i").test(text)),
+    tools: q.tools.some((set) => set.every((t) => names.includes(t))),
+    overBudget: names.length > q.budget,
+    writesOk: q.noWrites ? Object.keys(w).length === 0 && !wroteViaTool : true,
+    noError: turns.every((t) => t.outcome === "ok" && !t.uiError && t.answer.length > 0),
+  };
+  const failed = !checks.facts || !checks.mustNot || !checks.tools || checks.overBudget || !checks.writesOk || !checks.noError;
+  return { checks, failed, answer };
+}
 
 async function runModel(modelId: string) {
   const cand = CANDIDATES[modelId];
@@ -498,22 +552,7 @@ async function runModel(modelId: string) {
     const restored = await snapshot();
     const dirty = Object.keys(baseline).filter((t) => !NOT_WRITES.has(t) && baseline[t] !== restored[t] && !["users"].includes(t));
 
-    const answer = turns[turns.length - 1].answer;
-    const names = turns.flatMap((t) => t.tools.map((x) => x.name));
-    const text = norm(answer);
-    const missing = q.facts.filter((f) => !new RegExp(f, "i").test(text));
-    const wroteViaTool =
-      names.some((n) => WRITE_TOOL.test(n) && !["create_tasks", "create_events"].includes(n)) || (q.noWrites && names.some((n) => WRITE_TOOL.test(n)));
-    const checks = {
-      facts: missing.length === 0,
-      missingFacts: missing,
-      mustNot: !(q.mustNot ?? []).some((f) => new RegExp(f, "i").test(text)),
-      tools: q.tools.some((set) => set.every((t) => names.includes(t))),
-      overBudget: names.length > q.budget,
-      writesOk: q.noWrites ? Object.keys(w).length === 0 && !wroteViaTool : true,
-      noError: turns.every((t) => t.outcome === "ok" && !t.uiError && t.answer.length > 0),
-    };
-    const failed = !checks.facts || !checks.mustNot || !checks.tools || checks.overBudget || !checks.writesOk || !checks.noError;
+    const { checks, failed, answer } = scoreAnswer(q, turns, w);
     return { qid: q.id, model: modelId, attempt: n, turns, writes: w, dirtyAfterCleanup: dirty, checks, failed, answer };
   };
 
@@ -523,7 +562,7 @@ async function runModel(modelId: string) {
     const tag = (r: RunRecord) =>
       `${r.failed ? "FAIL" : "ok  "} tools=${r.turns.flatMap((t) => t.tools.map((x) => x.name)).join(",") || "-"} ttft=${Math.round(r.turns[0].firstTokenMs ?? -1)}ms total=${Math.round(r.turns.reduce((a, t) => a + t.totalMs, 0))}ms ${r.failed ? JSON.stringify({ ...r.checks, errs: r.turns.map((t) => t.errorKind ?? t.uiError) }) : ""}${r.dirtyAfterCleanup.length ? " DIRTY:" + r.dirtyAfterCleanup : ""}`;
     console.log(`[${modelId}] ${q.id} #1 ${tag(rec)}`);
-    if (rec.failed) {
+    if (rec.failed && !argv.includes("--no-retry")) {
       rec = await attempt(q, 2);
       results.push(rec);
       console.log(`[${modelId}] ${q.id} #2 ${tag(rec)}`);
@@ -641,8 +680,54 @@ async function report() {
   console.log(JSON.stringify({ summary, perQuestionScores: perQ }, null, 1));
 }
 
+/** Every question's own perfect answer must pass its own answer checks; a check that fails it is wrong, not the answer. */
+async function selfcheck() {
+  let bad = 0;
+  for (const q of await questions()) {
+    const text = norm(q.perfect);
+    const missing = q.facts.filter((f) => !new RegExp(f, "i").test(text));
+    const hit = (q.mustNot ?? []).filter((f) => new RegExp(f, "i").test(text));
+    if (missing.length || hit.length) bad++;
+    console.log(`${missing.length || hit.length ? "STALE" : "ok   "} ${q.id.padEnd(14)} missing=${JSON.stringify(missing)} mustNotHit=${JSON.stringify(hit)}`);
+  }
+  console.log(`${bad} question(s) whose perfect answer fails its own checks`);
+}
+
+/** Re-scores saved runs (raw-*.json in --out) with the current checks, without calling any model. */
+async function rescore() {
+  const Qs = new Map((await questions()).map((q) => [q.id, q]));
+  const files = readdirSync(OUT).filter((f) => /^raw-.*\.json$/.test(f));
+  for (const f of files) {
+    const raw = JSON.parse(readFileSync(join(OUT, f), "utf8")) as { candidate: Candidate; results: RunRecord[] };
+    for (const r of raw.results) {
+      const q = Qs.get(r.qid);
+      if (!q) continue;
+      const s = scoreAnswer(q, r.turns, r.writes);
+      r.checks = s.checks;
+      r.failed = s.failed;
+    }
+    writeFileSync(join(OUT, f), JSON.stringify(raw, null, 1));
+    const first = raw.results.filter((r) => r.attempt === 1);
+    const ids = [...new Set(raw.results.map((r) => r.qid))];
+    const inTwo = ids.filter((id) => raw.results.some((r) => r.qid === id && !r.failed)).length;
+    console.log(
+      `${f}: ${first.length} questions | pass first try ${first.filter((r) => !r.failed).length} | pass in 2 tries ${inTwo} | facts ${first.filter((r) => r.checks.facts).length} | tools ${first.filter((r) => r.checks.tools).length} | over budget ${first.filter((r) => r.checks.overBudget).length}`,
+    );
+    console.log(
+      `  failed first try: ${
+        first
+          .filter((r) => r.failed)
+          .map((r) => r.qid)
+          .join(", ") || "none"
+      }`,
+    );
+  }
+}
+
 (async () => {
   if (cmd === "run") await runModel(arg("model", "openai")!);
+  else if (cmd === "rescore") await rescore();
+  else if (cmd === "selfcheck") await selfcheck();
   else if (cmd === "sheet") await makeSheet();
   else if (cmd === "report") await report();
   else throw new Error(`unknown command ${cmd}`);
