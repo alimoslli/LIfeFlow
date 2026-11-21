@@ -27,3 +27,11 @@ Owner's go-ahead (2026-11-21, 04:05 UTC): start steps 1 and 2 from the pilot rep
 - **Found:** the test database must not run as a Postgres superuser (it skips row-level security). That caused 81 false test failures here and makes the step 2 scores provisional. Fixed in run_box.sh.
 - **GPU run 1, H100 `6ba06976`, 05:52 to 06:39 UTC, 94.83 credits, no examples.** On a fresh box, vLLM installed on /workspace (a network volume) never finished starting: its Python files read at about 0.2 MB a second. The teacher (gpt-oss-120b, 61 GB) is downloaded on the GPU storage. run_box.sh now installs vLLM, Node and the app on the box's own disk.
 - **Next:** run 1 more time with the new run_box.sh (estimate about 100 credits on one H100: 12 min setup, 5 min teacher test, 30 min examples). Waiting on the owner's budget for it: the cap set for this step was 150 and 95 is spent.
+
+### GPU run 2 (owner: "go", then "I approve all requests, don't stop till the steps of the plan are done")
+
+- Box H100 `95794dd7`, rented 06:47 UTC. Everything installs on the box's own disk now: setup took 3 minutes (was 20+).
+- Teacher gpt-oss-120b on the 20 test questions, clean database (no superuser): 6 of 20 first try, 7 in two tries; facts 8, right tools 17, over budget 5. Better than the 8B models, far from perfect, so the filter matters.
+- First generation (06:57 to 07:13): 1,620 turns, 1,506 kept. Stopped before training because only 6 of 37 skills had been asked (the per-life random pick clustered) and some answers wrote things nobody asked for. Kept in `/workspace/chatdata-run2a`.
+- Fixes: questions spread evenly over the whole bank (each life and slot steps by a prime), "unasked write" filter, em dashes become commas, plain spaces. Training scores only the skyling's own tokens (the full vocabulary scores ran out of memory).
+- Now: regeneration (12 questions a life, 1,944 in all; stop 07:58 UTC), then `chat-train/phase2.sh` on the same box: fine-tune Qwen3-8B (LoRA, up to 60 minutes), then score untuned and tuned on the 20 questions. Results land in `/workspace/chattrain`.
