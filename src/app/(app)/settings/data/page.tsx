@@ -7,7 +7,7 @@ import { requireUser, withCurrentUser } from "@/server/auth/current-user";
 import { listTrash } from "@/server/services/trash";
 import { DeletedSection } from "./deleted-section";
 import { getDb } from "@/server/db/client";
-import { accountHasPassword } from "@/server/services/accounts";
+import { accountHasPassword, appleAccessNotRevocable } from "@/server/services/accounts";
 import { deleteAccountAction } from "../actions";
 import { SettingsHeader } from "../settings-header";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
@@ -17,6 +17,7 @@ export const metadata: Metadata = { title: "Privacy and your data" };
 export default async function DataSettings() {
   const user = await requireUser({ account: true });
   const withPassword = await accountHasPassword(getDb(), user.id);
+  const appleLeft = await appleAccessNotRevocable(getDb(), user.id);
   // Recently deleted lives here now (it was its own page; owner's page map 2026-11-10).
   const trash = await withCurrentUser(async (s, u) => ({ items: await listTrash(s), tz: u.timezone }), { account: true });
   return (
@@ -55,6 +56,11 @@ export default async function DataSettings() {
           Deletes your account and everything in it, except a one-way fingerprint of your email address, kept so the same address can&apos;t earn a second
           invite credit. This can&apos;t be undone.
         </p>
+        {appleLeft && (
+          <p className="mt-2 text-sm text-text-2" data-testid="apple-remove-line">
+            You signed in with Apple, so also remove LifeFlow in your Apple ID settings (Sign in with Apple).
+          </p>
+        )}
         <ActionForm action={deleteAccountAction} className="mt-4 max-w-sm">
           {withPassword && (
             <Field label="Password" htmlFor="del-pw">
