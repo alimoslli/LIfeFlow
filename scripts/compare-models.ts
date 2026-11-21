@@ -47,6 +47,14 @@ const CANDIDATES: Record<string, Candidate> = {
   },
   "groq-oss": { id: "groq-oss", label: "Groq gpt-oss-120b", baseURL: "https://api.groq.com/openai/v1", model: "openai/gpt-oss-120b", sendReasoning: true },
   "groq-qwen": { id: "groq-qwen", label: "Groq qwen3.8-27b", baseURL: "https://api.groq.com/openai/v1", model: "qwen/qwen3.8-27b", sendReasoning: true },
+  // An open model we serve ourselves on a rented GPU (scripts/gpu/chat-eval): CMP_LOCAL_URL and CMP_LOCAL_MODEL name it.
+  local: {
+    id: process.env.CMP_LOCAL_ID || "local",
+    label: `Self-hosted ${process.env.CMP_LOCAL_MODEL ?? "(set CMP_LOCAL_MODEL)"}`,
+    baseURL: process.env.CMP_LOCAL_URL || "http://127.0.0.1:8100/v1",
+    model: process.env.CMP_LOCAL_MODEL || "local",
+    sendReasoning: false,
+  },
 };
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -363,7 +371,8 @@ async function runModel(modelId: string) {
     }
     return out;
   };
-  const NOT_WRITES = new Set(["conversations", "messages", "jarvis_runs", "audit_events", "attachments"]);
+  // Bookkeeping every turn writes (ai_usage: one row per paid call, ADR 0035), not a change the model made.
+  const NOT_WRITES = new Set(["conversations", "messages", "jarvis_runs", "audit_events", "attachments", "ai_usage"]);
   const diffCounts = (a: Record<string, string>, b: Record<string, string>) => {
     const d: Record<string, number> = {};
     for (const t of Object.keys(b)) {
