@@ -172,12 +172,17 @@ describe("accounts that stopped opening the app", () => {
 
   it("the morning look files nothing from Gmail for an idle account (a paid read per email), and files as before otherwise", async () => {
     const morning = new Date("2026-11-10T14:00:00Z"); // 9 AM in New York
-    const prefs = { gmailFiling: true } as Parameters<typeof runDueSlot>[2];
+    // filing reads emails with AI, so it runs only for someone who allowed AI (the clouds port, 2026-11-21)
+    const prefs = { gmailFiling: true, aiConsentAt: "2026-01-01T00:00:00.000Z" } as Parameters<typeof runDueSlot>[2];
     const a = await makeUser("Idle Filing");
     await a.run((s) => runDueSlot(s, TZ, prefs, morning, { scheduled: true, idle: true }));
     expect(mocks.filed).not.toHaveBeenCalled();
     const b = await makeUser("Active Filing");
     await b.run((s) => runDueSlot(s, TZ, prefs, morning, { scheduled: true, idle: false }));
+    expect(mocks.filed).toHaveBeenCalledTimes(1);
+    // without AI allowed, nothing is read, idle or not
+    const c = await makeUser("No AI Filing");
+    await c.run((s) => runDueSlot(s, TZ, { gmailFiling: true } as Parameters<typeof runDueSlot>[2], morning, { scheduled: true, idle: false }));
     expect(mocks.filed).toHaveBeenCalledTimes(1);
   });
 });
