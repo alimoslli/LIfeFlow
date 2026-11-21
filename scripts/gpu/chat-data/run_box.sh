@@ -19,6 +19,9 @@ su postgres -c "psql -c \"create role budgetflow login superuser password 'budge
 for db in budgetflow_test_d budgetflow_gen_test; do su postgres -c "createdb -O budgetflow $db" || true; done
 npm ci --ignore-scripts --no-audit --no-fund > $W/npm.log 2>&1
 for db in budgetflow_test_d budgetflow_gen_test; do TEST_DATABASE_URL=postgresql://budgetflow:budgetflow_dev@localhost:5432/$db npm run db:migrate:test > $W/migrate-$db.log 2>&1; done
+# Never run the app as a superuser: Postgres lets a superuser skip row-level security, and then one made-up person's
+# skyling would read every other person's rows. Superuser is only for the migrations above.
+su postgres -c "psql -c \"alter role budgetflow nosuperuser nobypassrls\""
 
 step download
 /opt/venv/bin/hf download "$TEACHER" --exclude "original/*" --exclude "metal/*" > $W/download.log 2>&1

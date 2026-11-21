@@ -2,6 +2,8 @@
 
 Step 2 of the own-model plan (owner, 2026-11-21: "you can start with 1 and 2"). The question: how far is an open model we could host ourselves from doing the skyling's real job today, untuned? Made-up data only (the eval student, Maya Chen, in a throwaway test database; ADR 0023). No app code changed. Nothing here ships.
 
+> **Correction, 2026-11-21 06:00 UTC: these scores are provisional.** The test database ran as a Postgres superuser, and a superuser skips row-level security, so the tools may have returned rows of more than one copy of the test student (each run seeded a new copy into the same database). Some wrong counts below may come from that, not the model. The runs are being repeated with a normal database user; this section will be replaced with the clean numbers.
+
 ## Short answer
 
 Far. Untuned, on the skyling's real loop, Qwen3-8B passes 2 of 20 questions with thinking off and 4 of 20 with thinking on. It usually picks the right tool (13 to 15 of 20), so the tools and prompt work with an open model. What fails is the answer: wrong weekdays and dates, wrong counts, and numbers it was given but left out. gpt-oss-20b (OpenAI's open model, Apache 2.0) also passes 4 of 20: it picks the right tools almost every time (19 of 20) and gets dates right more often, but calls more tools than needed (9 of 20 over budget) and still drops totals.
