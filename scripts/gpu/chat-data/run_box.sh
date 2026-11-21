@@ -24,7 +24,7 @@ for db in budgetflow_test_d budgetflow_gen_test; do TEST_DATABASE_URL=postgresql
 su postgres -c "psql -c \"alter role budgetflow nosuperuser nobypassrls\""
 
 step download
-/opt/venv/bin/hf download "$TEACHER" --exclude "original/*" --exclude "metal/*" > $W/download.log 2>&1
+/workspace/vllm-venv/bin/hf download "$TEACHER" --exclude "original/*" --exclude "metal/*" > $W/download.log 2>&1
 
 step serve
 nohup /workspace/vllm-venv/bin/vllm serve "$TEACHER" --served-model-name "$NAME" --port 8000 --max-model-len 32768 \
