@@ -67,6 +67,21 @@ export async function collectSnapshot(s: UserScope, user: SessionUser, now = new
         kind: a.kind,
         href: `/school/courses/${a.course.id}`,
       })),
+    due: upcomingA
+      .filter((a) => a.kind !== "exam" && a.kind !== "quiz" && a.dueAt && a.dueAt > now && localDateOf(a.dueAt, tz) <= weekEnd)
+      .sort((a, b) => a.dueAt!.getTime() - b.dueAt!.getTime())
+      .map((a) => ({
+        id: a.id,
+        title: a.title,
+        course: a.course.code ?? a.course.name,
+        dueAt: a.dueAt!,
+        kind: a.kind,
+        href: `/school/courses/${a.course.id}`,
+      })),
+    todos: tasks
+      .filter((t) => t.dueAt && !t.parentId && t.dueAt > now && localDateOf(t.dueAt, tz) <= weekEnd)
+      .sort((a, b) => a.dueAt!.getTime() - b.dueAt!.getTime())
+      .map((t) => ({ id: t.id, title: t.title, dueAt: t.dueAt!, href: "/tasks" })),
     freeMinutesByDay,
     money: await collectMoney(s, today),
   };

@@ -1,6 +1,7 @@
 import { addDaysStr, daysBetween, formatDateStr, formatIn, greetingIn, localDateOf } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
 import { findConflicts, type AgendaItem } from "../services/calendar";
+import { dueMathRule, freeGapRule, tonightRule } from "./sky-rules";
 import type { Briefing, DayGlance, Insight, LifeSnapshot } from "./types";
 
 /** Sentences read better with whole dollars: "$1,842", "$12.50" only under $100. */
@@ -67,6 +68,8 @@ const conflictRule: Rule = (s) => {
       text: `${first.a.title} overlaps ${first.b.title} ${when(first.b)}.`,
       detail: also,
       action: { label: "Help me sort it out", prompt: ask },
+      // two things booked at the same time: real trouble, the dark rain cloud
+      weather: "storm" as const,
       score: 90,
     },
   ];
@@ -243,7 +246,13 @@ export const RULES: Rule[] = [
   busyDayRule,
   billsRule,
   goalRule,
+  tonightRule,
+  freeGapRule,
+  dueMathRule,
 ];
+
+/** Every rule's insights, unranked (services/sky-insights ranks them with the stored messages). */
+export const allInsights = (s: LifeSnapshot): Insight[] => RULES.flatMap((r) => r(s));
 
 export function deriveInsights(s: LifeSnapshot, limit = 4): Insight[] {
   return RULES.flatMap((r) => r(s))

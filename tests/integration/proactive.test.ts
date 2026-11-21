@@ -414,7 +414,7 @@ describe("Sunday week ahead", () => {
     const { run } = await makeUser();
     // A Sunday evening; the week ahead is Mon Nov 9 to Sun Nov 15.
     const sunday = new Date("2026-11-08T23:00:00Z");
-    const quiet = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now: sunday }));
+    const quiet = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "sunday", now: sunday }));
     expect(quiet.find((m) => m.kind === "week_ahead")).toBeUndefined();
 
     await run(async (s) => {
@@ -424,10 +424,10 @@ describe("Sunday week ahead", () => {
       const course = await createCourse(s, { name: "Biology", code: "BIO 101" });
       await createAssignment(s, TZ, { courseId: course.id, title: "Quiz 4", kind: "quiz", dueDate: "2026-11-12", dueTime: "09:00" });
     });
-    const mon = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now: new Date("2026-11-09T23:00:00Z") }));
+    const mon = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "sunday", now: new Date("2026-11-09T23:00:00Z") }));
     expect(mon.find((m) => m.kind === "week_ahead")).toBeUndefined(); // only on Sundays
 
-    const out = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now: new Date(sunday.getTime() + 60_000) }));
+    const out = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "sunday", now: new Date(sunday.getTime() + 60_000) }));
     const msg = out.find((m) => m.kind === "week_ahead")!;
     expect(msg.title).toBe("Wednesday is your big day this week");
     expect(msg.body).toContain("Wednesday has about 11 hours on it: Work at Target 10:00 AM–7:00 PM and a to-do (Pay phone bill).");
@@ -488,7 +488,7 @@ describe("reviews and coaching", () => {
     // A Sunday evening: the weekly review. On a Sunday, use next Sunday (tonight already had its evening message).
     const daysToSunday = (7 - new Date(`${today}T12:00:00Z`).getUTCDay()) % 7 || 7;
     const sunday = new Date(`${addDaysStr(today, daysToSunday)}T23:30:00Z`);
-    const week = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now: sunday }));
+    const week = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "sunday", now: sunday }));
     const review = week.find((m) => m.kind === "weekly_review")!;
     expect(review.body).toMatch(/to-do.* done, \d+ still open, \$\d+ spent/);
     expect((review.facts.sections as { heading: string }[]).map((x) => x.heading)).toEqual(expect.arrayContaining(["Wins", "Still open", "Spending"]));

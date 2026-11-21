@@ -17,6 +17,7 @@ import { listHabits, slotMinutes } from "../habits";
 import { listActiveMemories } from "../memory";
 import { listAssignments, listCourses } from "../school";
 import { listShifts } from "../work";
+import { lifeLoad } from "../life-load";
 import type { Candidate, DetectContext, Detector } from "./detectors";
 
 type Section = { heading: string; lines: string[] };
@@ -44,7 +45,8 @@ export async function lastMinutePattern({ scope }: DetectContext) {
     .select({ dueAt: assignments.dueAt, completedAt: assignments.completedAt })
     .from(assignments)
     .where(and(eq(assignments.userId, scope.userId), isNotNull(assignments.completedAt), isNotNull(assignments.dueAt)));
-  const recent = rows.slice(-20);
+  // the latest 20, by when they were finished (rows come back in no set order)
+  const recent = rows.sort((a, b) => a.completedAt!.getTime() - b.completedAt!.getTime()).slice(-20);
   if (recent.length < 4) return null;
   const late = recent.filter((r) => r.dueAt!.getTime() - r.completedAt!.getTime() < 24 * 3600_000).length;
   if (late / recent.length < 0.6) return null;
@@ -147,10 +149,11 @@ export const eveningWrap: Detector = async ({ scope, tz, today }) => {
 
 /** Sunday evening: wins, what is still open, spending vs. budget, goals and forecasts, one change for next week. */
 export const weeklyReview: Detector = async (ctx) => {
-  const { scope, tz, today } = ctx;
+  const { scope, tz, today, now } = ctx;
   if (dayOfWeek(today) !== 0) return [];
   const wk = weekStart(today);
-  const [taskRows, spend, budgets, goals, habitsList] = await series(
+  const nextEnd = addDaysStr(today, 7);
+  const [taskRows, spend, budgets, goals, habitsList, accounts, ahead, upcoming] = await series(
     () =>
       scope.tx
         .select({ title: tasks.title, status: tasks.status, dueAt: tasks.dueAt, completedAt: tasks.completedAt })
@@ -160,15 +163,23 @@ export const weeklyReview: Detector = async (ctx) => {
     () => budgetStatus(scope, today),
     () => goalsWithPlans(scope, today),
     () => listHabits(scope, today),
+    () => listAccounts(scope),
+    () => lifeLoad(scope, tz, addDaysStr(today, 1)),
+    () => listAssignments(scope, tz, { view: "upcoming", now, limit: 100 }),
   );
   const done = taskRows.filter((t) => t.status === "done" && t.completedAt && localDateOf(t.completedAt, tz) >= wk);
   const slipped = taskRows.filter((t) => t.status !== "done" && t.dueAt && localDateOf(t.dueAt, tz) >= wk && localDateOf(t.dueAt, tz) <= today);
+  // Spending is said only with an account to say it from: "$0 spent" without a bank would be a guess.
+  const hasMoney = accounts.length > 0;
   const spent = spend.outCents;
   const weeklyBudget = Math.round((budgets.reduce((s, b) => s + b.limitCents, 0) * 7) / 30.44);
-  const patterns = [await weekendPattern(ctx), await lastMinutePattern(ctx)].filter((p): p is { text: string; fix: string } => !!p);
+  const weekend = hasMoney ? await weekendPattern(ctx) : null;
+  const lastMinute = await lastMinutePattern(ctx);
   const over = budgets.filter((b) => b.percent > 100).sort((a, b) => a.remainingCents - b.remainingCents)[0];
+  // gentle (owner, 2026-11-12): the habit itself is never named; only the change it suggests
   const change =
-    patterns[0]?.fix ??
+    weekend?.fix ??
+    lastMinute?.fix ??
     (over
       ? `Keep ${over.categoryName} under ${usd(Math.max(0, over.limitCents / 4.35))} next week.`
       : slipped.length
@@ -179,15 +190,32 @@ export const weeklyReview: Detector = async (ctx) => {
     .filter((g) => g.status === "active")
     .slice(0, 3)
     .map((g) => `${g.name}: ${g.percent}%${g.projectedDate ? `, on pace for ${formatDateStr(g.projectedDate, "MMMM yyyy")}` : ", no pace yet"}`);
+  // the look ahead (owner, 2026-11-12): next week's heaviest day, its exams and how much is due
+  const nextWeek = upcoming.filter((a) => a.dueAt && localDateOf(a.dueAt, tz) > today && localDateOf(a.dueAt, tz) <= nextEnd);
+  const exams = nextWeek.filter((a) => a.kind === "exam" || a.kind === "quiz");
+  const dueCount = nextWeek.length - exams.length;
+  const heavy = ahead.heaviest.hours >= 4 ? ahead.heaviest : null;
+  const nextLines = [
+    heavy ? `${formatDateStr(heavy.date, "EEEE")} is the heaviest day, about ${Math.round(heavy.hours)} hours` : null,
+    ...exams.slice(0, 3).map((e) => `${e.course.code ?? e.course.name} ${e.kind} ${formatDateStr(localDateOf(e.dueAt!, tz), "EEEE")}`),
+    dueCount ? `${dueCount} assignment${dueCount === 1 ? "" : "s"} due` : null,
+  ].filter((l): l is string => !!l);
+  // nothing to say: nothing done, nothing open, no spending and nothing next week (owner: skipped, never an empty review)
+  if (!done.length && !slipped.length && !(hasMoney && spent > 0) && !nextLines.length && !streaks.length) return [];
   const sections: Section[] = [
     { heading: "Wins", lines: [`${done.length} to-do${done.length === 1 ? "" : "s"} done`, ...streaks].filter(Boolean) },
     { heading: "Still open", lines: slipped.length ? slipped.map((t) => t.title).slice(0, 5) : ["Nothing. Clean week."] },
-    {
-      heading: "Spending",
-      lines: [weeklyBudget ? `${usd(spent)} spent of about ${usd(weeklyBudget)} budgeted for the week` : `${usd(spent)} spent this week`],
-    },
+    ...(hasMoney
+      ? [
+          {
+            heading: "Spending",
+            lines: [weeklyBudget ? `${usd(spent)} spent of about ${usd(weeklyBudget)} budgeted for the week` : `${usd(spent)} spent this week`],
+          },
+        ]
+      : []),
     ...(goalLines.length ? [{ heading: "Goals", lines: goalLines }] : []),
-    ...(patterns.length ? [{ heading: "Patterns", lines: patterns.map((p) => p.text) }] : []),
+    ...(weekend ? [{ heading: "Patterns", lines: [weekend.text] }] : []),
+    ...(nextLines.length ? [{ heading: "Next week", lines: nextLines }] : []),
     ...(change ? [{ heading: "One change for next week", lines: [change] }] : []),
   ];
   return [
@@ -195,7 +223,15 @@ export const weeklyReview: Detector = async (ctx) => {
       kind: "weekly_review",
       topic: "general",
       dedupeKey: `weekly_review:${wk}`,
-      facts: { done: done.length, slipped: slipped.length, spentCents: spent, budgetCents: weeklyBudget, change, sections },
+      facts: {
+        done: done.length,
+        slipped: slipped.length,
+        ...(hasMoney ? { spentCents: spent, budgetCents: weeklyBudget } : {}),
+        heaviest: heavy ? formatDateStr(heavy.date, "EEEE") : null,
+        exams: exams.length,
+        change,
+        sections,
+      },
       action: { type: "open", label: "Plan next week", href: "/plan" },
       priority: 85,
     },

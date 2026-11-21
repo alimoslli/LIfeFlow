@@ -31,7 +31,9 @@ import { EmptyNext } from "./_today/empty-next";
 import { ideaClouds } from "@/server/services/idea-clouds";
 import { BRIEF_UNTIL_HOUR, morningBriefLine, nextUpNote, workTodayLine } from "@/server/services/next-up";
 import { stopHref } from "@/lib/today-stop";
-import { formatIn } from "@/lib/dates";
+import { formatIn, todayIn } from "@/lib/dates";
+import { skyInsights } from "@/server/services/sky-insights";
+import { skyNote } from "@/lib/sky-note";
 
 /**
  * Today (v3): your time as a clock that opens into the timeline of your week (docs/design/clock/spec.md),
@@ -115,7 +117,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     const next = await nextUpNote(scope, tz, now);
     const brief = Number(formatIn(now, tz, "H")) < BRIEF_UNTIL_HOUR ? await morningBriefLine(scope, tz, now, { money: !locked, said: next?.text }) : null;
     const work = await workTodayLine(scope, tz, now, next?.text);
-    const { briefing } = await getBriefing(scope, user);
+    const { briefing, snapshot } = await getBriefing(scope, user);
     const [integrationList, banks] = await series(
       () => integrationStatus(scope),
       () => listPlaidConnections(scope),
@@ -135,14 +137,21 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     const far: AssistantNote | null = top
       ? { id: top.id, text: top.text, tone: top.tone, href: top.action?.href, prompt: top.action?.prompt, label: top.action?.label }
       : null;
+    // Nothing real in the next 24 hours: what the sky noticed on its own comes first (owner, 2026-11-12; lib/sky-insights:
+    // storms, then heads-ups, then ideas with their one step), else the briefing's note. Money stays out under the lock.
+    const sky = next ? null : ((await skyInsights(scope, snapshot, { moneyLocked: locked }))[0] ?? null);
     // a tap opens that thing's own card on the line (test students: the note opened the Calendar's month grid)
-    const note: AssistantNote | null = next ? { id: next.key, text: next.text, tone: "heads-up", href: stopHref(next.key) } : far;
+    const note: AssistantNote | null = next
+      ? { id: next.key, text: next.text, tone: "heads-up", href: stopHref(next.key) }
+      : sky
+        ? skyNote(sky, todayIn(tz, now))
+        : far;
     return {
       clock,
       note,
       brief,
       work,
-      clash: !!top?.id?.startsWith("conflict"),
+      clash: !!(sky ?? top)?.id?.startsWith("conflict"),
       assistantName: assistantProfile(user.preferences, user.timezone).name,
       // idea clouds beside the chat bar, from their own data (lib/idea-clouds)
       clouds: phone

@@ -1,3 +1,4 @@
+import type { SkyBlock, Weather } from "@/lib/sky-insights";
 import type { AgendaItem } from "../services/calendar";
 
 /** Plain facts about the user's life right now, gathered once, then interpreted by pure rules. */
@@ -11,6 +12,10 @@ export type LifeSnapshot = {
   week: AgendaItem[];
   overdue: { id: string; title: string; context: string; dueAt: Date; kind: "assignment" | "task"; href: string }[];
   exams: { id: string; title: string; course: string; dueAt: Date; kind: string; href: string }[];
+  /** Open assignments (not exams or quizzes) due in the next 7 days, soonest first. */
+  due?: { id: string; title: string; course: string; dueAt: Date; kind: string; href: string }[];
+  /** Open to-dos with a due time in the next 7 days, soonest first. */
+  todos?: { id: string; title: string; dueAt: Date; href: string }[];
   /** Free blocks of 60+ min in the next 7 days between 08:00 and 22:00. */
   freeMinutesByDay: { date: string; minutes: number; longest: number; morningMinutes: number }[];
   money: MoneySnapshot | null;
@@ -43,12 +48,15 @@ export type MoneySnapshot = {
   /** First projected day checking goes below $0 in the next 14 days (with expected pay, or without it). */
   overdraft?: { date: string; evenWithPay: boolean } | null;
   hasDemoData: boolean;
+  /** Subscriptions found on their accounts: how many and what they come to a month (yearly / 12). */
+  subscriptions?: { count: number; monthlyCents: number; yearlyCents: number } | null;
 };
 
 export type InsightTone = "attention" | "heads-up" | "good";
 export type InsightIcon = "clock" | "conflict" | "book" | "money" | "trend" | "calendar" | "goal" | "spark";
 
-export type InsightAction = { label: string; href?: string; prompt?: string };
+/** A one-tap booking of free time (lib/sky-insights `SkyBlock`), with Undo. */
+export type InsightAction = { label: string; href?: string; prompt?: string; block?: SkyBlock };
 
 export type Insight = {
   id: string;
@@ -60,6 +68,10 @@ export type Insight = {
   action?: InsightAction;
   /** Higher = more important. */
   score: number;
+  /** Set when the tone alone doesn't say it (a storm, or a heads-up that's only an idea). */
+  weather?: Weather;
+  /** About money: left out while the Money lock is on. */
+  money?: boolean;
 };
 
 export type MoneyGlance = {
