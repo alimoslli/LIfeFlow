@@ -328,35 +328,53 @@ Last: done 2026-11-10 evening ([the walk and the numbers](audits/2026-11-10-prod
 **Price** (owner, 11-05): $9.99 a month, or $5.99 for students. Free while testing.
 
 ## 10. The owner's list (only the owner can do these)
-1. Join the Apple Developer Program (blocks the App Store). Tried 2026-11-08: the website says "unable to process your request" and the Mac Developer app says enrollment "is not available for this Apple Account". Next: try the iPhone Developer app; check the Apple Account (two-factor, legal name, 18+, country, phone); look for a pending enrollment; else call Apple Developer Support (Membership and Account, Program Enrollment).
-2. Register in Microsoft Entra (blocks Teams).
-3. Request Plaid Production access (blocks real banks).
-4. Connect the Twilio number (blocks texting the assistant, phone sign-in and the after-shift message).
-5. Set up the desk task starter: a scheduled task API trigger and token, plus two Vercel variables (section 5).
-6. Connect Instagram in Metricool as a professional account with all permissions (section 8).
-8. Pro payments: Stripe keys for the web (go-live 9c); on iPhone, Apple in-app purchase comes with the App Store.
-9. Google verification of the app, so people outside the test list can connect Gmail.
-10. ~~Vercel environment variables~~ **Done 2026-11-10:** the six prices are in, and Admin › App › Health shows AI, banks, Google, the price cap, email, scheduled jobs and alert email all set up. Microsoft, Stripe and Twilio wait on items 2, 4 and 8. The old preview-branch database links were cleaned up. Optional, not added: the HQ desk "Start it" (item 5).
-11. **Cloud environment for the chats:** remove the `api.openai.com` and `api.groq.com` network secrets from the "LifeFlow" cloud environment (environment menu → Edit → Network secrets), so no chat can spend on the AI key.
-12. **A separate OpenAI project for production** (AI costs, decision 10, answered yes 2026-11-12): create a second project in the OpenAI account for the live app, give it its own key, and put that key in Vercel's production settings, so the usage and bill are only the live app's. An account step, not code. Also still yours before the AI limits go live: confirm the six prices and the alert email are set (they are, 2026-11-10); the search fee, small-model prices and voice prices stay unset for now (decision 11: no), so those features are held to counted limits.
+Ask "what's on my list?" in LF Main and this is the list sent back. Checked against `docs/go-live-checklist.md` and `docs/native-app-plan.md` on 2026-11-21: nothing the app needs from the owner is missing from here. None are done yet (owner, 2026-11-21). In order of what they unblock:
+
+1. **Google: one new permission** (blocks the student-test changes going live; 5 minutes).
+   1. console.cloud.google.com, the LifeFlow project, APIs & Services, then **OAuth consent screen** (on the new console it's Google Auth Platform, then **Data access**).
+   2. **Add or remove scopes**, search `calendar.calendarlist.readonly` ("See the list of Google calendars you're subscribed to"), tick it, **Update**, then **Save**.
+   3. Tell the COO "done". It lets LifeFlow see the calendars someone follows (a school's calendar, holidays) and read only their days off.
+2. **Apple Developer Program** ($99 a year; blocks the App Store, the iPhone app, Sign in with Apple's keys and in-app purchase).
+   1. Tried 2026-11-08: the website said "unable to process your request" and the Mac app said enrollment "is not available for this Apple Account".
+   2. Next try: the Apple Developer app on the iPhone, Account, Enroll Now.
+   3. If it still fails, check the Apple Account: two-factor on, your legal name, 18 or older, country and phone set; look for a half-finished enrollment.
+   4. Else call Apple Developer Support (developer.apple.com/contact, Membership and Account, Program Enrollment).
+3. **Google verification of the app** (blocks anyone outside the test list from connecting Gmail and Google Calendar; takes Google days to weeks).
+   1. Same console, OAuth consent screen (Branding): app name LifeFlow, logo, support email, home page https://lifeflowweb.com, privacy https://lifeflowweb.com/privacy, terms https://lifeflowweb.com/terms.
+   2. Verify the domain lifeflowweb.com in Google Search Console with the same Google account.
+   3. Publish the app (Testing to In production), then **Prepare for verification**. Gmail read access is a restricted scope, so Google asks for a short video of the app using it and may ask for a security assessment; reply to their emails.
+4. **Plaid production access** (blocks real banks; today only Plaid's test bank works).
+   1. dashboard.plaid.com, **Request production access** (or Team settings, Production).
+   2. Fill in the company profile, the use (read-only: balances and transactions for a personal planner), and the security questionnaire.
+   3. When approved, copy the production secret into Vercel as `PLAID_SECRET`, set `PLAID_ENV=production`, redeploy.
+5. **Twilio number** (blocks texting your skyling, phone sign-in and the after-shift message).
+   1. twilio.com: create the account, buy a US number that can send SMS.
+   2. Register for A2P 10DLC (US business texting; Twilio walks you through the brand and campaign).
+   3. In Vercel add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_PHONE_NUMBER` (like +14045550134), redeploy.
+   4. In Twilio, the number, Messaging, "A message comes in": Webhook, HTTP POST, `https://lifeflowweb.com/api/sms/inbound`.
+6. **Microsoft Entra** (blocks Outlook calendar and Teams meetings). Steps in `docs/go-live-checklist.md` section 2b: register LifeFlow at entra.microsoft.com, copy the client id and a secret into Vercel (`MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`), add the six read-only permissions, redeploy. Put the secret's expiry date in your calendar.
+7. **The cloud environment for the chats** (keeps any chat from spending on AI): in Claude Code on the web, the environment menu, **LifeFlow**, Edit, Network secrets: remove the `api.openai.com` and `api.groq.com` secrets. Nothing gets added there.
+8. **A separate OpenAI project for the live app** (so the bill is only the live app's): platform.openai.com, Projects, **Create project** "LifeFlow production", create a key in it, put it in Vercel's production `OPENAI_API_KEY`, redeploy, then delete the old key there.
+9. **Instagram in Metricool** (blocks scheduling posts): switch the Instagram account to a professional account in the Instagram app, then in Metricool connect it with every permission ticked.
+10. **After Apple (item 2) is done:**
+    1. **Sign in with Apple keys** for the website: `docs/go-live-checklist.md` section 3 (App ID, Services ID, key `.p8`, four Vercel values).
+    2. **App Store Connect**: create the app (bundle id `app.lifeflow`, it can't change later), the privacy answers (`docs/native-app-plan.md`), screenshots and the description, then TestFlight.
+    3. **In-app purchase** for the plans (owner, 2026-11-21: the paywall is in the App Store app only, after sign-in, never on the web): in App Store Connect, Agreements, Tax and Banking first, then the subscriptions and their prices.
+    4. **Google Play developer account** ($25 once), only if we ship Android too.
+11. **Optional:** the HQ desk "Start it" button (a scheduled task API trigger and token, plus `HQ_DESK_FIRE_URL` and `HQ_DESK_FIRE_TOKEN` in Vercel; section 5). Until then the desk opens a link, which works.
+
+Not needed now: Stripe keys (owner, 2026-11-21: no paywall on the web). Already done: Vercel environment variables and prices (2026-11-10), alert and sign-in email.
 
 ## 11. Waiting for the owner's yes (one list; details in HQ › Work)
-- **The character cast (LF Main, 2026-11-09; docs/design/companions/cast.png):** (a) six companions named for the sky (Dawn, Ray, Noon, Goldie, Dusk, Star): right names and looks? (b) keep 3 tones, or add a 4th "Calm"? (c) before someone picks, the wheel shows Ray (the sun you know); the designer proposed Dawn. (d) retire the old avatar setting (spark, orb, initial)? Kept until you say yes.
-- **The new buttons (LF Main, 2026-11-09):** tried on the landing page, sign-up, welcome and tour (a sunrise button with a chip where a skyling hops in, pixel sparks on press). Move them into the whole app? Kept to those four until you say.
-- **Apple sign-in on deleted accounts:** people who signed in with Apple before 2026-11-09 have no stored token, so deleting their account can't cancel Apple's access until they sign in with Apple once more. Recommended: one line on the delete screen ("also remove LifeFlow in your Apple ID settings").
-- **North Star:** confirm ADR 0032 (V3 itself is merged).
-- **LF Main's held branches:** phone sign-in, the "Still in the testing phase" note, and the tonight tool.
-- **Next.js patch (LF Main, 2026-11-16; `claude/next-patch`):** 16.4.3 to 16.4.6, seven moderate advisories fixed in 16.4.5; check and build pass. Merge it?
-- **HQ cards:** H4 approved and shipped (7647a69). H3 was declined on 2026-11-08: the "Record a paycheck" form on Work stays.
-- **Older cards being rewritten** (Goals redesign A, Connected accounts, the timeline concepts, Gmail abilities, search bolding, the agent workload, "Same bill?" outside the inbox).
+Decided 2026-11-21 (owner, in LF Main): the paywall comes only in the App Store app, after someone downloads it and signs in, not on the web now; the North Star record (ADR 0032) is dropped from this list; the AI budget per paid user waits until later; the delete screen gets one line for people who signed in with Apple before its token was kept (`claude/apple-delete-line`); a value the person types beats Apple Health for that day (as built, since Apple Health is sometimes wrong); a promise's text may show in a notification on the lock screen. Every unmerged branch is merged or deleted, going through them one at a time with the owner.
+
+Still open:
+- **The one-page website and waitlist** (owner, 2026-11-21): being built on `claude/one-page-landing`; pictures for the owner's yes.
 - **Marketing:** voice samples and credit spending.
-- **Onboarding and Today (phone check 2026-11-08):** 'Skip setup' and 'Skip' sit close together while the day connects.
-- **First run and price (research 2026-11-09, docs/research/2026-11-09-first-run-that-converts.md):** (a) where the paywall goes; recommended: only after "Your day, connected", showing the person's own saved item and their skyling's name; (b) the landing still can't show the price ($5.99 students) while the welcome says "free while we're testing": which one is true now? (c) add five first-minute counts (welcome step, first item saved, paywall seen, paid) to Admin › App?
-- **Apple Health vs typed values (COO, 2026-11-09):** a value the person types now always wins over Apple Health for that day (it used to be silently overwritten). Side effect: 20 exercise minutes typed in the morning keep Apple's full-day 60 out. Keep it, or let Apple fill in a typed day once the day is over?
-- **Promises (night audit 2026-11-08):** read the six firmer check-in lines once (some lean on pressure); decide whether a promise's text may show in a notification on the lock screen.
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-21, LF Main (owner: "make sure there aren't any steps that I have to do that are missing ... put that in the plan area"): section 10 is now the owner's full step list with how to do each one, checked against the go-live checklist and the native app plan (new: the Google calendar-list permission, Google verification's details, App Store Connect, in-app purchase, Google Play; Stripe not needed now). Section 11 records the owner's decisions of the day (paywall only in the App Store app, North Star dropped, AI budget later, the Apple line on the delete screen, typed beats Apple Health, promise text on the lock screen) and drops the items already decided.
 - 2026-11-18, LF Main (owner: "lets build a simple page similar to this, a simple about for lifeflow and the ppl behind it, Ali Moslli (Ceo and developer) and tyler kardy (CMO)", laid out like thefacebook's first about page): a public `/about` on `claude/about-page`, held for the owner's yes on the pictures. [ About LifeFlow ], The Project (one sky for classes, work, money and plans; started in 2026 by two students juggling school and work), The People (Ali Moslli, CEO & Developer; Tyler Kardy, CMO, with their photos), linked from the landing page's footer.
 - 2026-11-17, LF COO (owner: "i dont like the names of the ppl in line ... why are we saying how many ppl are waiting ... its not obvious that if your friend joins u move up, too many boxes ... where is the demo", then "yes" on the pictures): the waitlist is simpler. Gone: the front-of-the-line list, the head count, "How the line works" and the link box. Left: your place, the walk to the gate, the email confirm (until done), one card "Every friend who joins moves you up." with #N → #N-1 and one share button, and "Try your sky while you wait" up front with a picture of the wheel. The demo fits one screen (the way back no longer floats over the steps, no glossary), and a "Write to us" link sits under the launch line. Emails work again (Resend sender moved from the test address to lifeflowweb.com, checked live).
 - 2026-11-17, LF COO (owner: "fix this ... make sure errors like this are no where to be found ... i approve of everything", after a reviewer's notes on the landing page; and "why is the logo on the top left the old one"): shipped together with Today v2 and the Next.js patch (16.4.3 to 16.4.6, seven moderate advisories). Type never clips: every display heading with words sits at a line height of 1.1 or more (the landing's closing heading was at 1, the hero at 0.98), gradient words carry `lf-clip-text` so their italics and descenders are painted, and the eyebrow labels over the landing, waitlist and sign-in headings are gone (plus the Work card's "Work" and an empty Goals card's "Goals"); `tests/unit/type-clipping.test.ts` keeps it so. The logo everywhere (`BrandMark`) is the owner's logo picture, `public/brand/lifeflow-mark-192.png`, not a hand-drawn copy that had drifted.
