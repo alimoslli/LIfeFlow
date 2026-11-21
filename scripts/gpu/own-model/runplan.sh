@@ -25,7 +25,12 @@ if ! curl -sf http://127.0.0.1:8000/v1/models | grep -q "\"$NAME\""; then
   step "serve $NAME"
   # shellcheck disable=SC2086
   nohup $L/venv/bin/vllm serve $L/models/$NAME --served-model-name "$NAME" --port 8000 --gpu-memory-utilization 0.92 --max-num-seqs 32 --enable-auto-tool-choice $VLLM_ARGS > $T/vllm-plan-$NAME.log 2>&1 &
-  until curl -sf http://127.0.0.1:8000/v1/models > /dev/null; do sleep 5; done
+  VPID=$!
+  until curl -sf http://127.0.0.1:8000/v1/models > /dev/null; do
+    # the server died while loading: say why, shut down, leave the box idle
+    kill -0 $VPID 2>/dev/null || { echo "FAILED serve $NAME: $(grep -E 'Error|error' $T/vllm-plan-$NAME.log | tail -1 | cut -c1-200)" >> $T/board.txt; shutdown_all; exit 1; }
+    sleep 5
+  done
 fi
 step "ready $NAME"
 while IFS='|' read -r KIND LABEL A B; do
