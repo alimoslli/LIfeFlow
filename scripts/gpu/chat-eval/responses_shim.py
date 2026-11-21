@@ -14,6 +14,8 @@ ap.add_argument("--port", type=int, default=8100)
 ap.add_argument("--no-think", action="store_true", help="ask Qwen3-style templates to skip thinking")
 ap.add_argument("--max-tokens", type=int, default=2048, help="used when the request has no max_output_tokens")
 ap.add_argument("--think", choices=["on", "off", "default"], default="default", help="thinking for templates with a switch (Qwen3, Gemma 4)")
+ap.add_argument("--think-after-tools", action="store_true", help="thinking off while it picks a tool (fast), on once it has results to answer from "
+                "(careful with figures and with leaving nothing out); overrides --think")
 ap.add_argument("--reasoning-effort", default=None, help="for gpt-oss: low, medium or high")
 ap.add_argument("--temperature", type=float, default=0.2)
 ap.add_argument("--system-append", default=None, help="a text file added to the system prompt sent to the model (our own-model house rules); "
@@ -210,6 +212,8 @@ def call_upstream(body):
         if body.get("parallel_tool_calls") is not None:
             req["parallel_tool_calls"] = bool(body["parallel_tool_calls"])
     think = "off" if ARGS.no_think else ARGS.think
+    if ARGS.think_after_tools:
+        think = "on" if sent and sent[-1]["role"] == "tool" else "off"
     if think != "default":
         req["chat_template_kwargs"] = {"enable_thinking": think == "on"}
     if ARGS.reasoning_effort:
@@ -296,7 +300,7 @@ class H(BaseHTTPRequestHandler):
             append(ARGS.log, {"rid": rid, "error": msg[:500]})
             return
         text, resp = to_response(body, chat, rid)
-        conv = self.headers.get("X-Conv-Id")
+        conv = self.headers.get("X-Conv-Id") or "eval"
         if ARGS.dump and conv:
             m = chat["choices"][0]["message"]
             reply = {"role": "assistant", "content": m.get("content") or "", "tool_calls": m.get("tool_calls") or []}
