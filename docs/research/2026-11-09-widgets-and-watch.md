@@ -46,7 +46,7 @@ Recommendation: write about 60 lines of our own Capacitor plugin (`setWidgetToke
 From [Keeping a widget up to date](https://developer.apple.com/documentation/widgetkit/keeping-a-widget-up-to-date):
 
 - Widgets do not run live. WidgetKit gets a timeline (a list of future entries) and shows each at its date.
-- The system gives each widget a daily reload budget that depends on how often it is seen. Apple gives no number. Third-party reports say roughly 40 to 70 a day for a widget people look at often. That figure is an estimate, not an Apple fact.
+- The system gives each widget a daily reload budget that depends on how often it is seen. Apple's own page says a frequently viewed widget's daily budget "typically includes from 40 to 70 refreshes" (about every 15 to 60 minutes); treat it as typical, not a promise (corrected by the 2026-11-16 audit).
 - A reload policy (`atEnd`, `after(date)`) is a hint, not a promise.
 - Reloads from the app in the foreground, and from an App Intent, are not charged the same way. A push from our server can also wake the app, which then calls `reloadAllTimelines()`.
 
@@ -161,7 +161,7 @@ Follow-ups, each its own plan:
 
 ## 7. Open questions and gaps
 
-- Apple gives no reload budget number. Plan for a few a day and test on a device.
+- Apple's page gives a typical 40 to 70 reloads a day for a widget people view often (corrected 2026-11-16). Still send a day of entries in one fetch and test on a device.
 - Plugin choice (own plugin versus a Capgo or other one) should be confirmed once the Xcode project exists.
 - Whether Mac widgets also need the iPhone nearby depends on the macOS version. Treat the Mac as "comes with the iPhone widget" and test on a real Mac before promising it in marketing.
 - Whether the watch can reuse the iPhone token directly or needs its own is settled when that target is built.
