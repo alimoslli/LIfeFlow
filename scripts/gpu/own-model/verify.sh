@@ -20,7 +20,7 @@ service postgresql start; sleep 2
 
 step "verify serve $NAME"
 # shellcheck disable=SC2086
-nohup $L/venv/bin/vllm serve $L/models/$NAME --served-model-name "$NAME" --port 8000 --gpu-memory-utilization 0.92 --enable-auto-tool-choice $VLLM_ARGS > $T/vllm-verify-$NAME.log 2>&1 &
+nohup $L/venv/bin/vllm serve $L/models/$NAME --served-model-name "$NAME" --port 8000 --gpu-memory-utilization 0.92 --max-num-seqs 32 --enable-auto-tool-choice $VLLM_ARGS > $T/vllm-verify-$NAME.log 2>&1 &
 until curl -sf http://127.0.0.1:8000/v1/models > /dev/null; do sleep 5; done
 evalrun() {
   RUN="$1"; HARNESS="$2"; shift 2

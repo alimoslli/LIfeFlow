@@ -19,6 +19,8 @@ shutdown_all() {
 # hard stop: nothing left running, so the idle timer ends the box even if nobody is watching
 (until [ "$(date +%s)" -ge "$END" ]; do sleep 20; done; echo "STEP hard-stop $(date -u +%H:%M:%S)" >> $T/steps.log; shutdown_all; pkill -f "[b]akeoff.sh") &
 
+have() { grep -q "RESULT $1 " $T/board.txt 2>/dev/null; }
+if [ ! -d $REPO/node_modules ]; then
 step start
 (python3 -m venv $L/venv && $L/venv/bin/pip install -q vllm > $T/pip-vllm.log 2>&1 && echo ok > $L/vllm.ready) &
 (python3 -m venv $L/hfenv && $L/hfenv/bin/pip install -q huggingface_hub > $T/pip-hf.log 2>&1 && echo ok > $L/hf.ready) &
@@ -34,6 +36,12 @@ npm ci --ignore-scripts --no-audit --no-fund > $T/npm.log 2>&1
 TEST_DATABASE_URL=postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_test_d npm run db:migrate:test > $T/migrate.log 2>&1
 # superuser only for the migrations: a superuser skips row-level security
 su postgres -c "psql -c \"alter role budgetflow nosuperuser nobypassrls\""
+else
+  # a box this script already set up: just refresh the code
+  export PATH=$L/node-v22.23.5-linux-x64/bin:$PATH
+  cd $REPO && git fetch -q --depth 3 origin claude/skill-router-pilot && git reset -q --hard FETCH_HEAD; git log --oneline -1
+  service postgresql start; sleep 2
+fi
 step app-ready
 
 # earlier runs under the corrected checks (no model needed)
@@ -54,7 +62,7 @@ serve() {
   step "download $NAME"
   $L/hfenv/bin/hf download "$ID" --exclude "original/*" --exclude "metal/*" --local-dir $L/models/$NAME > $T/download-$NAME.log 2>&1 || { echo "FAILED download $NAME" >> $T/board.txt; return 1; }
   step "serve $NAME"
-  nohup $L/venv/bin/vllm serve $L/models/$NAME --served-model-name "$NAME" --port 8000 --gpu-memory-utilization 0.92 --enable-auto-tool-choice "$@" > $T/vllm-$NAME.log 2>&1 &
+  nohup $L/venv/bin/vllm serve $L/models/$NAME --served-model-name "$NAME" --port 8000 --gpu-memory-utilization 0.92 --max-num-seqs 32 --enable-auto-tool-choice "$@" > $T/vllm-$NAME.log 2>&1 &
   VPID=$!
   for i in $(seq 1 240); do
     curl -sf http://127.0.0.1:8000/v1/models > /dev/null && { step "ready $NAME"; return 0; }
@@ -68,6 +76,7 @@ stopserve() { pkill -f "[v]llm serve"; sleep 4; pkill -f "VLLM::EngineCore"; sle
 # evalrun <served name> <label> <harness args> <shim args...>
 evalrun() {
   NAME="$1"; LABEL="$2"; HARNESS="$3"; shift 3
+  have $LABEL && return 0
   step "eval $LABEL"
   HARNESS_ARGS="$HARNESS" timeout 2400 sh scripts/gpu/chat-eval/run.sh "$NAME" $T/$LABEL "$@" > $T/eval-$LABEL.log 2>&1
   python3 scripts/gpu/chat-eval/summarize.py $T/$LABEL/raw-local.json > $T/summary-$LABEL.txt 2>&1
@@ -82,7 +91,7 @@ fi
 stopserve qwen38-27b
 
 # 2. gpt-oss-20b (Apache 2.0): the small, cheap one
-if serve openai/gpt-oss-20b gpt-oss-20b --max-model-len 65536 --tool-call-parser openai; then
+if have oss20-rules && have oss20-high-rules; then :; elif serve openai/gpt-oss-20b gpt-oss-20b --max-model-len 65536 --tool-call-parser openai; then
   evalrun gpt-oss-20b oss20-rules "--no-retry" --system-append $RULES
   evalrun gpt-oss-20b oss20-high-rules "--no-retry" --reasoning-effort high --system-append $RULES
 fi
