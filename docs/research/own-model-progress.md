@@ -6,7 +6,7 @@ Owner's go-ahead (2026-11-21, 04:05 UTC): start steps 1 and 2 from the pilot rep
 
 ## Step 1: simple router on a CPU (no GPU money)
 
-- Script: `scripts/gpu/router/embedding_router.py`. Results: `scripts/gpu/router/embedding_router_results.json`.
+- Script: `scripts/gpu/router/embedding_router.py`. Results: `scripts/gpu/router/embedding_router_results.json` in the repo holds the seeds-only runs (run here); the full run with the teacher rows is `/workspace/chateval/LIfeFlow/scripts/gpu/router/embedding_router_results.json` on the GPU storage.
 - Done. Best: all-MiniLM-L6-v2 + small linear classifier on seeds plus the 5,284 teacher rows: fresh 65/74 (88%), held-out 33/43 (77%), 6 ms a message on a CPU. Seeds only: 53/74. Run on the GPU box's CPU (the teacher rows live on the GPU storage, `/workspace/chateval/train.json.gz`).
 
 ## Step 2: an untuned open chat model on the Jarvis eval
