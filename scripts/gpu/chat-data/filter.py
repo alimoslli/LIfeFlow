@@ -84,6 +84,8 @@ def check(meta_row, last, year):
     reply = last["reply"]
     text = (reply.get("content") or "").split("</think>")[-1].strip()
     text = re.sub(r"\*\*(.+?)\*\*", r"\1", text).replace("__", "")
+    # The teacher writes em dashes; the skyling never does. A comma keeps the answer (361 of 1,620 were lost to this).
+    text = re.sub(r"\s*\u2014\s*", ", ", text)
     if reply.get("tool_calls") or not text:
         reasons.append("no final answer")
     if last.get("finish") not in (None, "stop"):

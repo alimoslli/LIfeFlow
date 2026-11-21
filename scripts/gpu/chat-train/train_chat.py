@@ -89,10 +89,18 @@ warm = max(1, int(0.05 * total))
 sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1, (s + 1) / warm) * max(0.05, (total - s) / total))
 
 
+inner = model.get_base_model()  # the causal LM under the LoRA wrapper
+
+
 def loss_of(ids, labels):
+    """Next-token loss on the skyling's own tokens only. The vocabulary projection runs only at those positions: on a
+    16,000-token example the full logits would need about 10 GB (it ran out of memory on an H100, 2026-11-21)."""
     x = torch.tensor([ids], device=0)
-    y = torch.tensor([labels], device=0)
-    return model(input_ids=x, labels=y).loss
+    y = torch.tensor(labels[1:], device=0)
+    keep = (y != -100).nonzero(as_tuple=True)[0]
+    hidden = inner.model(input_ids=x).last_hidden_state[0, :-1]
+    logits = inner.lm_head(hidden[keep]).float()
+    return torch.nn.functional.cross_entropy(logits, y[keep])
 
 
 @torch.no_grad()
