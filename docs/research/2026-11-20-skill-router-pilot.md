@@ -87,6 +87,29 @@ No call went to OpenAI or Groq. Boxes f05637c5 and 43bc092a were not touched.
 - `scripts/gpu/router/`: `build_split.py`, `gen.py`, `common.py`, `train.py`, `evalm.py`, `keyword_router.ts`, `README.md`, `data/` (skills, seeds, held-out, fresh), `keyword_router_results.json`.
 - On the GPU storage, `/workspace/router/out`: `adapter-smol/` (the trained adapter), `train.json` (the 5,284 kept rows), `raw.json`, `dedup.json`, `gen_stats.json`, `train-smol.json`, `eval-smol-base.json`, `eval-smol-tuned.json`, `eval-qwen-base.json`, and a copy of the scripts and data.
 
+## Follow-up, 2026-11-21: the simple methods (next step 1)
+
+Owner: "start with 1 and 2". ADR 0023 says the simplest method that passes its tests wins, so before any hosting I tried simple routers on the same two test sets. Script: `scripts/gpu/router/embedding_router.py`. CPU only, no model calls; it ran on the GPU box's spare CPU because the teacher rows are stored there.
+
+| Method (small embedding model, no fine-tuning) | Trained on | Held-out (43) | Fresh (74) | Time per message on a CPU |
+|---|---|---|---|---|
+| Nearest skill description, all-MiniLM-L6-v2 | nothing | 28 (65%) | 37 (50%) | 6 ms |
+| Small classifier, all-MiniLM-L6-v2 | the 153 seeds | 28 (65%) | 53 (72%) | 6 ms |
+| Nearest 5 messages, all-MiniLM-L6-v2 | seeds + 5,284 teacher rows | 27 (63%) | 61 (82%) | 6 ms |
+| **Small classifier, all-MiniLM-L6-v2** | **seeds + 5,284 teacher rows** | **33 (77%)** | **65 (88%)** | **6 ms** |
+| Small classifier, bge-small-en-v1.5 | seeds + 5,284 teacher rows | 33 (77%) | 59 (80%) | 11 ms |
+| For comparison: keyword router (today) | | (not fair) | 23 (31%) | under 1 ms |
+| For comparison: tuned SmolLM3-3B | seeds + teacher rows | 38 (88%) | 70 (95%) | needs a GPU (not measured) |
+
+What it says:
+
+- The teacher rows matter more than the model: the same small classifier goes from 72% to 88% on fresh messages when it learns from them.
+- The best simple router gets 88% of fresh messages right in 6 ms on an ordinary CPU, with nothing to host. The tuned 3B model is better (95%, and 88% against 77% on the held-out evals) but needs a GPU.
+- Its misses are the same kind as the 3B model's: app-operator edits pulled to the skill they touch, and reminders against message drafting.
+- On these small test sets, 5 messages of difference is about 7 points, so the gap between 88% and 95% is real but not precisely measured.
+
+My recommendation: the small classifier is the one to try in the app first, because it costs nothing to run and triples the keyword router's hit rate on natural messages. It would sit beside the keyword router (keywords first when they match, the classifier when they find nothing), behind a switch, with the owner's yes, since it changes how the skyling picks skills. The tuned 3B model is worth it only if the classifier's misses show up in real use.
+
 ## What changed because of this report
 
-Nothing yet. It is a pilot; the next steps above are proposals.
+Nothing in the app yet. It is a pilot; the next steps above are proposals.
