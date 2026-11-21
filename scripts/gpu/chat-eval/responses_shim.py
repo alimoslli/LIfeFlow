@@ -118,9 +118,9 @@ def house_math(sent):
                 dk = next((x for x in v[0] if re.fullmatch(r"next\w*Date", x)), None)
                 ak = next((x for x in ("amount", "latestAmount") if x in v[0]), None)
                 if dk and ak and all(i.get(dk) and i.get("name") for i in v):
-                    rows = sorted(v, key=lambda i: i[dk])
-                    lines.append(f"{k} in date order: " + ", ".join(
-                        f"{i['name']} {i.get(dk + 'Weekday', '')} {i[dk]} ${abs(i[ak]):,.2f}" + (" (money coming in)" if i.get("kind") == "income" else "") for i in rows))
+                    # money going out only: expected pay is never counted before it lands (owner's rule)
+                    rows = sorted((i for i in v if i.get("kind") != "income"), key=lambda i: i[dk])
+                    lines.append(f"{k} going out, in date order: " + ", ".join(f"{i['name']} {i.get(dk + 'Weekday', '')} {i[dk]} ${abs(i[ak]):,.2f}" for i in rows))
     return lines
 
 
