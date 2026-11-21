@@ -1,0 +1,614 @@
+[
+  {
+    "text": "Delete my 3pm event",
+    "skill": "app-operator"
+  },
+  {
+    "text": "Update my phone bill to $70",
+    "skill": "app-operator"
+  },
+  {
+    "text": "Add buy milk to my to-dos",
+    "skill": "app-operator"
+  },
+  {
+    "text": "Rename my Calc course to Calculus II",
+    "skill": "app-operator"
+  },
+  {
+    "text": "Help me cut back on spending",
+    "skill": "budget-coach"
+  },
+  {
+    "text": "When did I last pay Sam on Venmo?",
+    "skill": "budget-coach"
+  },
+  {
+    "text": "Why am I spending more than usual?",
+    "skill": "budget-coach"
+  },
+  {
+    "text": "Where does my money go?",
+    "skill": "budget-coach"
+  },
+  {
+    "text": "Am I overspending on food?",
+    "skill": "budget-coach"
+  },
+  {
+    "text": "What was the last time I sent money to my landlord on Zelle?",
+    "skill": "budget-coach"
+  },
+  {
+    "text": "When was the last time I Zelled Omar Mousselli?",
+    "skill": "budget-coach"
+  },
+  {
+    "text": "Help with a cover letter",
+    "skill": "career-helper"
+  },
+  {
+    "text": "Track my internship applications",
+    "skill": "career-helper"
+  },
+  {
+    "text": "Prep me for my interview",
+    "skill": "career-helper"
+  },
+  {
+    "text": "Review my resume",
+    "skill": "career-helper"
+  },
+  {
+    "text": "Which is better, Spotify or Apple Music?",
+    "skill": "comparison"
+  },
+  {
+    "text": "Compare these two phone plans",
+    "skill": "comparison"
+  },
+  {
+    "text": "Netflix versus Hulu",
+    "skill": "comparison"
+  },
+  {
+    "text": "Compare iPad vs MacBook for school",
+    "skill": "comparison"
+  },
+  {
+    "text": "What should I do today?",
+    "skill": "daily-planner"
+  },
+  {
+    "text": "What do I need to get done today?",
+    "skill": "daily-planner"
+  },
+  {
+    "text": "Plan my day",
+    "skill": "daily-planner"
+  },
+  {
+    "text": "Make me a schedule for today",
+    "skill": "daily-planner"
+  },
+  {
+    "text": "Prep me for my chemistry final",
+    "skill": "exam-prep"
+  },
+  {
+    "text": "Make an exam countdown for my final",
+    "skill": "exam-prep"
+  },
+  {
+    "text": "Plan my exam prep",
+    "skill": "exam-prep"
+  },
+  {
+    "text": "My midterm is in 10 days, help",
+    "skill": "exam-prep"
+  },
+  {
+    "text": "Is this news real?",
+    "skill": "fact-checker"
+  },
+  {
+    "text": "Can you verify this statistic?",
+    "skill": "fact-checker"
+  },
+  {
+    "text": "True or false: Einstein failed math",
+    "skill": "fact-checker"
+  },
+  {
+    "text": "Fact check this claim",
+    "skill": "fact-checker"
+  },
+  {
+    "text": "Ask me some questions so you can help me",
+    "skill": "get-to-know-you"
+  },
+  {
+    "text": "What should you know about me?",
+    "skill": "get-to-know-you"
+  },
+  {
+    "text": "Learn about me",
+    "skill": "get-to-know-you"
+  },
+  {
+    "text": "Ask me questions about my routine",
+    "skill": "get-to-know-you"
+  },
+  {
+    "text": "Here's what I did toward my goal today",
+    "skill": "goal-checkin"
+  },
+  {
+    "text": "I saved $20 for my car today by not eating out",
+    "skill": "goal-checkin"
+  },
+  {
+    "text": "Check in on my goals with me",
+    "skill": "goal-checkin"
+  },
+  {
+    "text": "I walked 30 minutes and ate less, log it for my weight goal",
+    "skill": "goal-checkin"
+  },
+  {
+    "text": "How are my habits going?",
+    "skill": "habit-builder"
+  },
+  {
+    "text": "I keep breaking my streak",
+    "skill": "habit-builder"
+  },
+  {
+    "text": "Check off my habit for today",
+    "skill": "habit-builder"
+  },
+  {
+    "text": "Help me build a reading routine",
+    "skill": "habit-builder"
+  },
+  {
+    "text": "Help me get more exercise",
+    "skill": "health-basics"
+  },
+  {
+    "text": "How many steps did I get?",
+    "skill": "health-basics"
+  },
+  {
+    "text": "Find time for the gym",
+    "skill": "health-basics"
+  },
+  {
+    "text": "Plan workouts around my schedule",
+    "skill": "health-basics"
+  },
+  {
+    "text": "I have an 8 hour layover in Amsterdam",
+    "skill": "layover-planner"
+  },
+  {
+    "text": "What can I do on a stopover in Tokyo?",
+    "skill": "layover-planner"
+  },
+  {
+    "text": "Can I leave the airport on my layover?",
+    "skill": "layover-planner"
+  },
+  {
+    "text": "Layover plan for Istanbul",
+    "skill": "layover-planner"
+  },
+  {
+    "text": "When is the FAFSA deadline?",
+    "skill": "life-admin"
+  },
+  {
+    "text": "Help me with this paperwork",
+    "skill": "life-admin"
+  },
+  {
+    "text": "I need to renew my passport",
+    "skill": "life-admin"
+  },
+  {
+    "text": "Renew my driver's license",
+    "skill": "life-admin"
+  },
+  {
+    "text": "Which metro line goes to the Louvre?",
+    "skill": "local-transport"
+  },
+  {
+    "text": "How much is a subway ticket in New York?",
+    "skill": "local-transport"
+  },
+  {
+    "text": "Bus to campus from the station?",
+    "skill": "local-transport"
+  },
+  {
+    "text": "Public transport from Rome to the airport",
+    "skill": "local-transport"
+  },
+  {
+    "text": "Make me a grocery list",
+    "skill": "meal-planner"
+  },
+  {
+    "text": "Plan cheap meals for this week",
+    "skill": "meal-planner"
+  },
+  {
+    "text": "What should I cook tonight?",
+    "skill": "meal-planner"
+  },
+  {
+    "text": "Healthy cheap recipes for students",
+    "skill": "meal-planner"
+  },
+  {
+    "text": "Prep me for my meeting",
+    "skill": "meeting-prep"
+  },
+  {
+    "text": "Make an agenda for office hours",
+    "skill": "meeting-prep"
+  },
+  {
+    "text": "What should I ask at office hours?",
+    "skill": "meeting-prep"
+  },
+  {
+    "text": "Talking points for my 1:1",
+    "skill": "meeting-prep"
+  },
+  {
+    "text": "Remember that I prefer short answers",
+    "skill": "memory-manager"
+  },
+  {
+    "text": "What do you know about me?",
+    "skill": "memory-manager"
+  },
+  {
+    "text": "What do you remember?",
+    "skill": "memory-manager"
+  },
+  {
+    "text": "Forget that I work at the library",
+    "skill": "memory-manager"
+  },
+  {
+    "text": "Email my professor asking for an extension",
+    "skill": "message-drafter"
+  },
+  {
+    "text": "Message my study group",
+    "skill": "message-drafter"
+  },
+  {
+    "text": "Draft a text to my manager about swapping shifts",
+    "skill": "message-drafter"
+  },
+  {
+    "text": "Reply to this email for me",
+    "skill": "message-drafter"
+  },
+  {
+    "text": "What documents do I need to travel?",
+    "skill": "packing-prep"
+  },
+  {
+    "text": "Make me a packing list",
+    "skill": "packing-prep"
+  },
+  {
+    "text": "What should I pack for my trip?",
+    "skill": "packing-prep"
+  },
+  {
+    "text": "What's the weather for my trip?",
+    "skill": "packing-prep"
+  },
+  {
+    "text": "Split my $640 paycheck",
+    "skill": "paycheck-planner"
+  },
+  {
+    "text": "Plan my pay",
+    "skill": "paycheck-planner"
+  },
+  {
+    "text": "I got paid, plan my paycheck",
+    "skill": "paycheck-planner"
+  },
+  {
+    "text": "Payday plan please",
+    "skill": "paycheck-planner"
+  },
+  {
+    "text": "Is it ok to spend $50 this weekend?",
+    "skill": "purchase-advisor"
+  },
+  {
+    "text": "Is this worth buying right now?",
+    "skill": "purchase-advisor"
+  },
+  {
+    "text": "Can I afford a $120 concert ticket?",
+    "skill": "purchase-advisor"
+  },
+  {
+    "text": "Can I afford a new laptop?",
+    "skill": "purchase-advisor"
+  },
+  {
+    "text": "Set a reminder for Friday at 3",
+    "skill": "reminders-follow-up"
+  },
+  {
+    "text": "Don't let me forget to pay rent",
+    "skill": "reminders-follow-up"
+  },
+  {
+    "text": "Remind me to call the dentist tomorrow",
+    "skill": "reminders-follow-up"
+  },
+  {
+    "text": "Add a to-do to email my advisor by Friday",
+    "skill": "reminders-follow-up"
+  },
+  {
+    "text": "Am I on track for my goals?",
+    "skill": "savings-goals"
+  },
+  {
+    "text": "Start an emergency fund",
+    "skill": "savings-goals"
+  },
+  {
+    "text": "How much should I save each week?",
+    "skill": "savings-goals"
+  },
+  {
+    "text": "Create a savings goal for a laptop",
+    "skill": "savings-goals"
+  },
+  {
+    "text": "Add my shifts for next week",
+    "skill": "shift-manager"
+  },
+  {
+    "text": "Am I working too much?",
+    "skill": "shift-manager"
+  },
+  {
+    "text": "How many hours do I work this week?",
+    "skill": "shift-manager"
+  },
+  {
+    "text": "Estimate my pay this month",
+    "skill": "shift-manager"
+  },
+  {
+    "text": "Book a study block before my exam",
+    "skill": "smart-scheduler"
+  },
+  {
+    "text": "When can I fit in a workout this week?",
+    "skill": "smart-scheduler"
+  },
+  {
+    "text": "I have a conflict on Friday, fix it",
+    "skill": "smart-scheduler"
+  },
+  {
+    "text": "Reschedule my study block to tomorrow",
+    "skill": "smart-scheduler"
+  },
+  {
+    "text": "Help me catch up on what's overdue this week.",
+    "skill": "smart-scheduler"
+  },
+  {
+    "text": "Find time for three 1-hour study sessions",
+    "skill": "smart-scheduler"
+  },
+  {
+    "text": "When is the financial aid deadline?",
+    "skill": "student-perks"
+  },
+  {
+    "text": "What campus resources are there?",
+    "skill": "student-perks"
+  },
+  {
+    "text": "What student discounts can I get?",
+    "skill": "student-perks"
+  },
+  {
+    "text": "Find scholarships for me",
+    "skill": "student-perks"
+  },
+  {
+    "text": "Make flashcards from my notes",
+    "skill": "study-coach"
+  },
+  {
+    "text": "Make me a study plan for chemistry",
+    "skill": "study-coach"
+  },
+  {
+    "text": "How should I study for Friday?",
+    "skill": "study-coach"
+  },
+  {
+    "text": "What's due this week?",
+    "skill": "study-coach"
+  },
+  {
+    "text": "Is my free trial about to charge me?",
+    "skill": "subscription-hunter"
+  },
+  {
+    "text": "What subscriptions do I have?",
+    "skill": "subscription-hunter"
+  },
+  {
+    "text": "Which subscriptions should I cancel?",
+    "skill": "subscription-hunter"
+  },
+  {
+    "text": "How do I cancel Netflix?",
+    "skill": "subscription-hunter"
+  },
+  {
+    "text": "Give me the key points of this PDF",
+    "skill": "summarizer"
+  },
+  {
+    "text": "Summarize this article",
+    "skill": "summarizer"
+  },
+  {
+    "text": "Sum up my notes from class",
+    "skill": "summarizer"
+  },
+  {
+    "text": "TL;DR this email",
+    "skill": "summarizer"
+  },
+  {
+    "text": "Can you read my syllabus?",
+    "skill": "syllabus-parser"
+  },
+  {
+    "text": "Add the schedule of assignments from this PDF",
+    "skill": "syllabus-parser"
+  },
+  {
+    "text": "Parse this course outline",
+    "skill": "syllabus-parser"
+  },
+  {
+    "text": "Here's my syllabus, add all the due dates",
+    "skill": "syllabus-parser"
+  },
+  {
+    "text": "Break down my research paper",
+    "skill": "task-breakdown"
+  },
+  {
+    "text": "Split this project into subtasks",
+    "skill": "task-breakdown"
+  },
+  {
+    "text": "Break it down into smaller pieces",
+    "skill": "task-breakdown"
+  },
+  {
+    "text": "Give me steps for moving apartments",
+    "skill": "task-breakdown"
+  },
+  {
+    "text": "Some of my stuff is in the wrong category, fix my categories",
+    "skill": "transaction-review"
+  },
+  {
+    "text": "Can you review my transactions with me?",
+    "skill": "transaction-review"
+  },
+  {
+    "text": "Help me categorize my transactions",
+    "skill": "transaction-review"
+  },
+  {
+    "text": "I have a bunch of uncategorized transactions",
+    "skill": "transaction-review"
+  },
+  {
+    "text": "Why does ice float?",
+    "skill": "tutor"
+  },
+  {
+    "text": "Explain derivatives to me",
+    "skill": "tutor"
+  },
+  {
+    "text": "Walk me through this proof",
+    "skill": "tutor"
+  },
+  {
+    "text": "Teach me how supply and demand works",
+    "skill": "tutor"
+  },
+  {
+    "text": "Find out the price of a MacBook Air",
+    "skill": "web-research"
+  },
+  {
+    "text": "Search the web for scholarship deadlines",
+    "skill": "web-research"
+  },
+  {
+    "text": "What's the latest news on student loans?",
+    "skill": "web-research"
+  },
+  {
+    "text": "Look up the best student credit cards",
+    "skill": "web-research"
+  },
+  {
+    "text": "Give me a weekly recap",
+    "skill": "weekly-review"
+  },
+  {
+    "text": "Do my weekly review",
+    "skill": "weekly-review"
+  },
+  {
+    "text": "What slipped last week?",
+    "skill": "weekly-review"
+  },
+  {
+    "text": "How did my week go?",
+    "skill": "weekly-review"
+  },
+  {
+    "text": "I'm exhausted and can't focus",
+    "skill": "wellbeing-check-in"
+  },
+  {
+    "text": "I feel overwhelmed with everything",
+    "skill": "wellbeing-check-in"
+  },
+  {
+    "text": "I'm having a rough day",
+    "skill": "wellbeing-check-in"
+  },
+  {
+    "text": "I'm so stressed",
+    "skill": "wellbeing-check-in"
+  },
+  {
+    "text": "Is my thesis strong enough?",
+    "skill": "writing-helper"
+  },
+  {
+    "text": "Help me outline my essay",
+    "skill": "writing-helper"
+  },
+  {
+    "text": "Check my citations",
+    "skill": "writing-helper"
+  },
+  {
+    "text": "Give me feedback on my paper draft",
+    "skill": "writing-helper"
+  }
+]

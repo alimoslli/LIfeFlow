@@ -1,0 +1,187 @@
+[
+  {
+    "name": "app-operator",
+    "title": "App operator",
+    "description": "Creates, edits and deletes anything in LifeFlow on command and confirms what changed."
+  },
+  {
+    "name": "budget-coach",
+    "title": "Budget coach",
+    "description": "Explains spending, catches overspending and suggests fixes."
+  },
+  {
+    "name": "career-helper",
+    "title": "Career helper",
+    "description": "Reviews resumes, preps for interviews and tracks job applications."
+  },
+  {
+    "name": "comparison",
+    "title": "Comparison",
+    "description": "Side-by-side comparisons of products, options or plans."
+  },
+  {
+    "name": "daily-planner",
+    "title": "Daily planner",
+    "description": "Builds today's plan: what's fixed, what's due, and an order to do things in."
+  },
+  {
+    "name": "exam-prep",
+    "title": "Exam prep",
+    "description": "Counts down to exams and plans which topics to cover each day."
+  },
+  {
+    "name": "fact-checker",
+    "title": "Fact checker",
+    "description": "Verifies claims before stating them and labels what couldn't be confirmed."
+  },
+  {
+    "name": "get-to-know-you",
+    "title": "Get to know you",
+    "description": "Asks curious, well-timed questions and saves answers to memory."
+  },
+  {
+    "name": "goal-checkin",
+    "title": "Goal check-in",
+    "description": "Asks how the user worked toward their goals today and saves it in their words."
+  },
+  {
+    "name": "habit-builder",
+    "title": "Habit builder",
+    "description": "Tracks streaks and suggests gentle adjustments."
+  },
+  {
+    "name": "health-basics",
+    "title": "Health basics",
+    "description": "Sleep, meals and exercise planning. Not medical advice."
+  },
+  {
+    "name": "layover-planner",
+    "title": "Layover planner",
+    "description": "Works out usable time on a layover, transfers and a head-back-by time."
+  },
+  {
+    "name": "life-admin",
+    "title": "Life admin",
+    "description": "Forms, deadlines, renewals and appointments to book."
+  },
+  {
+    "name": "local-transport",
+    "title": "Local transport guide",
+    "description": "Trains, metro and buses: routes, prices, schedules and tickets."
+  },
+  {
+    "name": "meal-planner",
+    "title": "Meal and grocery planner",
+    "description": "Budget-friendly meal plans and shopping lists."
+  },
+  {
+    "name": "meeting-prep",
+    "title": "Meeting prep",
+    "description": "Agendas, talking points and notes."
+  },
+  {
+    "name": "memory-manager",
+    "title": "Memory manager",
+    "description": "Keeps what you know about the user accurate and shows it to them."
+  },
+  {
+    "name": "message-drafter",
+    "title": "Message drafter",
+    "description": "Drafts emails and texts to professors, managers or friends. The user reviews and sends."
+  },
+  {
+    "name": "packing-prep",
+    "title": "Packing and prep",
+    "description": "Packing lists, documents, visa and entry checks, and weather."
+  },
+  {
+    "name": "paycheck-planner",
+    "title": "Paycheck planner",
+    "description": "Splits each paycheck across bills, budgets and goals."
+  },
+  {
+    "name": "purchase-advisor",
+    "title": "Purchase advisor",
+    "description": "Answers 'can I afford this?' against the budget and upcoming bills."
+  },
+  {
+    "name": "reminders-follow-up",
+    "title": "Reminder and follow-up",
+    "description": "Sets reminders and nudges about things left open."
+  },
+  {
+    "name": "savings-goals",
+    "title": "Savings goals",
+    "description": "Builds a plan to reach each goal and tracks progress."
+  },
+  {
+    "name": "shift-manager",
+    "title": "Shift manager",
+    "description": "Handles shifts, paid hours and unpaid breaks, and notices heavy weeks."
+  },
+  {
+    "name": "smart-scheduler",
+    "title": "Smart scheduler",
+    "description": "Finds free time, books study blocks and moves things when there's a conflict."
+  },
+  {
+    "name": "student-perks",
+    "title": "Student perks finder",
+    "description": "Discounts, financial aid deadlines and campus resources."
+  },
+  {
+    "name": "study-coach",
+    "title": "Study coach",
+    "description": "Builds study plans with spaced repetition and practice questions from the user's material."
+  },
+  {
+    "name": "subscription-hunter",
+    "title": "Subscription hunter",
+    "description": "Finds recurring charges and suggests what to cancel."
+  },
+  {
+    "name": "summarizer",
+    "title": "Summarizer",
+    "description": "Summarizes articles, PDFs, emails and long notes."
+  },
+  {
+    "name": "syllabus-parser",
+    "title": "Syllabus parser",
+    "description": "Turns a syllabus (PDF, photo or text) into deadlines and a study plan."
+  },
+  {
+    "name": "task-breakdown",
+    "title": "Task breakdown",
+    "description": "Splits a big task or project into small subtasks with time estimates."
+  },
+  {
+    "name": "transaction-review",
+    "title": "Transaction review",
+    "description": "Goes through transactions you aren't sure about, together with the user, and categorizes them from their reply."
+  },
+  {
+    "name": "tutor",
+    "title": "Tutor",
+    "description": "Explains concepts step by step and checks understanding instead of handing over answers."
+  },
+  {
+    "name": "web-research",
+    "title": "Web research",
+    "description": "Live search across sources, with citations and verified facts only."
+  },
+  {
+    "name": "weekly-review",
+    "title": "Weekly review",
+    "description": "Recaps the week: wins, what is still open, money vs budget, and one change for next week."
+  },
+  {
+    "name": "wellbeing-check-in",
+    "title": "Wellbeing check-in",
+    "description": "Tracks energy and mood, watches for burnout, and handles rough days gently."
+  },
+  {
+    "name": "writing-helper",
+    "title": "Writing helper",
+    "description": "Outlines, gives feedback and checks citations while keeping the user's work their own."
+  }
+]

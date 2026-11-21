@@ -1,0 +1,174 @@
+[
+  {
+    "text": "Remove the gym habit",
+    "skill": "app-operator"
+  },
+  {
+    "text": "How's my budget this month?",
+    "skill": "budget-coach"
+  },
+  {
+    "text": "Where did my money go last month?",
+    "skill": "budget-coach"
+  },
+  {
+    "text": "What questions will they ask in a job interview?",
+    "skill": "career-helper"
+  },
+  {
+    "text": "Pros and cons of renting vs living in a dorm",
+    "skill": "comparison"
+  },
+  {
+    "text": "Can you time-block my day?",
+    "skill": "daily-planner"
+  },
+  {
+    "text": "Give me my morning brief",
+    "skill": "daily-planner"
+  },
+  {
+    "text": "What should I study each day before the test?",
+    "skill": "exam-prep"
+  },
+  {
+    "text": "Is it true that we only use 10% of our brain?",
+    "skill": "fact-checker"
+  },
+  {
+    "text": "Get to know me better",
+    "skill": "get-to-know-you"
+  },
+  {
+    "text": "I read two chapters for my reading goal",
+    "skill": "goal-checkin"
+  },
+  {
+    "text": "Start a new habit for me",
+    "skill": "habit-builder"
+  },
+  {
+    "text": "How did I sleep this week?",
+    "skill": "health-basics"
+  },
+  {
+    "text": "How much time do I have between flights?",
+    "skill": "layover-planner"
+  },
+  {
+    "text": "Book a doctor's appointment reminder",
+    "skill": "life-admin"
+  },
+  {
+    "text": "How do I get from the airport to downtown by train?",
+    "skill": "local-transport"
+  },
+  {
+    "text": "Meal plan on a $40 budget",
+    "skill": "meal-planner"
+  },
+  {
+    "text": "Help me prepare for the group meeting",
+    "skill": "meeting-prep"
+  },
+  {
+    "text": "Update my memory: I moved to Austin",
+    "skill": "memory-manager"
+  },
+  {
+    "text": "Write an email to my landlord",
+    "skill": "message-drafter"
+  },
+  {
+    "text": "Do I need a visa for Japan?",
+    "skill": "packing-prep"
+  },
+  {
+    "text": "How should I use my pay this week?",
+    "skill": "paycheck-planner"
+  },
+  {
+    "text": "Should I buy these shoes for $90?",
+    "skill": "purchase-advisor"
+  },
+  {
+    "text": "Follow up with me about the scholarship next week",
+    "skill": "reminders-follow-up"
+  },
+  {
+    "text": "Ping me before my shift",
+    "skill": "reminders-follow-up"
+  },
+  {
+    "text": "Help me save for a trip",
+    "skill": "savings-goals"
+  },
+  {
+    "text": "Lunch is unpaid on my 9 hour shifts, so I get paid 8 hours",
+    "skill": "shift-manager"
+  },
+  {
+    "text": "Move my Saturday shift to Sunday",
+    "skill": "shift-manager"
+  },
+  {
+    "text": "I'm behind, help me catch up this week",
+    "skill": "smart-scheduler"
+  },
+  {
+    "text": "Which day this week is going to be the hardest?",
+    "skill": "smart-scheduler"
+  },
+  {
+    "text": "Best student deals on laptops",
+    "skill": "student-perks"
+  },
+  {
+    "text": "Quiz me on my biology notes",
+    "skill": "study-coach"
+  },
+  {
+    "text": "Help me study for my exam",
+    "skill": "study-coach"
+  },
+  {
+    "text": "Find my recurring charges",
+    "skill": "subscription-hunter"
+  },
+  {
+    "text": "Summarize this document",
+    "skill": "summarizer"
+  },
+  {
+    "text": "Put every deadline from this syllabus in my calendar",
+    "skill": "syllabus-parser"
+  },
+  {
+    "text": "This task is too big, where do I start?",
+    "skill": "task-breakdown"
+  },
+  {
+    "text": "Show me the transactions you're not sure about so I can categorize them.",
+    "skill": "transaction-review"
+  },
+  {
+    "text": "I don't understand photosynthesis",
+    "skill": "tutor"
+  },
+  {
+    "text": "Research cheap phone plans",
+    "skill": "web-research"
+  },
+  {
+    "text": "Review my week",
+    "skill": "weekly-review"
+  },
+  {
+    "text": "I think I'm burning out",
+    "skill": "wellbeing-check-in"
+  },
+  {
+    "text": "Proofread this paragraph",
+    "skill": "writing-helper"
+  }
+]
