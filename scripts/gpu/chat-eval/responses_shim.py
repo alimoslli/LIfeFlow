@@ -112,6 +112,15 @@ def house_math(sent):
                 for i in v:
                     kinds[i["kind"]] = kinds.get(i["kind"], 0) + 1
                 lines.append(f"{k}: " + ", ".join(f"{n} of kind {kind}" for kind, n in kinds.items()))
+            # A list of things that each have a next date (bills, subscriptions): in date order, so "what comes out before
+            # Tuesday" is reading down a list, not hunting through one (the small ones at the end got left out).
+            if isinstance(v, list) and len(v) > 3 and all(isinstance(i, dict) for i in v):
+                dk = next((x for x in v[0] if re.fullmatch(r"next\w*Date", x)), None)
+                ak = next((x for x in ("amount", "latestAmount") if x in v[0]), None)
+                if dk and ak and all(i.get(dk) and i.get("name") for i in v):
+                    rows = sorted(v, key=lambda i: i[dk])
+                    lines.append(f"{k} in date order: " + ", ".join(
+                        f"{i['name']} {i.get(dk + 'Weekday', '')} {i[dk]} ${abs(i[ak]):,.2f}" + (" (money coming in)" if i.get("kind") == "income" else "") for i in rows))
     return lines
 
 
