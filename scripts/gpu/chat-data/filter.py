@@ -153,10 +153,30 @@ for conv_turn, rs in steps.items():
     if reasons:
         why.update(r.split(":")[0] for r in reasons)
         continue
+    meta_row = {"conv": conv_turn, "persona": m["persona"], "skill": m["question"].get("skill"), "source": m["question"]["source"], "steps": len(rs)}
+    # Every step is its own example. The first steps are the short ones where the skyling decides which tools to call:
+    # training on the last step alone (2026-11-21) left those out, and the tuned model stopped calling tools.
+    for i, r in enumerate(rs[:-1]):
+        calls = r["reply"].get("tool_calls") or []
+        if not calls:
+            continue
+        reply = {"role": "assistant", "content": "", "tool_calls": calls}
+        kept.append({"messages": list(r["messages"]) + [reply], "tools": r["tools"], "meta": {**meta_row, "step": i, "kind": "tool_call"}})
     msgs = [x for x in last["messages"]] + [{"role": "assistant", "content": text}]
-    kept.append({"messages": msgs, "tools": last["tools"], "meta": {"conv": conv_turn, "persona": m["persona"], "skill": m["question"].get("skill"),
-                                                                       "source": m["question"]["source"], "steps": len(rs)}})
+    kept.append({"messages": msgs, "tools": last["tools"], "meta": {**meta_row, "step": len(rs) - 1, "kind": "answer" if len(rs) > 1 else "answer_no_tools"}})
     by_source[m["question"]["source"]] += 1
+
+# Answers that call no tool are kept only for a small share: most skyling questions are about the person's own data,
+# and half the first training set answered without looking (the tuned model then asked or guessed instead of calling).
+NO_TOOL_SHARE = 0.12
+no_tool = [r for r in kept if r["meta"]["kind"] == "answer_no_tools"]
+others = [r for r in kept if r["meta"]["kind"] != "answer_no_tools"]
+cap = int(NO_TOOL_SHARE * len(others) / (1 - NO_TOOL_SHARE))
+random_ = __import__("random").Random(3)
+random_.shuffle(no_tool)
+dropped_no_tool = max(0, len(no_tool) - cap)
+kept = others + no_tool[:cap]
+why["no-tool answer over the cap"] += dropped_no_tool
 
 import os
 also = os.path.join(os.path.dirname(a.dump), "also.txt")
@@ -180,7 +200,7 @@ if os.path.exists(also):
 with open(a.out, "w") as f:
     for r in kept:
         f.write(json.dumps(r) + "\n")
-report = {"turns": len(steps), "kept": len(kept), "added_from_earlier_runs": sum(added.values()), "dropped_reasons": why.most_common(), "kept_by_source": by_source.most_common(),
+report = {"turns": len(steps), "kept": len(kept), "by_kind": collections.Counter(r["meta"]["kind"] for r in kept).most_common(), "added_from_earlier_runs": sum(added.values()), "dropped_reasons": why.most_common(), "kept_by_source": by_source.most_common(),
           "kept_by_persona": collections.Counter(r["meta"]["persona"] for r in kept).most_common()}
 json.dump(report, open(a.report, "w"), indent=1)
-print(json.dumps({k: report[k] for k in ("turns", "kept", "added_from_earlier_runs", "dropped_reasons")}, indent=1))
+print(json.dumps({k: report[k] for k in ("turns", "kept", "by_kind", "added_from_earlier_runs", "dropped_reasons")}, indent=1))

@@ -40,4 +40,6 @@ step eval-tuned
 sh scripts/gpu/chat-eval/run.sh skyling $T/eval-skyling --no-think > $T/eval-tuned.log 2>&1
 python3 scripts/gpu/chat-eval/summarize.py $T/eval-skyling/raw-local.json > $T/summary-tuned.txt 2>&1
 step done
+# shut the model server down, so the box goes idle and stops itself (it kept an H100 billing for hours otherwise)
+pkill -f "[v]llm serve"; sleep 5; pkill -f "VLLM::EngineCore"
 echo DONE > $T/done
