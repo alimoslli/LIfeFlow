@@ -106,6 +106,22 @@ async function connectedUser(g = fakeGoogle()) {
 }
 
 describe("Google sign-in", () => {
+  it("connects when the person unticks the followed-calendars box, but not when they untick Gmail or Calendar (owner, 2026-11-21)", async () => {
+    const tokenWith = (scope: string) =>
+      (async () => json({ access_token: "at", refresh_token: "rt", expires_in: 3600, scope, id_token: idToken("a@b.c") })) as unknown as typeof fetch;
+    const noList = SCOPE.split(" ")
+      .filter((x) => !x.includes("calendarlist"))
+      .join(" ");
+    const { creds } = await exchangeCode("code", "verifier", "https://app.test/api/integrations/google/callback", tokenWith(noList));
+    expect(creds.scope).not.toContain("calendarlist");
+    const noGmail = SCOPE.split(" ")
+      .filter((x) => !x.endsWith("gmail.readonly"))
+      .join(" ");
+    await expect(exchangeCode("code", "verifier", "https://app.test/api/integrations/google/callback", tokenWith(noGmail))).rejects.toThrow(
+      "Some permissions weren't granted",
+    );
+  });
+
   it("builds a PKCE + state auth URL asking for offline access to only the needed scopes", () => {
     const { state, challenge } = newOAuthState();
     const u = new URL(authUrl({ clientId: "cid", redirectUri: "https://app.test/cb", state, challenge }));

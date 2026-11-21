@@ -124,7 +124,8 @@ export async function exchangeCode(code: string, verifier: string, redirectUri: 
   if (!res.ok || !t.access_token) throw new GoogleError(`Google sign-in failed (${t.error ?? res.status}).`);
   if (!t.refresh_token) throw new GoogleError("Google didn't grant offline access. Please connect again.");
   const granted = String(t.scope ?? "").split(" ");
-  const missing = GOOGLE_SCOPES.filter((s) => s.startsWith("https://") && !granted.includes(s));
+  // The calendars they follow are a bonus (days off only): unticking that box on Google's screen never fails the connection.
+  const missing = GOOGLE_SCOPES.filter((s) => s.startsWith("https://") && s !== CALENDAR_LIST_SCOPE && !granted.includes(s));
   if (missing.length) throw new GoogleError("Some permissions weren't granted. Connect again and keep all boxes checked.");
   return {
     creds: {
