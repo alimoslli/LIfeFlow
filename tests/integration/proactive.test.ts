@@ -485,8 +485,10 @@ describe("reviews and coaching", () => {
     expect(wrap.body).toContain("You finished 1 to-do today. 1 is still open.");
     expect(wrap.action).toMatchObject({ type: "move_tasks" });
 
-    // A Sunday evening: the weekly review. On a Sunday, use next Sunday (tonight already had its evening message).
-    const daysToSunday = (7 - new Date(`${today}T12:00:00Z`).getUTCDay()) % 7 || 7;
+    // A Sunday evening: the weekly review, on the coming Sunday (today when the suite runs on a Sunday). Never the Sunday
+    // after: the to-do finished today would be over a week old there, so the review had nothing to say and the test failed
+    // every Sunday (2026-11-22).
+    const daysToSunday = (7 - new Date(`${today}T12:00:00Z`).getUTCDay()) % 7;
     const sunday = new Date(`${addDaysStr(today, daysToSunday)}T23:30:00Z`);
     const week = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "sunday", now: sunday }));
     const review = week.find((m) => m.kind === "weekly_review")!;
