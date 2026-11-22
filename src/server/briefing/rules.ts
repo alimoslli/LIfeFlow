@@ -1,6 +1,6 @@
 import { addDaysStr, daysBetween, formatDateStr, formatIn, greetingIn, localDateOf } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
-import { findConflicts, type AgendaItem } from "../services/calendar";
+import { findConflicts, withExamsBusy, type AgendaItem } from "../services/calendar";
 import { dueMathRule, freeGapRule, tonightRule } from "./sky-rules";
 import type { Briefing, DayGlance, Insight, LifeSnapshot } from "./types";
 import { examLabel } from "@/lib/course-label";
@@ -51,7 +51,7 @@ const overdueRule: Rule = (s) => {
  * that way), and counts any beyond that.
  */
 const conflictRule: Rule = (s) => {
-  const all = findConflicts(s.week.filter((i) => !i.endsAt || i.endsAt.getTime() > s.now.getTime()));
+  const all = findConflicts(withExamsBusy(s.week).filter((i) => !i.endsAt || i.endsAt.getTime() > s.now.getTime()));
   if (!all.length) return [];
   const [first, second] = all;
   const when = (x: AgendaItem) => `${dayName(localDateOf(x.startsAt, s.tz), s.today)} at ${formatIn(x.startsAt, s.tz, "h:mm a")}`;

@@ -2,7 +2,7 @@ import { addDaysStr, daysBetween, localDateOf, monthStart, todayIn } from "@/lib
 import type { SessionUser } from "../auth/sessions";
 import { series } from "../db/series";
 import type { UserScope } from "../db/with-user";
-import { freeSlots, getAgenda } from "../services/calendar";
+import { freeSlots, getAgenda, withExamsBusy } from "../services/calendar";
 import { DEFAULT_CATEGORIES } from "../services/finance/categories";
 import { moneyOverview } from "../services/finance/overview";
 import { budgetWarnings, cashForecast } from "../services/finance/forecast";
@@ -27,7 +27,7 @@ export async function collectSnapshot(s: UserScope, user: Pick<SessionUser, "tim
     () => listTasks(s, { status: "open", limit: 100 }),
   );
   const overdueTasks = tasks.filter((t) => t.dueAt && t.dueAt < now && !t.parentId);
-  const blocking = week.filter((i) => i.blocksTime);
+  const blocking = withExamsBusy(week).filter((i) => i.blocksTime);
   const freeMinutesByDay = Array.from({ length: 7 }, (_, i) => {
     const date = addDaysStr(today, i);
     const slots = freeSlots(blocking, date, tz, "08:00", "22:00", 60, now);

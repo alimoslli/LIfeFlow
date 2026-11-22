@@ -432,7 +432,9 @@ export async function coursesOnCalendar(scope: UserScope) {
 }
 
 export function findConflicts(items: AgendaItem[]) {
-  const timed = items.filter((i) => i.blocksTime && i.endsAt).sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+  const timed = withExamsBusy(items)
+    .filter((i) => i.blocksTime && i.endsAt)
+    .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
   const conflicts: { a: AgendaItem; b: AgendaItem }[] = [];
   for (let i = 0; i < timed.length; i++) {
     for (let j = i + 1; j < timed.length && timed[j].startsAt < timed[i].endsAt!; j++) {
@@ -475,12 +477,22 @@ export const EXAM_BUSY_MINUTES = 120;
  */
 export async function busyAgenda(scope: UserScope, tz: string, from: string, to: string, opts: { now?: Date } = {}): Promise<AgendaItem[]> {
   const items = await getAgenda(scope, tz, from, to, { include: ["event", "shift", "assignment"], now: opts.now });
-  return items.flatMap((i) => {
-    if (i.origin !== "assignment") return [i];
-    if (i.kind !== "exam" || i.allDay) return [];
-    return [{ ...i, endsAt: new Date(i.startsAt.getTime() + EXAM_BUSY_MINUTES * 60_000), blocksTime: true }];
-  });
+  return items.flatMap((i) => (i.origin === "assignment" && !isTimedExam(i) ? [] : [examAsBusy(i)]));
 }
+
+const isTimedExam = (i: Pick<AgendaItem, "origin" | "kind" | "allDay">) => i.origin === "assignment" && i.kind === "exam" && !i.allDay;
+
+/** A timed exam as a busy block (its start plus `EXAM_BUSY_MINUTES`); every other item as it is. */
+function examAsBusy(i: AgendaItem): AgendaItem {
+  if (!isTimedExam(i)) return i;
+  return { ...i, endsAt: new Date(i.startsAt.getTime() + EXAM_BUSY_MINUTES * 60_000), blocksTime: true };
+}
+
+/**
+ * A full agenda (to-dos, deadlines and all) with its timed exams made busy, for callers that already hold the whole list
+ * and need free time or clashes from it. Quizzes, deadlines, to-dos and all-day items stay as they are.
+ */
+export const withExamsBusy = (items: AgendaItem[]): AgendaItem[] => items.map(examAsBusy);
 
 export function freeSlots(
   items: (Pick<AgendaItem, "blocksTime" | "startsAt" | "endsAt"> & { origin?: AgendaItem["origin"] })[],
