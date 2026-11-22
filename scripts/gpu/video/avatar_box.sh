@@ -7,17 +7,19 @@
 # audio-image-to-video, Whisper-large-v3 for the lips, 8 steps with its own distillation LoRA, 25 frames a second.
 # Needs about 50 GB of GPU memory at full precision: one H100 (80 GB). Downloads about 63 GB.
 #
-#   nohup sh avatar_box.sh <picture url> <audio url> "<prompt>" <hard stop minutes, default 19> <480p|720p, default 480p> \
-#       > /workspace/avatar/run.log 2>&1 &
-# Results: /workspace/avatar/out.mp4 (trimmed to the audio), /workspace/avatar/status.txt (timings), steps.log.
-IMG_URL="$1"; AUD_URL="$2"; PROMPT="$3"; STOP_MIN="${4:-19}"; RES="${5:-480p}"
+#   nohup sh avatar_box.sh <picture url> <audio url> "<prompt>" <hard stop minutes, default 26> <480p|720p, default 480p> \
+#       [url of another clip to sharpen on the same box] > /workspace/avatar/run.log 2>&1 &
+# Results: /workspace/avatar/out.mp4 (trimmed to the audio), out-1080.mp4 (sharpened to 1080 x 1920 with upscale.py, which must
+# sit next to this script), extra-1080.mp4 (the other clip, sharpened), status.txt (timings), steps.log.
+IMG_URL="$1"; AUD_URL="$2"; PROMPT="$3"; STOP_MIN="${4:-26}"; RES="${5:-480p}"; EXTRA_URL="$6"
+HERE=$(cd "$(dirname "$0")" && pwd)
 T=/workspace/avatar; L=/root/avjob; R=$L/LongCat-Video; W=$R/weights
 START=$(date +%s); END=$(( START + STOP_MIN * 60 ))
 mkdir -p $T $L
 : > $T/status.txt
 step() { echo "STEP $1 $(date -u +%H:%M:%S) +$(( $(date +%s) - START ))s" | tee -a $T/steps.log; }
 shutdown_all() {
-  pkill -f "[r]un_demo_avatar"; pkill -f "[t]orchrun"; pkill -f "[h]f download"; pkill -f "[p]ip install"
+  pkill -f "[r]un_demo_avatar"; pkill -f "[t]orchrun"; pkill -f "[h]f download"; pkill -f "[p]ip install"; pkill -f "[u]pscale.py"
   echo "STEP shutdown $(date -u +%H:%M:%S) +$(( $(date +%s) - START ))s" >> $T/steps.log
 }
 fail() { echo "FAILED: $1" | tee -a $T/status.txt; step "failed: $1"; shutdown_all; kill $TIMER 2>/dev/null; exit 1; }
@@ -59,6 +61,20 @@ $P install -q -r $L/req-avatar.txt > $L/pip-avatar.log 2>&1 || { while read -r l
 $L/venv/bin/python -c "import torch, flash_attn; assert torch.__version__.startswith('2.6.0'), torch.__version__; print('torch', torch.__version__, 'cuda', torch.cuda.is_available())" || fail "torch changed version or flash-attn does not load"
 step "packages ready"
 wait $APT
+# The other clip is sharpened now, while the weights are still coming down and the GPU has nothing to do. It is saved first,
+# so it is safe whatever happens to the render. A failure here is written down and never stops the main clip.
+UP=""
+if [ -f "$HERE/upscale.py" ]; then
+  $P install -q --no-deps spandrel > $L/pip-up.log 2>&1
+  curl -fsSL -m 120 -o $L/x2.pth https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth || echo "NOTE: could not fetch the upscaler's weights" >> $T/status.txt
+  if [ -n "$EXTRA_URL" ] && [ -s $L/x2.pth ]; then
+    (curl -fsSL -m 120 -o $L/in/extra.mp4 "$EXTRA_URL" \
+      && $L/venv/bin/python "$HERE/upscale.py" --in $L/in/extra.mp4 --out $T/extra-1080.mp4 --weights $L/x2.pth > $T/upscale-extra.log 2>&1 \
+      && echo "STEP extra clip sharpened $(date -u +%H:%M:%S) +$(( $(date +%s) - START ))s" >> $T/steps.log \
+      || echo "NOTE: sharpening the extra clip failed (see upscale-extra.log)" >> $T/status.txt) &
+    UP=$!
+  fi
+fi
 N=0; while [ ! -f $L/weights.ready ]; do kill -0 $DL 2> /dev/null || [ -f $L/weights.ready ] || fail "the weights download stopped (see dl-*.log)"; sleep 3; N=$((N + 1)); done
 step "weights ready $(du -sh $W | cut -f1)"
 
@@ -93,6 +109,12 @@ ffmpeg -y -v error -i "$OUT" -t "$DUR" -c:v libx264 -crf 16 -pix_fmt yuv420p -c:
   echo "setup_seconds $(( R0 - START )) total_seconds $(( R1 - START ))"
 } >> $T/status.txt
 grep -i "segment\|it/s\|s/it" $T/render.log | tail -8 >> $T/status.txt
+# 4. sharpen our own clip to 1080 x 1920 the same way (after the other one has finished, one at a time on the GPU)
+[ -n "$UP" ] && wait $UP
+if [ -s $L/x2.pth ] && [ -f "$HERE/upscale.py" ]; then
+  $L/venv/bin/python "$HERE/upscale.py" --in $T/out.mp4 --out $T/out-1080.mp4 --weights $L/x2.pth > $T/upscale-out.log 2>&1 || echo "NOTE: sharpening our clip failed (see upscale-out.log)" >> $T/status.txt
+fi
+cat $T/upscale-*.log 2> /dev/null | grep "^UPSCALE" >> $T/status.txt
 step "done"
 shutdown_all
 kill $TIMER 2> /dev/null
