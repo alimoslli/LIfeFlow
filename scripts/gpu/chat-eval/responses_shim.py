@@ -218,7 +218,7 @@ def remind(sent):
 ORDER_TO_BOOK = re.compile(r"\b(find me|book (it|me|a|an|the|that|this|one)|block (out|off|me|a|an|the|some|it)|schedule (it|me|a|an|the|that|this)|put (it|this|that|them) on (my|the) calendar)\b", re.I)
 WRITE_TOOL = re.compile(r"^(create|update|delete|add|set|move|mark|log|save|record|remember|make|resolve|complete|schedule|book|cancel|archive|contribute|shift|split)_")
 # The person asked someone to do something: an order ("add ...", "find me ...", "block ..."), or "can you / please / go ahead".
-ASKS = re.compile(r"\b(can you|could you|will you|would you|please|go ahead|do it|do that|yes|yeah|sure|ok|okay|find me|get me|give me|help me (add|book|block|plan|schedule|set)|i need you to|i want you to|remind me|add|create|put|schedule|book|block|move|reschedule|delete|remove|cancel|set up|log|save|track|mark|update|change|rename|split|record|remember|note|sign me up)\b", re.I)
+ASKS = re.compile(r"\b(undo|revert|take (it|that) (back|off)|can you|could you|will you|would you|please|go ahead|do it|do that|yes|yeah|sure|ok|okay|find me|get me|give me|help me (add|book|block|plan|schedule|set)|i need you to|i want you to|remind me|add|create|put|schedule|book|block|move|reschedule|delete|remove|cancel|set up|log|save|track|mark|update|change|rename|split|record|remember|note|sign me up)\b", re.I)
 # ...unless the whole message is only a question about whether something would fit or work.
 ONLY_ASKS_IF = re.compile(r"\b(does|would|will|could|can|is|should|do)\s+(that|this|it|i)\b[^.?!]*\?\s*$", re.I)
 MONEY = re.compile(r"\$\s?(\d[\d,]*(?:\.\d{1,2})?)")

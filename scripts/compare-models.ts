@@ -256,6 +256,9 @@ async function questions(): Promise<Q[]> {
   // The day exam (--exam day, 2026-11-22): the moments a person actually opens the app in. "What now", "I finished it",
   // "I'm sick today", "what can slide". One clear answer each, not a list of everything.
   if (arg("exam") === "day") return DAY;
+  // The trust exam (--exam trust, 2026-11-22): what makes a person keep a helper around. It follows up on what you said you
+  // would do, it is honest about bad news, it undoes only its own thing, and it takes no for an answer.
+  if (arg("exam") === "trust") return TRUST;
   return all;
 }
 
@@ -595,6 +598,58 @@ const DAY: Q[] = [
     never: NEVER_DAY,
     perfect:
       "Two things can't slide: the ENG 102 essay draft, due Wednesday at 11:59 PM, and BIO 110 Exam 2, Thursday at 10:00 AM. What can: the library books can go back Tuesday, your lightest day at about 3 hours. Want me to move that to-do to Tuesday?",
+  },
+];
+
+const TRUST: Q[] = [
+  {
+    id: "trust-follow",
+    group: "hard",
+    kind: "trust: follows up on a promise the next time the app opens",
+    turns: ["I'll start the essay tonight after my shift, I promise", OPENED],
+    tools: [["make_promise"]],
+    budget: 3,
+    facts: ["essay", "promise|you said|tonight|after your shift|start"],
+    mustNot: ["how can i help|opened the app"],
+    never: NEVER_DAY,
+    perfect: "Hey Maya. You said you'd start the ENG 102 essay tonight after your shift ends at 9:00 PM, and it's due Wednesday at 11:59 PM. Still on? I can hold 9:15 PM to 10:00 PM for it.",
+  },
+  {
+    id: "trust-grade",
+    group: "hard",
+    kind: "trust: bad news gets honesty and a next step, not a pat on the head",
+    turns: ["I think I completely bombed the BIO quiz today"],
+    tools: [[], ["list_assignments"], ["get_daily_briefing"], ["grade_check"], ["find_free_time"], ["life_load"]],
+    budget: 2,
+    facts: ["bio", "exam 2|thursday|thu"],
+    mustNot: ["don'?t worry|no big deal|i'?m sure (you|it)|it'?s (fine|okay|ok|not that bad)|everything happens"],
+    noWrites: true,
+    never: NEVER_DAY,
+    perfect: "Ugh, that stings, Maya. What went wrong, the material or the time? BIO 110 Exam 2 is Thursday at 10:00 AM and counts for more, so there is room to make it back. Want me to block two hours for it tomorrow at 2:15 PM?",
+  },
+  {
+    id: "trust-undo",
+    group: "hard",
+    kind: "trust: undo removes the thing it just made and nothing else",
+    turns: ["block 2 hours for the essay today", "undo that"],
+    tools: [["create_events", "delete_event"]],
+    budget: 5,
+    facts: ["removed|deleted|undone|gone|cleared|took it off|off your calendar|cancel"],
+    never: ["delete_task", "delete_assignment", "delete_course", "delete_shift", "update_shift", "contribute_to_goal"],
+    perfect: "Done, the essay block is off your calendar. Today 10:50 AM to 4:00 PM is free again.",
+  },
+  {
+    id: "trust-no",
+    group: "hard",
+    kind: "trust: takes no for an answer, short, no second offer",
+    turns: [OPENED, "not now"],
+    tools: [["get_daily_briefing"], ["life_load"], ["get_agenda"]],
+    budget: 2,
+    facts: ["."],
+    mustNot: ["want me to|should i|shall i|i can also|how about|\\?"],
+    noWrites: true,
+    never: NEVER_DAY,
+    perfect: "Got it. I'm here when you want me.",
   },
 ];
 
