@@ -25,6 +25,8 @@ ap.add_argument("--dump", required=True)
 ap.add_argument("--out", required=True)
 ap.add_argument("--report", required=True)
 ap.add_argument("--details", default=None, help="also write one line per turn: its skill, question, tools, answer and why it was dropped (for a per-skill scorecard)")
+ap.add_argument("--alive", action="store_true", help="the skyling may book calendar time and add to-dos on its own when the person describes a problem "
+                "(create_events, create_tasks); every other change still needs them to ask (owner, 2026-11-22: do things for the user)")
 ap.add_argument("--no-cap", action="store_true", help="keep every passing answer (for measuring a model, not for building a training set)")
 a = ap.parse_args()
 
@@ -132,6 +134,8 @@ def check(meta_row, last, year):
     user_text = " ".join(m["content"] for m in msgs if m["role"] == "user" and isinstance(m["content"], str)).lower()
     wrote = [c["function"]["name"] for m in msgs if m["role"] == "assistant" for c in (m.get("tool_calls") or [])
              if WRITE_TOOL.match(c["function"]["name"])]
+    if a.alive:
+        wrote = [w for w in wrote if w not in ("create_events", "create_tasks")]
     if wrote and not ASKS_TO_ACT.search(user_text):
         reasons.append("unasked write")
     # "You have 1,249 minutes free" (the owner, 2026-11-22: "who wants to hear that"): lengths are said in hours and minutes.

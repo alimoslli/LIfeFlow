@@ -18,7 +18,7 @@ ap.add_argument("--think-after-tools", action="store_true", help="thinking off w
                 "(careful with figures and with leaving nothing out); overrides --think")
 ap.add_argument("--reasoning-effort", default=None, help="for gpt-oss: low, medium or high")
 ap.add_argument("--temperature", type=float, default=0.2)
-ap.add_argument("--system-append", default=None, help="a text file added to the system prompt sent to the model (our own-model house rules); "
+ap.add_argument("--system-append", action="append", default=None, help="(can be given more than once) a text file added to the system prompt sent to the model (our own-model house rules); "
                 "the --dump keeps the app's original prompt, so a student trained on the dump learns the behaviour without the rules")
 ap.add_argument("--remind", default=None, help="a text file of short reminders put at the very end of what the model reads, where it follows them best: "
                 "parts split by a line of ---: before the first tool call of a message, then one part per number of tool calls made so far "
@@ -29,7 +29,7 @@ ap.add_argument("--guard", action="store_true", help="our own checks around the 
 ap.add_argument("--log", default="shim.jsonl")
 ap.add_argument("--dump", default=None, help="write each tagged request (X-Conv-Id header) and reply in chat format, for training data")
 ARGS = ap.parse_args()
-APPEND = open(ARGS.system_append).read() if ARGS.system_append else ""
+APPEND = "\n".join(open(f).read() for f in ARGS.system_append) if ARGS.system_append else ""
 REMIND = [p.strip() for p in open(ARGS.remind).read().split("\n---\n")] if ARGS.remind else []
 LOCK = threading.Lock()  # requests run on threads; one writer at a time
 
