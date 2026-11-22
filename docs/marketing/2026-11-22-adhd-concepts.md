@@ -88,3 +88,15 @@ should check that before approving.
   - The COO's rule is to stop and report anything over quote.
   - If approved, the most it could reach is 3.75 + 17.5 = **21.25 credits**.
   - M3 would animate 3a alone with the light moving toward dusk, not 3a to 3b.
+- **2026-11-22, motion shots M1 and M3:**
+  - Run after the COO approved 8.75 credits each. One take each.
+  - Cost: **17.5 credits** (balance 787.53 to 770.03).
+  - Higgsfield jobs:
+    - M1: 9ecc1ebf-0bfb-4279-8a7e-6ad983d1107b
+    - M3: 8e0a27c9-eea9-4912-8ae6-6caf6103e784
+  - Files: `adhd-concepts/m1.mp4` and `m3.mp4` (1076 x 1924, 5 s, silent).
+  - Check:
+    - M1 passes: a slow push-in on the blank page in moonlight.
+    - M3 only half passes: the sunlight shimmers but never fades toward dusk. It works as a short living shot before the cut to the dusk still 3b, which carries "time passed".
+    - Not re-run (one take per shot).
+- **Total spent: 21.25 credits**, the approved maximum. Drafts only. Nothing posted or scheduled.
