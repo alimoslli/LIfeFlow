@@ -85,7 +85,7 @@ function baseFact(c: Candidate): InsightFact | null {
       };
     }
     case "overdue_tasks":
-      return { kind: "overdue_todos", total: num(f.total ?? f.count), moved: num(f.count), firstTitle: str(f.firstTitle) };
+      return { kind: "overdue_todos", total: num(f.total ?? f.count), moved: num(f.count), firstTitle: str(f.firstTitle), spread: Boolean(f.line) };
     case "spending_pace":
       // Only with a concrete fix (a budget with room to cover it): never a bare "you're over" line.
       return f.fromCategory

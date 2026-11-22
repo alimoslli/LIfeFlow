@@ -3,7 +3,7 @@ import { PROMISE_CHOICES } from "@/lib/promise-voice";
 import { dropStalePromises, keepFinishedTaskPromises, MAX_MOVES, promisesDue, promiseStats } from "../promises";
 import { senderLabel, subjectLabel } from "../../../lib/untrusted";
 import { checkedInOn, openGoals } from "../goal-checkins";
-import { and, desc, eq, gte, inArray, isNotNull, lt, ne } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNotNull } from "drizzle-orm";
 import {
   addDaysStr,
   dayOfWeek,
@@ -37,6 +37,8 @@ import { lifeLoad } from "../life-load";
 import { billsToReview, findSavings, listSavings } from "../finance/savings-finder";
 import { webSearchClient } from "../../integrations/web-search";
 import { examStudy, startEarlier } from "./study";
+import { backOnTrackPlan } from "../back-on-track";
+import { BACK_MAX, spreadLine } from "@/lib/back-on-track";
 import { eveningWrap, goalForecast, habitCoach, monthlyReview, morningBrief, weeklyLearned, weeklyReview } from "./reviews";
 
 /** "09:00" -> "9 AM", "15:30" -> "3:30 PM". */
@@ -453,28 +455,38 @@ const savedMore: Detector = async ({ scope, today }) => {
   ];
 };
 
-/** To-dos past due: offer to move them to tomorrow. */
-const overdueTasks: Detector = async ({ scope, tz, today }) => {
-  const rows = await scope.tx
-    .select({ id: tasks.id, title: tasks.title, dueAt: tasks.dueAt })
-    .from(tasks)
-    .where(and(eq(tasks.userId, scope.userId), ne(tasks.status, "done"), isNotNull(tasks.dueAt), lt(tasks.dueAt, new Date())));
-  const allLate = rows.filter((t) => localDateOf(t.dueAt!, tz) < today || t.dueAt!.getTime() < Date.now() - 3600_000);
-  const late = allLate.slice(0, 5);
+/**
+ * To-dos whose time passed: Back on track (owner, 2026-11-22; lib/back-on-track.ts) spreads them across free time in the
+ * next days; only with no free time at all are they offered tomorrow. The words never say overdue or missed.
+ */
+const overdueTasks: Detector = async ({ scope, tz, today, now }) => {
+  const { late: allLate, moves } = await backOnTrackPlan(scope, tz, now);
+  const late = allLate.slice(0, BACK_MAX);
   if (!late.length) return [];
+  const named = moves.length ? moves : late;
   const titles =
-    late
+    named
       .slice(0, 2)
       .map((t) => `"${t.title}"`)
-      .join(" and ") + (late.length > 2 ? ` and ${late.length - 2} more` : "");
+      .join(" and ") + (named.length > 2 ? ` and ${named.length - 2} more` : "");
   return [
     {
       kind: "overdue_tasks",
       topic: "general",
       dedupeKey: `overdue_tasks:${today}`,
-      // `count` is how many the message names and moves (at most 5); `total` is every one that's late
-      facts: { count: late.length, total: allLate.length, titles, firstTitle: late[0].title },
-      action: { type: "move_tasks", label: "Move to tomorrow", taskIds: late.map((t) => t.id), to: addDaysStr(today, 1) },
+      // `count` is how many the message names and moves (at most 5); `total` is every one waiting; `line` says where each goes
+      facts: moves.length
+        ? { count: moves.length, total: allLate.length, titles, firstTitle: named[0].title, line: spreadLine(moves, tz, today) }
+        : { count: late.length, total: allLate.length, titles, firstTitle: late[0].title },
+      action: moves.length
+        ? {
+            type: "move_tasks",
+            label: "Back on track",
+            taskIds: moves.map((m) => m.taskId),
+            to: addDaysStr(today, 1),
+            moves: moves.map((m) => ({ taskId: m.taskId, at: m.at.toISOString() })),
+          }
+        : { type: "move_tasks", label: "Move to tomorrow", taskIds: late.map((t) => t.id), to: addDaysStr(today, 1) },
       priority: 55,
     },
   ];

@@ -173,7 +173,8 @@ export type ProactiveAction =
   | { type: "shift_budget"; label: string; fromCategoryId: string; toCategoryId: string; cents: number; month: string }
   | { type: "block_time"; label: string; date: string; start: string; end: string; title: string }
   | { type: "create_task"; label: string; title: string; dueDate?: string }
-  | { type: "move_tasks"; label: string; taskIds: string[]; to: string }
+  // `moves` (Back on track): each to-do to its own free time; without it, all to the date `to`
+  | { type: "move_tasks"; label: string; taskIds: string[]; to: string; moves?: { taskId: string; at: string }[] }
   | { type: "contribute_goal"; label: string; goalId: string; cents: number }
   | { type: "open"; label: string; href: string }
   | { type: "ask"; label: string; prompt: string }

@@ -108,7 +108,9 @@ describe("proactive Jarvis", () => {
     await run((s) => createTask(s, TZ, { title: "Return library books", dueDate: addDaysStr(today, -2) }));
     const first = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "midday" }));
     const overdue = first.find((m) => m.kind === "overdue_tasks")!;
-    expect(overdue.body).toContain('"Return library books" is past due');
+    // Back on track: a new time in free time, never "past due" or "missed"
+    expect(overdue.body).toMatch(/Return library books (today|tomorrow) at \d{1,2}:\d{2} [AP]M/);
+    expect(overdue.body).not.toMatch(/past due|overdue|missed/i);
     await run((s) => respondToMessage(s, user(u.id), overdue.id, "do", today));
     const [t] = await run((s) => s.tx.select().from(tasks));
     expect(t.dueAt!.getTime()).toBeGreaterThan(Date.now());

@@ -45,7 +45,7 @@ describe("insight clouds (owner, 2026-11-12)", () => {
     expect(said).toContain("Thu: 2 due, 5 to 10 PM shift");
     expect(said).toContain("Netflix and Hulu: about $306 a year");
     expect(said).toContain("2 free hours before your 2 PM class");
-    expect(said).toContain("3 to-dos are past due");
+    expect(said).toContain("3 to-dos need new times");
     expect(said).toContain("You slept 5h 10m last night");
     expect(said).toContain("2 of 5 done today");
     expect(said).toContain("2 habits left today");
@@ -114,7 +114,7 @@ describe("insight clouds (owner, 2026-11-12)", () => {
   it("the tap fills a precise question or the one fix", () => {
     expect(say(all[0]).ask).toBe("Rent is $850 on Fri and I have $620. Move $230 from savings to cover it.");
     expect(say(all[3]).ask).toBe("Block 2 hours on Wednesday at 9 AM to work on Lab report.");
-    expect(say(all[6]).ask).toBe("Move my 3 past due to-dos to tomorrow.");
+    expect(say(all[6]).ask).toBe("Find my 3 waiting to-dos new times.");
   });
 
   it("each cloud is a fact, one line of why and one button, with the weather that fits", () => {

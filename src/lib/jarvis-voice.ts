@@ -125,12 +125,21 @@ const KINDS: Record<string, (f: F) => Parts> = {
     ask: f.goal ? `Want to put ${usd(n(f, "moveCents"))} toward ${s(f, "goal")}?` : undefined,
     mood: "win",
   }),
-  overdue_tasks: (f) => ({
-    headline: `${plural(n(f, "count"), "to-do")} past due`,
-    fact: `${s(f, "titles")} ${n(f, "count") === 1 ? "is" : "are"} past due.`,
-    ask: f.done ? "I moved them to tomorrow." : "Move them to tomorrow?",
-    mood: "info",
-  }),
+  // Back on track (owner, 2026-11-22): never "overdue", "missed" or how long it's been; the line says where each one goes
+  overdue_tasks: (f) =>
+    f.line
+      ? {
+          headline: "Back on track",
+          fact: `${plural(n(f, "count"), "to-do")} can go in your free time: ${s(f, "line")}.`,
+          ask: f.done ? "Done. Each one has its new time." : "Spread them out?",
+          mood: "info",
+        }
+      : {
+          headline: `${plural(n(f, "count"), "to-do")} to fit in`,
+          fact: `${s(f, "titles")} ${n(f, "count") === 1 ? "is" : "are"} still waiting.`,
+          ask: f.done ? "I moved them to tomorrow." : "Move them to tomorrow?",
+          mood: "info",
+        },
   unusual_spend: (f) =>
     f.firstTime
       ? {

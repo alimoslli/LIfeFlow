@@ -10,6 +10,7 @@ import { localDateOf, localTimeOf } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { claimStars, type Star } from "@/server/services/stars";
 import { answerMoment, momentAfterStars } from "@/server/services/moments";
+import { applyBackOnTrack } from "@/server/services/proactive/back-on-track-do";
 import { MOMENT_ANSWERS, type MomentAnswer, type MomentQuestion } from "@/lib/moment-question";
 import { afterAgeLock, saveBirthday } from "@/server/services/onboarding";
 import { getDb } from "@/server/db/client";
@@ -178,4 +179,16 @@ export async function answerMomentAction(answer: string): Promise<{ ok: boolean 
     unstable_rethrow(e);
     return { ok: false };
   }
+}
+
+/**
+ * Back on track (owner, 2026-11-22, the ADHD helps, item 3): the to-dos whose time passed are spread across free time.
+ * Nothing comes from the browser; the plan is made again from the person's records. `undo` is the message id for
+ * `respondAction(id, "undo")`, the usual Undo.
+ */
+export async function backOnTrackAction(): Promise<ActionState> {
+  return mutate("jarvis.back_on_track", async (s, u) => {
+    const r = await applyBackOnTrack(s, u);
+    return { message: r.text, undo: r.id };
+  });
 }

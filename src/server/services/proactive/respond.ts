@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { formatDateStr } from "@/lib/dates";
+import { formatDateStr, localDateOf, localTimeOf } from "@/lib/dates";
 import { jarvisMessages, tasks, type ProactiveAction, type UserPreferences } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { getDb } from "../../db/client";
@@ -58,12 +58,30 @@ export async function performAction(
       return { text: `Added the to-do "${a.title}"${a.dueDate ? ` for ${formatDateStr(a.dueDate, "EEE, MMM d")}` : ""}.`, undo: { taskId: t.id } };
     }
     case "move_tasks": {
-      const before = await scope.tx.select({ id: tasks.id, dueAt: tasks.dueAt, dueAllDay: tasks.dueAllDay }).from(tasks).where(eq(tasks.userId, scope.userId));
+      const before = await scope.tx
+        .select({ id: tasks.id, dueAt: tasks.dueAt, dueAllDay: tasks.dueAllDay, remindAt: tasks.remindAt, remindedAt: tasks.remindedAt })
+        .from(tasks)
+        .where(eq(tasks.userId, scope.userId));
       const moved = before.filter((t) => a.taskIds.includes(t.id));
-      for (const t of moved) await updateTask(scope, tz, t.id, { dueDate: a.to });
+      const spreadTo = new Map((a.moves ?? []).map((m) => [m.taskId, m.at]));
+      for (const t of moved) {
+        const at = spreadTo.get(t.id);
+        if (at) await updateTask(scope, tz, t.id, { dueDate: localDateOf(new Date(at), tz), dueTime: localTimeOf(new Date(at), tz) });
+        else await updateTask(scope, tz, t.id, { dueDate: a.to });
+      }
       return {
-        text: `Moved ${moved.length} to-do${moved.length === 1 ? "" : "s"} to ${formatDateStr(a.to, "EEEE")}.`,
-        undo: { tasks: moved.map((t) => ({ id: t.id, dueAt: t.dueAt?.toISOString() ?? null, dueAllDay: t.dueAllDay })) },
+        text: spreadTo.size
+          ? `Back on track: ${moved.length} to-do${moved.length === 1 ? "" : "s"} spread into your free time.`
+          : `Moved ${moved.length} to-do${moved.length === 1 ? "" : "s"} to ${formatDateStr(a.to, "EEEE")}.`,
+        undo: {
+          tasks: moved.map((t) => ({
+            id: t.id,
+            dueAt: t.dueAt?.toISOString() ?? null,
+            dueAllDay: t.dueAllDay,
+            remindAt: t.remindAt?.toISOString() ?? null,
+            remindedAt: t.remindedAt?.toISOString() ?? null,
+          })),
+        },
       };
     }
     case "contribute_goal": {
@@ -93,10 +111,15 @@ async function undoAction(scope: UserScope, undo: Record<string, unknown>) {
   if (typeof undo.contributionId === "string") await deleteContribution(scope, undo.contributionId);
   if (typeof undo.memoryId === "string") await deleteMemory(scope, undo.memoryId).catch(() => undefined);
   if (Array.isArray(undo.tasks))
-    for (const t of undo.tasks as { id: string; dueAt: string | null; dueAllDay: boolean }[])
+    for (const t of undo.tasks as { id: string; dueAt: string | null; dueAllDay: boolean; remindAt?: string | null; remindedAt?: string | null }[])
       await scope.tx
         .update(tasks)
-        .set({ dueAt: t.dueAt ? new Date(t.dueAt) : null, dueAllDay: t.dueAllDay })
+        .set({
+          dueAt: t.dueAt ? new Date(t.dueAt) : null,
+          dueAllDay: t.dueAllDay,
+          // older Undo records carry no reminder; leave it then
+          ...(t.remindAt !== undefined ? { remindAt: t.remindAt ? new Date(t.remindAt) : null, remindedAt: t.remindedAt ? new Date(t.remindedAt) : null } : {}),
+        })
         .where(eq(tasks.id, t.id));
 }
 

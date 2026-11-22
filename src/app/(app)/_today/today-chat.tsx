@@ -18,6 +18,7 @@ import { savesSomething } from "@/lib/tool-saves";
 import { cn } from "@/lib/utils";
 import { StartIt } from "./assistant-line";
 import { MomentAsk } from "./moment-ask";
+import { BackOnTrack } from "./back-on-track";
 
 /**
  * The skyling answers right on Today (owner, 2026-11-10: "there's no different page for the assistant. You just type it
@@ -363,9 +364,12 @@ export function TodayMiddle({
   note,
   brief,
   work,
+  back,
   children,
 }: {
   name: string;
+  /** Back on track: to-dos waiting for a new time (services/back-on-track.ts). */
+  back?: { count: number; line: string } | null;
   /** This morning's brief in one line, until noon (services/next-up.ts). */
   brief?: string | null;
   /** The day's shift, or "No work today" on a usual work day (services/next-up.ts `workTodayLine`). */
@@ -415,6 +419,7 @@ export function TodayMiddle({
         </section>
       )}
       <MomentAsk className="max-w-[22rem] shrink-0" />
+      <BackOnTrack count={back?.count ?? 0} line={back?.line ?? null} className="max-w-[22rem] shrink-0" />
       {work && (
         <p className="max-w-[22rem] shrink-0 text-center text-sm font-medium text-text-2" data-testid="work-today">
           {work}

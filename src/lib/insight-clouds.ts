@@ -20,7 +20,7 @@ export type InsightFact =
   | { kind: "conflict"; assignment: string; dueDay: string; shiftWhen: string; blockWhen?: string; blockDay?: string; blockStart?: string }
   | { kind: "due_soon"; titles: string[]; due: string; today: boolean }
   | { kind: "busy_day"; weekday: string; weekdayLong: string; date: string; dueCount: number; titles: string[]; shift?: { from: string; to: string } }
-  | { kind: "overdue_todos"; total: number; moved: number; firstTitle: string }
+  | { kind: "overdue_todos"; total: number; moved: number; firstTitle: string; spread?: boolean }
   | { kind: "spending_pace"; category: string; overCents: number; fromCategory: string; moveCents: number }
   | { kind: "sub_overlap"; names: string; yearlyCents: number }
   | { kind: "trial_ending"; name: string; daysLeft: number; thenCents: number }
@@ -168,11 +168,11 @@ export function describe(f: RawInsight, skyling = "Ray"): Described {
     }
     case "overdue_todos":
       return {
-        say: f.total === 1 ? fit(`"${name(f.firstTitle, 28)}" is past due`, "1 to-do is past due") : `${f.total} to-dos are past due`,
-        why: "One tap moves them to tomorrow.",
-        cta: f.moved < f.total ? `Move ${f.moved} to tomorrow` : "Move to tomorrow",
+        say: f.total === 1 ? fit(`"${name(f.firstTitle, 28)}" needs a new time`, "1 to-do needs a new time") : `${f.total} to-dos need new times`,
+        why: f.spread ? "One tap spreads them into your free time." : "One tap moves them to tomorrow.",
+        cta: f.spread ? "Back on track" : f.moved < f.total ? `Move ${f.moved} to tomorrow` : "Move to tomorrow",
         weather: "heads-up",
-        ask: f.total === 1 ? `Move "${f.firstTitle}" to tomorrow.` : `Move my ${f.total} past due to-dos to tomorrow.`,
+        ask: f.total === 1 ? `Find "${f.firstTitle}" a new time.` : `Find my ${f.total} waiting to-dos new times.`,
         priority: 40,
         about: ["overdue"],
       };

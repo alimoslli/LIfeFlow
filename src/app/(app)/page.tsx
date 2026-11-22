@@ -30,6 +30,9 @@ import { BirthdayCard } from "./_today/birthday-card";
 import { EmptyNext } from "./_today/empty-next";
 import { ideaClouds } from "@/server/services/idea-clouds";
 import { BRIEF_UNTIL_HOUR, morningBriefLine, nextUpNote, workTodayLine } from "@/server/services/next-up";
+import { backOnTrackPlan } from "@/server/services/back-on-track";
+import { spreadLine } from "@/lib/back-on-track";
+import { BackOnTrack } from "./_today/back-on-track";
 import { stopHref } from "@/lib/today-stop";
 import { formatIn, todayIn } from "@/lib/dates";
 import { skyInsights } from "@/server/services/sky-insights";
@@ -105,7 +108,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     );
   // A phone's Today shows no idea clouds (owner, 2026-11-16), so a phone doesn't work them out either.
   const phone = /\b(iPhone|iPod|Android.+Mobile)\b/.test((await headers()).get("user-agent") ?? "");
-  const { clock, note, brief, work, clash, assistantName, setup, hello, clouds, userId } = await withCurrentUser(async (scope, user) => {
+  const { clock, note, brief, work, back, clash, assistantName, setup, hello, clouds, userId } = await withCurrentUser(async (scope, user) => {
     const tz = user.timezone ?? "UTC";
     // Money (bills due, spent today) joins the clock only while the Money lock is open.
     // Today only reads here, and its parts ask for the same rows (bills, categories, 13 months of transactions) again and
@@ -117,6 +120,9 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     const next = await nextUpNote(scope, tz, now);
     const brief = Number(formatIn(now, tz, "H")) < BRIEF_UNTIL_HOUR ? await morningBriefLine(scope, tz, now, { money: !locked, said: next?.text }) : null;
     const work = await workTodayLine(scope, tz, now, next?.text);
+    // Back on track (owner, 2026-11-22): to-dos whose time passed, and where each would fit; only offered when one fits
+    const backPlan = await backOnTrackPlan(scope, tz, now);
+    const back = backPlan.moves.length ? { count: backPlan.moves.length, line: spreadLine(backPlan.moves, tz, todayIn(tz, now)) } : null;
     const { briefing, snapshot } = await getBriefing(scope, user);
     const [integrationList, banks] = await series(
       () => integrationStatus(scope),
@@ -151,6 +157,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
       note,
       brief,
       work,
+      back,
       clash: !!(sky ?? top)?.id?.startsWith("conflict"),
       assistantName: assistantProfile(user.preferences, user.timezone).name,
       // idea clouds beside the chat bar, from their own data (lib/idea-clouds)
@@ -181,6 +188,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
             {/* accounts made before the birthday was required are asked once, first (owner, 2026-11-10; not a lockout) */}
             {!me.preferences?.birthDate && <BirthdayCard />}
             {me.preferences?.birthDate && note && <AssistantLine name={assistantName} note={note} brief={brief} work={work} />}
+            {me.preferences?.birthDate && <BackOnTrack count={back?.count ?? 0} line={back?.line ?? null} className="mt-3" />}
             {/* nothing planned yet: one next step, on the first screen (connect what can be connected, else tell the skyling) */}
             {me.preferences?.birthDate &&
               !note &&
@@ -216,6 +224,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
           name={assistantName}
           brief={me.preferences?.birthDate ? brief : null}
           work={me.preferences?.birthDate ? work : null}
+          back={me.preferences?.birthDate ? back : null}
           note={
             !me.preferences?.birthDate
               ? null
