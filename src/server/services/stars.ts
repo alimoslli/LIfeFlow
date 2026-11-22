@@ -7,7 +7,7 @@ import type { UserScope } from "@/server/db/with-user";
 import { getAgenda, type AgendaItem } from "./calendar";
 import { awardStars } from "./sky-home";
 import { inQuietHours, jarvisSettings } from "./proactive/engine";
-import { listSubscriptions, notificationPrefs, sendOnce, type Sender } from "./push";
+import { listSubscriptions, notificationPrefs, sendOnce, sentCount, type Sender } from "./push";
 
 /** A star to claim: what it was for, and when the skyling passed it. */
 export type Star = { key: string; title: string; kind: string; label: string; at: string };
@@ -103,6 +103,6 @@ export async function pushStars(scope: UserScope, tz: string, prefs: UserPrefere
     .onConflictDoNothing();
   if (today >= STAR_PUSHES_A_DAY) return 0;
   const name = nameAtStart(assistantProfile(prefs, tz).name);
-  const { title, body } = starPush(name, fresh);
+  const { title, body } = starPush(name, fresh, await sentCount(scope, "starnote:%"));
   return (await sendOnce(scope, `starnote:${fresh[0].key}`, { title, body, url: "/", tag: "lf-stars" }, send)) ? 1 : 0;
 }

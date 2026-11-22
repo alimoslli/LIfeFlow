@@ -1,3 +1,4 @@
+import { headsUpBody } from "./reminder-words";
 import type { UserPreferences } from "@/server/db/schema";
 
 /**
@@ -18,8 +19,9 @@ const cut = (t: string, n: number) => (t.length > n ? `${t.slice(0, n - 1).trimE
  * "Bio 101 at 10:00 AM" / "In 15 minutes, Hall 201. Time to wrap up." Calm, no pressure words, the place only when the
  * calendar has one. `clock` is already in the person's time zone.
  */
-export function headsUpPush(item: { title: string; clock: string; location?: string | null }, minutesLeft: number): { title: string; body: string } {
+export function headsUpPush(item: { title: string; clock: string; location?: string | null }, minutesLeft: number, turn = 0): { title: string; body: string } {
   const mins = Math.max(1, Math.round(minutesLeft));
   const place = item.location?.trim() ? `, ${cut(item.location.trim(), 40)}` : "";
-  return { title: `${cut(item.title, 48)} at ${item.clock}`, body: `In ${mins} minute${mins === 1 ? "" : "s"}${place}. Time to wrap up.` };
+  // the words rotate so it isn't tuned out (lib/reminder-words.ts)
+  return { title: `${cut(item.title, 48)} at ${item.clock}`, body: headsUpBody(mins, place, turn) };
 }

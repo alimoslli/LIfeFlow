@@ -1,3 +1,4 @@
+import { starTail } from "./reminder-words";
 /**
  * The stars you claim on coming back (owner, 2026-11-10): what the skyling passed on your sky while you were away,
  * one star each with what it was for, and one more that says how many when there were a few (the sun is only for a sun
@@ -46,11 +47,11 @@ const ended = (s: { title: string; kind: string }) => (s.kind === "work" ? `Your
  * The note when something ends (owner, 2026-11-10: "a small dopamine effect"): what ended and that its star is waiting,
  * one line; the tap is the claim (it opens Today, where the stars come out). Things ending together are one note.
  */
-export function starPush(name: string, ends: { title: string; kind: string }[]): { title: string; body: string } {
+export function starPush(name: string, ends: { title: string; kind: string }[], turn = 0): { title: string; body: string } {
   const n = ends.length;
   const title = n === 1 ? `${name} has a star for you` : `${name} has ${n} stars for you`;
-  if (n === 1) return { title, body: `${ended(ends[0])} is over. Tap to claim your star on your sky.` };
+  if (n === 1) return { title, body: `${ended(ends[0])} is over. ${starTail(false, turn)}` };
   const names = ends.map((e) => (e.kind === "work" ? `your ${e.title} shift` : e.title));
   const list = n === 2 ? `${names[0]} and ${names[1]}` : `${names[0]}, ${names[1]} and ${n - 2} more`;
-  return { title, body: `${list.charAt(0).toUpperCase()}${list.slice(1)} are over. Tap to claim them on your sky.` };
+  return { title, body: `${list.charAt(0).toUpperCase()}${list.slice(1)} are over. ${starTail(true, turn)}` };
 }

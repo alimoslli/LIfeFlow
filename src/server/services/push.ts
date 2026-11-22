@@ -1,5 +1,6 @@
-import { and, eq, gt, isNull, lte, ne } from "drizzle-orm";
+import { and, eq, gt, isNull, like, lte, ne, sql } from "drizzle-orm";
 import { HEADS_UP_CHOICES } from "@/lib/heads-up";
+import { todoGroup, todoReminder } from "@/lib/reminder-words";
 import { z } from "zod";
 import { formatIn } from "@/lib/dates";
 import { notificationLog, pushSubscriptions, tasks, type UserPreferences } from "../db/schema";
@@ -106,7 +107,19 @@ export async function sendOnce(scope: UserScope, key: string, msg: PushMessage, 
   return delivered;
 }
 
-/** Sends the to-do reminders the user set. Safe to run every few minutes. */
+/** How many pushes of one kind this person has had (keys `like` the pattern): the turn for lib/reminder-words.ts. */
+export async function sentCount(scope: UserScope, pattern: string) {
+  const [{ n }] = await scope.tx
+    .select({ n: sql<number>`count(*)::int` })
+    .from(notificationLog)
+    .where(and(eq(notificationLog.userId, scope.userId), like(notificationLog.key, pattern)));
+  return n;
+}
+
+/**
+ * Sends the to-do reminders the user set. Safe to run every few minutes. Words rotate (lib/reminder-words.ts), and
+ * several due in the same run go out as one note (the ADHD helps, item 5).
+ */
 export async function runNotifications(scope: UserScope, tz: string, prefs: UserPreferences | undefined, send: Sender, now = new Date()) {
   const p = notificationPrefs(prefs);
   if (!(await listSubscriptions(scope)).length) return { sent: 0 };
@@ -125,19 +138,42 @@ export async function runNotifications(scope: UserScope, tz: string, prefs: User
           gt(tasks.remindAt, new Date(now.getTime() - 24 * 3600_000)),
         ),
       );
-    for (const t of due) {
+    const turn = due.length ? await sentCount(scope, "task%") : 0;
+    if (due.length === 1) {
+      const [t] = due;
       const when = t.dueAt ? (t.dueAllDay ? "today" : `at ${formatIn(t.dueAt, tz, "h:mm a")}`) : "";
       if (
         await sendOnce(
           scope,
           `task:${t.id}:${t.remindAt!.toISOString()}`,
-          { title: t.title, body: `Due ${when}`.trim(), url: `/tasks/${t.id}`, tag: `task-${t.id}` },
+          { ...todoReminder(t.title, when, turn), url: `/tasks/${t.id}`, tag: `task-${t.id}` },
           send,
         )
       )
         sent++;
-      await scope.tx.update(tasks).set({ remindedAt: now }).where(eq(tasks.id, t.id));
+    } else if (due.length > 1) {
+      const key = `tasks:${due
+        .map((t) => t.id)
+        .sort()
+        .join(",")}:${now.toISOString()}`;
+      if (
+        await sendOnce(
+          scope,
+          key.slice(0, 500),
+          {
+            ...todoGroup(
+              due.map((t) => t.title),
+              turn,
+            ),
+            url: "/tasks",
+            tag: "lf-tasks",
+          },
+          send,
+        )
+      )
+        sent++;
     }
+    for (const t of due) await scope.tx.update(tasks).set({ remindedAt: now }).where(eq(tasks.id, t.id));
   }
 
   // Bills, budgets and the morning brief now come from Jarvis (services/proactive), with his daily limit.

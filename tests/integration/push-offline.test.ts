@@ -64,7 +64,8 @@ describe("push notifications", () => {
     await run((s) => createTask(s, TZ, { title: "Pick up keys", dueDate: "2026-10-28", dueTime: "14:00", reminder: "1h" }));
     const later = fakeSender();
     expect((await run((s) => runNotifications(s, TZ, undefined, later.send, new Date(NOW.getTime() + 4 * 3600_000)))).sent).toBe(1);
-    expect(later.sent[0]).toMatchObject({ title: "Pick up keys", body: "Due at 2:00 PM" });
+    // their second to-do reminder, so the second wording (lib/reminder-words.ts: never the same twice in a row)
+    expect(later.sent[0]).toMatchObject({ title: "Pick up keys", body: "Set for 2:00 PM" });
   });
 
   it("never lets one account take over another account's device", async () => {

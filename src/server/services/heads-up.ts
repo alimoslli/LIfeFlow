@@ -4,7 +4,7 @@ import type { UserPreferences } from "@/server/db/schema";
 import type { UserScope } from "@/server/db/with-user";
 import { busyAgenda } from "./calendar";
 import { inQuietHours, jarvisSettings } from "./proactive/engine";
-import { listSubscriptions, sendOnce, type Sender } from "./push";
+import { listSubscriptions, sendOnce, sentCount, type Sender } from "./push";
 
 /**
  * The heads-up before something starts (owner, 2026-11-22, the ADHD helps, item 2; lib/heads-up.ts): a push the person's
@@ -24,10 +24,12 @@ export async function pushHeadsUp(scope: UserScope, tz: string, prefs: UserPrefe
     .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
   if (!items.length || !(await listSubscriptions(scope)).length) return 0;
   let sent = 0;
+  let turn = await sentCount(scope, "heads-up:%");
   for (const i of items) {
     const title = i.origin === "shift" ? i.title.replace(/^Work · /, "") : i.title;
-    const msg = headsUpPush({ title, clock: formatIn(i.startsAt, tz, "h:mm a"), location: i.location }, (i.startsAt.getTime() - now.getTime()) / 60_000);
+    const msg = headsUpPush({ title, clock: formatIn(i.startsAt, tz, "h:mm a"), location: i.location }, (i.startsAt.getTime() - now.getTime()) / 60_000, turn);
     if (await sendOnce(scope, `heads-up:${i.key}`, { ...msg, url: "/", tag: `lf-heads-up:${i.key}` }, send)) sent++;
+    turn++;
   }
   return sent;
 }
