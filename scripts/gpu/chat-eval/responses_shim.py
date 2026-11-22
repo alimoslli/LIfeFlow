@@ -270,6 +270,7 @@ def cut_off(msg):
     return bool(text) and not msg.get("tool_calls") and not re.search(r"[.?!)\"'\u201d\u2019*:]$", text)
 
 
+MAY_DO_UNASKED = {"create_events", "create_tasks", "save_memory", "make_promise", "update_assignment", "update_task", "update_event", "resolve_promise"}
 EXPECTED_PAY = re.compile(r"\b(paycheck|pay ?check|deposit|payday|get paid|gets? paid)\b(?:[^.!?\n]|\.\d){0,140}\b(cover|covers|make up|makes up|take care of|fix|fixes|solve|solves|close the gap|closes the gap)\b", re.I)
 BREAKDOWN = re.compile(r"break (it|this|that|the [^.?!]{0,40}) down|feels? (so |too |really )?(huge|massive|impossible|big)|where (do|would) i (even )?(start|begin)", re.I)
 
@@ -311,6 +312,14 @@ def guard_notes(original, msg):
     if "create_events" in calls and not any(u in LOOKS for u in used_calls(original)):
         return ["Look before you book: call get_agenda for that day first (or find_free_time), so a clash is caught before anything is saved. "
                 "If the time is taken, say so and book nothing."]
+    # Alive rules only: what it may change without being asked is a short list (its own calendar blocks and to-dos, a memory, a
+    # promise, marking a finished thing done). Anything else nobody asked for is sent back (2026-11-22: told "I got a job at the
+    # library", it added the job to the Work page by itself).
+    if "Be alive" in (APPEND or "") and not ASKS.search(last_user(original) or ""):
+        unasked = [c for c in writes if c not in MAY_DO_UNASKED]
+        if unasked:
+            return ["They did not ask you to change that, so do not call " + ", ".join(unasked) + ". React to what they said, ask your one question, "
+                    "and offer to set it up; do it when they say yes."]
     # Humane blocks (2026-11-22: asked for help before an exam it booked 10:50 AM to 4:00 PM and 2:15 PM to 10:00 PM, whole free
     # windows as "study"). Nobody studies eight hours straight; a block it chooses itself is two hours at most.
     long = long_blocks(msg, last_user(original))
