@@ -57,3 +57,19 @@ Nothing is made until the owner sets a budget. Nothing is posted or scheduled by
 - Talking head, Higgsfield Intone, quoted with voice A over the whole 24 s: 1080p 432 credits, 720p 189, 480p 81. Seedance 2.5 at 480p for 16 s is 48.
 - Cheapest good route: Intone at 480p, then our GPU upscale (tested on the drama ad), and only the lines he says on camera go to Intone. The app inserts cover the rest, so about 14 s of him: about 50 credits at 480p, about 110 at 720p (estimates scaled from the quotes above).
 - Production demo login: `demo@budgetflow.local` does not sign in on lifeflowweb.com ("That email and password don't match"). The app inserts need a demo account on production.
+
+## Animations explain the app, not just screen recordings (owner, 2026-11-22)
+
+The app's pieces, animated the way the campfire and pier videos do it, carry the explaining. The real app recording is the proof at the end of each point, not the whole explanation. Each animation shows what Jordan is saying at that moment:
+
+| Line | Animation (campfire and pier style: the app's own pixel skylings, sky colours, clouds and wheel) |
+|---|---|
+| "This is my entire week. One circle." | The wheel draws itself around his phone in the app's sky colours, his week's blocks dropping onto it one by one. |
+| "Lists don't work on me. I read the first line and I'm gone." | A long to-do list scrolls past beside him and falls apart into clouds that drift off. |
+| "Class, work, the gym, the quiz. It's all just there." | Each word lands as a small pixel icon on the wheel, timed to the word. |
+| "My skyling put it together for me." | Goldie pops up on his shoulder with the app's pixel bubble, placing the last block on the wheel. |
+| "I tap the day, and it's one line." | The wheel unrolls into the timeline: one line across the frame, the sun sliding along it. |
+| "What's now, what's next." | "Now" and "Next" light up on the line, in the app's own labels. |
+| "I look, I know. That's it." | The wheel settles back to the corner; end card. |
+
+Then a short full-screen recording of the real app (wheel, tap, timeline) as proof, recorded from production once a demo login exists there.
