@@ -72,6 +72,10 @@ export type UserPreferences = {
   aiConsentAt?: string | null;
   /** When the stars for what the skyling passed were last claimed on Today (services/stars.ts); unset until the first visit. */
   starsClaimedAt?: string;
+  /** The local day ("YYYY-MM-DD") the skyling last asked one of its questions (lib/moment-question.ts): one a day at most. */
+  askedOn?: string;
+  /** Until when the rest of a rough day stays quiet (answered "Rough" after a shift or class): no coaching nudges. */
+  easyUntil?: string;
   /** Idea clouds tapped, a count per cloud (lib/idea-clouds), never the message text: a tapped one counts as used. */
   ideaTaps?: Partial<Record<string, number>>;
   studyTime?: "morning" | "afternoon" | "evening" | "night";

@@ -12,8 +12,9 @@ import { courseLabel } from "@/lib/course-label";
  * time, each once, every couple of days. They skip what Jarvis already knows
  * (a saved answer, or the user's own records) and fit the user's life: a class
  * question only for students with classes, a job question only for workers.
- * Nothing about health, religion, politics, relationships, exact income,
- * addresses or account details. The answer is saved as a memory the user added,
+ * Nothing about health, religion, politics, exact income, addresses or account
+ * details. Life around them (who they live with, who they look after) is asked plainly
+ * and only as a choice (owner, 2026-11-22); "who I live with" never names anyone. The answer is saved as a memory the user added,
  * so it's editable and deletable in What Jarvis knows.
  */
 
@@ -172,6 +173,42 @@ export const QUESTIONS: Question[] = [
     ask: "What keeps you going when things pile up?",
     choices: ["Seeing my progress", "A clear plan for the day", "Small rewards", "Someone checking in"],
     memory: (a) => `What keeps me going: ${lower(a)}.`,
+    category: "preference",
+  },
+  // the owner's list (2026-11-22): what's hard, life around them, the day's rhythm; what no connection can see
+  {
+    key: "hardest_start",
+    ask: "What's hardest for you to get started on?",
+    choices: ["Big assignments", "Studying for exams", "Emails and forms", "Chores and errands"],
+    memory: (a) => `What's hardest for me to get started on: ${lower(a)}.`,
+    category: "preference",
+  },
+  {
+    key: "energy_dip",
+    ask: "When does your energy usually dip?",
+    choices: ["Mornings", "Right after lunch", "Late afternoon", "After work or class"],
+    memory: (a) => `When my energy usually dips: ${lower(a)}.`,
+    category: "routine",
+  },
+  {
+    key: "home_life",
+    ask: "Who do you live with?",
+    choices: ["Family", "Roommates", "On my own", "It changes"],
+    memory: (a) => `Who I live with: ${lower(a)}.`,
+    category: "fact",
+  },
+  {
+    key: "care_duties",
+    ask: "Do you look after anyone, like a sibling, a parent or a pet?",
+    choices: ["Yes, most days", "Sometimes", "Not really"],
+    memory: (a) => `Looking after someone at home: ${lower(a)}.`,
+    category: "routine",
+  },
+  {
+    key: "heavy_week",
+    ask: "When a week gets heavy, what helps most?",
+    choices: ["Fewer reminders", "One thing at a time", "A plan for the week", "Someone checking in"],
+    memory: (a) => `When a week gets heavy, what helps most: ${lower(a)}.`,
     category: "preference",
   },
 ];

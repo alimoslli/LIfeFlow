@@ -5,6 +5,8 @@ import { assistantProfile } from "@/lib/assistant";
 import { jarvisMessages, notificationLog, type JarvisSettings, type UserPreferences } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { DETECTORS, RUNS, type Candidate } from "./detectors";
+import { QUIET_ON_EASY_DAYS } from "@/lib/moment-question";
+import { easyDay } from "../moments";
 import { aiAllowed } from "@/lib/ai-consent";
 import { nextQuestion } from "./questions";
 import { performAction } from "./respond";
@@ -121,7 +123,8 @@ export async function runProactive({ scope, tz, prefs, trigger, now = new Date()
   if (settings.learning === undefined && trigger === "morning")
     candidates.push({ kind: "consent", topic: "general", dedupeKey: "consent", facts: {}, action: { type: "consent", label: "Yes, learn" }, priority: 40 });
 
-  if (settings.learning && trigger === "evening") {
+  // one question a day across everything the skyling asks: none on a day it already asked about a shift or class
+  if (settings.learning && trigger === "evening" && prefs?.askedOn !== today) {
     const q = await nextQuestion(scope, now, prefs, await listActiveMemories(scope, now));
     if (q) candidates.push(q);
   }
@@ -131,6 +134,8 @@ export async function runProactive({ scope, tz, prefs, trigger, now = new Date()
   candidates = candidates
     .filter((c) => c.topic === "general" || settings.topics[c.topic] !== false)
     .filter((c) => !settings.mutedKinds.includes(c.kind) && !stat.get(c.kind)?.suppressed)
+    // they said the shift or class was rough: the rest of the day has no coaching or nudges, only real trouble
+    .filter((c) => !easyDay(prefs, now) || !QUIET_ON_EASY_DAYS.has(c.kind))
     .map((c) => ({ ...c, priority: c.priority + (stat.get(c.kind)?.boost ?? 0) }))
     .sort((a, b) => b.priority - a.priority);
   if (!candidates.length) return [];
