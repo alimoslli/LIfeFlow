@@ -300,6 +300,50 @@ def long_blocks(msg, asked):
     return out
 
 
+def exam_times(msgs):
+    """Exams, quizzes and other timed, graded sittings seen in the tool results: (date, "HH:MM", title). The calendar's free-time
+    tool does not count them as busy, so our code has to."""
+    found = []
+
+    def walk(v):
+        if isinstance(v, list):
+            for x in v:
+                walk(x)
+        elif isinstance(v, dict):
+            due = v.get("due")
+            if isinstance(due, str) and re.match(r"\d{4}-\d\d-\d\d \d\d:\d\d$", due) and (
+                    str(v.get("kind", "")).lower() in ("exam", "quiz") or re.search(r"\b(exam|midterm|final|quiz)\b", str(v.get("title", "")), re.I)):
+                found.append((due[:10], due[11:], str(v.get("title", "the exam"))))
+            for x in v.values():
+                walk(x)
+
+    for m in msgs:
+        if m.get("role") == "tool":
+            try:
+                walk(json.loads(m.get("content") or ""))
+            except (ValueError, TypeError):
+                pass
+    return found
+
+
+def over_exam(msg, original):
+    """Events in a create_events call that run over an exam seen in the results."""
+    exams = exam_times(original)
+    out = []
+    for c in msg.get("tool_calls") or []:
+        if c["function"]["name"] != "create_events" or not exams:
+            continue
+        try:
+            events = json.loads(c["function"].get("arguments") or "{}").get("events") or []
+        except ValueError:
+            continue
+        for e in events:
+            for date, at, title in exams:
+                if str(e.get("date")) == date and str(e.get("startTime", "99")) <= at < str(e.get("endTime", "00")):
+                    out.append(f"\"{e.get('title', 'a block')}\" runs over {title} at {clock(at)}")
+    return out
+
+
 def guard_notes(original, msg):
     """What is wrong with this reply, as notes to send back to the model; empty when it is fine."""
     calls = [c["function"]["name"] for c in msg.get("tool_calls") or []]
@@ -322,6 +366,10 @@ def guard_notes(original, msg):
                     "and offer to set it up; do it when they say yes."]
     # Humane blocks (2026-11-22: asked for help before an exam it booked 10:50 AM to 4:00 PM and 2:15 PM to 10:00 PM, whole free
     # windows as "study"). Nobody studies eight hours straight; a block it chooses itself is two hours at most.
+    clash = over_exam(msg, original)
+    if clash:
+        return [clash[0] + ". An exam is not shown as busy time, so check it yourself: nothing is booked over the exam, and study for it ends "
+                "before it starts. Call create_events again with blocks that end before the exam."]
     long = long_blocks(msg, last_user(original))
     if long:
         return ["You booked " + long[0] + ", a whole free window. Nobody can use a block that long. Book blocks of 1 to 2 hours inside the "
