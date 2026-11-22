@@ -241,6 +241,9 @@ async function questions(): Promise<Q[]> {
   // The life exam (--exam life, 2026-11-22, the owner: "read the user's life and understand all of it ... living through it with him"):
   // questions where the right answer needs school, work, money and the calendar together, so one source is never enough.
   if (arg("exam") === "life") return LIFE;
+  // The opening exam (--exam open, 2026-11-22, the owner: "i want my skyling interacting with me before i do"): the person
+  // opens the chat and says nothing; the app sends "[opened the app]" and the skyling speaks first.
+  if (arg("exam") === "open") return OPEN;
   return all;
 }
 
@@ -385,6 +388,35 @@ const LIFE: Q[] = [
     never: NEVER_LIFE,
     perfect:
       "Schedule-wise yes: Thursday has BIO 110 Exam 2 at 10:00 AM and ENG 102 ends at 2:15 PM, so the evening is open. Money is the catch: rent ($950) hasn't posted and you have $842.17, so keep dinner small. I haven't added it; send me the time and place and I'll put it on your calendar.",
+  },
+];
+
+const OPENED = "[opened the app]";
+const OPEN: Q[] = [
+  {
+    id: "open-first",
+    group: "hard",
+    kind: "opening: the skyling speaks first, about what matters now, and changes nothing",
+    turns: [OPENED],
+    tools: [["get_daily_briefing"], ["life_load"], ["get_agenda"]],
+    budget: 2,
+    facts: ["maya", "essay|exam|library", "\\d"],
+    mustNot: ["how can i help|what can i (do|help)|opened the app"],
+    noWrites: true,
+    never: NEVER_LIFE,
+    perfect:
+      "Morning, Maya. BIO 110 runs until 10:50, then you're free until your 4:00 PM shift. The one that matters: the ENG 102 essay draft, due Wednesday at 11:59 PM. Want me to block 10:50 AM to 12:50 PM for it? The library books are due today too.",
+  },
+  {
+    id: "open-then-yes",
+    group: "hard",
+    kind: "opening, then the person says yes: it does what it offered",
+    turns: [OPENED, "yes do it"],
+    tools: [["create_events"], ["create_tasks"]],
+    budget: 5,
+    facts: [SAID_IT_DID_IT, "\\d"],
+    never: NEVER_LIFE,
+    perfect: "Booked: ENG 102 essay draft, today 10:50 AM to 12:50 PM. It's on your calendar, and you can undo it.",
   },
 ];
 
