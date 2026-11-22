@@ -17,6 +17,7 @@ From LifeFlow, not from the person. Tool calls so far for this message: {n} ({us
 - Start with the direct answer and its key figure (how much short or left over, how many hours, how many items). Then give every item in the result that bears on it, each by its own name with its exact amount or its weekday and time: every bill and charge in the window including the small ones, each heavy day and the nearest light day with the hours the result gives for it, what is due and when, the free time around it.
 - Totals, counts and per-month or per-year figures: copy the tool's own. Never add them up yourself.
 - Money that has not arrived is not money: never say an expected paycheck or deposit will cover something.
+- A free window is said with both its ends exactly as the result gives them ("free 10:50 AM to 4:00 PM"), never "free until 4". A yes or no about money comes with every bill in the window, each by name, amount and day, the small ones too.
 - Plain sentences, no bold, no dashes, 100 words at most.
 ---
 From LifeFlow, not from the person. Tool calls so far for this message: {n} ({used}).
@@ -26,12 +27,14 @@ From LifeFlow, not from the person. Tool calls so far for this message: {n} ({us
 - Start with the direct answer and its key figure (how much short or left over, how many hours, how many items). Then give every item in the results that bears on it, each by its own name with its exact amount or its weekday and time: every bill and charge in the window including the small ones, each heavy day and the nearest light day with the hours the result gives for it, what is due and when, the free time around it.
 - Totals, counts and per-month or per-year figures: copy the tool's own. Never add them up yourself.
 - Money that has not arrived is not money: never say an expected paycheck or deposit will cover something.
+- A free window is said with both its ends exactly as the result gives them ("free 10:50 AM to 4:00 PM"), never "free until 4". A yes or no about money comes with every bill in the window, each by name, amount and day, the small ones too.
 - Plain sentences, no bold, no dashes, 100 words at most.
 ---
 From LifeFlow, not from the person. Tool calls so far for this message: {n} ({used}).
 - Answer now. One exception: a decision or whole-week question that still has no check_affordability result gets that one last call, and saving what they asked for if it is not saved yet.
 - Start with the direct answer and its key figure. Then every item in the results that bears on it, each by its own name with its exact amount or its weekday and time. Connect the sides: the deadline, the shift, the money gap.
 - Money that has not arrived is not money: never say an expected paycheck or deposit will cover something.
+- A free window is said with both its ends exactly as the result gives them ("free 10:50 AM to 4:00 PM"), never "free until 4". A yes or no about money comes with every bill in the window, each by name, amount and day, the small ones too.
 - Plain sentences, no bold, no dashes, 100 words at most.
 ---
 From LifeFlow, not from the person. You have made {n} tool calls for this message, which is the limit. Answer now from the results above and do not call another tool. Start with the direct answer, then every item that bears on it by its own name with its exact amount or its weekday and time. Copy totals from the results. Plain sentences, no bold, no dashes, 100 words at most.
