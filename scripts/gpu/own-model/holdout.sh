@@ -36,6 +36,8 @@ kill $SHIM
 python3 scripts/gpu/chat-data/filter.py --meta "$H/meta-*.jsonl" --dump $H/dump.jsonl --out $H/kept.jsonl --report $H/report.json --no-cap $ALIVE --details $H/details.jsonl > $H/filter.log 2>&1
 # every turn with its skill, answer and why it failed, kept on storage; and the scorecard by skill
 cp $H/details.jsonl $T/holdout-$LABEL-details.jsonl
+# the clean examples are training data for a later student: keep them on storage (the box disk is lost when it stops)
+mkdir -p $T/traindata && cp $H/kept.jsonl $T/traindata/$LABEL-kept.jsonl
 python3 - "$H/details.jsonl" > $T/holdout-$LABEL-skills.txt <<'PY'
 import json, sys, collections
 rows = [json.loads(l) for l in open(sys.argv[1])]
