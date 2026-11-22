@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Skyling 1.0 test</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #152643; color: #fff; font: 15px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+  .bar { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; padding: 8px 12px; padding-top: max(8px, env(safe-area-inset-top)); background: #0f1d36; }
+  .name { font-weight: 600; }
+  .meter { font-size: 13px; opacity: .85; }
+  .spacer { flex: 1; }
+  .go { color: #cfe0ff; font-size: 13px; text-decoration: underline; background: none; border: 0; padding: 6px 2px; cursor: pointer; }
+  .stop { background: #ffd166; color: #152643; border: 0; border-radius: 999px; font: inherit; font-weight: 700; padding: 8px 18px; min-height: 44px; cursor: pointer; }
+  .stop:disabled { opacity: .6; }
+  iframe { flex: 1; width: 100%; border: 0; background: #fff; }
+  .done { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 100vh; height: 100dvh; padding: 24px; box-sizing: border-box; }
+  .done h1 { font-size: 22px; margin: 0 0 12px; }
+  .done p { max-width: 34em; margin: 6px 0; opacity: .9; }
+  .big { font-size: 18px; font-weight: 600; opacity: 1 !important; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap" id="live">
+  <div class="bar">
+    <span class="name">Skyling 1.0 · our own model · test</span>
+    <span class="meter" id="meter" aria-live="polite">starting…</span>
+    <span class="spacer"></span>
+    <button class="go" id="chat" type="button">Open the chat</button>
+    <button class="stop" id="stop" type="button">Stop</button>
+  </div>
+  <iframe id="app" name="app" src="/jarvis" title="LifeFlow with sample data"></iframe>
+</div>
+<div class="done" id="done" hidden>
+  <h1 id="doneTitle">Stopped</h1>
+  <p class="big" id="doneCount"></p>
+  <p id="doneWhy"></p>
+  <p>The model is off. The GPU box switches off within a few minutes, and this link no longer works. Ask in the GPU rent work chat for a new session.</p>
+</div>
+<script>
+(function () {
+  var last = null, misses = 0, over = false;
+  var meter = document.getElementById("meter");
+  function words(s) { return s.minutes.toFixed(0) + " min · about " + s.credits + " credits"; }
+  function finish(title, why) {
+    if (over) return; over = true;
+    document.getElementById("live").hidden = true;
+    document.getElementById("doneTitle").textContent = title;
+    document.getElementById("doneCount").textContent = last ? "This session used about " + last.credits + " credits (" + last.minutes.toFixed(0) + " minutes of GPU time, setup included)." : "";
+    document.getElementById("doneWhy").textContent = why;
+    document.getElementById("done").hidden = false;
+  }
+  function tick() {
+    if (over) return;
+    fetch("/__skyling/status", { cache: "no-store", credentials: "same-origin" }).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (s) {
+      misses = 0; last = s;
+      if (s.state !== "running") return finish("Stopped", "The session was stopped.");
+      meter.textContent = words(s) + " · stops by itself in " + Math.ceil(s.stops_in_minutes) + " min if quiet";
+    }).catch(function () {
+      // the box is gone: it stopped by itself (quiet for too long, or the time limit)
+      if (++misses >= 3) finish("This session has ended", "It stopped by itself after a quiet spell or at its time limit.");
+    });
+  }
+  document.getElementById("chat").addEventListener("click", function () { document.getElementById("app").src = "/jarvis"; });
+  document.getElementById("stop").addEventListener("click", function () {
+    var b = this; b.disabled = true; b.textContent = "Stopping…";
+    fetch("/__skyling/stop", { method: "POST", credentials: "same-origin" }).then(function (r) { return r.json(); }).then(function (s) {
+      last = s; finish("Stopped", "You tapped Stop.");
+    }).catch(function () { finish("Stopped", "The stop was sent."); });
+  });
+  tick(); setInterval(tick, 10000);
+})();
+</script>
+</body>
+</html>

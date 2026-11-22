@@ -4,14 +4,17 @@
 # password-protected link. Made-up data only (ADR 0023): the demo account from scripts/seed-demo.ts. No OpenAI: the app's
 # model address points at our translator on this box.
 #
-#   nohup sh skyling_demo.sh <most minutes up, default 50> <idle minutes, default 15> > /workspace/ownmodel/demo.log 2>&1 &
+#   nohup sh skyling_demo.sh <most minutes up, default 60> <idle minutes, default 10> > /workspace/ownmodel/demo.log 2>&1 &
 #
 # Progress: /workspace/ownmodel/demo-status.txt. When it works: /workspace/ownmodel/demo-link.txt (the link and both logins).
-# It stops everything by itself after <idle minutes> with no message to the skyling, after <most minutes up> in all, or as
-# soon as /workspace/ownmodel/demo-stop exists. A running app keeps a rented box billing, so this is what ends the bill:
-# with nothing running, the box's own idle timer stops it a few minutes later.
+# The link opens a test frame (frame.html, control.py): the label "Skyling 1.0 · our own model · test", the session's minutes
+# and credits so far, a Stop button, and the real app's skyling chat inside it.
+# It stops everything at once when Stop is tapped (or /workspace/ownmodel/demo-stop appears), and by itself after
+# <idle minutes> with no message to the skyling or <most minutes up> in all. A running app keeps a rented box billing, so
+# this is what ends the bill: with nothing running the box's own idle timer stops it a few minutes later, and the chat
+# that rented it stops it sooner when it sees the STOPPED line.
 # No command tracing: this script handles two passwords, and its log is kept on shared storage.
-MAX_MIN="${1:-50}"; IDLE_MIN="${2:-15}"
+MAX_MIN="${1:-60}"; IDLE_MIN="${2:-10}"; RATE="${3:-120}"
 T=/workspace/ownmodel; L=/root/job; REPO=$L/LIfeFlow; LOGS=$L/demo-logs
 HF=Qwen/Qwen3.8-27B; MODEL=qwen38-27b
 BOOT=$(date +%s)
@@ -19,7 +22,7 @@ mkdir -p $T $L/models $LOGS
 : > $T/demo-status.txt; rm -f $T/demo-link.txt $T/demo-stop
 status() { echo "$(date -u +%H:%M:%S) $1" | tee -a $T/demo-status.txt; }
 shutdown_all() {
-  pkill -f "[c]loudflared tunnel"; pgrep -f "[n]ext-server" | xargs -r kill; pkill -f "[n]ext start"
+  pkill -f "[d]emo/control.py"; pkill -f "[c]loudflared tunnel"; pgrep -f "[n]ext-server" | xargs -r kill; pkill -f "[n]ext start"
   pkill -f "[r]esponses_shim.py"; pkill -f "[v]llm serve"; sleep 3; pkill -f "[V]LLM::EngineCore"
   nginx -s stop 2> /dev/null; service postgresql stop
   [ -n "$GUARD" ] && kill $GUARD 2> /dev/null
@@ -121,11 +124,18 @@ OPENAI_API_KEY=not-a-real-key OPENAI_MODEL=$MODEL OPENAI_MODEL_SMALL=$MODEL OPEN
 for i in $(seq 1 60); do curl -sf http://127.0.0.1:3000/api/health > /dev/null && break; sleep 1; done
 curl -sf http://127.0.0.1:3000/api/health > /dev/null || fail "the app did not start: $(tail -2 $LOGS/app.log | tr '\n' ' ' | cut -c1-200)"
 
+# the test frame's desk: minutes, credits and the Stop button. The idle and time limits count from here.
+READY=$(date +%s)
+nohup python3 scripts/gpu/demo/control.py --boot $BOOT --ready $READY --rate $RATE --idle-min $IDLE_MIN --max-min $MAX_MIN \
+  --shim-log $LOGS/shim.jsonl --stop-file $T/demo-stop > $LOGS/control.log 2>&1 &
+sleep 1
+
 # checks: the door refuses without its password and opens with it, through the public link
-NOPASS=$(curl -s -o /dev/null -w "%{http_code}" "$LINK/login")
-WITHPASS=$(curl -s -o /dev/null -w "%{http_code}" -u "$LINK_USER:$LINK_PASS" "$LINK/login")
-status "link check: without the password $NOPASS (should be 401), with it $WITHPASS (should be 200)"
-[ "$NOPASS" = 401 ] && [ "$WITHPASS" = 200 ] || fail "the link check"
+NOPASS=$(curl -s -o /dev/null -w "%{http_code}" "$LINK/__skyling/")
+WITHPASS=$(curl -s -o /dev/null -w "%{http_code}" -u "$LINK_USER:$LINK_PASS" "$LINK/__skyling/")
+APPPASS=$(curl -s -o /dev/null -w "%{http_code}" -u "$LINK_USER:$LINK_PASS" "$LINK/login")
+status "link check: without the password $NOPASS (should be 401), with it $WITHPASS and the app $APPPASS (should be 200)"
+[ "$NOPASS" = 401 ] && [ "$WITHPASS" = 200 ] && [ "$APPPASS" = 200 ] || fail "the link check"
 # and one real question, asked in a browser through the same link: sign in, open the chat, read the answer
 for i in $(seq 1 60); do [ -f $L/browser.ready ] && break; sleep 2; done
 CHECK=$(timeout 240 node scripts/gpu/demo/check_chat.mjs "$LINK" "$LINK_USER" "$LINK_PASS" "$DEMO_EMAIL" "$DEMO_PASS" "What do I need to get done today?" 2>&1 | tail -1)
@@ -135,31 +145,31 @@ case "$CHECK" in
   *) status "browser check did NOT pass (the link may still work): $(echo "$CHECK" | cut -c1-220)" ;;
 esac
 
-READY=$(date +%s)
 cat > $T/demo-link.txt <<EOF
-LINK=$LINK
+LINK=$LINK/__skyling/
 LINK_LOGIN=$LINK_USER
 LINK_PASSWORD=$LINK_PASS
 APP_EMAIL=$DEMO_EMAIL
 APP_PASSWORD=$DEMO_PASS
 READY_AT=$(date -u +%H:%M:%S)
-SETUP_SECONDS=$((READY - BOOT))
+SETUP_SECONDS=$(($(date +%s) - BOOT))
 STOPS_AFTER_IDLE_MINUTES=$IDLE_MIN
 STOPS_AFTER_MINUTES=$MAX_MIN
 EOF
-status "READY. Stops by itself after $IDLE_MIN minutes without a message or $MAX_MIN minutes in all."
+status "READY. Stop button in the page; stops by itself after $IDLE_MIN minutes without a message or $MAX_MIN minutes in all."
 
 # the watch: end the session (and so the bill) when nobody is talking, at the time limit, or when asked
 while true; do
-  sleep 20
+  sleep 2
   NOW=$(date +%s)
   LAST=$(stat -c %Y $LOGS/shim.jsonl 2> /dev/null || echo $READY)
   [ "$LAST" -lt "$READY" ] && LAST=$READY
-  [ -f $T/demo-stop ] && { WHY="asked to stop"; break; }
+  [ -f $T/demo-stop ] && { WHY="$(head -1 $T/demo-stop | cut -c1-40)"; [ -n "$WHY" ] || WHY="asked to stop"; sleep 1; break; }
   [ $((NOW - READY)) -ge $((MAX_MIN * 60)) ] && { WHY="the $MAX_MIN minute limit"; break; }
   [ $((NOW - LAST)) -ge $((IDLE_MIN * 60)) ] && { WHY="no message for $IDLE_MIN minutes"; break; }
   kill -0 $VPID 2> /dev/null || { WHY="the model server stopped"; break; }
 done
 MSGS=$(grep -c '"tools": \[\]' $LOGS/shim.jsonl 2> /dev/null || echo 0)
-status "session over ($WHY): about $MSGS answers given, up $(( ($(date +%s) - READY) / 60 )) minutes"
+MINS=$(( ($(date +%s) - BOOT) / 60 ))
+status "session over ($WHY): about $MSGS answers given; box up $MINS minutes, about $(( MINS * RATE / 60 )) credits"
 shutdown_all "$WHY"

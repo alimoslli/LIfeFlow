@@ -29,9 +29,15 @@ try {
   await Promise.race([box.waitFor({ timeout: 30_000 }), allow.first().waitFor({ timeout: 30_000 })]).catch(() => {});
   if (await allow.count()) await allow.first().click();
   await box.waitFor({ timeout: 30_000 });
+  // the page must be live before typing, or the message is lost: send, and send once more if it did not show up
+  await page.waitForTimeout(2000);
   const t0 = Date.now();
-  await box.fill(question);
-  await box.press("Enter");
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await box.fill(question);
+    await box.press("Enter");
+    const shown = await page.locator("[data-chat-scroll]").getByText(question, { exact: false }).first().waitFor({ timeout: 8000 }).then(() => true).catch(() => false);
+    if (shown) break;
+  }
   await page.waitForTimeout(1500);
   await page.getByRole("button", { name: "Send" }).waitFor({ state: "visible", timeout: 180_000 });
   await page.waitForTimeout(500);
