@@ -141,7 +141,7 @@ Update after every video. Newest at the top.
 
 | # | Video | Status | Notes |
 |---|---|---|---|
-| 2 | ADHD-first concepts: "11:48 PM. Blank page.", "Back after a rough week.", "Deep in it." | Shot list drafted, nothing generated | `docs/marketing/2026-11-22-adhd-concepts.md`: 5 stills + 2 motion shots, 18.75 credits quoted, waiting on the COO and the $25 cap. Follows the research claims lines (never asks if the viewer has ADHD, no treat/improve, no superpower). |
+| 2 | ADHD-first concepts: "11:48 PM. Blank page.", "Back after a rough week.", "Deep in it." | Three silent draft cuts made (21.25 credits of footage), waiting on the owner | `docs/marketing/2026-11-22-adhd-concepts.md`: Footage: 5 stills and 2 motion shots, 21.25 credits in total, approved by the COO. Cuts: `docs/marketing/adhd-concepts/drafts/`. Follows the research claims lines (never asks if the viewer has ADHD, no treat/improve, no superpower). |
 | 1 | "I didn't open LifeFlow for 7 days" | Script done, not filmed | Needs demo account loaded with matching data (bio exam, Wednesday shift, $45 bill, low balance, double Spotify charge). Check the morning brief arrives as a real lock-screen notification before filming. |
 
 ---

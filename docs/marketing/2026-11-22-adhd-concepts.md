@@ -100,3 +100,29 @@ should check that before approving.
     - M3 only half passes: the sunlight shimmers but never fades toward dusk. It works as a short living shot before the cut to the dusk still 3b, which carries "time passed".
     - Not re-run (one take per shot).
 - **Total spent: 21.25 credits**, the approved maximum. Drafts only. Nothing posted or scheduled.
+
+## Draft cuts (2026-11-22, the COO's go)
+
+The cuts are in `adhd-concepts/drafts/`. Each is 1080 x 1920, 30 fps, silent, and made only from real app screens and
+the approved footage. No new credits were used.
+
+- **`reel-1-blank-page.mp4` (21 s):**
+  - Starts on M1 with "11:48 PM. Blank page." in the first frame.
+  - Then Today's "Start it", the focus screen ("Open a doc and type the title."), the 5 minute timer, "5 minutes done. You started.", and "Done. That counts."
+  - Ends on still 1b and the end card "For when starting / is the hardest part."
+- **`reel-2-back-on-track.mp4` (14 s):**
+  - Starts on still 2a with "Back after a rough week."
+  - Then Today's "3 to-dos can find new times.", the tap, and where each one went.
+  - Ends on the end card "No pile. / Just the next thing."
+- **`reel-3-deep-in-it.mp4` (15 s):**
+  - Starts on M3 with "Deep in it.", then the dusk still 3b.
+  - Then the focus check-in "Bio 101 is at ... Want to wrap up?" and the "Heads-up before things start" choice in Settings › Notifications.
+  - Ends on the end card "A heads-up, at the / minutes you pick."
+  - The heads-up push itself isn't shown: a real notification can't be recorded in the test browser, and a made-up one is against the playbook. The on-screen check-in and the real setting stand in for it.
+
+How they were made:
+- **Screen recordings:** Playwright video of the local build at 405 x 720, with the same made-up data the tests use. Never production, never a real person's data.
+- **Edit:** done locally with ffmpeg (`drafts/make.sh`). Every cut is a hard cut with a short punch-in; the stills have a slow push.
+- **Music and voice:** none. The owner adds the music.
+
+Nothing is posted or scheduled. The COO puts these in front of the owner with the ADHD-help pictures.
