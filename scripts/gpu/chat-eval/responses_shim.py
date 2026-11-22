@@ -343,7 +343,11 @@ def call_upstream(body):
         if notes:
             again = [dict(x) for x in sent]
             again[-1]["content"] = (again[-1]["content"] or "") + "\n\n<house_check>\n" + "\n".join("- " + n for n in notes) + "\n</house_check>"
-            # a cut sentence tends to be cut again at the same word: a warmer second try takes another path
+            # A cut sentence is cut again at the same word when the server reuses its saved copy of the prompt's start (seen
+            # 2026-11-22, likely the model server's prefix cache with this model family). So the second try for a cut answer
+            # starts the prompt one blank line earlier, which makes the server read it afresh, and runs a little warmer.
+            if cut_off(m):
+                again[0] = {**again[0], "content": "\n" + (again[0].get("content") or "")}
             second = post({**req, "messages": again, **({"temperature": 0.7} if cut_off(m) else {})})
             # the second reply is kept only when it has fewer problems; otherwise the first stands (never a loop)
             if len(guard_notes(original, second["choices"][0]["message"])) < len(notes):
