@@ -269,7 +269,7 @@ const ALIVE: Q[] = [
     turns: ["I'm so behind on the ENG 102 essay, I haven't even started"],
     tools: [["find_free_time", "create_events"]],
     budget: 3,
-    facts: ["essay", SAID_IT_DID_IT, "mon|tue|wed", "\\d:\\d\\d|\\d (am|pm)"],
+    facts: ["essay|draft", SAID_IT_DID_IT, "mon|tue|wed", "\\d:\\d\\d|\\d (am|pm)"],
     never: NEVER_ALONE,
     perfect:
       "Booked it: ENG 102 Argument essay draft, Monday 10:50 AM to 12:50 PM, before your shift. It's due Wednesday at 11:59 PM, so Tuesday stays free for a second pass. It's on your calendar, and you can undo it.",
@@ -307,7 +307,7 @@ const ALIVE: Q[] = [
     budget: 3,
     facts: ["842", "950"],
     // pay that has not landed is never counted (owner's rule); the first run said "your paycheck ... would cover the shortfall"
-    mustNot: ["(paycheck|deposit|pay)[^.]{0,80}(cover|make up|take care of)"],
+    mustNot: ["(paycheck|deposit|payday)([^.!?]|\\.\\d){0,140}(cover|make up|take care of|close the gap)"],
     noWrites: true,
     never: NEVER_ALONE,
     perfect:

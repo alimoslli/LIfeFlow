@@ -270,6 +270,7 @@ def cut_off(msg):
     return bool(text) and not msg.get("tool_calls") and not re.search(r"[.?!)\"'\u201d\u2019*:]$", text)
 
 
+EXPECTED_PAY = re.compile(r"\b(paycheck|pay ?check|deposit|payday|get paid|gets? paid)\b(?:[^.!?\n]|\.\d){0,140}\b(cover|covers|make up|makes up|take care of|fix|fixes|solve|solves|close the gap|closes the gap)\b", re.I)
 BREAKDOWN = re.compile(r"break (it|this|that|the [^.?!]{0,40}) down|feels? (so |too |really )?(huge|massive|impossible|big)|where (do|would) i (even )?(start|begin)", re.I)
 
 
@@ -331,6 +332,10 @@ def guard_notes(original, msg):
     if "Be alive" in (APPEND or "") and BREAKDOWN.search(last_user(original) or "") and "create_tasks" not in used_calls(original):
         return ["They asked you to break it down. Do it, do not offer it: call create_tasks now with three to five steps, each with its own "
                 "due day before the deadline (the first one today or tomorrow). Then say the steps in one line each and that they are on the to-do list."]
+    # The owner's rule: pay that has not landed is never counted. "Your paycheck ... would cover it" is sent back.
+    if EXPECTED_PAY.search(text):
+        notes.append("Money that has not arrived is not money. Do not say a paycheck or deposit will cover, fix or make up anything. "
+                     "You may say when pay is expected, and nothing more about it.")
     words = len(text.split())
     if words > WORD_LIMIT:
         notes.append(f"Your answer is {words} words and the limit is {WORD_LIMIT}. Write it again shorter: keep the direct answer and every figure, cut the rest.")
