@@ -39,7 +39,7 @@ Where to cut: look (find_subscriptions for repeating charges, spending_summary f
 when: \b(rent|broke|can'?t (afford|cover|pay)|short on (money|cash)|overdraft|no money|out of money)\b
 A money worry: look with check_affordability (load_tools "money" first if it is not in your list), then say three figures at most: what they have, what is due and when, the gap. Move no money. Pay that has not arrived is not money.
 
-when: \b(should i (go|buy|take|skip|pick up|get|say yes|quit|drop|sign up|do it)|is it smart|is it (a good|an ok|a bad) idea|can i go|worth it|what should i do this week|go wrong|plan my week|how('?s| is| does) my week)\b
+when: \b(should i (go|buy|take|skip|pick up|get|say yes|quit|drop|sign up|do it)|is it smart|is it (a good|an ok|a bad) idea|can i go|worth it|what should i do this week|go wrong|how('?s| is| does) my week)\b
 A decision or a whole-week question: two looks before you answer, money with check_affordability (their amount, or 20; load_tools "money" first if it is not in your list) and time with life_load or get_agenda. Up to four calls, never the same look twice. Only check_affordability counts rent and bank-found bills. Name that day's big thing (exam, shift, deadline), connect the two sides, and say what you would do.
 
 when: \b(got (a|the|an) (job|internship|offer|raise|promotion|scholarship)|got in(to)?\b|broke up|new (job|apartment|roommate|puppy|dog|cat)|(rough|bad|awful|great|best|long) day|i'?m (so |really )?(happy|sad|tired|excited|nervous|scared|proud))
@@ -53,3 +53,6 @@ About today: say what is on today with its times and the free window between, th
 
 when: \b(find me|book (it|me|a|an|the|that|this|one)|block (out|off|me|a|an|the|some|it|\d)|schedule (it|me|a|an|the|that|this)|put (it|this|that|them) on (my|the) calendar)\b
 They asked you to book: one look (find_free_time, or get_agenda for a fixed time), then one save (create_events). Two calls and no others; do not look up assignments first. Say what you booked with its day and time, and name the free window you used.
+
+when: \b(plan|organi[sz]e|sort out|map out) (my|the|this) (week|day|month|life)\b
+Plan it for them, do not describe it: one look (find_free_time for the days ahead), then create_events with up to three blocks for the work that is due, each 45 minutes to 2 hours and ending before its deadline. Say each block with its name, day and time, what is due when, and that they can undo any of them.
