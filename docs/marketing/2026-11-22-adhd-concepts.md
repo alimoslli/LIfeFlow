@@ -1,6 +1,6 @@
 # ADHD-first video concepts: shot list and costs (draft for the COO)
 
-Date: 2026-11-22. Written by LF Main overnight while the owner slept. **Nothing has been generated or spent.** The playbook
+Date: 2026-11-22. Written by LF Main overnight while the owner slept. The COO approved the list on 2026-11-22. **What was actually spent is in the log at the end.** The playbook
 (section 6, 2026-11-08) says the COO writes the shot list with each shot's cost before any credits are used. This is a
 draft of that list for the COO to approve, change or drop.
 
@@ -67,3 +67,24 @@ should check that before approving.
 - Approve the shot list as is, change it, or drop it.
 - Confirm that 18.75 credits fits the $25.
 - Whether concept 2 waits until the owner says yes to Back on track in the app.
+
+## Log (actual spend)
+
+- **2026-11-22, stills 1a, 1b, 2a, 3a, 3b:**
+  - Model `gpt_image_2_6`, 9:16, one take each.
+  - Cost: **3.75 credits** (balance 791.28 to 787.53), the same as the quote.
+  - Saved in `docs/marketing/adhd-concepts/`.
+  - Higgsfield jobs:
+    - 1a: 99b12da6-a355-460d-a7cc-19c7f9de0267
+    - 1b: 757efc59-9693-49f3-81b2-11df677a4c22
+    - 2a: 7aa1cf3f-1f28-4faf-9bc3-757e8d97f68e
+    - 3a: 93e324dc-b1e4-438f-b81d-db596c3ace2e
+    - 3b: 458ba39b-c9af-432b-8dcc-0da8642e5e8b
+  - Check:
+    - All five pass: no faces, no logos, no readable text.
+    - 3a and 3b show different drawings, so they work as two cut shots ("time passed") but not as one morph.
+- **Motion shots M1 and M3: held, not run.**
+  - Re-quoted at **8.75 credits each** (Kling v3.0 pro, 5 s, sound off), above the 7.5 in the list.
+  - The COO's rule is to stop and report anything over quote.
+  - If approved, the most it could reach is 3.75 + 17.5 = **21.25 credits**.
+  - M3 would animate 3a alone with the light moving toward dusk, not 3a to 3b.
