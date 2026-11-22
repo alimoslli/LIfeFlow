@@ -23,6 +23,8 @@ ap.add_argument("--system-append", action="append", default=None, help="(can be 
 ap.add_argument("--remind", default=None, help="a text file of short reminders put at the very end of what the model reads, where it follows them best: "
                 "parts split by a line of ---: before the first tool call of a message, then one part per number of tool calls made so far "
                 "({n} and {used} are filled in; the last part serves every higher count). Like --system-append, only what is sent changes; the --dump keeps the app's messages")
+ap.add_argument("--situations", default=None, help="a text file of situation cards (when: <pattern>, then the text): only the cards that match the person's "
+                "last message are added to the reminder, three at most, so the reminder stays short however many abilities there are")
 ap.add_argument("--guard", action="store_true", help="our own checks around the model, the same idea as the app's (the code decides, not the model): "
                 "a saving tool called when the person only asked a question is sent back once; an answer with an amount that is in no "
                 "tool result is sent back once; bold marks and long dashes are taken out of the answer")
@@ -31,6 +33,23 @@ ap.add_argument("--dump", default=None, help="write each tagged request (X-Conv-
 ARGS = ap.parse_args()
 APPEND = "\n".join(open(f).read() for f in ARGS.system_append) if ARGS.system_append else ""
 REMIND = [p.strip() for p in open(ARGS.remind).read().split("\n---\n")] if ARGS.remind else []
+
+
+def read_situations(path):
+    cards = []
+    for block in re.split(r"\n\s*\n", open(path).read()):
+        lines = [l for l in block.strip().split("\n") if l.strip() and not l.startswith("#")]
+        if lines and lines[0].startswith("when:"):
+            cards.append((re.compile(lines[0][5:].strip(), re.I), " ".join(lines[1:]).strip()))
+    return cards
+
+
+SITUATIONS = read_situations(ARGS.situations) if ARGS.situations else []
+
+
+def situations(asked):
+    """The cards for this moment: the ones whose pattern matches the person's last message, three at most."""
+    return [text for rx, text in SITUATIONS if rx.search(asked or "")][:3]
 LOCK = threading.Lock()  # requests run on threads; one writer at a time
 
 
@@ -169,7 +188,7 @@ def remind(sent):
         return
     last = sent[-1]
     asked = last_user(sent)
-    extra = []
+    extra = ["This moment: " + c for c in situations(asked)]
     if last["role"] == "user":
         note = REMIND[0]
     elif last["role"] == "tool":
