@@ -73,3 +73,20 @@ The app's pieces, animated the way the campfire and pier videos do it, carry the
 | "I look, I know. That's it." | The wheel settles back to the corner; end card. |
 
 Then a short full-screen recording of the real app (wheel, tap, timeline) as proof, recorded from production once a demo login exists there.
+
+## The full reel (owner, 2026-11-22: open model; a whole video with a start and an end)
+
+![scenes](Jordan_scenes.jpg) (left to right: the plain-hoodie reference, scene 1 dorm, scene 2 kitchen, scene 4 car)
+
+About 33 s. Voice A (Dylan) unless the owner picks B. Jordan on camera about 16 s; the app and the animations carry the rest.
+
+| # | Time | Where | Picture | On screen | Jordan says |
+|---|---|---|---|---|---|
+| 1 Cold open | 0 to 2.5 s | Dorm, night | 283d6214 (phone held up, blank screen) | The real wheel composited onto his phone screen, the wheel's colours spilling out around him | **On camera:** "This is my entire week. One circle." |
+| 2 Setup | 2.5 to 8.5 s | Kitchen, morning (earlier; time cut with a whoosh) | 03795fd7 (tired, sticky notes on the fridge) | A long to-do list scrolls up beside him and breaks into clouds | **On camera:** "I have ADHD, so, um... to-do lists don't work on me. I read the first line and I'm gone." |
+| 3 The show | 8.5 to 22 s | The real app, full screen | Production recording (demo login still needed) | The wheel (class, work, gym, quiz landing as pixel icons), Goldie placing the last block, the tap that unrolls the timeline, "Now" and "Next" lighting up | **Voice over:** "So now it's all one wheel. Class, work, the gym, the quiz. My skyling planned it for me. And if I want the details, I tap the day, and it's one line. What's now, what's next." |
+| 4 Payoff | 22 to 27.5 s | Car, sunset (later that day; he picks the phone up) | 4f7c1b9e | The wheel small in the corner, the sun on it at evening | **On camera:** "Honestly? I don't read anything anymore. I look, I know." |
+| 5 Sign-off | 27.5 to 30.5 s | Same car shot | 4f7c1b9e (same render) | Captions only | **On camera:** "It's called LifeFlow. Link's in my bio." |
+| End card | 30.5 to 33.5 s | | | LifeFlow, the waitlist line | |
+
+Talking shots for the AI Lab, one box run: scene 1 (about 2.5 s), scene 2 (about 6 s), scenes 4 and 5 as one clip (about 8 s). The scene 3 voice is narration only, with no lip sync.
