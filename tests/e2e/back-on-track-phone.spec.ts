@@ -29,6 +29,8 @@ test("waiting to-dos: one tap spreads them into free time, with Undo", async ({ 
 
   await page.getByTestId("back-on-track").filter({ visible: true }).getByRole("button", { name: "Undo" }).click();
   await expect
-    .poll(async () => (await queryAsUser<{ d: string }>(email, "select string_agg(date_trunc('second', due_at)::text, ',' order by title) as d from tasks"))[0].d)
+    .poll(
+      async () => (await queryAsUser<{ d: string }>(email, "select string_agg(date_trunc('second', due_at)::text, ',' order by title) as d from tasks"))[0].d,
+    )
     .toBe(before);
 });

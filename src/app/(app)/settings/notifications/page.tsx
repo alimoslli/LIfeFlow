@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/surface";
 import { assistantProfile, nameAtStart } from "@/lib/assistant";
 import { formatIn } from "@/lib/dates";
 import { pushSummary } from "@/lib/jarvis-voice";
+import { HEADS_UP_CHOICES, headsUpMinutes } from "@/lib/heads-up";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { jarvisSettings } from "@/server/services/proactive/engine";
 import { listSubscriptions, notificationPrefs, pushConfig } from "@/server/services/push";
@@ -17,10 +18,11 @@ import { SettingsHeader } from "../settings-header";
 export const metadata: Metadata = { title: "Notifications" };
 
 export default async function NotificationSettings() {
-  const { prefs, devices, tz, pushes } = await withCurrentUser(async (s, u) => ({
+  const { prefs, devices, tz, headsUp, pushes } = await withCurrentUser(async (s, u) => ({
     prefs: notificationPrefs(u.preferences),
     devices: await listSubscriptions(s),
     tz: u.timezone,
+    headsUp: headsUpMinutes(u.preferences),
     pushes: pushSummary(
       nameAtStart(assistantProfile(u.preferences, u.timezone).name),
       jarvisSettings(u.preferences),
@@ -53,6 +55,19 @@ export default async function NotificationSettings() {
               <span className="block text-xs text-muted">A short note when a class, shift or plan ends. Never at night.</span>
             </span>
             <input type="checkbox" name="stars" defaultChecked={prefs.stars} className="lf-switch" />
+          </label>
+          <label className="flex min-h-14 cursor-pointer items-center gap-3 border-b border-border py-2">
+            <span className="min-w-0 flex-1">
+              <span className="block text-[0.9375rem]">Heads-up before things start</span>
+              <span className="block text-xs text-muted">Before a class, shift or meeting with a time. Never in quiet hours.</span>
+            </span>
+            <select name="headsUp" defaultValue={headsUp} className="min-h-11 rounded-xl bg-surface px-3 text-sm" data-testid="heads-up-minutes">
+              {HEADS_UP_CHOICES.map((m) => (
+                <option key={m} value={m}>
+                  {m ? `${m} min before` : "Off"}
+                </option>
+              ))}
+            </select>
           </label>
           <p className="py-3 text-sm text-text-2">
             {pushes}{" "}

@@ -11,3 +11,15 @@ export function headsUpMinutes(prefs: Pick<UserPreferences, "notifications"> | n
   const m = prefs?.notifications?.headsUp;
   return typeof m === "number" && (HEADS_UP_CHOICES as readonly number[]).includes(m) ? m : HEADS_UP_DEFAULT;
 }
+
+const cut = (t: string, n: number) => (t.length > n ? `${t.slice(0, n - 1).trimEnd()}…` : t);
+
+/**
+ * "Bio 101 at 10:00 AM" / "In 15 minutes, Hall 201. Time to wrap up." Calm, no pressure words, the place only when the
+ * calendar has one. `clock` is already in the person's time zone.
+ */
+export function headsUpPush(item: { title: string; clock: string; location?: string | null }, minutesLeft: number): { title: string; body: string } {
+  const mins = Math.max(1, Math.round(minutesLeft));
+  const place = item.location?.trim() ? `, ${cut(item.location.trim(), 40)}` : "";
+  return { title: `${cut(item.title, 48)} at ${item.clock}`, body: `In ${mins} minute${mins === 1 ? "" : "s"}${place}. Time to wrap up.` };
+}

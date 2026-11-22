@@ -1,4 +1,5 @@
 import { and, eq, gt, isNull, lte, ne } from "drizzle-orm";
+import { HEADS_UP_CHOICES } from "@/lib/heads-up";
 import { z } from "zod";
 import { formatIn } from "@/lib/dates";
 import { notificationLog, pushSubscriptions, tasks, type UserPreferences } from "../db/schema";
@@ -53,6 +54,11 @@ export const notificationPrefsSchema = z.object({
   briefTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Pick a time like 08:00"),
   budgetAlerts: z.boolean(),
   stars: z.boolean(),
+  // the heads-up before something starts (lib/heads-up.ts): one of HEADS_UP_CHOICES, 0 = off
+  headsUp: z
+    .number()
+    .refine((m) => (HEADS_UP_CHOICES as readonly number[]).includes(m))
+    .optional(),
 });
 
 export async function listSubscriptions(scope: UserScope) {

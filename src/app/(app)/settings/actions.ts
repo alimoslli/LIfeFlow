@@ -1,4 +1,5 @@
 "use server";
+import { HEADS_UP_DEFAULT } from "@/lib/heads-up";
 import { assistantProfile, nameAtStart } from "@/lib/assistant";
 import { rateLimit } from "@/server/rate-limit";
 import { sendFeedback } from "@/server/services/feedback";
@@ -192,7 +193,12 @@ export async function saveNotificationPrefsAction(_p: ActionState, fd: FormData)
   return mutate(
     "notifications.preferences",
     async (_s, u) => {
-      const notifications = notificationPrefsSchema.parse({ ...notificationPrefs(u.preferences), reminders: on("reminders"), stars: on("stars") });
+      const notifications = notificationPrefsSchema.parse({
+        ...notificationPrefs(u.preferences),
+        reminders: on("reminders"),
+        stars: on("stars"),
+        headsUp: Number(fd.get("headsUp") ?? HEADS_UP_DEFAULT),
+      });
       await updatePreferences(getDb(), u.id, { notifications });
       return "Notification settings saved.";
     },
