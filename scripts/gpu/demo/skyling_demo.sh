@@ -15,10 +15,13 @@
 # that rented it stops it sooner when it sees the STOPPED line.
 # No command tracing: this script handles two passwords, and its log is kept on shared storage.
 MAX_MIN="${1:-60}"; IDLE_MIN="${2:-10}"; RATE="${3:-120}"; MODE="${4:-alive}"
-# alive (default): Skyling 1.0 plus the alive rules (it does the first step itself, and speaks first when the chat opens).
+# cards: alive plus situation cards. alive (default): Skyling 1.0 plus the alive rules (it does the first step itself, and speaks first when the chat opens).
 # plain: Skyling 1.0 exactly as tested on 2026-11-21.
 if [ "$MODE" = plain ]; then
   RULES="--system-append scripts/gpu/own-model/skyling-rules.txt --remind scripts/gpu/own-model/skyling-reminders.txt"; LABEL="Skyling 1.0"; FIRST="What do I need to get done today?"
+elif [ "$MODE" = cards ]; then
+  # alive, with the situation cards: only the reminders that fit the person's last message (skyling-situations.txt)
+  RULES="--system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive2.txt --situations scripts/gpu/own-model/skyling-situations.txt"; LABEL="Skyling 1.1"; FIRST="[opened the app]"
 else
   RULES="--system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive.txt"; LABEL="Skyling 1.1"; FIRST="[opened the app]"
 fi

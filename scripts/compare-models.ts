@@ -511,7 +511,7 @@ const WISH: Q[] = [
     turns: ["the ENG 102 essay feels huge, break it down for me"],
     tools: [["create_tasks"]],
     budget: 3,
-    facts: ["essay", "wed", "\\d"],
+    facts: ["essay|draft", "wed", "\\d"],
     never: NEVER_LIFE,
     perfect:
       "Done, three steps for the ENG 102 essay are on your to-do list: thesis and outline today, first draft Tuesday, proofread Wednesday before 11:59 PM. Want the first one on your calendar at 10:50 AM today?",
