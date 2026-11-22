@@ -1,0 +1,139 @@
+{
+  "id": "s0048-student-im-behind-dev-books-four-blocks-with-undo",
+  "title": "Community college student (roommates, part-time barista, 5 classes, 16 credits, Canvas, afternoon steady) writes 'I'm so behind' on Monday; Dev acts: orders what is due, books four afternoon blocks in her window with Undo, and leaves the night class and weekend shifts alone.",
+  "persona": "p6003-community-college-roommates-part-time",
+  "now": "2026-11-16T12:40",
+  "history_days": 90,
+  "future_days": 30,
+  "seed": 7048,
+  "changes": [
+    {
+      "id": "m-behind",
+      "type": "memory",
+      "content": "I'm so behind in everything. I don't even know where to start.",
+      "category": "project",
+      "via": "chat",
+      "told_at": "2026-11-16T12:35"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-behind",
+      "check": "heavy stretch",
+      "what": "She says she is behind and does not know where to start (m-behind). The real list from Canvas: Spanish homework 12 due tomorrow Tue Nov 17 11:59 PM (asg-span-170-homework-12); two discussion posts Wed (asg-chem-178-discussion-post-12, asg-hist-188-discussion-post-12); Chem homework 13 and two discussion posts Thu (asg-chem-178-homework-13, asg-eng-104-discussion-post-13, asg-span-170-discussion-post-13); Chem lab report 6 and Business quiz 12 Fri (asg-chem-178-lab-report-6, asg-bus-216-quiz-12). Eight items in five days. Her free afternoons are today, Wed, Thu and Fri 2 to 4:45 PM; Tuesday has the Chem lab 2 to 4:50 PM, Monday has the night Business class 6 to 8:45 PM, and she works Saturday and Sunday.",
+      "by_when": "2026-11-16T13:00",
+      "facts": [
+        "m-behind",
+        "asg-span-170-homework-12",
+        "asg-chem-178-homework-13",
+        "asg-chem-178-lab-report-6",
+        "asg-bus-216-quiz-12"
+      ]
+    }
+  ],
+  "best_fix": {
+    "for": "n-behind",
+    "action": "plan",
+    "needs_user": false,
+    "send_at": "2026-11-16T12:45",
+    "what": "Dev acts and tells her in two lines: 'That is a lot but it is a list, not a pile. I put four afternoon blocks on your calendar, ordered by due date. Tap Undo to remove them.' Blocks: Mon Nov 16 2:00 to 4:00 PM Spanish homework 12 (due tomorrow); Wed Nov 18 2:00 to 4:00 PM the Chem and History discussion posts; Thu Nov 19 2:00 to 4:00 PM Chem homework 13 and the English and Spanish posts; Fri Nov 20 2:00 to 4:00 PM Chem lab report 6 and Business quiz 12. Each block is a start, and the list shrinks as she ticks items off.",
+    "why": "A named, ordered list in her firm afternoon window turns 'behind' into four sittings. Autonomy covers calendar and to-dos, and everything has Undo.",
+    "placements": [
+      {
+        "id": "pl-b1",
+        "activity": "study",
+        "label": "Spanish homework 12",
+        "start": "2026-11-16T14:00",
+        "end": "2026-11-16T16:00"
+      },
+      {
+        "id": "pl-b2",
+        "activity": "study",
+        "label": "Chem and History discussion posts",
+        "start": "2026-11-18T14:00",
+        "end": "2026-11-18T16:00"
+      },
+      {
+        "id": "pl-b3",
+        "activity": "study",
+        "label": "Chem homework 13, English and Spanish posts",
+        "start": "2026-11-19T14:00",
+        "end": "2026-11-19T16:00"
+      },
+      {
+        "id": "pl-b4",
+        "activity": "study",
+        "label": "Chem lab report 6 and Business quiz 12",
+        "start": "2026-11-20T14:00",
+        "end": "2026-11-20T16:00"
+      }
+    ]
+  },
+  "routine_fit": {
+    "placements": [
+      {
+        "placement": "pl-b1",
+        "routine": "study",
+        "window": "afternoon-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-b2",
+        "routine": "study",
+        "window": "afternoon-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-b3",
+        "routine": "study",
+        "window": "afternoon-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-b4",
+        "routine": "study",
+        "window": "afternoon-1",
+        "fits": true
+      }
+    ],
+    "tempting": [
+      {
+        "suggestion": "fill her evenings and the weekend with catch-up study, including Monday night after the Business class",
+        "routine": "study",
+        "why_wrong": "she studies afternoons and stops by 6:30 PM; Monday evening is class and Sat and Sun are her shifts",
+        "facts": [
+          "m-01"
+        ]
+      }
+    ]
+  },
+  "must_not": [
+    "ask her a list of questions before doing anything (she said she does not know where to start)",
+    "book study on Monday evening, Tuesday lab afternoon, Saturday or Sunday (class and work)",
+    "book anything after 6:30 PM",
+    "do, write or check any of the homework, quiz or lab report",
+    "say she is failing or use guilt words",
+    "add blocks without showing Undo",
+    "fill her evenings and the weekend with catch-up study, including Monday night after the Business class"
+  ],
+  "stay_quiet": false,
+  "tags": [
+    "student",
+    "community college",
+    "roommates",
+    "part-time job",
+    "5 classes",
+    "16 credits",
+    "canvas",
+    "afternoon steady",
+    "i'm behind",
+    "dev acts",
+    "undo",
+    "heavy stretch",
+    "routine fit"
+  ],
+  "assumptions": [
+    "She told Dev in chat; the skyling treats 'behind' as permission to place blocks on the calendar, as its autonomy covers calendar and tasks.",
+    "The block timing uses the next four free days inside her afternoon window; Wednesday's 5 PM live Spanish session starts after the block."
+  ]
+}
