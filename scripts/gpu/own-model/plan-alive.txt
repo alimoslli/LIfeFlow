@@ -1,7 +1,9 @@
 eval|alive-r1-old20|--no-retry|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive.txt
 eval|alive-r1-alive6|--no-retry --exam alive|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive.txt
 eval|v10-alive6|--no-retry --exam alive|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --remind scripts/gpu/own-model/skyling-reminders.txt
-eval|alive-r1-examB|--no-retry --exam b|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive.txt
+eval|alive-r1-life4|--no-retry --exam life|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive.txt
+eval|v10-life4|--no-retry --exam life|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --remind scripts/gpu/own-model/skyling-reminders.txt
 eval|alive-r2-old20|--no-retry|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive.txt
 eval|alive-r2-alive6|--no-retry --exam alive|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive.txt
-eval|v10-alive6-r2|--no-retry --exam alive|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --remind scripts/gpu/own-model/skyling-reminders.txt
+eval|alive-r2-life4|--no-retry --exam life|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive.txt
+eval|alive-r1-examB|--no-retry --exam b|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive.txt

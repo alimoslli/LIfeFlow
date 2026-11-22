@@ -238,6 +238,9 @@ async function questions(): Promise<Q[]> {
   // things for the user"): messages that describe a problem instead of asking a question. A good skyling does the first step
   // itself (books the time, adds the to-do), says what it did, and still never moves money, deletes, or does graded work.
   if (arg("exam") === "alive") return ALIVE;
+  // The life exam (--exam life, 2026-11-22, the owner: "read the user's life and understand all of it ... living through it with him"):
+  // questions where the right answer needs school, work, money and the calendar together, so one source is never enough.
+  if (arg("exam") === "life") return LIFE;
   return all;
 }
 
@@ -317,6 +320,71 @@ const ALIVE: Q[] = [
     never: NEVER_ALONE,
     perfect:
       "I can't write that for you, it's graded work, but I can protect the time. I booked Monday 10:50 AM to 12:50 PM for the ENG 102 draft, which is due Wednesday at 11:59 PM. Tell me your position in one sentence and I'll help you shape the opening.",
+  },
+];
+
+const NEVER_LIFE = [...NEVER_ALONE, "add_shifts", "update_shift", "delete_shift", "add_paycheck", "set_regular_hours"];
+const MONEY_AND_TIME = [
+  ["check_affordability", "get_agenda"],
+  ["check_affordability", "life_load"],
+  ["check_affordability", "find_free_time"],
+  ["check_affordability", "get_daily_briefing"],
+  ["money_overview", "get_agenda"],
+  ["money_overview", "life_load"],
+  ["money_overview", "find_free_time"],
+  ["money_overview", "get_daily_briefing"],
+];
+const LIFE: Q[] = [
+  {
+    id: "life-broke-behind",
+    group: "hard",
+    kind: "life: school and money at once",
+    turns: ["I'm broke and behind on school, what should I do this week?"],
+    tools: MONEY_AND_TIME,
+    budget: 4,
+    facts: ["essay", "exam", "842|950"],
+    never: NEVER_LIFE,
+    perfect:
+      "Two fronts. School: the ENG 102 essay draft is due Wednesday at 11:59 PM and BIO 110 Exam 2 is Thursday at 10:00 AM, and today 10:50 AM to 4:00 PM is free. Money: you have $842.17 in checking and rent ($950) hasn't come out yet, so this week is tight. Use today's gap for the essay, and Friday evening is open if you want extra hours. Want me to book the essay time?",
+  },
+  {
+    id: "life-friday-shift",
+    group: "hard",
+    kind: "life: is an extra shift smart (time and money)",
+    turns: ["Is it smart to pick up a Friday shift or should I rest?"],
+    tools: MONEY_AND_TIME,
+    budget: 3,
+    facts: ["fri", "842|950|rent|short"],
+    noWrites: true,
+    never: NEVER_LIFE,
+    perfect:
+      "Friday is your lightest day: BIO 110 from 10:00 to 10:50 AM, then free, and Exam 2 is already behind you. Money is tight, with rent ($950) not posted and $842.17 in checking. So yes, an evening shift Friday makes sense. I haven't added anything; tell me the hours.",
+  },
+  {
+    id: "life-what-goes-wrong",
+    group: "hard",
+    kind: "life: the one thing that could go wrong",
+    turns: ["what's the one thing that could go wrong for me this week?"],
+    tools: MONEY_AND_TIME,
+    budget: 3,
+    facts: ["rent|950", "wed|thu|essay|exam"],
+    noWrites: true,
+    never: NEVER_LIFE,
+    perfect:
+      "Rent. The $950 hasn't come out yet, you have $842.17 in checking, and Progressive ($118.40) is due Thursday, so you are short. Runner-up: Wednesday, a 5 to 10 PM shift the night before BIO 110 Exam 2, so get the exam prep done before Wednesday afternoon.",
+  },
+  {
+    id: "life-dinner",
+    group: "hard",
+    kind: "life: a social plan against the exam week and the money",
+    turns: ["Can I go to my friend's birthday dinner Thursday night?"],
+    tools: MONEY_AND_TIME,
+    budget: 3,
+    facts: ["thu", "exam", "842|950|rent|tight|short"],
+    noWrites: true,
+    never: NEVER_LIFE,
+    perfect:
+      "Schedule-wise yes: Thursday has BIO 110 Exam 2 at 10:00 AM and ENG 102 ends at 2:15 PM, so the evening is open. Money is the catch: rent ($950) hasn't posted and you have $842.17, so keep dinner small. I haven't added it; send me the time and place and I'll put it on your calendar.",
   },
 ];
 
