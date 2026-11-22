@@ -398,7 +398,10 @@ def guard_notes(original, msg):
                      "You may say when pay is expected, and nothing more about it.")
     words = len(text.split())
     if words > WORD_LIMIT:
-        notes.append(f"Your answer is {words} words and the limit is {WORD_LIMIT}. Write it again shorter: keep the direct answer and every figure, cut the rest.")
+        # Asked for 100 it wrote 117 to 139 on the unseen questions (9 of 189, 2026-11-22): models count words badly, so the
+        # rewrite is asked for well under the limit.
+        notes.append(f"Your answer is {words} words and the limit is {WORD_LIMIT}. Write it again in at most {int(WORD_LIMIT * 0.7)} words: "
+                     "the direct answer first, every figure that matters, one next step. Cut greetings, repeats, and lists longer than three items.")
     raw = [m.group(0) for m in RAW_MINUTES.finditer(text)]
     if raw:
         notes.append("Nobody talks in minutes like \"" + raw[0] + "\". Say lengths of time in hours and minutes (\"5 hours 10 minutes\"), "
