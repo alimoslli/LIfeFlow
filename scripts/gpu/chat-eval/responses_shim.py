@@ -459,22 +459,27 @@ def call_upstream(body):
                     chat["guard"] = "finished a cut sentence"
             except urllib.error.HTTPError:
                 pass
-        notes = guard_notes(original, m)
-        if notes:
+        # Up to two tries at putting it right (2026-11-22: one try left 12 of 189 unseen answers over the word limit). Each try
+        # is kept only when it has fewer problems than what it replaces, so this can never loop or make an answer worse.
+        for _ in range(2):
+            m = chat["choices"][0]["message"]
+            notes = guard_notes(original, m)
+            if not notes:
+                break
             again = [dict(x) for x in sent]
             again[-1]["content"] = (again[-1]["content"] or "") + "\n\n<house_check>\n" + "\n".join("- " + n for n in notes) + "\n</house_check>"
             # A cut sentence is cut again at the same word when the server reuses its saved copy of the prompt's start (seen
-            # 2026-11-22, likely the model server's prefix cache with this model family). So the second try for a cut answer
+            # 2026-11-22, likely the model server's prefix cache with this model family). So the next try for a cut answer
             # starts the prompt one blank line earlier, which makes the server read it afresh, and runs a little warmer.
             if cut_off(m):
                 again[0] = {**again[0], "content": "\n" + (again[0].get("content") or "")}
             second = post({**req, "messages": again, **({"temperature": 0.7} if cut_off(m) else {})})
-            # the second reply is kept only when it has fewer problems; otherwise the first stands (never a loop)
-            if len(guard_notes(original, second["choices"][0]["message"])) < len(notes):
-                for k in ("prompt_tokens", "completion_tokens", "total_tokens"):
-                    second.setdefault("usage", {})[k] = (second.get("usage") or {}).get(k, 0) + (chat.get("usage") or {}).get(k, 0)
-                chat = second
-                chat["guard"] = notes[0][:80]
+            if len(guard_notes(original, second["choices"][0]["message"])) >= len(notes):
+                break
+            for k in ("prompt_tokens", "completion_tokens", "total_tokens"):
+                second.setdefault("usage", {})[k] = (second.get("usage") or {}).get(k, 0) + (chat.get("usage") or {}).get(k, 0)
+            second["guard"] = notes[0][:80]
+            chat = second
         m = chat["choices"][0]["message"]
         # Still cut after both tries: end at the last whole sentence rather than show half a word.
         if cut_off(m):
