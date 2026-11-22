@@ -448,7 +448,7 @@ const CURIOUS: Q[] = [
     facts: ["library", "\\?"],
     mustNot: NOT_A_HELPDESK,
     never: [...NEVER_LIFE, "add_job"],
-    perfect: "A second job, nice, congrats! When do you start, and do you know your hours yet? Tell me the days and I'll fit them around Campus Coffee and your classes.",
+    perfect: "A second job at the library, nice, congrats! When do you start, and do you know your hours yet? Tell me the days and I'll fit them around Campus Coffee and your classes.",
   },
   {
     id: "cur-rough",
