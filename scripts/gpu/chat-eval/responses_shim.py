@@ -329,6 +329,52 @@ def exam_times(msgs):
     return found
 
 
+def busy_times(msgs):
+    """Things with a start and an end seen in the tool results (classes, shifts, events): (date, "HH:MM", "HH:MM", title)."""
+    found = []
+    stamp = re.compile(r"(\d{4}-\d\d-\d\d) (\d\d:\d\d)$")
+
+    def walk(v):
+        if isinstance(v, list):
+            for x in v:
+                walk(x)
+        elif isinstance(v, dict):
+            a, b = stamp.match(str(v.get("start", ""))), stamp.match(str(v.get("end", "")))
+            if a and b and a.group(1) == b.group(1) and v.get("blocksTime") is not False and v.get("type") in (None, "event", "shift"):
+                found.append((a.group(1), a.group(2), b.group(2), str(v.get("title", "something"))))
+            for x in v.values():
+                walk(x)
+
+    for m in msgs:
+        if m.get("role") == "tool":
+            try:
+                walk(json.loads(m.get("content") or ""))
+            except (ValueError, TypeError):
+                pass
+    return found
+
+
+def over_busy(msg, original):
+    """Events in a create_events call that land on top of something the results showed (2026-11-22: it looked at Wednesday,
+    saw the 5 to 10 PM shift, and saved a 5 PM gym class anyway, then warned about the overlap)."""
+    busy = busy_times(original)
+    out = []
+    for c in msg.get("tool_calls") or []:
+        if c["function"]["name"] != "create_events" or not busy:
+            continue
+        try:
+            events = json.loads(c["function"].get("arguments") or "{}").get("events") or []
+        except ValueError:
+            continue
+        for e in events if isinstance(events, list) else []:
+            if not isinstance(e, dict):
+                continue
+            for date, start, end, title in busy:
+                if str(e.get("date")) == date and str(e.get("startTime", "99")) < end and str(e.get("endTime", "00")) > start and str(e.get("title")) != title:
+                    out.append(f"\"{e.get('title', 'that')}\" would land on top of {title} ({clock(start)} to {clock(end)})")
+    return out
+
+
 def over_exam(msg, original):
     """Events in a create_events call that run over an exam seen in the results."""
     exams = exam_times(original)
@@ -369,6 +415,9 @@ def guard_notes(original, msg):
                     "and offer to set it up; do it when they say yes."]
     # Humane blocks (2026-11-22: asked for help before an exam it booked 10:50 AM to 4:00 PM and 2:15 PM to 10:00 PM, whole free
     # windows as "study"). Nobody studies eight hours straight; a block it chooses itself is two hours at most.
+    onto = over_busy(msg, original)
+    if onto:
+        return [onto[0] + ". Do not save it. Tell them about the clash in one line and offer a free time instead; book only when they pick one."]
     clash = over_exam(msg, original)
     if clash:
         return [clash[0] + ". An exam is not shown as busy time, so check it yourself: nothing is booked over the exam, and study for it ends "
