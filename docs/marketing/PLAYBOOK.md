@@ -141,7 +141,7 @@ Update after every video. Newest at the top.
 
 | # | Video | Status | Notes |
 |---|---|---|---|
-| 2 | ADHD-first concepts: "11:48 PM. Blank page.", "Back after a rough week.", "Deep in it." | Three silent draft cuts made (21.25 credits of footage), waiting on the owner | `docs/marketing/2026-11-22-adhd-concepts.md`: Footage: 5 stills and 2 motion shots, 21.25 credits in total, approved by the COO. Cuts: `docs/marketing/adhd-concepts/drafts/`. Follows the research claims lines (never asks if the viewer has ADHD, no treat/improve, no superpower). |
+| 2 | ADHD-first concepts: "11:48 PM. Blank page.", "Back after a rough week.", "Deep in it." | **Rejected by the owner** (2026-11-22, via the COO: "this could not have been or looked worse"). All video and Higgsfield work stopped until the COO brings his direction. Drafts left in place. | `docs/marketing/2026-11-22-adhd-concepts.md`: Footage: 5 stills and 2 motion shots, 21.25 credits in total, approved by the COO. Cuts: `docs/marketing/adhd-concepts/drafts/`. Follows the research claims lines (never asks if the viewer has ADHD, no treat/improve, no superpower). |
 | 1 | "I didn't open LifeFlow for 7 days" | Script done, not filmed | Needs demo account loaded with matching data (bio exam, Wednesday shift, $45 bill, low balance, double Spotify charge). Check the morning brief arrives as a real lock-screen notification before filming. |
 
 ---
@@ -174,6 +174,13 @@ Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playboo
 - **Topics and wording:** no rent (many viewers live with parents). No spoken "link in bio" in the podcast. Never the owner's name in the podcast.
 - **People:** no real person's likeness without consent (Tyler consented).
 - **Credits:** never spend any without quoting the exact cost and getting the owner's okay. Podcast episodes are about 3 clips and 50 to 60 credits.
+
+6. **ADHD-first concept reels (2026-11-22, rejected hard):**
+   - What they were: generated stock-style rooms (desk, bed, art desk) with one caption, then small phone-screen recordings, then plain text end cards. 21.25 credits.
+   - Owner: "this could not have been or looked worse."
+   - Stopped until his direction comes through the COO.
+   - Not yet known which parts failed. Ask before guessing.
+   - Likely suspects against this file's own rules: crowded or small app frames, a generic stock look, and no character or brand presence.
 
 **What looked promising:**
 - Real app screen recordings: free, and the only drafts that passed (v8, v13).
