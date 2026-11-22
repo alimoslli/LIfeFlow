@@ -31,7 +31,9 @@ TIMER=$!
 step "start $(nvidia-smi --query-gpu=name,memory.total --format=csv,noheader | head -1)"
 python3 --version
 # 1. code, tools and inputs (small), while the weights and the python packages come down side by side
-(command -v ffmpeg > /dev/null || (apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ffmpeg libsndfile1) > $L/apt.log 2>&1) &
+# gcc: the audio separator pulls in a package (diffq) that is built from source; without a compiler it silently did not install
+# and the first render died on "No module named audio_separator" (2026-11-22).
+( (command -v ffmpeg > /dev/null && command -v gcc > /dev/null) || (apt-get update -qq; DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ffmpeg libsndfile1 gcc g++ python3-dev) > $L/apt.log 2>&1) &
 APT=$!
 git clone -q --depth 1 https://github.com/meituan-longcat/LongCat-Video.git $R || fail "could not fetch the model's code"
 cd $R && git log --oneline -1
@@ -46,6 +48,7 @@ mkdir -p $L/in && curl -fsSL -m 120 -o $L/in/person.png "$IMG_URL" && curl -fsSL
        --local-dir $W/LongCat-Video-Avatar-1.6 > $L/dl-avatar.log 2>&1 && echo ok > $L/weights.ready) &
 DL=$!
 
+wait $APT   # the compiler has to be there before the python packages are built
 PY=$(python3 -c "import sys; print('cp%d%d' % sys.version_info[:2])")
 python3 -m venv $L/venv || fail "venv"
 P=$L/venv/bin/pip
@@ -58,7 +61,13 @@ $P install -q -r $L/req.txt > $L/pip-req.log 2>&1 || fail "requirements (see pip
 grep -v -i "^libsndfile1" requirements_avatar.txt > $L/req-avatar.txt
 $P install -q -r $L/req-avatar.txt > $L/pip-avatar.log 2>&1 || { while read -r line; do [ -n "$line" ] && $P install -q "$line" >> $L/pip-avatar.log 2>&1; done < $L/req-avatar.txt; }
 # installing extras must not have moved torch off the version the wheel above was built for
-$L/venv/bin/python -c "import torch, flash_attn; assert torch.__version__.startswith('2.6.0'), torch.__version__; print('torch', torch.__version__, 'cuda', torch.cuda.is_available())" || fail "torch changed version or flash-attn does not load"
+$L/venv/bin/python -c "import audio_separator" 2> /dev/null || $P install -q audio-separator==0.30.2 >> $L/pip-avatar.log 2>&1
+(cd $R && $L/venv/bin/python -c "
+import torch, flash_attn
+assert torch.__version__.startswith('2.6.0'), torch.__version__
+from longcat_video.audio_process.vocal_separator import separate_vocals
+from audio_separator.separator import Separator
+print('torch', torch.__version__, 'cuda', torch.cuda.is_available())") || fail "a package the render needs does not load (torch moved, flash-attn, or the audio separator)"
 step "packages ready"
 wait $APT
 # The other clip is sharpened now, while the weights are still coming down and the GPU has nothing to do. It is saved first,
@@ -93,12 +102,20 @@ $L/venv/bin/torchrun --nproc_per_node=1 run_demo_avatar_single_audio_to_video.py
   --use_distill --lora_path loraB/lora.safetensors --model_type avatar-v1.6 --mix_steps=4 --mix_alpha=1.0 > $T/render.log 2>&1
 RC=$?
 R1=$(date +%s)
-[ $RC -eq 0 ] || { tail -30 $T/render.log; fail "render exited $RC (see render.log)"; }
 OUT=$(ls -t $L/out/*.mp4 2> /dev/null | head -1)
+# The model's own save step stops ffmpeg at the end of the audio and then fails with "Broken pipe" on the frames left over
+# (the last segment runs past the audio). The file is complete by then, so a finished, readable video counts as success.
+if [ $RC -ne 0 ]; then
+  if [ -n "$OUT" ] && grep -q "BrokenPipeError" $T/render.log && ffmpeg -v error -i "$OUT" -f null - 2> /dev/null; then
+    echo "NOTE: the model's save step ended with a broken pipe after the file was complete" >> $T/status.txt
+  else
+    tail -30 $T/render.log; fail "render exited $RC (see render.log)"
+  fi
+fi
 [ -n "$OUT" ] || fail "render finished but wrote no video"
 step "render done $(basename $OUT)"
-# 3. cut to the voice's length, keep the untrimmed file too, write the numbers
-cp "$OUT" $T/out-full.mp4
+# 3. cut to the voice's length, keep the model's own file too, write the numbers
+cp "$OUT" $T/out-raw.mp4
 ffmpeg -y -v error -i "$OUT" -t "$DUR" -c:v libx264 -crf 16 -pix_fmt yuv420p -c:a aac -b:a 192k -movflags +faststart $T/out.mp4 || cp "$OUT" $T/out.mp4
 {
   echo "OK"
