@@ -50,3 +50,10 @@ App inserts, full screen from production on the demo account: the wheel (hold 2 
 | App recording, animations, captions, mix | 0 (done here) |
 
 Nothing is made until the owner sets a budget. Nothing is posted or scheduled by Marketing.
+
+## Voice tape and quote (2026-11-22)
+
+- Tape: `Jordan_voice_tape_A_Dylan_B_Miles.mp3`. A is Dylan reading the whole reel (24.3 s); B is Miles reading the hook and first lines (14.1 s). Both ElevenLabs presets through Higgsfield, about 1.9 credits. A transcribes back word for word (it says "skylin" for "skyling"; the final take will spell it out for the voice). Claude can't hear: the owner picks by ear.
+- Talking head, Higgsfield Intone, quoted with voice A over the whole 24 s: 1080p 432 credits, 720p 189, 480p 81. Seedance 2.5 at 480p for 16 s is 48.
+- Cheapest good route: Intone at 480p, then our GPU upscale (tested on the drama ad), and only the lines he says on camera go to Intone. The app inserts cover the rest, so about 14 s of him: about 50 credits at 480p, about 110 at 720p (estimates scaled from the quotes above).
+- Production demo login: `demo@budgetflow.local` does not sign in on lifeflowweb.com ("That email and password don't match"). The app inserts need a demo account on production.
