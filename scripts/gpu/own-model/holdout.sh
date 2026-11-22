@@ -31,7 +31,20 @@ done
 wait $PIDS
 SECS=$(( $(date +%s) - START ))
 kill $SHIM
-python3 scripts/gpu/chat-data/filter.py --meta "$H/meta-*.jsonl" --dump $H/dump.jsonl --out $H/kept.jsonl --report $H/report.json --no-cap > $H/filter.log 2>&1
+python3 scripts/gpu/chat-data/filter.py --meta "$H/meta-*.jsonl" --dump $H/dump.jsonl --out $H/kept.jsonl --report $H/report.json --no-cap --details $H/details.jsonl > $H/filter.log 2>&1
+# every turn with its skill, answer and why it failed, kept on storage; and the scorecard by skill
+cp $H/details.jsonl $T/holdout-$LABEL-details.jsonl
+python3 - "$H/details.jsonl" > $T/holdout-$LABEL-skills.txt <<'PY'
+import json, sys, collections
+rows = [json.loads(l) for l in open(sys.argv[1])]
+by = collections.defaultdict(list)
+for r in rows:
+    by[r["skill"] or "(no skill)"].append(r)
+print(f"skills {len(by)} | turns {len(rows)} | passing {sum(r['ok'] for r in rows)}")
+for skill, rs in sorted(by.items(), key=lambda kv: (sum(r["ok"] for r in kv[1]) / len(kv[1]), kv[0])):
+    why = collections.Counter(x.split(":")[0] for r in rs for x in set(y.split(":")[0] for y in r["reasons"]))
+    print(f"{skill:24s} {sum(r['ok'] for r in rs):2d} of {len(rs):2d}  {dict(why) if why else ''}")
+PY
 python3 - "$H" "$SECS" "$LABEL" > $T/holdout-$LABEL.txt <<'PY'
 import json, glob, sys, statistics as st
 h, secs, label = sys.argv[1], int(sys.argv[2]), sys.argv[3]

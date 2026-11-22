@@ -24,6 +24,7 @@ ap.add_argument("--meta", required=True)
 ap.add_argument("--dump", required=True)
 ap.add_argument("--out", required=True)
 ap.add_argument("--report", required=True)
+ap.add_argument("--details", default=None, help="also write one line per turn: its skill, question, tools, answer and why it was dropped (for a per-skill scorecard)")
 ap.add_argument("--no-cap", action="store_true", help="keep every passing answer (for measuring a model, not for building a training set)")
 a = ap.parse_args()
 
@@ -144,6 +145,7 @@ def check(meta_row, last, year):
 
 
 kept, why = [], collections.Counter()
+details = []
 by_source = collections.Counter()
 for conv_turn, rs in steps.items():
     life, k, t = conv_turn.split("~")
@@ -151,6 +153,11 @@ for conv_turn, rs in steps.items():
     last = rs[-1]
     year = int((m or {}).get("nowLocal", "2026")[:4])
     reasons, text = check(m, last, year)
+    if a.details and m:
+        turn_text = m["turns"][int(t)]["text"] if int(t) < len(m["turns"]) else m["question"]["text"]
+        calls = [c["function"]["name"] for r in rs for c in (r["reply"].get("tool_calls") or [])]
+        details.append({"conv": conv_turn, "skill": m["question"].get("skill"), "persona": m["persona"], "question": turn_text, "tools": calls,
+                        "ok": not reasons, "reasons": reasons, "words": len(text.split()), "answer": text})
     if reasons:
         why.update(r.split(":")[0] for r in reasons)
         continue
@@ -201,6 +208,10 @@ if os.path.exists(also):
 with open(a.out, "w") as f:
     for r in kept:
         f.write(json.dumps(r) + "\n")
+if a.details:
+    with open(a.details, "w") as f:
+        for d in details:
+            f.write(json.dumps(d) + "\n")
 report = {"turns": len(steps), "kept": len(kept), "by_kind": collections.Counter(r["meta"]["kind"] for r in kept).most_common(), "added_from_earlier_runs": sum(added.values()), "dropped_reasons": why.most_common(), "kept_by_source": by_source.most_common(),
           "kept_by_persona": collections.Counter(r["meta"]["persona"] for r in kept).most_common()}
 json.dump(report, open(a.report, "w"), indent=1)
