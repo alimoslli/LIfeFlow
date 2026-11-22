@@ -1,0 +1,7 @@
+eval|alive4-wish5|--no-retry --exam wish|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive.txt
+eval|alive4-alive6|--no-retry --exam alive|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive.txt
+eval|alive4-life4|--no-retry --exam life|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive.txt
+eval|alive4-wish5-r2|--no-retry --exam wish|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive.txt
+eval|alive4-alive6-r2|--no-retry --exam alive|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive.txt
+eval|alive4-old20|--no-retry --alive-rules|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive.txt
+eval|plain-wish5|--no-retry --exam wish|--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --remind scripts/gpu/own-model/skyling-reminders.txt

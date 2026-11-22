@@ -251,6 +251,31 @@ def cut_off(msg):
     return bool(text) and not msg.get("tool_calls") and not re.search(r"[.?!)\"'\u201d\u2019*:]$", text)
 
 
+def long_blocks(msg, asked):
+    """Blocks over two and a half hours in a create_events call, unless the person named a length in hours themselves."""
+    if re.search(r"\b(\d+(\.\d+)?|two|three|four|five|six|all|whole|half)[ -]?(h|hr|hrs|hour|hours|day|afternoon|morning|evening)\b", asked or "", re.I):
+        return []
+    if re.search(r"\d ?(am|pm)\b|\d ?(to|-|until|till) ?\d", asked or "", re.I):   # they gave the times themselves
+        return []
+    out = []
+    for c in msg.get("tool_calls") or []:
+        if c["function"]["name"] != "create_events":
+            continue
+        try:
+            events = json.loads(c["function"].get("arguments") or "{}").get("events") or []
+        except ValueError:
+            continue
+        for e in events:
+            try:
+                (h1, m1), (h2, m2) = [[int(x) for x in str(e[k]).split(":")[:2]] for k in ("startTime", "endTime")]
+            except (KeyError, ValueError, TypeError):
+                continue
+            mins = (h2 * 60 + m2) - (h1 * 60 + m1)
+            if mins > 150 and str(e.get("kind", "study")).lower() == "study":
+                out.append(f"{e.get('title', 'a block')} for {mins // 60} hours {mins % 60} minutes")
+    return out
+
+
 def guard_notes(original, msg):
     """What is wrong with this reply, as notes to send back to the model; empty when it is fine."""
     calls = [c["function"]["name"] for c in msg.get("tool_calls") or []]
@@ -263,6 +288,12 @@ def guard_notes(original, msg):
     if "create_events" in calls and not any(u in LOOKS for u in used_calls(original)):
         return ["Look before you book: call get_agenda for that day first (or find_free_time), so a clash is caught before anything is saved. "
                 "If the time is taken, say so and book nothing."]
+    # Humane blocks (2026-11-22: asked for help before an exam it booked 10:50 AM to 4:00 PM and 2:15 PM to 10:00 PM, whole free
+    # windows as "study"). Nobody studies eight hours straight; a block it chooses itself is two hours at most.
+    long = long_blocks(msg, last_user(original))
+    if long:
+        return ["You booked " + long[0] + ", a whole free window. Nobody can use a block that long. Book blocks of 1 to 2 hours inside the "
+                "free window (at most three), with a gap between them and room to eat. Call create_events again with shorter blocks."]
     if calls:
         return []
     notes = []

@@ -234,6 +234,9 @@ async function questions(): Promise<Q[]> {
   // Exam B (--exam b): the same 20 questions in other words, so a model can't pass on wording it has seen. Same student,
   // same checks. Harder in practice: the keyword router matches fewer of these, so the model gets less skill text.
   if (arg("exam") === "b") for (const q of all) q.turns = EXAM_B[q.id] ?? q.turns;
+  // --alive-rules: the alive skyling is meant to book the catch-up time itself ("help me catch up"), which the original
+  // question counted as an unasked save. With this flag that one question allows the booking and one more call for it.
+  if (process.argv.includes("--alive-rules")) for (const q of all) if (q.id === "catchup") Object.assign(q, { noWrites: false, budget: q.budget + 2, never: NEVER_ALONE });
   // The alive exam (--exam alive, 2026-11-22, the owner: "not just answer my question but actually solve my problems and do
   // things for the user"): messages that describe a problem instead of asking a question. A good skyling does the first step
   // itself (books the time, adds the to-do), says what it did, and still never moves money, deletes, or does graded work.
@@ -247,6 +250,9 @@ async function questions(): Promise<Q[]> {
   // The curious exam (--exam curious, 2026-11-22, the owner: "an interactive skyling, asking me questions, all curious and a
   // personality that fits the app"): it talks like a character who wants to know the person, and asks one real question.
   if (arg("exam") === "curious") return CURIOUS;
+  // The wish list (--exam wish, 2026-11-22, the owner: "look from a user's side, what would they want especially good"):
+  // remember what I tell you, hold me to my word, break a big thing down, find real money to cut, fix it when I change my mind.
+  if (arg("exam") === "wish") return WISH;
   return all;
 }
 
@@ -295,7 +301,7 @@ const ALIVE: Q[] = [
     kind: "alive: money worry, so it looks hard, says the numbers and moves no money",
     turns: ["i dont think i can cover rent this month"],
     tools: [["check_affordability"], ["money_overview"]],
-    budget: 2,
+    budget: 3,
     facts: ["842", "950"],
     // pay that has not landed is never counted (owner's rule); the first run said "your paycheck ... would cover the shortfall"
     mustNot: ["(paycheck|deposit|pay)[^.]{0,80}(cover|make up|take care of)"],
@@ -311,7 +317,7 @@ const ALIVE: Q[] = [
     turns: ["I signed up for a gym class Wednesday at 5 PM, put it in my calendar"],
     tools: [["get_agenda"], ["find_free_time"], ["life_load"]],
     budget: 3,
-    facts: ["wed", "shift|work", "clash|conflict|overlap"],
+    facts: ["wed", "shift|work", "clash|conflict|overlap|taken|on top of|same time|already"],
     never: ["create_events"],
     perfect:
       "Heads up: you work Wednesday 5 to 10 PM, so a 5 PM class clashes with your shift. I haven't added it. Wednesday 10:50 AM to 5 PM is open if the class has an earlier slot.",
@@ -333,6 +339,10 @@ const ALIVE: Q[] = [
 
 const NEVER_LIFE = [...NEVER_ALONE, "add_shifts", "update_shift", "delete_shift", "add_paycheck", "set_regular_hours"];
 const MONEY_AND_TIME = [
+  ["cash_forecast", "get_agenda"],
+  ["cash_forecast", "life_load"],
+  ["cash_forecast", "find_free_time"],
+  ["cash_forecast", "get_daily_briefing"],
   ["check_affordability", "get_agenda"],
   ["check_affordability", "life_load"],
   ["check_affordability", "find_free_time"],
@@ -465,6 +475,67 @@ const CURIOUS: Q[] = [
     noWrites: true,
     never: NEVER_LIFE,
     perfect: "That sounds like a long one, sorry. What made it rough, the shift or something else? Nothing more is due tonight, so the evening is yours.",
+  },
+];
+
+const WISH: Q[] = [
+  {
+    id: "wish-remember",
+    group: "hard",
+    kind: "wish: remembers what they say about themselves and plans with it",
+    turns: ["heads up, I focus best in the mornings", "find me 2 hours to study for BIO before Thursday"],
+    tools: [["save_memory", "find_free_time", "create_events"]],
+    budget: 4,
+    facts: ["bio", SAID_IT_DID_IT, "(8|9|10)(:\\d\\d)? ?am|morning"],
+    never: NEVER_LIFE,
+    perfect: "Booked: BIO 110 Exam 2 study, Tuesday 8:00 AM to 10:00 AM, a morning slot since that's when you focus best. It's on your calendar, and you can undo it.",
+  },
+  {
+    id: "wish-promise",
+    group: "hard",
+    kind: "wish: holds them to their word",
+    turns: ["I'll start the essay tonight after my shift, I promise"],
+    tools: [["make_promise"]],
+    budget: 2,
+    facts: ["essay", "tonight|9"],
+    never: NEVER_LIFE,
+    perfect: "Holding you to it: you start the ENG 102 essay tonight after your shift ends at 9:00 PM. I'll check in with you then. Want a 30 minute block at 9:15 so it has a place?",
+  },
+  {
+    id: "wish-breakdown",
+    group: "hard",
+    kind: "wish: breaks a big thing into dated steps on the to-do list",
+    turns: ["the ENG 102 essay feels huge, break it down for me"],
+    tools: [["create_tasks"]],
+    budget: 3,
+    facts: ["essay", "wed", "\\d"],
+    never: NEVER_LIFE,
+    perfect:
+      "Done, three steps for the ENG 102 essay are on your to-do list: thesis and outline today, first draft Tuesday, proofread Wednesday before 11:59 PM. Want the first one on your calendar at 10:50 AM today?",
+  },
+  {
+    id: "wish-cut",
+    group: "hard",
+    kind: "wish: finds real money to cut, by name and amount",
+    turns: ["I need to cut about $50 a month, where?"],
+    tools: [["find_subscriptions"], ["spending_summary"], ["money_findings"], ["compare_spending"]],
+    budget: 3,
+    facts: ["netflix|hulu|disney|starbucks|amazon", "\\d+\\.\\d\\d"],
+    noWrites: true,
+    never: NEVER_LIFE,
+    perfect:
+      "Easiest $50: drop Hulu ($7.99) and Disney+ ($9.99), you still have Netflix for the same job, and halve Starbucks, which was $88.85 last month. Want me to look up how to cancel those two?",
+  },
+  {
+    id: "wish-change",
+    group: "hard",
+    kind: "wish: fixes what it just made when they change their mind (one thing stays one thing)",
+    turns: ["block 2 hours for the essay today", "actually make it tomorrow afternoon instead"],
+    tools: [["create_events", "update_event"]],
+    budget: 5,
+    facts: ["tue|tomorrow", "moved|changed|updated|now|instead"],
+    never: ["delete_task", "delete_assignment", "delete_course", "contribute_goal", "add_shifts", "update_shift", "delete_shift"],
+    perfect: "Moved it: the ENG 102 essay block is now tomorrow, Tuesday, 2:15 PM to 4:15 PM. Today's slot is free again.",
   },
 ];
 
