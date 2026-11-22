@@ -121,6 +121,14 @@ def house_math(sent):
                     # money going out only: expected pay is never counted before it lands (owner's rule)
                     rows = sorted((i for i in v if i.get("kind") != "income"), key=lambda i: i[dk])
                     lines.append(f"{k} going out, in date order: " + ", ".join(f"{i['name']} {i.get(dk + 'Weekday', '')} {i[dk]} ${abs(i[ak]):,.2f}" for i in rows))
+            # Days with a load level and hours: which are heavy, and the nearest light one (where work can move first).
+            if isinstance(v, list) and len(v) > 2 and all(isinstance(i, dict) and "level" in i and isinstance(i.get("hours"), (int, float)) for i in v):
+                name = lambda i: f"{i.get('label') or i.get('date')} ({i.get('dateWeekday', '')}) {i['hours']} hours".replace(" ()", "")
+                heavy = sorted((i for i in v if i["level"] == "heavy"), key=lambda i: -i["hours"])
+                light = next((i for i in v if i["level"] == "light"), None)
+                parts = (["heavy: " + ", ".join(name(i) for i in heavy)] if heavy else []) + (["the nearest light day: " + name(light)] if light else [])
+                if parts:
+                    lines.append(f"{k} by load, " + "; ".join(parts))
     return lines
 
 
@@ -141,6 +149,8 @@ def remind(sent):
         # Our code reads the person's words; the model is told, not asked, what they did and did not ask for.
         if ORDER_TO_BOOK.search(asked) and not only_a_question(asked) and "find_free_time" in used and not any(WRITE_TOOL.match(u) for u in used):
             extra.append("They asked you to find the time for them, so finish the job: pick the best slot in the result and save it now with create_events (one call), then say what you booked with its day and time.")
+        if used and WRITE_TOOL.match(used[-1]):
+            extra.append("You just saved something. Say what it is by the title you gave it, with its day and time, and that it is saved.")
     else:
         return
     if only_a_question(asked):
@@ -200,27 +210,43 @@ def known_numbers(msgs):
     return seen
 
 
-def guard_note(original, msg):
-    """What is wrong with this reply, as one note to send back to the model; None when it is fine."""
+CLAIMS_SAVE = re.compile(r"^\W*(done[.!,]?\s+)?(i('ve| have)?\s+)?(added|booked|saved|scheduled|created|blocked|logged|moved|deleted|removed|marked|updated|rescheduled|cancell?ed|set up|put)\b", re.I)
+WORD_LIMIT = 100
+
+
+def cut_off(msg):
+    """A final answer that stops in the middle of a sentence ("... due Wednesday at 11:59 PM, and B")."""
+    text = (msg.get("content") or "").split("</think>")[-1].strip()
+    return bool(text) and not msg.get("tool_calls") and not re.search(r"[.?!)\"'\u201d\u2019*:]$", text)
+
+
+def guard_notes(original, msg):
+    """What is wrong with this reply, as notes to send back to the model; empty when it is fine."""
     calls = [c["function"]["name"] for c in msg.get("tool_calls") or []]
     writes = [c for c in calls if WRITE_TOOL.match(c)]
     if writes and only_a_question(last_user(original)):
-        return ("They only asked whether it would fit or work. They did not ask you to save anything, so do not call " + ", ".join(writes) +
-                ". Answer the question from what you have and offer to save it.")
+        return ["They only asked whether it would fit or work. They did not ask you to save anything, so do not call " + ", ".join(writes) +
+                ". Answer the question from what you have and offer to save it."]
     if calls:
-        return None
+        return []
+    notes = []
     text = (msg.get("content") or "").split("</think>")[-1].strip()
-    # A model sometimes stops in the middle of a sentence ("... due Wednesday at 11:59 PM, and B"): ask for it whole.
-    if text and not re.search(r"[.?!)\"'\u201d\u2019*:]$", text):
-        return "Your answer stopped in the middle of a sentence. Write the whole answer again, complete."
-    if not any(m["role"] == "tool" for m in original):
-        return None
-    known = known_numbers(original + [{"role": "tool", "content": " ".join(house_math(original))}])
-    bad = [m.group(0) for m in MONEY.finditer(text) if num(m.group(1)) not in known] + [m.group(1) for m in DECIMAL.finditer(text) if num(m.group(1)) not in known]
-    if bad:
-        return ("These figures are not in any result: " + ", ".join(sorted(set(bad))[:6]) + ". Write the answer again using only figures copied exactly "
-                "from the results, with cents. Do not add, subtract, round or estimate.")
-    return None
+    if cut_off(msg):
+        notes.append("Your answer stopped in the middle of a sentence. Write the whole answer again, complete.")
+    # "Added ..." with no saving tool called in this message: nothing was saved, and the skyling never claims what it did not do.
+    if CLAIMS_SAVE.search(text) and not any(WRITE_TOOL.match(u) for u in used_calls(original)):
+        notes.append("You wrote that you saved something, but you called no saving tool in this message, so nothing was saved. Call the tool now, "
+                     "and only say it is saved after the tool result says so.")
+    words = len(text.split())
+    if words > WORD_LIMIT:
+        notes.append(f"Your answer is {words} words and the limit is {WORD_LIMIT}. Write it again shorter: keep the direct answer and every figure, cut the rest.")
+    if any(m["role"] == "tool" for m in original):
+        known = known_numbers(original + [{"role": "tool", "content": " ".join(house_math(original))}])
+        bad = [m.group(0) for m in MONEY.finditer(text) if num(m.group(1)) not in known] + [m.group(1) for m in DECIMAL.finditer(text) if num(m.group(1)) not in known]
+        if bad:
+            notes.append("These figures are not in any result: " + ", ".join(sorted(set(bad))[:6]) + ". Use only figures copied exactly from the results, "
+                         "with cents. Do not add, subtract, round or estimate.")
+    return notes
 
 
 def clean(text):
@@ -262,17 +288,28 @@ def call_upstream(body):
         req["reasoning_effort"] = ARGS.reasoning_effort
     chat = post(req)
     if ARGS.guard:
-        note = guard_note(original, chat["choices"][0]["message"])
-        if note:
-            again = [dict(m) for m in sent]
-            again[-1]["content"] = (again[-1]["content"] or "") + "\n\n<house_check>\n" + note + "\n</house_check>"
+        m = chat["choices"][0]["message"]
+        # Stopped mid-sentence: let it finish the sentence it started.
+        if cut_off(m):
+            try:
+                more = post({**req, "messages": sent + [{"role": "assistant", "content": m["content"]}], "continue_final_message": True, "add_generation_prompt": False})
+                rest = (more["choices"][0]["message"].get("content") or "")
+                if rest.strip() and not more["choices"][0]["message"].get("tool_calls"):
+                    m["content"] = m["content"] + rest
+                    chat["guard"] = "finished a cut sentence"
+            except urllib.error.HTTPError:
+                pass
+        notes = guard_notes(original, m)
+        if notes:
+            again = [dict(x) for x in sent]
+            again[-1]["content"] = (again[-1]["content"] or "") + "\n\n<house_check>\n" + "\n".join("- " + n for n in notes) + "\n</house_check>"
             second = post({**req, "messages": again})
-            # keep the second reply only if it is clean; otherwise the first stands (never loop)
-            if not guard_note(original, second["choices"][0]["message"]):
+            # the second reply is kept only when it has fewer problems; otherwise the first stands (never a loop)
+            if len(guard_notes(original, second["choices"][0]["message"])) < len(notes):
                 for k in ("prompt_tokens", "completion_tokens", "total_tokens"):
                     second.setdefault("usage", {})[k] = (second.get("usage") or {}).get(k, 0) + (chat.get("usage") or {}).get(k, 0)
                 chat = second
-                chat["guard"] = note[:80]
+                chat["guard"] = notes[0][:80]
         m = chat["choices"][0]["message"]
         # One tool call per step: the model then reads each result (and the reminder with the count) before it may call again.
         if len(m.get("tool_calls") or []) > 1:
