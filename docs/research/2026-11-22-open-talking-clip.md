@@ -53,6 +53,23 @@ What still gives it away, honestly:
 2. **Skin is a little too smooth in some frames.** The clip is drawn at 480 x 832 and sharpened; sharpening adds edges, not pores. Fix: draw it at 720p (costs a new render; it may not fit one H100's memory, 62 GB were used at 480p).
 3. **One take, default settings.** No second seed was tried to pick the better one.
 
+## The Jordan reel: three shots in one run (same evening)
+
+The owner picked the open model for the reel; the COO approved one H100 run, up to 85 credits. LF Marketing sent three pictures and voices (dorm at night, kitchen in the morning, car at sunset). `scripts/gpu/video/avatar_batch.sh` with `scenes/jordan-reel.tsv`.
+
+| Shot | Voice | Drawn at | Delivered | Render | Clip |
+|---|---|---|---|---|---|
+| 1, dorm, phone held up | 2.35 s | 736 x 1248, 1 segment | 1080 x 1920, 58 frames | 288 s | https://d2ol7oe51mr4n9.cloudfront.net/user_3M4RdHXwCzt85SV7RGv8R91VfvG/28ac48a3-25d0-4808-8800-e2b2a56d6370.mp4 |
+| 2, kitchen, neck rub and shrug | 6.53 s | 736 x 1248, 2 segments | 1080 x 1920, 162 frames | 481 s | https://d2ol7oe51mr4n9.cloudfront.net/user_3M4RdHXwCzt85SV7RGv8R91VfvG/10b81e87-dbb1-4091-b461-e604e75a9a3d.mp4 |
+| 3, car, nod | 6.35 s | 736 x 1248, 2 segments | 1080 x 1920, 158 frames | 486 s | https://d2ol7oe51mr4n9.cloudfront.net/user_3M4RdHXwCzt85SV7RGv8R91VfvG/335d6c44-d4eb-486d-99e1-7616cb632801.mp4 |
+
+- **Box:** one H100, 22:29:01 to 23:00:00 UTC, 31.0 minutes, **61.98 credits**, stopped by hand 13 seconds after the last upload. All three shots rendered first time, no retry.
+- **720p works on one H100, barely.** About 25 seconds a step, 190 seconds a segment, against 56 at 480p (3.4 times slower). Peak GPU memory 78.5 to 80.6 GB of 81.5: it fits with about 1 GB to spare, so a longer shot or a busier picture could fail. The script would then have fallen back to 480p.
+- **Setup took 8.5 minutes**, 2.5 more than the first run: the audio packages are now installed one at a time so one bad package cannot silently drop another. Safer, and about 5 credits dearer. A prebuilt box image would remove most of it.
+- **Checked here, frame by frame:** the phone in shot 1 stays steady and face-on with a clean blank screen; shot 2 does the neck rub and then drops the hand into a shrug; shot 3 is steady with a light gesture. Same face inside each shot, no jump at the joins, hands normal, plain hoodie (the scrambled lettering is gone from the new pictures). His hair reads warmer and lighter in the car than in the dorm: that is in the source pictures, not added by the render.
+- **Lip timing, measured:** shot 1 best match at 0 ms, shots 2 and 3 at 40 to 60 ms (lips slightly ahead, the natural side). How closely the mouth follows the voice: 0.60 for shot 1, but only 0.20 and 0.22 for shots 2 and 3 (the first clip was 0.39, Intone 0.44). The low numbers may be the measure (a shrug and a turned head hide the mouth) or looser lips. **Shots 2 and 3 need a person to watch them with sound before the reel goes out.**
+- Each clip is one or two frames shorter than its voice file (2.32, 6.48 and 6.32 s), and the voice starts 40 ms in.
+
 ## Sources
 
 - https://github.com/meituan-longcat/LongCat-Video (code, MIT, run commands)
