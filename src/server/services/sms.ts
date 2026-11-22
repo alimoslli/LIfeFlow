@@ -1,5 +1,5 @@
 import { randomInt, timingSafeEqual } from "node:crypto";
-import { eq, lt } from "drizzle-orm";
+import { eq, lt, sql } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { smsInbound, users, type UserPreferences } from "../db/schema";
 import { normalizePhone, sendSms, smsConfig, type SmsConfig } from "../integrations/twilio";
@@ -17,7 +17,8 @@ type Sms = NonNullable<UserPreferences["sms"]>;
 const CODE_MINUTES = 10;
 const SENDS_PER_ACCOUNT_HOUR = 5;
 const SENDS_PER_NUMBER_HOUR = 3;
-const TRIES_PER_CODE_WINDOW = 5;
+const TRIES_PER_CODE = 5;
+const TRIES_PER_ACCOUNT_HOUR = 10;
 /** A keyed hash bound to the account and number, so a leaked row can't be brute-forced offline and a code works only where it was sent. */
 const hash = (userId: string, phone: string, code: string) => keyedHash("sms-link-code", `${userId}:${phone}:${code}`);
 const CLASH = "That number can't be linked. Try a different one.";
@@ -46,13 +47,15 @@ export async function startPhoneLink(db: Database, userId: string, raw: string, 
   if (!cfg) throw new ServiceError("Texting isn't available yet.");
   const phone = normalizePhone(raw);
   if (!phone) throw new ServiceError("Enter your mobile number, like (404) 555-0134 or +44 7700 900123.");
-  const [taken] = await db.select({ id: users.id }).from(users).where(eq(users.smsPhone, phone));
-  if (taken && taken.id !== userId) throw new ServiceError(CLASH); // never says the number is linked elsewhere
-  // Limits count before the text goes out: per account and per number (the number key is hashed, never the digits).
+  // Limits count first, for every number, so checking numbers one after another is limited (the number key is hashed, never the digits).
   if (!(await rateLimit(db, `sms-link:send:user:${userId}`, SENDS_PER_ACCOUNT_HOUR, 3600)).allowed)
     throw new ServiceError("Too many codes sent. Try again in an hour.");
   if (!(await rateLimit(db, `sms-link:send:phone:${keyedHash("sms-link-phone", phone)}`, SENDS_PER_NUMBER_HOUR, 3600)).allowed)
     throw new ServiceError("Too many codes sent to that number. Try again in an hour.");
+  // A number linked to another account answers exactly like a free one but sends nothing, so nobody can tell them apart;
+  // the code never reaches anyone, so verify fails as a wrong code, and verify re-checks the number before linking.
+  const [taken] = await db.select({ id: users.id }).from(users).where(eq(users.smsPhone, phone));
+  const linkedElsewhere = !!taken && taken.id !== userId;
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
   await setSms(db, userId, {
     pendingPhone: phone,
@@ -60,6 +63,7 @@ export async function startPhoneLink(db: Database, userId: string, raw: string, 
     codeExpiresAt: new Date(Date.now() + CODE_MINUTES * 60_000).toISOString(),
     attempts: 0,
   });
+  if (linkedElsewhere) return phone;
   await sendSms(cfg, phone, `Your LifeFlow code is ${code}. It expires in ${CODE_MINUTES} minutes.`, fetchImpl);
   return phone;
 }
@@ -69,8 +73,19 @@ export async function verifyPhoneLink(db: Database, userId: string, code: string
   const s = u.preferences.sms;
   if (!s?.pendingPhone || !s.codeHash || !s.codeExpiresAt) throw new ServiceError("Send a code first.");
   if (new Date(s.codeExpiresAt) < new Date()) throw new ServiceError("That code expired. Send a new one.");
-  // One atomic counter row decides every guess, so parallel guesses can't pass 5 tries (a new code doesn't reset it).
-  if (!(await rateLimit(db, `sms-link:try:user:${userId}`, TRIES_PER_CODE_WINDOW, CODE_MINUTES * 60)).allowed)
+  // One conditional UPDATE counts each guess against this code (attempts < 5), so parallel guesses can't pass 5 and no clock edge adds more.
+  const counted = await db
+    .update(users)
+    .set({
+      preferences: sql`jsonb_set(${users.preferences}, '{sms,attempts}', to_jsonb(coalesce((${users.preferences}->'sms'->>'attempts')::int, 0) + 1))`,
+    })
+    .where(
+      sql`${users.id} = ${userId} and ${users.preferences}->'sms'->>'codeHash' = ${s.codeHash} and coalesce((${users.preferences}->'sms'->>'attempts')::int, 0) < ${TRIES_PER_CODE}`,
+    )
+    .returning({ id: users.id });
+  if (counted.length === 0) throw new ServiceError("Too many tries. Wait a few minutes and send a new code.");
+  // A new code starts its own 5, so the account also has an hourly cap on all guesses.
+  if (!(await rateLimit(db, `sms-link:try:user:${userId}`, TRIES_PER_ACCOUNT_HOUR, 3600)).allowed)
     throw new ServiceError("Too many tries. Wait a few minutes and send a new code.");
   const phone = s.pendingPhone;
   const ok = timingSafeEqual(Buffer.from(hash(userId, phone, code.trim())), Buffer.from(s.codeHash));
@@ -83,8 +98,11 @@ export async function verifyPhoneLink(db: Database, userId: string, code: string
       .update(users)
       .set({ smsPhone: phone, preferences: { ...u.preferences, sms: { money: s.money, conversationId: s.conversationId } } })
       .where(eq(users.id, userId));
-  } catch {
-    throw new ServiceError(CLASH);
+  } catch (e) {
+    // Only the unique violation (the number was linked meanwhile) reads as the clash; real errors must reach error_reports.
+    const code = (e as { code?: string; cause?: { code?: string } })?.code ?? (e as { cause?: { code?: string } })?.cause?.code;
+    if (code === "23505") throw new ServiceError(CLASH);
+    throw e;
   }
   return phone;
 }

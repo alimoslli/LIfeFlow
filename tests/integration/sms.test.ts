@@ -63,7 +63,8 @@ describe("texting Jarvis", () => {
     expect(await verifyPhoneLink(db, user.id, code)).toBe("+14045550134");
     expect(await userForPhone(db, "404-555-0134")).toBe(user.id);
     const other = await makeUser("Other");
-    await expect(startPhoneLink(db, other.user.id, "4045550134", CFG, t.fetchImpl)).rejects.toThrow(/can't be linked/);
+    expect(await startPhoneLink(db, other.user.id, "4045550134", CFG, t.fetchImpl)).toBe("+14045550134"); // looks like a free number; nothing is sent
+    await expect(verifyPhoneLink(db, other.user.id, "123456")).rejects.toThrow(/doesn't match/);
 
     const send = async (to: string, text: string) => t.sent.push({ to, body: text });
     const deps = { provider: () => new ScriptedProvider(), send };
@@ -120,15 +121,89 @@ describe("phone-link code limits", () => {
     await startPhoneLink(db, user.id, "(404) 555-0211", CFG, t.fetchImpl);
     const code = t.sent[0].body.match(/\d{6}/)![0];
     const wrong = code === "000000" ? "111111" : "000000";
+    vi.useFakeTimers({ toFake: ["Date"], now: Date.UTC(2026, 5, 1, 12, 5, 0) }); // mid-block, so the 10-minute edge can't land inside the run
     const results = await Promise.allSettled(Array.from({ length: 40 }, () => verifyPhoneLink(db, user.id, wrong)));
     const checked = results.filter((r) => r.status === "rejected" && /doesn't match/.test(String(r.reason))).length;
     expect(checked).toBe(5);
     await expect(verifyPhoneLink(db, user.id, code)).rejects.toThrow(/Too many tries/);
+    vi.useRealTimers();
     const b = await makeUser("Sender");
     for (let i = 0; i < 3; i++) await startPhoneLink(db, b.user.id, "(404) 555-0212", CFG, t.fetchImpl);
     await expect(startPhoneLink(db, b.user.id, "(404) 555-0212", CFG, t.fetchImpl)).rejects.toThrow(/Too many codes/);
     await startPhoneLink(db, b.user.id, "(404) 555-0213", CFG, t.fetchImpl);
     await expect(startPhoneLink(db, b.user.id, "(404) 555-0214", CFG, t.fetchImpl)).rejects.toThrow(/Too many codes/);
+  });
+});
+
+describe("phone-link review fixes", () => {
+  it("a number linked elsewhere looks like a free one (same answer, no text) and its checks hit the limit", async () => {
+    const db = getDb();
+    const owner = await makeUser("Own");
+    const t = twilio();
+    await startPhoneLink(db, owner.user.id, "(404) 555-0301", CFG, t.fetchImpl);
+    await verifyPhoneLink(db, owner.user.id, t.sent[0].body.match(/\d{6}/)![0]);
+    const nosy = await makeUser("Nosy");
+    const before = t.sent.length;
+    expect(await startPhoneLink(db, nosy.user.id, "(404) 555-0301", CFG, t.fetchImpl)).toBe("+14045550301");
+    expect(t.sent.length).toBe(before); // nothing goes to the owner's phone
+    await expect(verifyPhoneLink(db, nosy.user.id, "123456")).rejects.toThrow(/doesn't match/);
+    let limited = 0;
+    for (let i = 0; i < 6; i++)
+      await startPhoneLink(db, nosy.user.id, "(404) 555-0301", CFG, t.fetchImpl).catch((e) =>
+        /Too many codes/.test(String(e)) ? limited++ : Promise.reject(e),
+      );
+    expect(limited).toBeGreaterThan(0);
+  });
+
+  it("one code gets 5 checked guesses even across a 10-minute edge", async () => {
+    const db = getDb();
+    const { user } = await makeUser("Edge");
+    const t = twilio();
+    const edge = Date.UTC(2026, 5, 1, 12, 10, 0);
+    vi.useFakeTimers({ toFake: ["Date"], now: edge - 60_000 });
+    try {
+      await startPhoneLink(db, user.id, "(404) 555-0302", CFG, t.fetchImpl);
+      const code = t.sent[0].body.match(/\d{6}/)![0];
+      const wrong = code === "000000" ? "111111" : "000000";
+      const outcome = async () =>
+        verifyPhoneLink(db, user.id, wrong).then(
+          () => "ok",
+          (e) => (/doesn't match/.test(String(e)) ? "checked" : "blocked"),
+        );
+      const seen: string[] = [];
+      for (let i = 0; i < 3; i++) seen.push(await outcome());
+      vi.setSystemTime(edge + 60_000);
+      for (let i = 0; i < 6; i++) seen.push(await outcome());
+      expect(seen.filter((x) => x === "checked").length).toBe(5);
+      await expect(verifyPhoneLink(db, user.id, code)).rejects.toThrow(/Too many tries/);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("only a unique violation reads as the clash; any other database error is rethrown", async () => {
+    const db = getDb();
+    const { user } = await makeUser("Err");
+    const t = twilio();
+    await startPhoneLink(db, user.id, "(404) 555-0303", CFG, t.fetchImpl);
+    const code = t.sent[0].body.match(/\d{6}/)![0];
+    // the first update counts the guess; the second is the link itself
+    const failing = (err: unknown) => {
+      let calls = 0;
+      return new Proxy(db, {
+        get: (target, prop, recv) => {
+          if (prop !== "update") return Reflect.get(target, prop, recv);
+          return (...a: Parameters<typeof db.update>) => {
+            if (++calls === 2) throw err;
+            return target.update(...a);
+          };
+        },
+      }) as typeof db;
+    };
+    const boom = new Error("connection terminated");
+    await expect(verifyPhoneLink(failing(boom), user.id, code)).rejects.toBe(boom);
+    const dup = Object.assign(new Error("duplicate key"), { code: "23505" });
+    await expect(verifyPhoneLink(failing(dup), user.id, code)).rejects.toThrow(/can't be linked/);
   });
 });
 
