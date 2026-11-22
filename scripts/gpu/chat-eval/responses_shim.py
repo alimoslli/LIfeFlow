@@ -240,6 +240,7 @@ def known_numbers(msgs):
     return seen
 
 
+LOOKS = ("get_agenda", "find_free_time", "life_load", "get_daily_briefing", "tonight")
 CLAIMS_SAVE = re.compile(r"^\W*(done[.!,]?\s+)?(i('ve| have)?\s+)?(added|booked|saved|scheduled|created|blocked|logged|moved|deleted|removed|marked|updated|rescheduled|cancell?ed|set up|put)\b", re.I)
 WORD_LIMIT = 100
 
@@ -257,6 +258,11 @@ def guard_notes(original, msg):
     if writes and only_a_question(last_user(original)):
         return ["They only asked whether it would fit or work. They did not ask you to save anything, so do not call " + ", ".join(writes) +
                 ". Answer the question from what you have and offer to save it."]
+    # Look before you book: a calendar save with no look at the calendar first in this message is sent back, so a clash is
+    # caught before it is saved, not after (2026-11-22: it saved a gym class on top of a shift, then warned about it).
+    if "create_events" in calls and not any(u in LOOKS for u in used_calls(original)):
+        return ["Look before you book: call get_agenda for that day first (or find_free_time), so a clash is caught before anything is saved. "
+                "If the time is taken, say so and book nothing."]
     if calls:
         return []
     notes = []
