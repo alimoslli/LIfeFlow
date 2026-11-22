@@ -274,6 +274,7 @@ def cut_off(msg):
 
 
 MAY_DO_UNASKED = {"create_events", "create_tasks", "save_memory", "make_promise", "update_assignment", "update_task", "update_event", "resolve_promise"}
+SKIP_IT = re.compile(r"\b(skip|skipping|ditch|ditching|bail on|blow off)\b[^.!?\n]{0,40}\b(class|lecture|lab|shift|work|sleep|breakfast|lunch|dinner)\b", re.I)
 EXPECTED_PAY = re.compile(r"\b(paycheck|pay ?check|deposit|payday|get paid|gets? paid)\b(?:[^.!?\n]|\.\d){0,140}\b(cover|covers|make up|makes up|take care of|fix|fixes|solve|solves|close the gap|closes the gap)\b", re.I)
 BREAKDOWN = re.compile(r"break (it|this|that|the [^.?!]{0,40}) down|feels? (so |too |really )?(huge|massive|impossible|big)|where (do|would) i (even )?(start|begin)", re.I)
 
@@ -442,6 +443,10 @@ def guard_notes(original, msg):
     if "Be alive" in (APPEND or "") and BREAKDOWN.search(last_user(original) or "") and "create_tasks" not in used_calls(original):
         return ["They asked you to break it down. Do it, do not offer it: call create_tasks now with three to five steps, each with its own "
                 "due day before the deadline (the first one today or tomorrow). Then say the steps in one line each and that they are on the to-do list."]
+    # It once told a student to "skip the BIO 110 class at 10:00 AM if you want the full block". The skyling plans around
+    # classes, shifts and sleep; it never trades them away.
+    if SKIP_IT.search(text):
+        notes.append("Never suggest skipping a class, a shift, a meal or sleep. Take that out and plan around it.")
     # The owner's rule: pay that has not landed is never counted. "Your paycheck ... would cover it" is sent back.
     if EXPECTED_PAY.search(text):
         notes.append("Money that has not arrived is not money. Do not say a paycheck or deposit will cover, fix or make up anything. "
