@@ -297,6 +297,8 @@ const ALIVE: Q[] = [
     tools: [["check_affordability"], ["money_overview"]],
     budget: 2,
     facts: ["842", "950"],
+    // pay that has not landed is never counted (owner's rule); the first run said "your paycheck ... would cover the shortfall"
+    mustNot: ["(paycheck|deposit|pay)[^.]{0,80}(cover|make up|take care of)"],
     noWrites: true,
     never: NEVER_ALONE,
     perfect:
@@ -431,9 +433,10 @@ const CURIOUS: Q[] = [
     kind: "curious: a hello gets a hello with life in it and one question about them",
     turns: ["hey"],
     tools: [[]],
-    budget: 1,
-    facts: ["maya", "\\?"],
-    mustNot: NOT_A_HELPDESK,
+    budget: 2,
+    // a hello with their day in it, not "what's on your mind" (first run, 2026-11-22)
+    facts: ["maya", "\\?", "bio|class|shift|coffee|essay|exam|library"],
+    mustNot: [...NOT_A_HELPDESK, "what's on your mind"],
     noWrites: true,
     never: NEVER_LIFE,
     perfect: "Hey Maya! BIO at 10, then a clear stretch until your 4:00 PM shift. How are you feeling about the exam on Thursday?",

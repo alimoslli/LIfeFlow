@@ -337,7 +337,8 @@ def call_upstream(body):
         if notes:
             again = [dict(x) for x in sent]
             again[-1]["content"] = (again[-1]["content"] or "") + "\n\n<house_check>\n" + "\n".join("- " + n for n in notes) + "\n</house_check>"
-            second = post({**req, "messages": again})
+            # a cut sentence tends to be cut again at the same word: a warmer second try takes another path
+            second = post({**req, "messages": again, **({"temperature": 0.7} if cut_off(m) else {})})
             # the second reply is kept only when it has fewer problems; otherwise the first stands (never a loop)
             if len(guard_notes(original, second["choices"][0]["message"])) < len(notes):
                 for k in ("prompt_tokens", "completion_tokens", "total_tokens"):
@@ -345,6 +346,12 @@ def call_upstream(body):
                 chat = second
                 chat["guard"] = notes[0][:80]
         m = chat["choices"][0]["message"]
+        # Still cut after both tries: end at the last whole sentence rather than show half a word.
+        if cut_off(m):
+            whole = re.match(r"(?s)(.*[.?!])\s+\S[^.?!]*$", (m.get("content") or "").strip())
+            if whole and len(whole.group(1)) > 40:
+                m["content"] = whole.group(1)
+                chat["guard"] = "trimmed a cut sentence"
         # One tool call per step: the model then reads each result (and the reminder with the count) before it may call again.
         if len(m.get("tool_calls") or []) > 1:
             m["tool_calls"] = m["tool_calls"][:1]
