@@ -50,6 +50,8 @@ export default defineConfig({
         VAPID_PRIVATE_KEY: vapid.privateKey,
         VAPID_SUBJECT: "mailto:e2e@example.com",
         INBOX_DOMAIN: "in.example.com",
+        // the moment question is off in production until the owner decides (docs/backlog/2026-11-22-adhd-six.md); on here so it is tested
+        MOMENT_QUESTIONS: "on",
         INBOX_WEBHOOK_SECRET: "e2e-inbox-secret",
         ADMIN_EMAILS: "admin-owner@example.com",
         // no email service in the tests, whatever this machine has set (the waitlist confirm card answers "isn't available yet")
