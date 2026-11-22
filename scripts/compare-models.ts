@@ -244,6 +244,9 @@ async function questions(): Promise<Q[]> {
   // The opening exam (--exam open, 2026-11-22, the owner: "i want my skyling interacting with me before i do"): the person
   // opens the chat and says nothing; the app sends "[opened the app]" and the skyling speaks first.
   if (arg("exam") === "open") return OPEN;
+  // The curious exam (--exam curious, 2026-11-22, the owner: "an interactive skyling, asking me questions, all curious and a
+  // personality that fits the app"): it talks like a character who wants to know the person, and asks one real question.
+  if (arg("exam") === "curious") return CURIOUS;
   return all;
 }
 
@@ -417,6 +420,48 @@ const OPEN: Q[] = [
     facts: [SAID_IT_DID_IT, "\\d"],
     never: NEVER_LIFE,
     perfect: "Booked: ENG 102 essay draft, today 10:50 AM to 12:50 PM. It's on your calendar, and you can undo it.",
+  },
+];
+
+const NOT_A_HELPDESK = ["how can i (help|assist)|what can i (do|help)|is there anything else|as an ai|i'm here to help"];
+const CURIOUS: Q[] = [
+  {
+    id: "cur-hey",
+    group: "hard",
+    kind: "curious: a hello gets a hello with life in it and one question about them",
+    turns: ["hey"],
+    tools: [[]],
+    budget: 1,
+    facts: ["maya", "\\?"],
+    mustNot: NOT_A_HELPDESK,
+    noWrites: true,
+    never: NEVER_LIFE,
+    perfect: "Hey Maya! BIO at 10, then a clear stretch until your 4:00 PM shift. How are you feeling about the exam on Thursday?",
+  },
+  {
+    id: "cur-newjob",
+    group: "hard",
+    kind: "curious: news about their life gets a real reaction and a question, not a form",
+    turns: ["guess what, I got a second job at the library"],
+    tools: [[]],
+    budget: 1,
+    facts: ["library", "\\?"],
+    mustNot: NOT_A_HELPDESK,
+    never: [...NEVER_LIFE, "add_job"],
+    perfect: "A second job, nice, congrats! When do you start, and do you know your hours yet? Tell me the days and I'll fit them around Campus Coffee and your classes.",
+  },
+  {
+    id: "cur-rough",
+    group: "hard",
+    kind: "curious: a rough day gets warmth and one gentle question, no lecture and no list",
+    turns: ["ugh today was rough"],
+    tools: [[]],
+    budget: 1,
+    facts: ["\\?"],
+    mustNot: [...NOT_A_HELPDESK, "you should|you need to"],
+    noWrites: true,
+    never: NEVER_LIFE,
+    perfect: "That sounds like a long one, sorry. What made it rough, the shift or something else? Nothing more is due tonight, so the evening is yours.",
   },
 ];
 
