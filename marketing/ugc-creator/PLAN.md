@@ -26,24 +26,19 @@ Brief: the COO for the owner, 2026-11-22. One recurring made-up student who make
 - When posted, the TikTok and Instagram AI-generated label is on.
 - ADHD angle: speaks to people who find starting hard. Never "do you have ADHD", no medical claims (research: docs/research/2026-11-22-adhd-first.md on claude/adhd-six).
 
-## Three scripts (20 to 30 seconds)
+## The reel (owner, 2026-11-22: one real-looking UGC reel, a strong hook, LifeFlow shown clearly)
 
-**1. "Starting is the hard part" (dorm, night, about 26 s)**
-> Okay, um. Real talk. My problem was never doing the work. It's *starting* it. Like, I'll stare at my laptop for an hour. So, this app, LifeFlow. Look. My whole day, on one wheel: class, my shift, the quiz that's due. And if something's big, I tap "plan it" and my skyling helps me break it into a first step. Small enough to actually start. That's... kind of the whole thing.
+Jordan has ADHD himself and talks about it the way ADHD creators do, through his own day. He never tells the viewer they have ADHD and never says the app treats or fixes anything; it just makes his days easier. The heart, per the owner: his whole messy week in one glance on the wheel, the skyling planning and organizing it for him, and the timeline that is simple to open. No lists to read: look and know. Left out because they are held: Start it, the class heads-up, Back on track.
 
-App inserts: Today with the day wheel; the "Plan it with Goldie" card.
+**Three hooks for the first 1 to 2 seconds (pick one):**
+1. He holds the phone up to the lens, the wheel filling the frame: "This is my entire week. One circle."
+2. Straight to camera, deadpan: "I have ADHD. To-do lists don't work on me."
+3. A real moment: he stares at a long to-do list on his laptop, closes it: "Yeah, I'm not reading that." Then the wheel.
 
-**2. "Today doesn't fit" (car, late afternoon, about 24 s)**
-> So I'm sitting in the parking lot because, uh... today was never gonna work. Class, then work, then studying for a quiz. And LifeFlow just says it. Look: "Today is too full, about two hours more than fits." And it shows you why. Then I can lighten the day instead of, like, pretending.
+**The script (dorm at night, about 25 s), after the hook:**
+> I have ADHD, so, um... lists don't work on me. I read the first line and I'm gone. So this is my whole week. One wheel. Class, work, the gym, the quiz. It's all just... there. My skyling put it together for me. And if I want the details, I tap the day, and it's one line. What's now, what's next. I look, I know. That's it.
 
-App inserts: Calendar "Your week" with the too-full day, tap the day, "Lighten this day with Goldie".
-
-**3. "It gave me a date" (kitchen, morning, about 22 s)**
-> Okay, this is a little embarrassing. The money tab doesn't just show what you spent. Look, it gives you a date. The day you'd run out if you keep spending like this. And it flags bills that might not go through. Like, before it happens. Which, honestly? Fair.
-
-App inserts: Money "Heads up" card with the run-out date, then the next 30 days bar.
-
-All app wording is from the real app's demo screens of 2026-11-20; it is checked again on production before recording.
+App inserts, full screen from production on the demo account: the wheel (hold 2 s), the skyling and the planned day, the tap that opens the timeline, a slow scroll along it. The wheel and the skylings animate around him while he talks about them.
 
 ## Credit quote per video
 
