@@ -25,23 +25,30 @@ export default async function FocusPage({ searchParams }: { searchParams: Promis
   let data;
   try {
     data = await withCurrentUser(async (scope, user) => {
-    const tz = user.timezone || "UTC";
-    const now = new Date();
-    const thing =
-      target.origin === "task"
-        ? await getTask(scope, target.id).then((t) => ({ title: t.title, kind: "task", done: t.status === "done", course: null as string | null }))
-        : await getAssignment(scope, target.id).then((a) => ({ title: a.title, kind: a.kind as string, done: a.status === "done", course: a.course.code ?? a.course.name }));
-    // the next fixed thing (a class, shift, meeting or exam) in the next day, so the screen can say when to wrap up
-    const today = todayIn(tz, now);
-    const next = (await busyAgenda(scope, tz, today, addDaysStr(today, 1), { now })).filter((i) => i.blocksTime && i.startsAt > now).sort((a, b) => +a.startsAt - +b.startsAt)[0];
-    return {
-      ...thing,
-      step: firstStep(thing.kind, thing.title),
-      name: assistantProfile(user.preferences, user.timezone).name,
-      companion: user.preferences?.companion ?? null,
-      next: next ? { title: next.title, at: next.startsAt.toISOString(), clock: formatIn(next.startsAt, tz, "h:mm a") } : null,
-      headsUp: headsUpMinutes(user.preferences),
-    };
+      const tz = user.timezone || "UTC";
+      const now = new Date();
+      const thing =
+        target.origin === "task"
+          ? await getTask(scope, target.id).then((t) => ({ title: t.title, kind: "task", done: t.status === "done", course: null as string | null }))
+          : await getAssignment(scope, target.id).then((a) => ({
+              title: a.title,
+              kind: a.kind as string,
+              done: a.status === "done",
+              course: a.course.code ?? a.course.name,
+            }));
+      // the next fixed thing (a class, shift, meeting or exam) in the next day, so the screen can say when to wrap up
+      const today = todayIn(tz, now);
+      const next = (await busyAgenda(scope, tz, today, addDaysStr(today, 1), { now }))
+        .filter((i) => i.blocksTime && i.startsAt > now)
+        .sort((a, b) => +a.startsAt - +b.startsAt)[0];
+      return {
+        ...thing,
+        step: firstStep(thing.kind, thing.title),
+        name: assistantProfile(user.preferences, user.timezone).name,
+        companion: user.preferences?.companion ?? null,
+        next: next ? { title: next.title, at: next.startsAt.toISOString(), clock: formatIn(next.startsAt, tz, "h:mm a") } : null,
+        headsUp: headsUpMinutes(user.preferences),
+      };
     });
   } catch (e) {
     // a thing that's gone or isn't theirs goes back to Today; the session's own redirects pass through

@@ -13,6 +13,7 @@ import { haptic } from "@/lib/haptics";
 /** Compact titles and back targets for the phone app bar. Detail views get a back button. */
 const ROUTES: { test: RegExp; title: string; back?: string }[] = [
   { test: /^\/$/, title: "Today" },
+  { test: /^\/focus$/, title: "Start it", back: "/" },
   { test: /^\/plan$/, title: "Calendar", back: "/" },
   { test: /^\/calendar/, title: "Calendar", back: "/" },
   { test: /^\/tasks\/[^/]+$/, title: "To-do", back: "/tasks" },
