@@ -58,8 +58,8 @@ test("HQ on a phone: no sideways scroll, big room targets, no serious accessibil
   await page.goto("/admin");
   // The penthouse (not a link: desk, yes and Goodnight buttons) and the seven employee rooms.
   const rooms = page.locator(".hq-room:not(.hq-room-lounge)");
-  await expect(rooms).toHaveCount(8);
-  for (let i = 0; i < 8; i++) {
+  await expect(rooms).toHaveCount(9);
+  for (let i = 0; i < 9; i++) {
     const box = await rooms.nth(i).boundingBox();
     expect(box?.height ?? 0, `room ${i}`).toBeGreaterThanOrEqual(44);
   }
@@ -70,7 +70,7 @@ test("HQ on a phone: no sideways scroll, big room targets, no serious accessibil
     expect(Math.abs(boxes[i].width - founder.width), `room ${i} width`).toBeLessThan(2);
     expect(boxes[i].y, `room ${i} below room ${i - 1}`).toBeGreaterThan(boxes[i - 1].y + boxes[i - 1].height - 1);
   }
-  for (const label of ["Penthouse", "Floor 7", "Floor 6", "Floor 5", "Floor 4", "Floor 3", "Floor 2", "Floor 1", "Lobby"])
+  for (const label of ["Penthouse", "Floor 8", "Floor 7", "Floor 6", "Floor 5", "Floor 4", "Floor 3", "Floor 2", "Floor 1", "Lobby"])
     await expect(page.locator(".hq-slab:visible", { hasText: new RegExp(`^${label}$`) })).toHaveCount(1);
   // The roof carries the sign.
   await expect(page.locator(".hq-roof-sign")).toHaveText("LifeFlow HQ");

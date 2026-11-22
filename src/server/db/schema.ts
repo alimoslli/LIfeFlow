@@ -1891,8 +1891,8 @@ export const pendingActions = pgTable(
 // requireAdmin() (pages and actions) or an HQ key (the /api/hq routes). Never put app users' content here.
 
 /** The five HQ employees. The founder is the owner, not a row. */
-/** The six departments plus the COO ("assistant", the head manager the CEO talks to; company.md). */
-export const HQ_ROLES = ["developer", "designer", "researcher", "marketing", "qa", "support", "assistant"] as const;
+/** The seven departments (AI Lab added 2026-11-21) plus the COO ("assistant", the head manager the CEO talks to; company.md). */
+export const HQ_ROLES = ["developer", "designer", "researcher", "marketing", "qa", "support", "assistant", "ailab"] as const;
 export type HqRole = (typeof HQ_ROLES)[number];
 export type HqLink = { label: string; url: string };
 export type HqSource = "owner" | "agent" | "import";

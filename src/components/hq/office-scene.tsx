@@ -1,7 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { BriefcaseBusiness, CodeXml, Crown, HeartHandshake, Megaphone, Moon, PenTool, Search, ShieldCheck, Sofa, Sun, type LucideIcon } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  CodeXml,
+  Crown,
+  FlaskConical,
+  HeartHandshake,
+  Megaphone,
+  Moon,
+  PenTool,
+  Search,
+  ShieldCheck,
+  Sofa,
+  Sun,
+  type LucideIcon,
+} from "lucide-react";
 import type { OfficeSnapshot, EmployeeCard } from "@/server/hq/types";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { goodnightAction, lightsOnAction } from "@/app/admin/hq/actions";
@@ -38,6 +52,7 @@ const ICON: Record<string, LucideIcon> = {
   developer: CodeXml,
   designer: PenTool,
   researcher: Search,
+  ailab: FlaskConical,
   marketing: Megaphone,
   qa: ShieldCheck,
   support: HeartHandshake,
@@ -229,27 +244,30 @@ export function OfficeScene({ snapshot, desk }: { snapshot: OfficeSnapshot; desk
       <div className="hq-floors">
         <Slab>Penthouse</Slab>
         <Penthouse pending={n} desk={desk} />
-        <Slab on="p">Floor 7</Slab>
+        <Slab on="p">Floor 8</Slab>
         <Slab on="t">Floor 4</Slab>
         {room("assistant")}
-        <Slab on="p">Floor 6</Slab>
+        <Slab on="p">Floor 7</Slab>
         <Slab on="d">Floor 2</Slab>
         {room("developer")}
-        <Slab on="p">Floor 5</Slab>
+        <Slab on="p">Floor 6</Slab>
         <Slab on="t">Floor 3</Slab>
         {room("designer")}
-        <Slab on="p">Floor 4</Slab>
+        <Slab on="p">Floor 5</Slab>
         {room("researcher")}
-        <Slab on="p">Floor 3</Slab>
+        <Slab on="p">Floor 4</Slab>
         <Slab on="t">Floor 2</Slab>
         <Slab on="d">Floor 1</Slab>
         {room("marketing")}
-        <Slab on="p">Floor 2</Slab>
+        <Slab on="p">Floor 3</Slab>
         {room("qa")}
-        <Slab on="p">Floor 1</Slab>
-        <Slab on="t">Ground</Slab>
+        <Slab on="p">Floor 2</Slab>
+        <Slab on="t">Floor 1</Slab>
         {room("support")}
-        <Slab on="pd">Lobby</Slab>
+        <Slab on="p">Floor 1</Slab>
+        <Slab on="d">Ground</Slab>
+        {room("ailab")}
+        <Slab on="pt">Lobby</Slab>
         <div className="hq-room hq-room-lounge" data-state="lounge">
           <div className="hq-stage">
             <Image

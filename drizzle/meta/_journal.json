@@ -463,6 +463,13 @@
       "when": 1799100000000,
       "tag": "0072_purchase_time",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1799200000000,
+      "tag": "0073_hq_ailab",
+      "breakpoints": true
     }
   ]
 }

@@ -315,10 +315,10 @@ describe("office snapshot, detail, summary", () => {
   afterEach(() => vi.useRealTimers());
   it("is honest with no data", async () => {
     const s = await officeSnapshot(db());
-    expect(s.employees.map((e) => e.role)).toEqual(["assistant", "developer", "designer", "researcher", "marketing", "qa", "support"]);
+    expect(s.employees.map((e) => e.role)).toEqual(["assistant", "developer", "designer", "researcher", "marketing", "qa", "support", "ailab"]);
     // Research, QA and Customer Success work in the COO's rounds (no chat of their own): asleep, never offline.
-    expect(s.employees.map((e) => e.state)).toEqual(["offline", "offline", "offline", "sleeping", "offline", "sleeping", "sleeping"]);
-    expect(s.counts).toEqual({ working: 0, done: 0, ready: 0, asleep: 3, offline: 4 });
+    expect(s.employees.map((e) => e.state)).toEqual(["offline", "offline", "offline", "sleeping", "offline", "sleeping", "sleeping", "offline"]);
+    expect(s.counts).toEqual({ working: 0, done: 0, ready: 0, asleep: 3, offline: 5 });
     expect(s.employees.find((e) => e.role === "qa")?.line).toMatch(/^Wakes (Sun|Tue|Thu) 3:07 AM, night round$/);
     expect(s.employees.every((e) => e.note === null)).toBe(true);
     expect(s.budget).toMatchObject({ weekPct: null, roundsPct: null, target: 40, ceiling: 50 });

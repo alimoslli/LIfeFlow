@@ -54,6 +54,12 @@ test("The desk: the pile opens the files, a file plays the MacBook and lands in 
   expect(Math.abs(design.y - research.y)).toBeLessThan(2);
   const lobby = (await op.locator(".hq-room-lounge").boundingBox())!;
   expect(lobby.width).toBeGreaterThan(you.width);
+  // The AI Lab is the seventh department: on a wide screen it shares the ground floor with the lobby, below the Support row.
+  const lab = (await op.locator('.hq-room[data-role="ailab"]').boundingBox())!;
+  const support = (await op.locator('.hq-room[data-role="support"]').boundingBox())!;
+  expect(lab.y).toBeGreaterThan(support.y + support.height - 1);
+  expect(Math.abs(lab.y - lobby.y)).toBeLessThan(2);
+  expect(lab.width).toBeLessThan(lobby.width);
   if (SHOTS) await op.locator(".hq-tower").screenshot({ path: `${SHOTS}/office-web.png` });
 
   // The drawn pile is a button.

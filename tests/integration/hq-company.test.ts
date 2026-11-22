@@ -97,7 +97,7 @@ describe("the team", () => {
     vi.setSystemTime(new Date("2026-11-10T10:00:00Z"));
   });
   afterEach(() => vi.useRealTimers());
-  it("has the COO and six departments, in order", () => {
+  it("has the COO and seven departments, in order", () => {
     expect(EMPLOYEES.map((e) => [e.role, e.title])).toEqual([
       ["assistant", "COO"],
       ["developer", "Engineering"],
@@ -106,6 +106,7 @@ describe("the team", () => {
       ["marketing", "Marketing & Growth"],
       ["qa", "Quality & Security"],
       ["support", "Customer Success"],
+      ["ailab", "AI Lab"],
     ]);
     expect(EMPLOYEES.filter((e) => !e.ownChat).map((e) => e.role)).toEqual(["researcher", "qa", "support"]);
     expect(EMPLOYEES.find((e) => e.role === "assistant")?.chatTitle).toBe("LF COO");
@@ -215,7 +216,8 @@ describe("the team", () => {
     expect(card("qa")).toMatchObject({ state: "ready", line: "On call · next round Thu 3:07 AM" });
     expect(card("researcher")).toMatchObject({ state: "ready", line: "On call · next round Thu 3:07 AM" });
     expect(card("designer").state).toBe("offline"); // no chat connected: never "ready"
-    expect(s.counts).toMatchObject({ ready: 4, offline: 3, working: 0 });
+    expect(card("ailab").state).toBe("offline"); // the lab has its own chat, not connected here
+    expect(s.counts).toMatchObject({ ready: 4, offline: 4, working: 0 });
     // A pass running: the COO works, the departments stay ready (passes are his alone).
     await recordCheckin(db(), { sessionId: COS, status: "working", summary: "Pass started" });
     expect(await by("assistant")).toMatchObject({ state: "working", line: "Pass started" });

@@ -1,7 +1,7 @@
 import type { HqRole } from "../db/schema";
 
 /**
- * LifeFlow HQ's seven employees (ADR 0024, 0026): the COO and six departments. They are the face of the owner's real
+ * LifeFlow HQ's eight employees (ADR 0024, 0026): the COO and seven departments. They are the face of the owner's real
  * Claude Code chats: none of them is an AI model of its own, and nothing here runs a model. The founder (the owner) has a room
  * too but is not an employee.
  */
@@ -119,6 +119,21 @@ export const EMPLOYEES: readonly Employee[] = [
     chatTitle: null,
     ownChat: false,
     agent: ".claude/agents/customer-success.md",
+  },
+  {
+    role: "ailab",
+    title: "AI Lab",
+    tagline: "Our own model · GPUs · Scorecards",
+    jobs: [
+      "Our own model: tests open models on rented GPUs and scores each skill",
+      "Runs the skyling bake-offs",
+      "Keeps a scorecard for each skill",
+      "Reports cost and results to the COO",
+    ],
+    workingLine: "Running tests on the GPUs",
+    chatTitle: "GPU rent work",
+    ownChat: true,
+    agent: ".claude/agents/ai-lab.md",
   },
 ];
 

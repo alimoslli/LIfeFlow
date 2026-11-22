@@ -44,6 +44,7 @@ Started 2026-11-08 at the owner's request: "make sure all is in writing and they
 | **LF Managing Agents** | Managing agents, beside the COO (the owner kept it, 2026-11-09) | `session_01Mhcz6BYyF8TLLXwBiWcWyk` | `claude/nightly-audits` | none |
 | **LF Marketing** | Marketing & Growth | `session_01Mhcz6CyarVMRum5SxqLMqM` | `claude/lifeflow-ad-reel-higgsfield-s3r3v1` | 8 |
 | **LF HQ** | HQ: the admin area and the company's tools | `session_01Mhcz6BtYDPTHBytp9oyjLZ` | `claude/sharp-lovelace-8fr6z5` (kept equal to main) | 5 |
+| **GPU rent work** | AI Lab: our own model, open models on rented GPUs, the skyling bake-offs, per-skill scorecards (owner, 2026-11-21) | `session_01Mhcz6BvfTxKDtCuFGxTS8C` | its own | none |
 | HQ sync | A helper: copies every chat's status into HQ hourly. Never needs opening. | `session_01Mhcz6C2smYHWY1gvs4Jt75` | none | none |
 
 Quality & Security, Research & Insights and Customer Success have no chat of their own. They are lead agents (`.claude/agents/*.md`) that the COO runs in the night and Monday rounds.
@@ -380,6 +381,7 @@ Still open:
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-21, LF Main (owner: "yes do it, make sure everything stays simple and easy to organize and manage"): a seventh HQ room, AI Lab (role key `ailab`, agent `.claude/agents/ai-lab.md`), for the own-model and GPU work; its chat is "GPU rent work" (migration `0073_hq_ailab` maps it). It has no round: ready in its chat by day. Its pictures are copies of Research's for now.
 - 2026-11-21, LF Main (owner, on the pictures: "perfect i love it"): the one-page website shipped to main from `claude/one-page-landing`.
 - 2026-11-21, LF Main (owner: "I want it all on one page ... If they're signed in, that page will just be the land where the waitlist is and where they can try the app out"): the one-page website on `claude/one-page-landing`, held for his yes on pictures (spec `docs/backlog/2026-11-21-one-page-website.md`). About and the two people are on the front page; "How the waitlist works" and "Join the waitlist" while the switch is on; `/about` goes to `/#about`; sign-up goes straight to the waitlist with the birthday asked first (under 13 locks as in setup) and setup waits until they're let in.
 - 2026-11-21, LF Main (owner: "A, B, C ... I approve with your recommendations"): the clouds branch (`claude/pensive-mendel-r1yy4a`) is brought over in pieces that fit Today v2, on `claude/clouds-port`: purchases on the timeline with the day's total as a floating coin (migration renumbered to 0072), the useful sky (study blocks before exams, a head start, Tonight, free gaps, the Sunday look at 6 PM) shown by Today's note only when nothing real is in the next 24 hours and by the idea clouds on the skyling's page and a laptop, and Gmail on with the connection (AI allowed, not for idle accounts) with the COO's three rounds of review fixes. Not brought over: the thought-cloud note and the swipeable strip, which Today v2 replaced.

@@ -52,11 +52,11 @@ test("HQ: the office, work (missions, approvals, report) and keys work end to en
   await pool.query("truncate hq_missions, hq_approvals, hq_activity, hq_keys, hq_chats, hq_usage_samples, hq_briefs cascade");
   const op = await ownerPage(browser);
 
-  // The office: seven employee rooms (links), the penthouse (not a link: it has the desk, the yes and Goodnight buttons), plain counts.
+  // The office: eight employee rooms (links), the penthouse (not a link: it has the desk, the yes and Goodnight buttons), plain counts.
   expect((await op.goto("/admin"))?.status()).toBe(200);
   await expect(op.getByRole("heading", { level: 1, name: /^Good (morning|afternoon|evening), Owner\.$/ })).toBeVisible();
   const rooms = op.locator("a.hq-room");
-  await expect(rooms).toHaveCount(7);
+  await expect(rooms).toHaveCount(8);
   await expect(op.getByRole("link", { name: /^COO\s*,/ })).toBeVisible();
   await expect(op.getByTestId("hq-cmo")).toHaveText("CMO · Your partner · Coming soon");
   await expect(op.getByRole("button", { name: "Goodnight" })).toBeVisible();
@@ -78,7 +78,7 @@ test("HQ: the office, work (missions, approvals, report) and keys work end to en
   await expect(op.locator("a.hq-room")).toHaveCount(0);
   await expect(op.getByRole("heading", { name: "Research & Insights", level: 2 })).toBeVisible();
   await op.getByRole("link", { name: "Office", exact: true }).first().click();
-  await expect(op.locator("a.hq-room")).toHaveCount(7);
+  await expect(op.locator("a.hq-room")).toHaveCount(8);
 
   // A mission for Engineering: it shows on their page, moves to doing, then done with a result.
   await op.goto("/admin/work");

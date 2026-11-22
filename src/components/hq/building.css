@@ -226,6 +226,10 @@ a.hq-room:focus-visible {
   .hq-room-founder .hq-stage {
     --ar: 2 / 1;
   }
+  /* The lobby has its own floor under the last pair of rooms, the full width. */
+  .hq-room-lounge {
+    grid-column: 1 / -1;
+  }
 }
 /* Wide: three rooms a floor like the concept; the COO shares the penthouse with you; the lobby runs the full width. */
 @media (min-width: 1024px) {
@@ -246,8 +250,9 @@ a.hq-room:focus-visible {
   .hq-room-founder {
     grid-column: span 2;
   }
+  /* The AI Lab is the seventh department: it takes the ground floor's first place and the lobby the other two. */
   .hq-room-lounge {
-    grid-column: 1 / -1;
+    grid-column: span 2;
   }
   .hq-room[data-role="assistant"] .hq-stage {
     aspect-ratio: auto;
