@@ -12,7 +12,7 @@ import { budgetStatus, spendingByCategory } from "../finance/planning";
 import { listAccounts } from "../finance/accounts";
 import { balancesOf } from "../finance/overview";
 import { flowTotals } from "../finance/totals";
-import { coursesOnCalendar, freeSlots, getAgenda } from "../calendar";
+import { busyAgenda, coursesOnCalendar, freeSlots } from "../calendar";
 import { listHabits, slotMinutes } from "../habits";
 import { listActiveMemories } from "../memory";
 import { listAssignments, listCourses } from "../school";
@@ -363,12 +363,12 @@ async function classTimesOn({ scope, tz }: DetectContext, day: string) {
  * items and class times; none when class times can't be read, or when tomorrow has nothing on it (an empty day means
  * we don't know it, not that it's free).
  */
-async function openSlotTomorrow(ctx: DetectContext, minutes: number, earliest: string | null) {
+export async function openSlotTomorrow(ctx: DetectContext, minutes: number, earliest: string | null) {
   if (!earliest) return null;
   const day = addDaysStr(ctx.today, 1);
   const classes = await classTimesOn(ctx, day);
   if (!classes) return null;
-  const items = [...(await getAgenda(ctx.scope, ctx.tz, day, day, { now: ctx.now })), ...classes];
+  const items = [...(await busyAgenda(ctx.scope, ctx.tz, day, day, { now: ctx.now })), ...classes];
   if (!items.some((i) => i.blocksTime && i.endsAt)) return null;
   const slot = freeSlots(items, day, ctx.tz, earliest, "21:00", minutes)[0];
   return slot ? { date: day, time: localTimeOf(slot.startsAt, ctx.tz) } : null;

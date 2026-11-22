@@ -29,7 +29,7 @@ import { flowTotals } from "../finance/totals";
 import { merchantKey } from "../finance/recurring-detect";
 import { listAssignments } from "../school";
 import { listShifts } from "../work";
-import { getAgenda, freeSlots } from "../calendar";
+import { busyAgenda, freeSlots } from "../calendar";
 import { subscriptionsOverview } from "../finance/subscriptions";
 import { scanTransactions } from "../finance/findings";
 import { transactionsToReview } from "../finance/categorize";
@@ -205,7 +205,7 @@ const deadlineConflicts: Detector = async ({ scope, tz, today, now, fresh }) => 
     // Free time the day before the shift (or today), at least 2 hours.
     let block: { date: string; start: string; end: string } | null = null;
     for (let d = addDaysStr(shift.date, -1); d >= today && !block; d = addDaysStr(d, -1)) {
-      const items = await getAgenda(scope, tz, d, d, { now });
+      const items = await busyAgenda(scope, tz, d, d, { now });
       // from now on: a free day's one long stretch starts at 9 AM, so "starts after now" alone dropped it once the day began
       const slot = freeSlots(items, d, tz, "09:00", "21:00", 120, now).find((x) => x.minutes >= 120);
       if (slot) block = { date: d, start: localTimeOf(slot.startsAt, tz), end: addMinutes(localTimeOf(slot.startsAt, tz), 120) };

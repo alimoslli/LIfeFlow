@@ -235,6 +235,16 @@ async function runSlot(scope: UserScope, tz: string, prefs: UserPreferences | un
   const slot = slotOf(localTime);
   // from the scheduler: not before the slot's time has come (nothing is logged, so the next run tries again)
   if (opts.scheduled && localTime < scheduledFrom(slot, jarvisSettings(prefs).quietEnd)) return [];
+  // Mornings, if the user turned it on: file new school, bill and work emails from Gmail. Never blocks the rest. Claimed on its
+  // own key, and only when it really runs, so a morning run for an idle account doesn't use up the filing for when they open the app.
+  if (slot === "morning" && emailFilingOn(prefs, "gmail") && aiAllowed(prefs) && !opts.idle) {
+    const [filing] = await scope.tx
+      .insert(notificationLog)
+      .values({ userId: scope.userId, key: `filing:${todayIn(tz, now)}:gmail`, title: "morning-gmail" })
+      .onConflictDoNothing()
+      .returning({ id: notificationLog.id });
+    if (filing) await fileFromGmail(scope, tz, todayIn(tz, now)).catch((e) => console.error("[gmail filing]", e instanceof Error ? e.name : e));
+  }
   const [first] = await scope.tx
     .insert(notificationLog)
     .values({ userId: scope.userId, key: `slot:${todayIn(tz, now)}:${slot}`, title: slot })
@@ -247,9 +257,6 @@ async function runSlot(scope: UserScope, tz: string, prefs: UserPreferences | un
   await runInboxCleanupOnce(scope, todayIn(tz, now));
   // Receipts kept while their bank charge hadn't posted ride along on it once it has. Never blocks the rest.
   await attachWaitingReceiptsSafely(scope, todayIn(tz, now));
-  // Mornings, if the user turned it on: file new school, bill and work emails from Gmail. Never blocks the rest.
-  if (slot === "morning" && emailFilingOn(prefs, "gmail") && aiAllowed(prefs) && !opts.idle)
-    await fileFromGmail(scope, tz, todayIn(tz, now)).catch((e) => console.error("[gmail filing]", e instanceof Error ? e.name : e));
   return runProactive({ scope, tz, prefs, trigger: slot, now });
 }
 

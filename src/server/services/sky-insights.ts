@@ -90,7 +90,7 @@ async function emailFinds(scope: UserScope, now: Date): Promise<SkyInsight[]> {
     const f = r.filed.find((x) => !x.stale);
     if (!f) return [];
     const moved = f.kind === "assignment_update";
-    const money = MONEY_FINDS.has(f.kind) || (f.kind === "task" && /^Reminder: pay /.test(f.label));
+    const money = MONEY_FINDS.has(f.kind) || (f.kind === "task" && /^Reminder: pay /.test(f.label)) || hasAmount(f.label);
     return [
       {
         id: `email-${r.id}`,

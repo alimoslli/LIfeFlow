@@ -345,6 +345,22 @@ describe("what it finds lands on the sky, from your email", () => {
     });
   });
 
+  it("any find whose words name an amount counts as money, so the Money lock hides it (night audit, 2026-11-22)", async () => {
+    const { user, run } = await makeUser("Amount Mail");
+    await connect(run);
+    const extract = (async () => ({
+      ...base,
+      type: "delivery",
+      summary: "A $950 desk arrives.",
+      delivery: { item: "$950 desk", carrier: "UPS", expected_date: "2026-11-19" },
+    })) as never;
+    const { f } = fakeGmail(["18c2a1b0f3d4e5d1"]);
+    await run((s) => fileFromGmail(s, TZ, "2026-11-17", { fetch: f, extract }));
+    const sky = (locked: boolean) => run(async (s) => skyInsights(s, await collectSnapshot(s, user, new Date()), { moneyLocked: locked }));
+    expect((await sky(false)).find((i) => i.kind === "from_email")).toMatchObject({ money: true });
+    expect((await sky(true)).some((i) => i.kind === "from_email")).toBe(false);
+  });
+
   it("a bill from email is left out of the sky while the Money lock is on", async () => {
     const { user, run } = await makeUser("Bill Mail");
     await connect(run);
