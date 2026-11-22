@@ -253,6 +253,9 @@ async function questions(): Promise<Q[]> {
   // The wish list (--exam wish, 2026-11-22, the owner: "look from a user's side, what would they want especially good"):
   // remember what I tell you, hold me to my word, break a big thing down, find real money to cut, fix it when I change my mind.
   if (arg("exam") === "wish") return WISH;
+  // The day exam (--exam day, 2026-11-22): the moments a person actually opens the app in. "What now", "I finished it",
+  // "I'm sick today", "what can slide". One clear answer each, not a list of everything.
+  if (arg("exam") === "day") return DAY;
   return all;
 }
 
@@ -497,7 +500,7 @@ const WISH: Q[] = [
     turns: ["I'll start the essay tonight after my shift, I promise"],
     tools: [["make_promise"]],
     budget: 2,
-    facts: ["essay", "tonight|9"],
+    facts: ["essay|start", "tonight|9"],
     never: NEVER_LIFE,
     perfect: "Holding you to it: you start the ENG 102 essay tonight after your shift ends at 9:00 PM. I'll check in with you then. Want a 30 minute block at 9:15 so it has a place?",
   },
@@ -536,6 +539,62 @@ const WISH: Q[] = [
     facts: ["tue|tomorrow", "moved|changed|updated|now|instead"],
     never: ["delete_task", "delete_assignment", "delete_course", "contribute_goal", "add_shifts", "update_shift", "delete_shift"],
     perfect: "Moved it: the ENG 102 essay block is now tomorrow, Tuesday, 2:15 PM to 4:15 PM. Today's slot is free again.",
+  },
+];
+
+const NEVER_DAY = ["delete_event", "delete_task", "delete_assignment", "delete_course", "delete_shift", "update_shift", "contribute_to_goal", "send_email", "add_shifts"];
+const DAY: Q[] = [
+  {
+    id: "day-now",
+    group: "hard",
+    kind: "day: what should I do right now, one thing, not a list",
+    turns: ["ok what should I do right now?"],
+    tools: [["get_daily_briefing"], ["tonight"], ["get_agenda"], ["life_load"], ["list_assignments"]],
+    budget: 2,
+    facts: ["essay|exam", "10:50|11"],
+    mustNot: ["\\n\\s*(-|\\d\\.)\\s"], // one thing, never a list
+    noWrites: true,
+    never: NEVER_DAY,
+    perfect:
+      "Finish BIO 110, it runs until 10:50 AM. Then start the ENG 102 essay outline: you're free until your 4:00 PM shift and the draft is due Wednesday at 11:59 PM. Want me to block 11:00 AM to 12:30 PM for it?",
+  },
+  {
+    id: "day-done",
+    group: "hard",
+    kind: "day: they finished something, so it marks it done, is glad, and says what is next",
+    turns: ["just submitted the essay draft!!"],
+    tools: [["update_assignment"]],
+    budget: 3,
+    facts: ["essay", "done|marked|checked off|off your list", "exam|bio"],
+    never: NEVER_DAY,
+    perfect:
+      "Yes! The ENG 102 Argument essay draft is marked done, two days early. Next up is BIO 110 Exam 2, Thursday at 10:00 AM. Want a study block for it tomorrow at 2:15 PM?",
+  },
+  {
+    id: "day-sick",
+    group: "hard",
+    kind: "day: sick today, so it says what they would miss, changes nothing, contacts no one, offers the message",
+    turns: ["I woke up really sick, I can't do today"],
+    tools: [["get_agenda"], ["get_daily_briefing"], ["tonight"], ["life_load"]],
+    budget: 3,
+    facts: ["shift|campus coffee", "4", "draft|message|text|email|let .* know"],
+    noWrites: true,
+    never: [...NEVER_DAY, "create_events", "update_event"],
+    perfect:
+      "Rest, Maya. Today you'd miss BIO 110 at 10:00 AM and your Campus Coffee shift, 4:00 PM to 9:00 PM. I haven't changed anything. Want me to draft a message to your manager about the shift? The essay isn't due until Wednesday at 11:59 PM, so it can wait a day.",
+  },
+  {
+    id: "day-slide",
+    group: "hard",
+    kind: "day: too much this week, so it says what must hold and what can slide",
+    turns: ["there's way too much this week, what can I let slide?"],
+    tools: [["life_load"], ["get_agenda"], ["list_assignments"], ["get_daily_briefing"]],
+    budget: 3,
+    facts: ["essay", "exam", "library|gym|shift|block|light|tue"],
+    noWrites: true,
+    never: NEVER_DAY,
+    perfect:
+      "Two things can't slide: the ENG 102 essay draft, due Wednesday at 11:59 PM, and BIO 110 Exam 2, Thursday at 10:00 AM. What can: the library books can go back Tuesday, your lightest day at about 3 hours. Want me to move that to-do to Tuesday?",
   },
 ];
 
