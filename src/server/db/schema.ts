@@ -132,7 +132,7 @@ export type UserPreferences = {
   };
   /** Which push notifications the user wants, and when the morning brief arrives (local HH:mm). */
   /** `stars`: a one-line note when a class, shift or plan ends that a star is waiting (services/stars.ts `pushStars`). */
-  notifications?: { reminders?: boolean; bills?: boolean; morningBrief?: boolean; briefTime?: string; budgetAlerts?: boolean; stars?: boolean };
+  notifications?: { reminders?: boolean; bills?: boolean; morningBrief?: boolean; briefTime?: string; budgetAlerts?: boolean; stars?: boolean; /** minutes before a timed class, shift or meeting for the heads-up push (the ADHD helps, item 2); 0 = off */ headsUp?: number };
   assistantVoice?: "alloy" | "ash" | "ballad" | "cedar" | "coral" | "echo" | "marin" | "sage" | "shimmer" | "verse";
 };
 

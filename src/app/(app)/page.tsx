@@ -142,7 +142,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
     const sky = next ? null : ((await skyInsights(scope, snapshot, { moneyLocked: locked }))[0] ?? null);
     // a tap opens that thing's own card on the line (test students: the note opened the Calendar's month grid)
     const note: AssistantNote | null = next
-      ? { id: next.key, text: next.text, tone: "heads-up", href: stopHref(next.key) }
+      ? { id: next.key, text: next.text, tone: "heads-up", href: stopHref(next.key), start: next.start }
       : sky
         ? skyNote(sky, todayIn(tz, now))
         : far;
@@ -220,7 +220,7 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
             !me.preferences?.birthDate
               ? null
               : note
-                ? { text: note.text, href: note.href, prompt: note.prompt, attention: note.tone === "attention" }
+                ? { text: note.text, href: note.href, prompt: note.prompt, attention: note.tone === "attention", start: note.start }
                 : clock.empty
                   ? setup.length > 0
                     ? { text: `Connect ${setup.join(" and ")} to fill your sky`, href: "/settings/integrations" }

@@ -16,6 +16,7 @@ import { AI_CONSENT_NEEDED } from "@/lib/ai-consent";
 import { isNarration } from "@/lib/narration";
 import { savesSomething } from "@/lib/tool-saves";
 import { cn } from "@/lib/utils";
+import { StartIt } from "./assistant-line";
 
 /**
  * The skyling answers right on Today (owner, 2026-11-10: "there's no different page for the assistant. You just type it
@@ -369,7 +370,7 @@ export function TodayMiddle({
   /** The day's shift, or "No work today" on a usual work day (services/next-up.ts `workTodayLine`). */
   work?: string | null;
   /** The skyling's one note: a link, a question it sends, or words it puts in the bar. */
-  note: { text: string; href?: string; prompt?: string; fill?: string; attention?: boolean } | null;
+  note: { text: string; href?: string; prompt?: string; fill?: string; attention?: boolean; start?: string } | null;
   /** Something that must come first (the birthday question). */
   children?: React.ReactNode;
 }) {
@@ -409,6 +410,7 @@ export function TodayMiddle({
           >
             {note.text}
           </button>
+          {note.start && <StartIt href={note.start} className="shrink-0" />}
         </section>
       )}
       {work && (

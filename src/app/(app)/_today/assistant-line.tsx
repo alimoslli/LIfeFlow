@@ -6,7 +6,16 @@ import { SkylingIcon } from "@/components/skylings/sprite";
 import { useShell } from "@/components/shell/app-shell";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 
-export type AssistantNote = { id?: string; text: string; tone: "attention" | "heads-up" | "good"; href?: string; prompt?: string; label?: string };
+export type AssistantNote = {
+  id?: string;
+  text: string;
+  tone: "attention" | "heads-up" | "good";
+  href?: string;
+  prompt?: string;
+  label?: string;
+  /** the focus screen for the work the note names ("Start it", owner 2026-11-22, the ADHD helps) */
+  start?: string;
+};
 
 /**
  * Under the clock: the one thing the skyling noticed by joining the dots (an exam and tonight's study,
@@ -58,6 +67,19 @@ export function AssistantLine({ name, note, brief, work }: { name: string; note:
           {body}
         </button>
       )}
+      {note.start && <StartIt href={note.start} className="mt-2.5 ml-[3.75rem]" />}
     </section>
+  );
+}
+
+/**
+ * "Start it" (owner, 2026-11-22, the ADHD helps, item 1): getting going is the hard part, so the note's work opens a calm
+ * focus screen with one small first step and a short timer. Its own button beside the note, never inside its link.
+ */
+export function StartIt({ href, className }: { href: string; className?: string }) {
+  return (
+    <Link href={href} className={`lf-sb lf-sb-sun lf-sb-sm min-h-11 ${className ?? ""}`} data-testid="start-it">
+      <PixelIcon name="play" className="h-4 w-4" aria-hidden /> Start it
+    </Link>
   );
 }
