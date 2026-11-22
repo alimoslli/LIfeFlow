@@ -636,7 +636,8 @@ const TRUST: Q[] = [
     turns: ["block 2 hours for the essay today", "undo that"],
     tools: [["create_events", "delete_event"]],
     budget: 5,
-    facts: ["removed|deleted|undone|gone|cleared|took it off|off your calendar|cancel"],
+    // the app asks for a Confirm tap before any delete, so "Press Confirm to delete ..." is a right answer too
+    facts: ["removed|deleted|undone|gone|cleared|took it off|off your calendar|cancel|confirm"],
     never: ["delete_task", "delete_assignment", "delete_course", "delete_shift", "update_shift", "contribute_to_goal"],
     perfect: "Done, the essay block is off your calendar. Today 10:50 AM to 4:00 PM is free again.",
   },
