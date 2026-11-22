@@ -6,6 +6,8 @@
 # runs the automatic quality filter (numbers must come from tools, right weekdays, no changes nobody asked for, the
 # skyling's style). Writes /workspace/ownmodel/holdout-<label>.txt: pass rate, why answers failed, speed.
 NAME="$1"; LABEL="$2"; N="${3:-162}"; shift 3
+# the alive rule set books study time itself; the filter must allow that (filter.py --alive) or it counts as an unasked change
+ALIVE=""; case "$*" in *skyling-alive.txt*) ALIVE="--alive";; esac
 T=/workspace/ownmodel; L=/root/job; REPO=$L/LIfeFlow; H=$L/holdout-$LABEL
 export PATH=$L/node-v22.23.5-linux-x64/bin:$PATH
 cd $REPO; mkdir -p $H
@@ -31,7 +33,7 @@ done
 wait $PIDS
 SECS=$(( $(date +%s) - START ))
 kill $SHIM
-python3 scripts/gpu/chat-data/filter.py --meta "$H/meta-*.jsonl" --dump $H/dump.jsonl --out $H/kept.jsonl --report $H/report.json --no-cap --details $H/details.jsonl > $H/filter.log 2>&1
+python3 scripts/gpu/chat-data/filter.py --meta "$H/meta-*.jsonl" --dump $H/dump.jsonl --out $H/kept.jsonl --report $H/report.json --no-cap $ALIVE --details $H/details.jsonl > $H/filter.log 2>&1
 # every turn with its skill, answer and why it failed, kept on storage; and the scorecard by skill
 cp $H/details.jsonl $T/holdout-$LABEL-details.jsonl
 python3 - "$H/details.jsonl" > $T/holdout-$LABEL-skills.txt <<'PY'
