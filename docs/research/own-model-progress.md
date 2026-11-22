@@ -38,3 +38,13 @@ Owner's go-ahead (2026-11-21, 04:05 UTC): start steps 1 and 2 from the pilot rep
 - **Result (08:58 UTC):** examples 2,023 kept of 2,261; teacher gpt-oss-120b 6/20; Qwen3-8B untuned 4/20; trained 1/20 (it stopped calling tools: half the examples answered without one, and the long tool-using ones were cut). Report: `docs/research/2026-11-21-own-skyling-model-training.md`.
 - **Overspend:** the H100 ran idle with the model server up until 11:47 (599.10 credits for the box, about 340 idle). Scripts now shut the server down at the end.
 - **Next, ready:** `scripts/gpu/chat-train/retrain.sh` (every tool-calling step as its own example, no-tool answers capped at 12%, 24k tokens; about 150 credits). Waiting on the owner's go.
+
+## Step 4: Skyling 1.0 (owner, 2026-11-21: "beat at least 15 out of 20 ... a reliable cheaper model ready by tonight", 551 credits; later "lets call it Skyling 1.0")
+
+- **Result:** Qwen3.8-27B (Apache 2.0, untrained) with our house rules, reminders and checks in code scored 20, 19, 19 of 20 (one of them the reworded exam) and 92% on 189 unseen questions. The earlier setup that evening (version 0) scored 19, 16, 18, 18 and 17, 19. Report: `docs/research/2026-11-21-skyling-1-0.md`.
+- **Why not training:** the first fine-tune's teacher scored 7 of 20, so a student could not reach 15. A stronger base model plus rules, reminders at the end of the prompt and checks in code got there in one evening. This setup is now a teacher worth distilling from.
+- **What is ours:** `scripts/gpu/own-model/skyling-rules.txt`, `skyling-reminders.txt`, and the checks in `scripts/gpu/chat-eval/responses_shim.py --guard`. Run it with `scripts/gpu/own-model/v0_box.sh` (unattended, shuts itself down).
+- **Cost:** about 2,060 messages an hour on one H100 (120 credits an hour). The 8-bit copy on an L40S keeps the quality but manages about 260 an hour, so it is the dearer host.
+- **Spent:** 490.67 of 551 credits; about 130 of it idle minutes and one lost box while the chat restarted.
+- **Found:** the quality filter read "$1,085.59" as a made-up "085.59" (fixed 2026-11-22). The first training set lost good examples to it.
+- **Open, each needs the owner's yes:** run OpenAI once on the same 20 questions; build the rules, reminders and checks into the app behind a setting; three fixes to the app's own skills and tools (budget-coach step 1, life_load summary, find_subscriptions monthly total); a room for this work in HQ. Not done: the situation library against Skyling 1.0.
