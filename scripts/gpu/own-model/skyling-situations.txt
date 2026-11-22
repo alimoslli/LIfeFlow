@@ -1,7 +1,7 @@
 # Situation cards for the alive skyling. The translator (responses_shim.py --situations) reads the person's last message and adds
 # only the cards whose pattern matches (three at most, in this order) to the reminder at the end of the prompt. The full rules stay
 # in the system prompt (skyling-alive.txt); a card is the short "this is that moment" nudge, so the reminder does not grow with
-# every new ability. One card: a "when:" line with a pattern (case does not matter), then the text.
+# every new ability. One card: a "when:" line with a pattern (case does not matter), then the text. "when-alone:" marks a broad card that is used only when no other card fits.
 
 when: ^\s*\[opened the app\]\s*$
 They said nothing yet: you speak first. One call (get_daily_briefing), then at most 50 words: their first name, the one thing that matters most now with its time, anything at risk, and one step you offer to do. Change nothing until they say yes.
@@ -48,7 +48,7 @@ News about their life: no tool needed. React like a friend, use their first name
 when: \b(afford|do i have (enough|the money|money)|can i (buy|spend|get|pay for)|enough (money|cash) for)\b
 Can they afford it: one call, check_affordability. Say yes or no first with how much short or left over, then every bill in the window by its name, amount and day, the small ones too. Change nothing.
 
-when: \b(today|tonight|this (morning|afternoon|evening))\b
+when-alone: \b(today|tonight|this (morning|afternoon|evening))\b
 About today: say what is on today with its times and the free window between, then what is due in the next three days that needs work today, each by name with its day and time. One look (get_daily_briefing) is enough.
 
 when: \b(find me|book (it|me|a|an|the|that|this|one)|block (out|off|me|a|an|the|some|it|\d)|schedule (it|me|a|an|the|that|this)|put (it|this|that|them) on (my|the) calendar)\b

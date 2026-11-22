@@ -40,7 +40,9 @@ def read_situations(path):
     for block in re.split(r"\n\s*\n", open(path).read()):
         lines = [l for l in block.strip().split("\n") if l.strip() and not l.startswith("#")]
         if lines and lines[0].startswith("when:"):
-            cards.append((re.compile(lines[0][5:].strip(), re.I), " ".join(lines[1:]).strip()))
+            cards.append((re.compile(lines[0][5:].strip(), re.I), " ".join(lines[1:]).strip(), False))
+        elif lines and lines[0].startswith("when-alone:"):   # a broad card ("today"): used only when no other card fits
+            cards.append((re.compile(lines[0][11:].strip(), re.I), " ".join(lines[1:]).strip(), True))
     return cards
 
 
@@ -49,7 +51,8 @@ SITUATIONS = read_situations(ARGS.situations) if ARGS.situations else []
 
 def situations(asked):
     """The cards for this moment: the ones whose pattern matches the person's last message, three at most."""
-    return [text for rx, text in SITUATIONS if rx.search(asked or "")][:3]
+    hits = [(text, alone) for rx, text, alone in SITUATIONS if rx.search(asked or "")]
+    return ([t for t, alone in hits if not alone] or [t for t, _ in hits])[:3]
 LOCK = threading.Lock()  # requests run on threads; one writer at a time
 
 
