@@ -36,6 +36,23 @@ Both are fixed in `scripts/gpu/video/avatar_box.sh` (compiler installed first, a
 
 I looked at five frames of each clip: the same person in both, no broken faces or hands, the open model moves the hand and changes mouth shapes more, Intone's framing is a little tighter (ours loses 14 pixels on each side to reach 9:16). I cannot hear, so **lip sync is not judged here**: LF Marketing builds the side by side and judges that for the owner. One render, one seed, default settings: this is a first look, not a tuned result.
 
+## Does it look like a real person, start to finish? (owner, same evening: "make sure the video looks human made, realistic ... characteristics that dont change")
+
+Checked on the delivered clip, frame by frame, without renting anything:
+
+- **Same person throughout: yes.** Face crops every 20 frames show the same face, hair, stubble and hoodie. Measured with face landmarks on all 266 frames, the face's proportions move 2 to 6% over the clip, head turns included (Intone: 1 to 4%), and the four rendered segments have the same average proportions, so nothing drifts from one segment to the next.
+- **No jump where the segments join.** Frame-to-frame change at the three joins is 5.5 to 6.7 against a usual 2.5 and a normal busy frame at 5.2: slightly above normal, not visible in the crops. Colour and brightness are the same in every segment (103.6, 103.7, 102.7, 103.2).
+- **Hands:** five fingers and normal shapes in every frame sampled; fast gestures blur the way a phone camera would.
+- **Lips against the voice, measured** (`scripts/gpu/video/lipcheck.py`: mouth opening against loudness): the lips ran about 80 ms ahead of the voice, where Intone's run 40 ms ahead, which is the natural amount. Fixed for free by starting the voice 40 ms earlier; re-measured at 40 ms. The corrected file is the one to use:
+  https://d2ol7oe51mr4n9.cloudfront.net/user_3M4RdHXwCzt85SV7RGv8R91VfvG/646f4178-56af-48ab-805e-dd687e7ba245.mp4
+  How closely the mouth follows the voice: 0.39 for ours, 0.44 for Intone on the same measure (higher is tighter). So Intone's lips are a little tighter. This measure cannot hear the words; a person still has to watch it with sound.
+
+What still gives it away, honestly:
+
+1. **The lettering on the hoodie is scrambled** (a ring and nine blobs that are not letters). It is in the source picture, so it is in both clips. It stays put, but a viewer who looks will read it as generated. Fix: a new source picture with a plain hoodie or a real word.
+2. **Skin is a little too smooth in some frames.** The clip is drawn at 480 x 832 and sharpened; sharpening adds edges, not pores. Fix: draw it at 720p (costs a new render; it may not fit one H100's memory, 62 GB were used at 480p).
+3. **One take, default settings.** No second seed was tried to pick the better one.
+
 ## Sources
 
 - https://github.com/meituan-longcat/LongCat-Video (code, MIT, run commands)
