@@ -40,7 +40,9 @@ for line in open(a.dump):
     steps[r["conv"]].append(r)  # conv here is "<life>~<k>~<turn>"
 
 MONEY = re.compile(r"\$\s?(\d[\d,]*(?:\.\d{1,2})?)")
-DECIMAL = re.compile(r"(?<![\d.])(\d+\.\d+)(?![\d.])")
+# Not after a comma or a dollar sign: "$1,085.59" is one amount (MONEY reads it), not a stray "085.59". Until 2026-11-22 the
+# comma was missing here, so every amount of $1,000 or more with cents was reported as a number that is in no tool result.
+DECIMAL = re.compile(r"(?<![\d.,$])(\d+\.\d+)(?![\d.])")
 DAYS = {"mon": 0, "tue": 1, "wed": 2, "thu": 3, "fri": 4, "sat": 5, "sun": 6}
 MONTHS = {m: i + 1 for i, m in enumerate(["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"])}
 DAY_DATE = re.compile(r"\b(mon|tue|wed|thu|fri|sat|sun)[a-z]*\.?,?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})\b", re.I)
