@@ -11,6 +11,7 @@ import { CastCards } from "@/components/skylings/cast-cards";
 import { NightSky } from "@/components/skylings/night-sky";
 import { SkyLink } from "@/components/skylings/sky-button";
 import type { CompanionKey } from "@/lib/companions";
+import type { Pose } from "@/components/day-clock/companion";
 import { getDb } from "@/server/db/client";
 import { inviterFor } from "@/server/services/invites";
 import { accessSettings } from "@/server/services/waitlist";
@@ -79,7 +80,44 @@ const WHY = [
 
 const INSTAGRAM = "https://www.instagram.com/lifeflowweb";
 
+/**
+ * For when starting is the hard part (owner, 2026-11-22: point the site at people with ADHD; one app, no ADHD version).
+ * Only what the app really does (docs/backlog/2026-11-22-adhd-six.md). The research's lines hold
+ * (docs/research/2026-11-22-adhd-first.md): never asks or says whether the reader has ADHD, never treat, manage or improve,
+ * no "superpower", no test or symptom list.
+ */
+const EASIER: { who: CompanionKey; pose: Pose; name: string; says: string }[] = [
+  {
+    who: "ray",
+    pose: "read",
+    name: "Start it",
+    says: "One small first step and five minutes, with your skyling reading beside you. Keep going only if you want to.",
+  },
+  {
+    who: "goldie",
+    pose: "wave",
+    name: "A heads-up first",
+    says: "Before a class, shift or meeting starts, at the minutes you pick. No more looking up and it's already time.",
+  },
+  {
+    who: "dawn",
+    pose: "stretch",
+    name: "Back on track",
+    says: "Away for a while? What waited gets new times in your free week, two a day at most. No pile, no counting days.",
+  },
+  {
+    who: "star",
+    pose: "celebrate",
+    name: "Stars for real things",
+    says: "A star when a class, a shift or a to-do is done. Never for just opening the app, and no streak to lose.",
+  },
+];
+
 const FAQS: { q: string; a: string }[] = [
+  {
+    q: "Is LifeFlow for people with ADHD?",
+    a: "It's for anyone with a full life, and we build every part with ADHD in mind: one next step, short starts, a heads-up before things begin, and a fresh start after time away. It isn't a medical app and doesn't treat anything.",
+  },
   {
     q: "Do I have to connect my bank or school?",
     a: "No. Add everything yourself, or send your skyling a photo of a syllabus, a work schedule or a bank statement and it adds it for you. Connecting is optional.",
@@ -275,6 +313,29 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
                   ))}
                 </div>
                 <small className="mt-auto pt-4 text-xs text-white/65">Example</small>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ---------- For when starting is the hard part (owner, 2026-11-22) ---------- */}
+      <section id="starting" aria-labelledby="starting-h" className="scroll-mt-4 bg-night-2 px-5 pb-20 sm:px-8 lg:pb-28">
+        <div className="mx-auto max-w-6xl">
+          <h2 id="starting-h" className={`max-w-[18ch] ${h2}`}>
+            For when starting is the hardest part.
+          </h2>
+          <p className="mt-5 max-w-[52ch] text-[1.0625rem] text-white/75">
+            Made with ADHD in mind, and easier for anyone with a lot going on. One thing at a time, never a wall of tasks.
+          </p>
+          <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {EASIER.map((e) => (
+              <li key={e.name} className="flex min-w-0 flex-col gap-4 rounded-[1.75rem] bg-white/[0.06] p-5 ring-1 ring-white/12 sm:p-6">
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/[0.07] ring-1 ring-white/10">
+                  <CompanionGlyph companion={e.who} pose={e.pose} night={ownsNight(e.who)} className="lf-pixel h-12 w-12" />
+                </span>
+                <p className="font-display text-[1.1875rem] leading-[1.2] font-medium">{e.name}</p>
+                <p className="text-[0.9375rem] leading-snug text-white/80">{e.says}</p>
               </li>
             ))}
           </ul>

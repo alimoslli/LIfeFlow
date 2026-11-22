@@ -98,3 +98,20 @@ test("while the waitlist is on, the page says how the line works and every butto
   await page.goto("/");
   await expect(page.getByRole("region", { name: "How the waitlist works." })).toHaveCount(0);
 });
+
+// Pointing at people with ADHD (owner, 2026-11-22), inside the research's lines (docs/research/2026-11-22-adhd-first.md):
+// never asks or says the reader has ADHD, no treatment or improvement claim, no "superpower", no test or symptom list.
+test("the starting section says what the app does, and the page keeps the ADHD claims lines", async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto("/");
+  const s = page.locator("#starting");
+  await expect(s.getByRole("heading", { name: "For when starting is the hardest part." })).toBeVisible();
+  for (const name of ["Start it", "A heads-up first", "Back on track", "Stars for real things"]) await expect(s.getByText(name, { exact: true })).toBeVisible();
+  await s.scrollIntoViewIfNeeded();
+  await s.screenshot({ path: "test-results/adhd-landing-starting-phone.png" });
+  const text = await page.locator("body").innerText();
+  expect(text).not.toMatch(/superpower|do you have adhd|your adhd|adhd (test|quiz)|symptom|clinically|doctor.approved|proven/i);
+  expect(text).not.toMatch(/\b(treats?|manages?|improves?|reduces?|cures?) (your )?adhd/i);
+  await page.getByText("Is LifeFlow for people with ADHD?").click();
+  await expect(page.getByText(/isn't a medical app and doesn't treat anything/)).toBeVisible();
+});
