@@ -113,10 +113,12 @@ until curl -sf http://127.0.0.1:8000/v1/models > /dev/null; do
   [ -f $T/demo-stop ] && { shutdown_all "asked to stop during setup"; exit 0; }
   sleep 5
 done
-# Skyling 1.0 = the model plus our rules, reminders and checks (the translator). Its log stays on this box's own disk,
-# which is wiped when the box stops: what the person types to the skyling is never written to shared storage.
+# Skyling 1.0 = the model plus our rules, reminders and checks (the translator). The owner asked (2026-11-22) that every
+# answer of a test session be checked afterwards, so the session's questions, tool results and answers are kept: on this
+# box's disk while it runs, copied to the owner's own GPU storage when it ends (demo-transcript-<time>.jsonl). Made-up
+# demo data and the tester's own messages only.
 nohup python3 scripts/gpu/chat-eval/responses_shim.py --upstream http://127.0.0.1:8000/v1 --port 8100 --think off --guard \
-  --system-append scripts/gpu/own-model/skyling-rules.txt --remind scripts/gpu/own-model/skyling-reminders.txt --log $LOGS/shim.jsonl > $LOGS/shim.out 2>&1 &
+  --system-append scripts/gpu/own-model/skyling-rules.txt --remind scripts/gpu/own-model/skyling-reminders.txt --log $LOGS/shim.jsonl --dump $LOGS/transcript.jsonl > $LOGS/shim.out 2>&1 &
 sleep 2
 # the real app, production build, listening on this box only; its model address is our translator, not OpenAI
 OPENAI_API_KEY=not-a-real-key OPENAI_MODEL=$MODEL OPENAI_MODEL_SMALL=$MODEL OPENAI_BASE_URL=http://127.0.0.1:8100/v1 APP_URL="$LINK" NODE_ENV=production \
@@ -170,6 +172,7 @@ while true; do
   kill -0 $VPID 2> /dev/null || { WHY="the model server stopped"; break; }
 done
 MSGS=$(grep -c '"tools": \[\]' $LOGS/shim.jsonl 2> /dev/null || echo 0)
+[ -s $LOGS/transcript.jsonl ] && cp $LOGS/transcript.jsonl "$T/demo-transcript-$(date -u +%Y%m%d-%H%M).jsonl"
 MINS=$(( ($(date +%s) - BOOT) / 60 ))
 status "session over ($WHY): about $MSGS answers given; box up $MINS minutes, about $(( MINS * RATE / 60 )) credits"
 shutdown_all "$WHY"

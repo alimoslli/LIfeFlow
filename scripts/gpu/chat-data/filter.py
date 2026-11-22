@@ -52,6 +52,7 @@ NARRATE = re.compile(r"\b(let me (check|look|see|pull)|i'll (look|check) (that|i
 APP_PATH = re.compile(r"(?<![\w.])/(finances|work|tasks|calendar|school|goals|money|plan|jarvis|settings|habits|milestones|today|health)\b")
 WRITE_TOOL = re.compile(r"^(create|update|delete|add|set|move|mark|log|save|record|remember|make|resolve|complete|schedule|book|cancel|archive|contribute|shift|split)_")
 ASKS_TO_ACT = re.compile(r"\b(add|create|make|put|schedule|book|block|move|reschedule|delete|remove|cancel|set|remind|log|save|track|mark|update|change|rename|plan|split|record|remember|note|enter|fill|sign me up|do (it|that)|go ahead|yes)\b")
+RAW_MINUTES = re.compile(r"\b(\d{1,3}(?:,\d{3})+|\d{3,}|9\d)\s*(?:minutes|mins?)\b", re.I)
 HEADING = re.compile(r"^\s*#{1,6}\s", re.M)
 
 
@@ -133,6 +134,9 @@ def check(meta_row, last, year):
              if WRITE_TOOL.match(c["function"]["name"])]
     if wrote and not ASKS_TO_ACT.search(user_text):
         reasons.append("unasked write")
+    # "You have 1,249 minutes free" (the owner, 2026-11-22: "who wants to hear that"): lengths are said in hours and minutes.
+    if RAW_MINUTES.search(text):
+        reasons.append("raw minutes")
     if len(text.split()) > 100:
         reasons.append("too long")
     if HEADING.search(text):

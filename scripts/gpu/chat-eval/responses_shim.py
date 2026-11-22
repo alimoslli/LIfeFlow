@@ -129,7 +129,37 @@ def house_math(sent):
                 parts = (["heavy: " + ", ".join(name(i) for i in heavy)] if heavy else []) + (["the nearest light day: " + name(light)] if light else [])
                 if parts:
                     lines.append(f"{k} by load, " + "; ".join(parts))
+            # Free time: each window in a 12-hour clock with its length in hours, so the model never reads out raw minutes
+            # or adds them into one total (the owner got "you have 1,249 minutes free", 2026-11-22).
+            if isinstance(v, list) and v and all(isinstance(i, dict) and isinstance(i.get("free"), list) for i in v):
+                days = []
+                for i in v:
+                    wins = [f"{clock(w['start'])} to {clock(w['end'])} ({span(w.get('minutes'))})" for w in i["free"] if isinstance(w, dict) and w.get("start") and w.get("end")]
+                    if wins:
+                        days.append(f"{i.get('weekday') or i.get('dateWeekday') or i.get('date')}: " + ", ".join(wins))
+                if days:
+                    lines.append("free time, say it as these windows and never as a total: " + "; ".join(days))
     return lines
+
+
+def clock(hhmm):
+    """ "14:15" -> "2:15 PM" (people's clock); anything else is returned as it is. """
+    m = re.fullmatch(r"(\d{1,2}):(\d{2})", str(hhmm))
+    if not m:
+        return str(hhmm)
+    h, mi = int(m.group(1)), m.group(2)
+    return f"{(h - 1) % 12 + 1}:{mi} {'AM' if h < 12 else 'PM'}"
+
+
+def span(minutes):
+    """ 310 -> "5 hours 10 minutes" """
+    if not isinstance(minutes, (int, float)):
+        return "length not given"
+    h, mi = divmod(int(minutes), 60)
+    return " ".join(x for x in (f"{h} hour{'s' if h != 1 else ''}" if h else "", f"{mi} minutes" if mi else "") if x) or "0 minutes"
+
+
+RAW_MINUTES = re.compile(r"\b(\d{1,3}(?:,\d{3})+|\d{3,}|9\d)\s*(?:minutes|mins?)\b", re.I)
 
 
 def remind(sent):
@@ -240,6 +270,10 @@ def guard_notes(original, msg):
     words = len(text.split())
     if words > WORD_LIMIT:
         notes.append(f"Your answer is {words} words and the limit is {WORD_LIMIT}. Write it again shorter: keep the direct answer and every figure, cut the rest.")
+    raw = [m.group(0) for m in RAW_MINUTES.finditer(text)]
+    if raw:
+        notes.append("Nobody talks in minutes like \"" + raw[0] + "\". Say lengths of time in hours and minutes (\"5 hours 10 minutes\"), "
+                     "name the actual free windows with their day and clock times, and never add free time up into one total.")
     if any(m["role"] == "tool" for m in original):
         known = known_numbers(original + [{"role": "tool", "content": " ".join(house_math(original))}])
         bad = [m.group(0) for m in MONEY.finditer(text) if num(m.group(1)) not in known] + [m.group(1) for m in DECIMAL.finditer(text) if num(m.group(1)) not in known]
