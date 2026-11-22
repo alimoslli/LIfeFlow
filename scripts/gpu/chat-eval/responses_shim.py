@@ -251,6 +251,9 @@ def cut_off(msg):
     return bool(text) and not msg.get("tool_calls") and not re.search(r"[.?!)\"'\u201d\u2019*:]$", text)
 
 
+BREAKDOWN = re.compile(r"break (it|this|that|the [^.?!]{0,40}) down|feels? (so |too |really )?(huge|massive|impossible|big)|where (do|would) i (even )?(start|begin)", re.I)
+
+
 def long_blocks(msg, asked):
     """Blocks over two and a half hours in a create_events call, unless the person named a length in hours themselves."""
     if re.search(r"\b(\d+(\.\d+)?|two|three|four|five|six|all|whole|half)[ -]?(h|hr|hrs|hour|hours|day|afternoon|morning|evening)\b", asked or "", re.I):
@@ -304,6 +307,11 @@ def guard_notes(original, msg):
     if CLAIMS_SAVE.search(text) and not any(WRITE_TOOL.match(u) for u in used_calls(original)):
         notes.append("You wrote that you saved something, but you called no saving tool in this message, so nothing was saved. Call the tool now, "
                      "and only say it is saved after the tool result says so.")
+    # Alive rules only: asked to break a big thing down, it listed the steps and then asked whether to save them (2026-11-22).
+    # The steps belong on the to-do list in the same turn; offering is the old behaviour.
+    if "Be alive" in (APPEND or "") and BREAKDOWN.search(last_user(original) or "") and "create_tasks" not in used_calls(original):
+        return ["They asked you to break it down. Do it, do not offer it: call create_tasks now with three to five steps, each with its own "
+                "due day before the deadline (the first one today or tomorrow). Then say the steps in one line each and that they are on the to-do list."]
     words = len(text.split())
     if words > WORD_LIMIT:
         notes.append(f"Your answer is {words} words and the limit is {WORD_LIMIT}. Write it again shorter: keep the direct answer and every figure, cut the rest.")
