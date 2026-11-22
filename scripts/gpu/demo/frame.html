@@ -71,6 +71,44 @@
       last = s; finish("Stopped", "You tapped Stop.");
     }).catch(function () { finish("Stopped", "The stop was sent."); });
   });
+  // The skyling speaks first (owner, 2026-11-22): when the chat is open and the skyling has not opened yet, the frame sends
+  // the opening signal for the person, and that signal is never shown as one of their own messages.
+  var OPENED = "[opened the app]", sent = false;
+  function chatDoc() { try { var d = document.getElementById("app").contentDocument; return d && d.location.pathname.indexOf("/jarvis") === 0 ? d : null; } catch (e) { return null; } }
+  function hideSignal(d) {
+    var found = false, all = d.querySelectorAll("[data-chat-scroll] *");
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i];
+      if (el.children.length === 0 && el.textContent.trim() === OPENED) {
+        found = true;
+        var row = el;
+        while (row.parentElement && !row.parentElement.hasAttribute("data-chat-scroll") && row.parentElement.textContent.trim() === OPENED) row = row.parentElement;
+        row.style.display = "none";
+      }
+    }
+    return found;
+  }
+  function opener() {
+    var d = chatDoc();
+    if (!d || over) return;
+    var already = hideSignal(d);
+    if (already || sent) return;
+    var box = d.querySelector('textarea[aria-label^="Message "], input[aria-label^="Message "]');
+    var scroll = d.querySelector("[data-chat-scroll]");
+    if (!box || !scroll || d.readyState !== "complete") return;
+    sent = true;
+    setTimeout(function () {
+      var proto = box.tagName === "TEXTAREA" ? d.defaultView.HTMLTextAreaElement.prototype : d.defaultView.HTMLInputElement.prototype;
+      Object.getOwnPropertyDescriptor(proto, "value").set.call(box, OPENED);
+      box.dispatchEvent(new d.defaultView.Event("input", { bubbles: true }));
+      setTimeout(function () {
+        var send = d.querySelector('button[aria-label="Send"]');
+        if (send && !send.disabled) send.click();
+        else box.dispatchEvent(new d.defaultView.KeyboardEvent("keydown", { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true }));
+      }, 150);
+    }, 1800);
+  }
+  setInterval(opener, 400);
   tick(); setInterval(tick, 10000);
 })();
 </script>

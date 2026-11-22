@@ -14,7 +14,14 @@
 # this is what ends the bill: with nothing running the box's own idle timer stops it a few minutes later, and the chat
 # that rented it stops it sooner when it sees the STOPPED line.
 # No command tracing: this script handles two passwords, and its log is kept on shared storage.
-MAX_MIN="${1:-60}"; IDLE_MIN="${2:-10}"; RATE="${3:-120}"
+MAX_MIN="${1:-60}"; IDLE_MIN="${2:-10}"; RATE="${3:-120}"; MODE="${4:-alive}"
+# alive (default): Skyling 1.0 plus the alive rules (it does the first step itself, and speaks first when the chat opens).
+# plain: Skyling 1.0 exactly as tested on 2026-11-21.
+if [ "$MODE" = plain ]; then
+  RULES="--system-append scripts/gpu/own-model/skyling-rules.txt --remind scripts/gpu/own-model/skyling-reminders.txt"; LABEL="Skyling 1.0"; FIRST="What do I need to get done today?"
+else
+  RULES="--system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive.txt"; LABEL="Skyling 1.1"; FIRST="[opened the app]"
+fi
 T=/workspace/ownmodel; L=/root/job; REPO=$L/LIfeFlow; LOGS=$L/demo-logs
 HF=Qwen/Qwen3.8-27B; MODEL=qwen38-27b
 BOOT=$(date +%s)
@@ -117,8 +124,9 @@ done
 # answer of a test session be checked afterwards, so the session's questions, tool results and answers are kept: on this
 # box's disk while it runs, copied to the owner's own GPU storage when it ends (demo-transcript-<time>.jsonl). Made-up
 # demo data and the tester's own messages only.
+sed -i "s/Skyling 1\.0 · our own model · test/$LABEL · our own model · test/" scripts/gpu/demo/frame.html
 nohup python3 scripts/gpu/chat-eval/responses_shim.py --upstream http://127.0.0.1:8000/v1 --port 8100 --think off --guard \
-  --system-append scripts/gpu/own-model/skyling-rules.txt --remind scripts/gpu/own-model/skyling-reminders.txt --log $LOGS/shim.jsonl --dump $LOGS/transcript.jsonl > $LOGS/shim.out 2>&1 &
+  $RULES --log $LOGS/shim.jsonl --dump $LOGS/transcript.jsonl > $LOGS/shim.out 2>&1 &
 sleep 2
 # the real app, production build, listening on this box only; its model address is our translator, not OpenAI
 OPENAI_API_KEY=not-a-real-key OPENAI_MODEL=$MODEL OPENAI_MODEL_SMALL=$MODEL OPENAI_BASE_URL=http://127.0.0.1:8100/v1 APP_URL="$LINK" NODE_ENV=production \
@@ -140,7 +148,7 @@ status "link check: without the password $NOPASS (should be 401), with it $WITHP
 [ "$NOPASS" = 401 ] && [ "$WITHPASS" = 200 ] && [ "$APPPASS" = 200 ] || fail "the link check"
 # and one real question, asked in a browser through the same link: sign in, open the chat, read the answer
 for i in $(seq 1 60); do [ -f $L/browser.ready ] && break; sleep 2; done
-CHECK=$(timeout 240 node scripts/gpu/demo/check_chat.mjs "$LINK" "$LINK_USER" "$LINK_PASS" "$DEMO_EMAIL" "$DEMO_PASS" "What do I need to get done today?" 2>&1 | tail -1)
+CHECK=$(timeout 240 node scripts/gpu/demo/check_chat.mjs "$LINK" "$LINK_USER" "$LINK_PASS" "$DEMO_EMAIL" "$DEMO_PASS" "$FIRST" 2>&1 | tail -1)
 echo "$CHECK" > $T/demo-check.json
 case "$CHECK" in
   *'"ok":true'*) status "browser check passed: signed in and got an answer" ;;
