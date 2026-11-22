@@ -561,6 +561,14 @@ Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playboo
 - The "caught it days early" angle with a first-frame hook.
 - Dev's look and movement.
 
+**The minimum bar (owner, 2026-11-22, via the COO): no draft goes to the owner or the COO below it.**
+- A real character on camera, talking.
+- Real sound: a voice, plus music or ambient sound.
+- The real app, full screen, recorded from production (lifeflowweb.com, demo account, made-up data), never a local build, never small in a corner or on a grey screen.
+- The look of our campfire and pier videos.
+- For AI people: phone-camera realism (natural light, a little handheld shake, real room noise, a natural voice with ums and pauses; no glossy AI look, perfect skin or plastic motion). When posted, the platform's AI-generated label is turned on, and the character never claims to be a real paying user with results he didn't have (FTC fake-testimonial line).
+- Why: the three overnight ADHD reels of 2026-11-22 (made by LF Main) failed every point. No character, no sound, Pinterest-style stills unrelated to LifeFlow, the app small in a corner on a grey screen, and screens from a local test build. The owner: "0 standards. Our standards are way higher than this."
+
 **So the plan is:**
 - Post the drafts that already passed (v8, v13) first, fixed for the open items: "calm place", the Sienna voice, and the 15% code (it must exist in Stripe).
 - Then post steadily with free screen-recording reels and carousels. Use credits only for what the numbers show is working.
