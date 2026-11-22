@@ -118,7 +118,7 @@ def build(sheet=False):
         if i < starts["s2"]:
             j = i; t = j / FPS; fr = put_screen(s1[j], quads, j, shot_app)
             q = quads[j][0]; top = (q[0] + q[1]) / 2 if q is not None else np.array([W / 2, H / 2]); bot = (q[3] + q[2]) / 2 if q is not None else top; cx, cy = top + (bot - top) * 0.43
-            u = S.smooth(S.clamp((t - 0.35) / 0.75)); z = 4.0 + (1.0 - 4.0) * u; tx = cx + (W / 2 - cx) * u; ty = cy + (H / 2 - cy) * u
+            u = S.smooth(S.clamp((t - 1.1) / 0.6)); z = 4.0 + (1.0 - 4.0) * u; tx = cx + (W / 2 - cx) * u; ty = cy + (H / 2 - cy) * u
             M = np.float32([[z, 0, W / 2 - z * tx], [0, z, H / 2 - z * ty]]); fr = cv2.warpAffine(fr, M, (W, H), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT)
             img = Image.fromarray(grain(shake(fr, j, 2.0 * u), seed=j)).convert("RGBA"); caption(img, "s1", t)
         elif i < starts["n3"]:
@@ -126,14 +126,9 @@ def build(sheet=False):
         elif i < starts["s3"]:
             j = i - starts["n3"]; t = j / FPS; im = bg.copy(); im.paste(Image.fromarray(app[min(j, len(app) - 1)]), (PX0, PY0), pmask)
             t_w0 = wt("n3", "wheel") - 0.5; t_u0 = t_sky - 1.0; t_u1 = t_sky - 0.2
-            if t < t_u1:
-                a_in = S.clamp((t - t_w0) / 0.35); un = S.smooth(S.clamp((t - t_u0) / (t_u1 - t_u0)))
-                if a_in > 0:
-                    ww = int(W * (1.0 + 0.9 * un)); hh = max(8, int(W * 520 / 780 * (1 - 0.92 * un))); wl = WHEEL.resize((ww, hh), Image.LANCZOS).convert("RGBA")
-                    wl.putalpha(int(255 * a_in * (1 - S.clamp((t - t_u1 + 0.15) / 0.15)))); y = int(H * 0.42 - hh / 2)
-                    cover = Image.new("RGBA", (W, H), (0, 0, 0, 0)); cover.paste(bg.convert("RGBA"), (0, 0)); cover.putalpha(int(255 * a_in * (1 - un)))
-                    im.alpha_composite(cover); im.alpha_composite(wl, ((W - ww) // 2, y))
-            z = 1 + 0.03 * j / n3; arr = cv2.warpAffine(np.array(im.convert("RGB")), np.float32([[z, 0, W / 2 * (1 - z)], [0, z, H / 2 * (1 - z)]]), (W, H), borderMode=cv2.BORDER_REFLECT)
+            zw = S.smooth(S.clamp((t - t_w0) / 0.45)) * (1 - S.smooth(S.clamp((t - t_u0) / (t_u1 - t_u0))))   # push into the wheel on "one wheel", back out before "my skyling"
+            z0 = 1 + 0.03 * j / n3; z = z0 + (1.34 - z0) * zw; wcx, wcy = PX0 + PW / 2, PY0 + PH * 0.15; tx = W / 2 + (wcx - W / 2) * zw; ty = H / 2 + (wcy + 260 / 1.34 - H / 2) * zw
+            arr = cv2.warpAffine(np.array(im.convert("RGB")), np.float32([[z, 0, W / 2 - z * tx], [0, z, H / 2 - z * ty]]), (W, H), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT)
             if j < 6: arr = (arr.astype(np.float32) * (j + 1) / 6 + 255 * (1 - (j + 1) / 6)).astype(np.uint8)   # flash in
             a = arr.astype(np.float32)
             u = S.clamp((t - t_sky + 0.1) / 0.3)
@@ -166,7 +161,7 @@ def build(sheet=False):
     T = N / FPS; ns = int(T * SR); voice = np.zeros((ns + SR, 2), np.float32); bed = np.zeros_like(voice)
     def put(bus, x, at, g=0.0):
         q = int(max(0, at) * SR); x = x[: max(0, len(bus) - q)]; bus[q:q + len(x)] += x * 10 ** (g / 20)
-    put(voice, S.load(f"{UGC}/shot1.mp4"), starts["s1"] / FPS); put(voice, S.load(f"{UGC}/shot2.mp4"), starts["s2"] / FPS)
+    put(voice, S.load(f"{UGC}/op1.wav"), starts["s1"] / FPS); put(voice, S.load(f"{UGC}/shot2.mp4"), starts["s2"] / FPS)
     put(voice, S.load(f"{UGC}/line3b.mp3"), starts["n3"] / FPS); put(voice, S.load(f"{UGC}/shot3.mp4"), starts["s3"] / FPS)
     r = np.sqrt((voice[np.abs(voice).max(1) > 0.01] ** 2).mean()) + 1e-9; voice *= 0.12 / r
     rng = np.random.default_rng(1); room = rng.normal(0, 1, (len(voice), 2)).astype(np.float32); room = np.cumsum(room, 0); room -= np.convolve(room[:, 0], np.ones(2400) / 2400, "same")[:, None]
@@ -182,7 +177,7 @@ def build(sheet=False):
     mix = np.tanh(voice + bed)[:ns]
     with wave.open(f"{HERE}/_pre.wav", "wb") as wv: wv.setnchannels(2); wv.setsampwidth(2); wv.setframerate(SR); wv.writeframes((np.clip(mix, -1, 1) * 32767).astype(np.int16).tobytes())
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", f"{HERE}/_pre.wav", "-af", "loudnorm=I=-14:TP=-1.5:LRA=9", "-ar", "48000", f"{HERE}/_mix.wav"], check=True)
-    out = f"{HERE}/Jordan_Reel_v3.mp4"
+    out = f"{HERE}/Jordan_Reel_v4.mp4"
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", f"{HERE}/_silent.mp4", "-i", f"{HERE}/_mix.wav", "-c:v", "copy", "-c:a", "aac", "-b:a", "224k", "-shortest", "-movflags", "+faststart", out], check=True)
     print("done", out, round(T, 2), "s", {k: round(v / FPS, 2) for k, v in starts.items()}, flush=True)
 build(sheet=len(sys.argv) > 1 and sys.argv[1] == "sheet")
