@@ -500,7 +500,7 @@ const WISH: Q[] = [
     turns: ["I'll start the essay tonight after my shift, I promise"],
     tools: [["make_promise"]],
     budget: 2,
-    facts: ["essay|start", "tonight|9"],
+    facts: ["essay|start|promise", "tonight|9"],
     never: NEVER_LIFE,
     perfect: "Holding you to it: you start the ENG 102 essay tonight after your shift ends at 9:00 PM. I'll check in with you then. Want a 30 minute block at 9:15 so it has a place?",
   },
