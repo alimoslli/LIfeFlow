@@ -2,7 +2,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { addDaysStr, daysBetween, formatDateStr, localDateOf, localTimeOf } from "@/lib/dates";
 import { jarvisMessages, users } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
-import { freeSlots, getAgenda, type AgendaItem } from "../calendar";
+import { busyAgenda, freeSlots, type AgendaItem } from "../calendar";
 import { listAssignments } from "../school";
 import type { Candidate, Detector } from "./detectors";
 import { lastMinutePattern } from "./reviews";
@@ -91,7 +91,7 @@ export const examStudy: Detector = async ({ scope, tz, today, now }) => {
   const fresh = exams.filter((e) => !offered.has(`exam_study:${e.id}`));
   if (!fresh.length) return [];
   const hours = await studyHours(scope);
-  const agenda = await getAgenda(scope, tz, today, addDaysStr(today, 7), { now, include: ["event", "shift"] });
+  const agenda = await busyAgenda(scope, tz, today, addDaysStr(today, 7), { now });
   const out: Candidate[] = [];
   for (const a of fresh.slice(0, 3)) {
     const course = courseLabel(a.course);
@@ -144,7 +144,7 @@ export const startEarlier: Detector = async (ctx) => {
   // only when it helps: their own finished work says they usually finish in the last day
   if (!fresh.length || !(await lastMinutePattern(ctx))) return [];
   const hours = await studyHours(scope);
-  const agenda = await getAgenda(scope, tz, today, addDaysStr(today, 7), { now, include: ["event", "shift"] });
+  const agenda = await busyAgenda(scope, tz, today, addDaysStr(today, 7), { now });
   for (const a of fresh) {
     const course = courseLabel(a.course) ?? "";
     if (bookedFor(agenda, now, a.dueAt!, [a.title])) continue;

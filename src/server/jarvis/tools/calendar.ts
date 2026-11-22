@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ServiceError } from "../../services/errors";
 import { moveToTrash } from "../../services/trash";
 import { addDaysStr, daysBetween, formatIn, localDateOf } from "@/lib/dates";
-import { EVENT_KINDS, createEvent, findConflicts, freeSlots, getAgenda, getEvent, updateEvent, type AgendaItem } from "../../services/calendar";
+import { EVENT_KINDS, busyAgenda, createEvent, findConflicts, freeSlots, getAgenda, getEvent, updateEvent, type AgendaItem } from "../../services/calendar";
 import { dateArg, defineTool, idArg, timeArg, type ToolContext } from "../tool";
 import { lifeLoad } from "../../services/life-load";
 import { courseArg, withCourseIds } from "./course-arg";
@@ -82,7 +82,7 @@ export const calendarTools = [
   }),
   defineTool({
     name: "find_free_time",
-    description: "Find open time blocks between existing commitments (events and shifts) for each day in a range. Use before scheduling study sessions.",
+    description: "Find open time blocks between existing commitments (events, shifts and exams) for each day in a range. Use before scheduling study sessions.",
     schema: z.object({
       from: dateArg(),
       to: dateArg(),
@@ -93,7 +93,8 @@ export const calendarTools = [
     mutates: false,
     async execute(a, ctx) {
       if (a.to < a.from || daysBetween(a.from, a.to) > 14) throw new ServiceError("Range must be 0–14 days.");
-      const items = await ctx.run((s) => getAgenda(s, ctx.tz, a.from, a.to, { include: ["event", "shift"], now: ctx.now }));
+      // exams from School count as busy too (busyAgenda), so a study block never lands on the exam itself
+      const items = await ctx.run((s) => busyAgenda(s, ctx.tz, a.from, a.to, { now: ctx.now }));
       const days = [];
       for (let d = a.from; d <= a.to; d = addDaysStr(d, 1)) {
         const slots = freeSlots(items, d, ctx.tz, a.dayStart ?? "08:00", a.dayEnd ?? "22:00", a.minMinutes ?? 45, ctx.now);
@@ -118,7 +119,7 @@ export const calendarTools = [
         const created = [];
         const conflicts: { event: string; conflictsWith: string; at: string }[] = [];
         for (const e of events) {
-          const before = await getAgenda(s, ctx.tz, e.date, e.date, { include: ["event", "shift"] });
+          const before = await busyAgenda(s, ctx.tz, e.date, e.date);
           const row = await createEvent(s, ctx.tz, { ...e, allDay: e.allDay ?? !e.startTime }, "jarvis");
           const item: AgendaItem = {
             key: "new",

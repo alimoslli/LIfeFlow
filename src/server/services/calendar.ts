@@ -462,6 +462,26 @@ function restAfterNightShifts<T extends Pick<AgendaItem, "blocksTime" | "startsA
 
 /** Open blocks on a day between busy items (minutes >= minMinutes, between dayStart and dayEnd, HH:mm). With `notBefore`
  * (now), nothing earlier is offered; it starts on the next quarter hour. The rest after an overnight shift counts as busy. */
+/**
+ * How long a timed exam from School holds the person's time (COO, 2026-11-22: the AI Lab found the skyling could book a
+ * study block on top of an exam). An assignment only has its start, so this is a safe stand-in for the sitting itself.
+ */
+export const EXAM_BUSY_MINUTES = 120;
+
+/**
+ * The fixed commitments that make time busy, for anything that looks for free time or a clash: timed events, shifts, and
+ * timed exams from School (busy from their start for `EXAM_BUSY_MINUTES`). Deadlines, quizzes, to-dos and all-day items
+ * never block time.
+ */
+export async function busyAgenda(scope: UserScope, tz: string, from: string, to: string, opts: { now?: Date } = {}): Promise<AgendaItem[]> {
+  const items = await getAgenda(scope, tz, from, to, { include: ["event", "shift", "assignment"], now: opts.now });
+  return items.flatMap((i) => {
+    if (i.origin !== "assignment") return [i];
+    if (i.kind !== "exam" || i.allDay) return [];
+    return [{ ...i, endsAt: new Date(i.startsAt.getTime() + EXAM_BUSY_MINUTES * 60_000), blocksTime: true }];
+  });
+}
+
 export function freeSlots(
   items: (Pick<AgendaItem, "blocksTime" | "startsAt" | "endsAt"> & { origin?: AgendaItem["origin"] })[],
   date: string,
