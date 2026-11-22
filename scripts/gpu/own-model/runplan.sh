@@ -18,6 +18,7 @@ shutdown_all() {
   echo "STEP shutdown $(date -u +%H:%M:%S)" >> $T/steps.log
 }
 (until [ "$(date +%s)" -ge "$END" ]; do sleep 20; done; echo "STEP hard-stop $(date -u +%H:%M:%S)" >> $T/steps.log; shutdown_all; pkill -f "[r]unplan.sh") &
+TIMER=$!   # stopped at the end: a timer left behind once cut the next round short on the same box (2026-11-22)
 cd $REPO && git fetch -q --depth 3 origin claude/skill-router-pilot && git reset -q --hard FETCH_HEAD; git log --oneline -1
 service postgresql start; sleep 2
 if ! curl -sf http://127.0.0.1:8000/v1/models | grep -q "\"$NAME\""; then
@@ -50,3 +51,4 @@ done < "$PLAN"
 step "plan-done $PLAN"
 [ "$KEEP" = keep ] || shutdown_all
 echo DONE > "$PLAN.done"
+kill $TIMER 2>/dev/null
