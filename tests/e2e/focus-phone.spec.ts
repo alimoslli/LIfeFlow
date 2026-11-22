@@ -34,7 +34,8 @@ test("Start it: a first step, five minutes with the skyling, keep going, and fin
   await expect(page.getByTestId("focus-timeup")).toHaveText("5 minutes done. You started.");
   await page.screenshot({ path: "test-results/adhd-focus-timeup-phone.png" });
   await page.getByTestId("focus-keep").click();
-  await expect(page.getByTestId("focus-clock")).toHaveText(/^2[45]:\d\d$/);
+  // no set end: it counts up from 0:00
+  await expect(page.getByTestId("focus-clock")).toHaveText(/^0:0\d$/);
 
   // well past the plan, one calm line
   await page.clock.fastForward("45:00");

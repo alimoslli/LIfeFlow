@@ -17,6 +17,7 @@ import { isNarration } from "@/lib/narration";
 import { savesSomething } from "@/lib/tool-saves";
 import { cn } from "@/lib/utils";
 import { StartIt } from "./assistant-line";
+import { MomentAsk } from "./moment-ask";
 
 /**
  * The skyling answers right on Today (owner, 2026-11-10: "there's no different page for the assistant. You just type it
@@ -413,6 +414,7 @@ export function TodayMiddle({
           {note.start && <StartIt href={note.start} className="shrink-0" />}
         </section>
       )}
+      <MomentAsk className="max-w-[22rem] shrink-0" />
       {work && (
         <p className="max-w-[22rem] shrink-0 text-center text-sm font-medium text-text-2" data-testid="work-today">
           {work}

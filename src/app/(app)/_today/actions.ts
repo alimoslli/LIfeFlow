@@ -9,6 +9,8 @@ import { ServiceError } from "@/server/services/errors";
 import { localDateOf, localTimeOf } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { claimStars, type Star } from "@/server/services/stars";
+import { answerMoment, momentAfterStars } from "@/server/services/moments";
+import { MOMENT_ANSWERS, type MomentAnswer, type MomentQuestion } from "@/lib/moment-question";
 import { afterAgeLock, saveBirthday } from "@/server/services/onboarding";
 import { getDb } from "@/server/db/client";
 import { after } from "next/server";
@@ -152,11 +154,28 @@ export async function saveBirthdayAction(birthDate: string, confirmed = false): 
  * Claims the stars for what the skyling passed while they were away (owner, 2026-11-10). A client action, called once
  * Today is on screen, so a prefetch of the page never claims them unseen. Nothing to show on any failure.
  */
-export async function claimStarsAction(): Promise<Star[]> {
+export async function claimStarsAction(): Promise<{ stars: Star[]; question: MomentQuestion | null }> {
   try {
-    return await withCurrentUser((s, u) => claimStars(s, u.timezone || "UTC"));
+    return await withCurrentUser(async (s, u) => {
+      const tz = u.timezone || "UTC";
+      const stars = await claimStars(s, tz);
+      // the skyling's one question on a real moment that just ended (owner, 2026-11-22; off until he decides)
+      return { stars, question: await momentAfterStars(s, tz, stars) };
+    });
   } catch (e) {
     unstable_rethrow(e);
-    return [];
+    return { stars: [], question: null };
+  }
+}
+
+/** The answer to the moment question: only "Rough" changes anything (a quiet rest of the day). Nothing is stored about it. */
+export async function answerMomentAction(answer: string): Promise<{ ok: boolean }> {
+  if (!(MOMENT_ANSWERS as readonly string[]).includes(answer)) return { ok: false };
+  try {
+    await withCurrentUser((s, u) => answerMoment(s, u.timezone || "UTC", answer as MomentAnswer));
+    return { ok: true };
+  } catch (e) {
+    unstable_rethrow(e);
+    return { ok: false };
   }
 }

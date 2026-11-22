@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { FIRST_MINUTES, KEEP_GOING_MINUTES } from "@/lib/first-step";
-import { clockLeft, focusCheck, type FocusNext } from "@/lib/focus-check";
+import { clockLeft, clockUp, focusCheck, type FocusNext } from "@/lib/focus-check";
 import { ownsNight } from "@/lib/companions";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
 import { FRAMES } from "@/components/day-clock/companion";
@@ -101,9 +101,12 @@ export function FocusScreen(p: {
     writeSession(p.itemKey, s);
   };
   const stop = () => writeSession(p.itemKey, null);
-  const left = session ? session.startedAt + session.minutes * 60_000 - now : 0;
-  const timeUp = !!session && left <= 0;
-  const check = session ? focusCheck({ startedAt: session.startedAt, plannedMinutes: session.minutes, now, next: p.next, headsUp: p.headsUp }) : null;
+  // the first sitting counts down; "Keep going" has no set end and counts up (research 2026-11-22: no fixed focus blocks)
+  const open = !!session && session.minutes === 0;
+  const left = session && !open ? session.startedAt + session.minutes * 60_000 - now : 0;
+  const timeUp = !!session && !open && left <= 0;
+  const planned = open ? KEEP_GOING_MINUTES : (session?.minutes ?? FIRST_MINUTES);
+  const check = session ? focusCheck({ startedAt: session.startedAt, plannedMinutes: planned, now, next: p.next, headsUp: p.headsUp }) : null;
 
   const finish = () =>
     start(async () => {
@@ -170,7 +173,7 @@ export function FocusScreen(p: {
       ) : (
         <section aria-label="Working on it" className="flex w-full flex-col items-center gap-4">
           <p className="font-display text-[3.5rem] leading-none tabular-nums" role="timer" aria-live="off" data-testid="focus-clock">
-            {timeUp ? "0:00" : clockLeft(left)}
+            {open ? clockUp(now - session.startedAt) : timeUp ? "0:00" : clockLeft(left)}
           </p>
           <p className="text-[0.9375rem] text-text-2">{p.step}</p>
           {check && (
@@ -180,7 +183,7 @@ export function FocusScreen(p: {
           )}
           {timeUp && !check && (
             <p role="status" className="text-[1.0625rem] font-medium" data-testid="focus-timeup">
-              {session.minutes === FIRST_MINUTES ? `${FIRST_MINUTES} minutes done. You started.` : "Time's up. Nice work."}
+              {FIRST_MINUTES} minutes done. You started.
             </p>
           )}
           <div className="flex flex-wrap justify-center gap-2">
@@ -188,13 +191,8 @@ export function FocusScreen(p: {
               <PixelIcon name="check" className="h-4 w-4" aria-hidden /> I finished it
             </button>
             {timeUp && (
-              <button
-                type="button"
-                className="lf-sb lf-sb-glass lf-sb-sm min-h-11 lf-sb-day"
-                onClick={() => begin(KEEP_GOING_MINUTES)}
-                data-testid="focus-keep"
-              >
-                Keep going {KEEP_GOING_MINUTES} minutes
+              <button type="button" className="lf-sb lf-sb-glass lf-sb-sm min-h-11 lf-sb-day" onClick={() => begin(0)} data-testid="focus-keep">
+                Keep going
               </button>
             )}
             <button

@@ -5,6 +5,7 @@ import { showStop } from "@/lib/today-stop";
 import { SkylingIcon } from "@/components/skylings/sprite";
 import { useShell } from "@/components/shell/app-shell";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
+import { MomentAsk } from "./moment-ask";
 
 export type AssistantNote = {
   id?: string;
@@ -68,6 +69,7 @@ export function AssistantLine({ name, note, brief, work }: { name: string; note:
         </button>
       )}
       {note.start && <StartIt href={note.start} className="mt-2.5 ml-[3.75rem]" />}
+      <MomentAsk className="mt-3" />
     </section>
   );
 }

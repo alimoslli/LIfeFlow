@@ -8,7 +8,7 @@ export type StartKind = "assignment" | "exam" | "quiz" | "project" | "reading" |
 
 /** How long the first sitting is: short enough to say yes to. */
 export const FIRST_MINUTES = 5;
-/** "Keep going": one longer sitting after the first. */
+/** After "Keep going" (no set end, research 2026-11-22), the check-in counts from this many minutes. */
 export const KEEP_GOING_MINUTES = 25;
 
 const WRITE = /\b(essay|paper|report|reflection|response|summary|proposal|draft|thesis|letter|blog|write|writing|journal)\b/i;

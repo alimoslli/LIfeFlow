@@ -1,4 +1,5 @@
 import { and, eq, gte, like } from "drizzle-orm";
+import { ageOn } from "@/lib/birthday";
 import { addDaysStr, startOfLocalDay, todayIn } from "@/lib/dates";
 import { pickMoment, type MomentAnswer, type MomentQuestion, type MomentStar } from "@/lib/moment-question";
 import { jarvisMessages, users } from "../db/schema";
@@ -10,7 +11,17 @@ import type { UserScope } from "../db/with-user";
  * a shift, a class or an exam, one specific question about it, at most one question a day (this one or a get-to-know
  * question), marked asked in the same transaction so another device or a reload never asks again.
  */
+/**
+ * Off until the owner decides (research 2026-11-22, "Things to avoid" 5: no question about how something felt without a
+ * crisis path in our own code, and a lawyer's read of California's SB 243 first). `MOMENT_QUESTIONS=on` turns it on.
+ */
+export const momentQuestionsOn = (env: Record<string, string | undefined> = process.env) => env.MOMENT_QUESTIONS === "on";
+
+/** How old someone must be to be asked how something felt (research 2026-11-22: under 18 gets rhythm and goal questions only). */
+export const MOMENT_MIN_AGE = 18;
+
 export async function momentAfterStars(scope: UserScope, tz: string, stars: MomentStar[], now = new Date()): Promise<MomentQuestion | null> {
+  if (!momentQuestionsOn()) return null;
   const q = pickMoment(stars);
   if (!q) return null;
   const today = todayIn(tz, now);
@@ -26,6 +37,9 @@ export async function momentAfterStars(scope: UserScope, tz: string, stars: Mome
         .limit(1),
   );
   if (u.preferences.askedOn === today || asked.length) return null;
+  // never to someone under 18, or whose birthday we don't have
+  const birth = u.preferences.birthDate;
+  if (!birth || ageOn(birth, today) < MOMENT_MIN_AGE) return null;
   await scope.tx
     .update(users)
     .set({ preferences: { ...u.preferences, askedOn: today } })

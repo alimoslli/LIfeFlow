@@ -6,6 +6,7 @@ import { isSplashActive, onSplashEnd } from "@/components/motion/intro";
 import { MAX_STARS, moreLabel, runLabel, spokenStars } from "@/lib/stars";
 import { cheerSkylings } from "@/components/skylings/night";
 import { claimStarsAction } from "./actions";
+import { setMoment } from "./moment-ask";
 
 /** Time between stars: each one has landed and is floating off before the next jumps out. */
 const GAP_MS = 1100;
@@ -43,7 +44,7 @@ export function ClaimStars() {
     const play = async () => {
       // the sky first: the stars come out of the skyling once it's drawn (at most a few seconds' wait)
       for (let i = 0; i < 30 && !document.querySelector('[data-testid="day-clock"][data-ready="true"]'); i++) await new Promise((r) => setTimeout(r, 100));
-      const stars = await claimStarsAction();
+      const { stars, question } = await claimStarsAction();
       if (off || !stars.length) return;
       const shown = stars.slice(0, MAX_STARS);
       const more = stars.length - shown.length;
@@ -61,6 +62,8 @@ export function ClaimStars() {
       const run = runLabel(stars.length);
       if (run) later(after + (more > 0 ? GAP_MS : 0) + 200, () => celebrate(skylingAt(), "small", run, { who: starNo(shown.length + 1) }));
       setSaid(spokenStars(stars.map((s) => s.title)));
+      // after the stars have landed, the skyling asks its one question about the moment (owner, 2026-11-22)
+      if (question) later(after + 1200, () => setMoment(question));
     };
     const start = () => void play();
     const unsubscribe = isSplashActive() ? onSplashEnd(start) : (start(), undefined);

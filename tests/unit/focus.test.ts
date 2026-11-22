@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { firstStep, focusHref, startable, FIRST_MINUTES } from "@/lib/first-step";
-import { clockLeft, focusCheck, OVER_BY_MINUTES } from "@/lib/focus-check";
+import { clockLeft, clockUp, focusCheck, OVER_BY_MINUTES } from "@/lib/focus-check";
 import { HEADS_UP_DEFAULT, headsUpMinutes } from "@/lib/heads-up";
 
 // The ADHD helps (owner, 2026-11-22; docs/backlog/2026-11-22-adhd-six.md): Start it, Sit with me and the check-in.
@@ -72,6 +72,9 @@ describe("the check-in speaks only inside a session, gently", () => {
     expect(clockLeft(5 * 60_000)).toBe("5:00");
     expect(clockLeft(61_500)).toBe("1:02");
     expect(clockLeft(-3000)).toBe("0:00");
+    expect(clockUp(0)).toBe("0:00");
+    expect(clockUp(12 * 60_000 + 3000)).toBe("12:03");
+    expect(clockUp(3600_000 + 5 * 60_000)).toBe("1:05:00");
   });
 });
 
