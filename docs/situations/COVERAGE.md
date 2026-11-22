@@ -2,11 +2,25 @@
 
 Updated by the situation writer after every batch. Run `python3 docs/situations/validate.py` for live counts.
 
-**Cases:** 45 (s0001 to s0015 batch 1, s0016 to s0020 batch 2, s0021 to s0025 batch 3, s0026 to s0030 batch 4, s0031 to s0035 batch 5, s0036 to s0040 batch 6, s0041 to s0045 batch 7, 2026-11-12) · **Stay-quiet share:** 11 of 45 (24%) · **Student share:** 32 of 45 (71%; batch 7 is 4 of 5) · **Routine-fit share:** 34 of 45 (76%) · **Targets:** 30 before Dev's brain is built (reached), 300 before the 10-student test, about a quarter stay-quiet, **at least 70% students** (owner, 2026-11-05), at least one in five testing routine fit.
+**Cases:** 50 (s0046 to s0050 batch 8, 2026-11-22; s0001 to s0015 batch 1, s0016 to s0020 batch 2, s0021 to s0025 batch 3, s0026 to s0030 batch 4, s0031 to s0035 batch 5, s0036 to s0040 batch 6, s0041 to s0045 batch 7, 2026-11-12) · **Stay-quiet share:** 12 of 50 (24%) · **Student share:** 37 of 50 (74%; batch 8 is 5 of 5) · **Routine-fit share:** 39 of 50 (78%) · **Targets:** 30 before Dev's brain is built (reached), 300 before the 10-student test, about a quarter stay-quiet, **at least 70% students** (owner, 2026-11-05), at least one in five testing routine fit.
 
 Worked examples (full cases with generated connections, not counted above): `examples/e0001-student-aunt-away-short-before-payday` (community college student who works) and `examples/e0002-night-nurse-school-closure`.
 
 Stay-quiet cases: s0043 (eating out a little above usual, nothing due, no fix), s0039 (the week told again, all already saved), s0010 (pay $18.40 lower after daylight saving), s0012 (cancelled tutorial, essay already handled by her morning routine), s0013 (sick day covered by paid sick leave), s0014 (food spending spike from hosting Thanksgiving), s0023 (full week already handled), s0020, s0030 (retired, covered, index fund up but not needed).
+
+## Batch 8 (s0046 to s0050, 2026-11-22): exams not booked over, ADHD without shame, "I'm behind" answered by acting
+
+All five are students, on existing personas with new seeds. By kind: university dorm no job, Moodle (p2047); university roommates campus job, Canvas, evening (p2040); community college roommates part-time, 5 classes, Canvas (p6003); part-time nursing community college, Moodle (p4012); part-time overnight warehouse, with family, Canvas (p1027).
+
+| Case | Covers |
+|---|---|
+| s0046 | Physics final moved to Thu Dec 10, 2 to 4 PM, inside her firm study window; two review blocks Mon and Wed afternoons, nothing booked over the exam |
+| s0047 | ADHD in her own words (starting is hard, hyperfocus ate the Sunday evening): Spanish due Monday; one tap for a 7 to 8:30 PM block with a first step and stop time, none tonight after 10 PM, no shame |
+| s0048 | "I'm so behind": Dev acts, four afternoon blocks ordered by due date with Undo, no questions first, nothing in night class or work days |
+| s0049 | Stay quiet: ADHD, she moved the Business post a day herself into her afternoon window and asked not to be nudged while it fits |
+| s0050 | "I'm swamped" before a night-shift weekend: three blocks in Sunday and after-class windows with Undo, never before shifts, in post-night sleep or over Sunday dinner |
+
+Routine-fit cases: all five. Stay-quiet: s0049. Simulator notes: ADHD, behind and swamped are planted as `memory` changes (the simulator has no behaviour of its own for slid tasks); an exam move onto a study window is checked through the placements only (the simulator does not move the generated study event).
 
 ## Batch 7 (s0041 to s0045, 2026-11-12): what the Today clouds and email finds now show
 

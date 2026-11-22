@@ -1,0 +1,124 @@
+{
+  "id": "s0047-student-adhd-hyperfocus-ate-the-evening-spanish-due",
+  "title": "Roommates university student with a campus job (5 classes, Canvas, evening steady) told Dev starting is the hard part and she loses hours once she is in; Sunday night she says the Drawing piece ate her evening and Spanish is untouched. Dev offers a small first step in tomorrow's study window with a stop time, no shame.",
+  "persona": "p2040-university-roommates-campus-job",
+  "now": "2026-11-22T22:15",
+  "history_days": 90,
+  "future_days": 30,
+  "seed": 7047,
+  "changes": [
+    {
+      "id": "m-start",
+      "type": "memory",
+      "content": "I have ADHD. Starting is the hard part for me, and once I'm into something I lose track of time. A tiny first step helps and a stop time helps. Don't make me feel bad about it.",
+      "category": "preference",
+      "via": "chat",
+      "told_at": "2026-11-09T20:10"
+    },
+    {
+      "id": "m-slid",
+      "type": "memory",
+      "content": "Got into the Drawing piece at 7 and looked up at 10. Haven't touched the Spanish homework and I can't make myself start it now.",
+      "category": "project",
+      "via": "chat",
+      "told_at": "2026-11-22T22:10"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-slid",
+      "check": "pattern",
+      "what": "Spanish homework 12 is due tomorrow, Monday Nov 23, 11:59 PM (asg-span-292-homework-12) and she says it is untouched (m-slid) after her Sunday evening study window (7 to 9:45 PM) went to the Drawing piece. It is 10:15 PM and she goes to bed around 12:15 AM; her evening study never runs after 11 PM. Tomorrow's Monday evening window (7 to 9:45 PM) is free: no shift on Mondays and Math homework 13 is not due until Tuesday Nov 24 (asg-math-108-homework-13). She told Dev what helps: a tiny first step and a stop time (m-start).",
+      "by_when": "2026-11-22T22:30",
+      "facts": [
+        "asg-span-292-homework-12",
+        "asg-math-108-homework-13",
+        "m-slid",
+        "m-start"
+      ]
+    }
+  ],
+  "best_fix": {
+    "for": "n-slid",
+    "action": "plan",
+    "needs_user": true,
+    "send_at": "2026-11-22T22:20",
+    "what": "One calm line and one tap: 'Nothing is lost, Spanish is due tomorrow night and Monday evening is free. Want me to put it at 7:00 PM with a first step of just opening it and doing item 1, and a stop at 8:30?' [Add it]. Also add Math homework 13 on Tuesday evening at the same time, 7:00 to 8:30 PM, so it does not slide the same way. Both come with Undo. Tonight: nothing more to do, go to sleep.",
+    "why": "A small first step and a stop time are what she said works (m-start); the block sits in her firm evening window (m-01 in her routines) and ends well before her 11 PM limit; she keeps a night's sleep.",
+    "placements": [
+      {
+        "id": "pl-span",
+        "activity": "study",
+        "label": "Spanish homework: open it, do item 1, stop at 8:30",
+        "start": "2026-11-23T19:00",
+        "end": "2026-11-23T20:30"
+      },
+      {
+        "id": "pl-math",
+        "activity": "study",
+        "label": "Math homework 13: open it, do item 1, stop at 8:30",
+        "start": "2026-11-24T19:00",
+        "end": "2026-11-24T20:30"
+      }
+    ]
+  },
+  "routine_fit": {
+    "placements": [
+      {
+        "placement": "pl-span",
+        "routine": "study",
+        "window": "evening-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-math",
+        "routine": "study",
+        "window": "evening-1",
+        "fits": true
+      }
+    ],
+    "tempting": [
+      {
+        "suggestion": "tell her to start the Spanish homework tonight at 10:30 PM and push through",
+        "routine": "study",
+        "why_wrong": "her evening study ends by 11 PM and she sleeps around 12:15 AM; tomorrow's window is free and the due time is 11:59 PM",
+        "facts": [
+          "asg-span-292-homework-12",
+          "m-start"
+        ]
+      }
+    ]
+  },
+  "must_not": [
+    "tell her to start the Spanish homework tonight after 10 PM",
+    "use shame or guilt words (lazy, should have, you always)",
+    "diagnose, explain her ADHD or call this a symptom; only use what she told Dev",
+    "write, solve or check the Spanish or Math homework (planning only)",
+    "book a long open block with no stop time",
+    "add blocks outside her evening window or on her Tuesday shift 2 to 5 PM",
+    "tell her to start the Spanish homework tonight at 10:30 PM and push through"
+  ],
+  "stay_quiet": false,
+  "tags": [
+    "student",
+    "university",
+    "roommates",
+    "campus job",
+    "5 classes",
+    "canvas",
+    "evening steady",
+    "adhd",
+    "hyperfocus",
+    "starting a task",
+    "task slid",
+    "no shame",
+    "small first step",
+    "stop time",
+    "plan with undo",
+    "routine fit"
+  ],
+  "assumptions": [
+    "She wrote her own words about ADHD; Dev saves them as a user memory and never labels or explains it.",
+    "Study at home in the evening window records as a calendar block, so the Sunday slide is visible only through her words."
+  ]
+}

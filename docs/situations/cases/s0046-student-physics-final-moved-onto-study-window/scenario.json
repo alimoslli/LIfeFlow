@@ -1,0 +1,116 @@
+{
+  "id": "s0046-student-physics-final-moved-onto-study-window",
+  "title": "Dorm university student (no job, 6 classes, 19 credits, Moodle, afternoon steady) learns her online Physics final moved to Thu Dec 10, 2 to 4 PM, the middle of her firm study window; Dev plans review blocks before it and never books study over the exam itself.",
+  "persona": "p2047-university-dorm-none",
+  "now": "2026-11-30T18:00",
+  "history_days": 90,
+  "future_days": 30,
+  "seed": 7046,
+  "changes": [
+    {
+      "id": "c-final",
+      "type": "exam_move",
+      "course": "PHYS 406",
+      "exam": "Final exam",
+      "date": "2026-12-10",
+      "start": "14:00",
+      "end": "16:00",
+      "announced_at": "2026-11-30T16:10",
+      "title": "Physics final exam moved to Thursday Dec 10, 2 to 4 PM",
+      "announcement": "Because of a room change for the online proctoring pool, the Physics I final exam is now Thursday Dec 10, 2:00 to 4:00 PM, instead of Friday Dec 18. Same format, same length."
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-final",
+      "check": "late fact",
+      "what": "The Physics final moved from Dec 18 to Thursday Dec 10, 2:00 to 4:00 PM (c-final.announcement, exam-phys-406-final-exam, posted today 4:10 PM). That is exactly her firm Thursday afternoon study window (14:00 to 16:45, m-01), so the usual study slot that day is the exam. Her other classes are Spanish and Econ that morning, and her Econ and Spanish finals come later.",
+      "by_when": "2026-11-30T20:00",
+      "facts": [
+        "c-final.announcement",
+        "exam-phys-406-final-exam",
+        "m-01"
+      ]
+    }
+  ],
+  "best_fix": {
+    "for": "n-final",
+    "action": "plan",
+    "needs_user": true,
+    "send_at": "2026-11-30T18:05",
+    "what": "Offer two Physics review blocks in her afternoon window, Monday Dec 7 and Wednesday Dec 9, 2:00 to 4:00 PM, as one tap that adds them with Undo, and leave Thursday Dec 10 afternoon empty for the exam (a short note: nothing is booked on exam day).",
+    "why": "Her study is afternoons (m-01); the exam now replaces Thursday's slot, so the review moves to the two nearest afternoons before it. Monday and Wednesday are free after her 12:00 Biology class ends at 12:50.",
+    "placements": [
+      {
+        "id": "pl-phys-1",
+        "activity": "study",
+        "label": "Physics final review",
+        "start": "2026-12-07T14:00",
+        "end": "2026-12-07T16:00"
+      },
+      {
+        "id": "pl-phys-2",
+        "activity": "study",
+        "label": "Physics final review",
+        "start": "2026-12-09T14:00",
+        "end": "2026-12-09T16:00"
+      }
+    ]
+  },
+  "routine_fit": {
+    "placements": [
+      {
+        "placement": "pl-phys-1",
+        "routine": "study",
+        "window": "afternoon-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-phys-2",
+        "routine": "study",
+        "window": "afternoon-1",
+        "fits": true
+      }
+    ],
+    "tempting": [
+      {
+        "suggestion": "keep the usual Thursday Dec 10 afternoon study block, or book a review block at 2 PM on exam day",
+        "routine": "study",
+        "why_wrong": "Thursday 2 to 4 PM is the exam itself; a study block there double-books her",
+        "facts": [
+          "c-final.announcement",
+          "m-01"
+        ]
+      }
+    ]
+  },
+  "must_not": [
+    "book or keep a study block over the exam time on Thursday Dec 10 (2 to 4 PM)",
+    "keep the old Dec 18 date in any plan or reminder",
+    "put study in the evening or after 6:30 PM (she studies afternoons)",
+    "write, solve or check anything for the exam (planning only)",
+    "tell her to ask the professor to move it back",
+    "keep the usual Thursday Dec 10 afternoon study block, or book a review block at 2 PM on exam day"
+  ],
+  "stay_quiet": false,
+  "tags": [
+    "student",
+    "university",
+    "dorm",
+    "no job",
+    "6 classes",
+    "19 credits",
+    "moodle",
+    "online exam",
+    "afternoon steady",
+    "moved exam",
+    "late fact",
+    "exam must not be booked over",
+    "routine fit",
+    "plan with undo"
+  ],
+  "assumptions": [
+    "Online finals sometimes get a new fixed slot when the proctoring pool changes.",
+    "Dev adds the blocks only on her tap and shows Undo."
+  ]
+}

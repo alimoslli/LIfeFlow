@@ -1,0 +1,76 @@
+{
+  "id": "s0049-student-adhd-task-slid-a-day-already-planned-stay-quiet",
+  "title": "Part-time nursing student at a community college (roommates, grocery job, 3 classes, Moodle, afternoon steady) lost Tuesday to a rabbit hole and moves the Business post to tomorrow's study window herself; the plan is already inside her routine, so Dev stays quiet.",
+  "persona": "p4012-cc-roommates-nursing-part-time-savings",
+  "now": "2026-11-17T20:00",
+  "history_days": 90,
+  "future_days": 30,
+  "seed": 7049,
+  "changes": [
+    {
+      "id": "m-nudge",
+      "type": "memory",
+      "content": "Things slide for me a lot, I have ADHD. If I move something a day and it's still inside my afternoon time, leave me alone about it. Only ping me when it's really close.",
+      "category": "preference",
+      "via": "chat",
+      "told_at": "2026-11-02T16:05"
+    },
+    {
+      "id": "m-plan",
+      "type": "memory",
+      "content": "Fell down a research rabbit hole on drug classes today and didn't start the Business post. Doing it tomorrow in my usual afternoon time.",
+      "category": "project",
+      "via": "chat",
+      "told_at": "2026-11-17T19:40"
+    }
+  ],
+  "dev_must_notice": [],
+  "best_fix": {
+    "what": "Nothing. At most the usual list on Today shows the Business post due tomorrow at 11:59 PM. No card, no push, no re-plan.",
+    "why": "She already moved it to tomorrow in her firm Wednesday afternoon window (2 to 4:45 PM, m-01), which ends about seven hours before the 11:59 PM due time (asg-bus-170-discussion-post-12), and she asked Dev to stay out of it while it fits there (m-nudge). A nudge now would repeat what she said and sound like shame.",
+    "action": "none",
+    "needs_user": false
+  },
+  "routine_fit": {
+    "tempting": [
+      {
+        "suggestion": "offer a catch-up block tonight or an extra evening block for the Business post",
+        "routine": "study",
+        "why_wrong": "she studies afternoons and already set tomorrow's afternoon window; she asked not to be nudged while it fits",
+        "facts": [
+          "m-plan",
+          "m-nudge"
+        ]
+      }
+    ]
+  },
+  "must_not": [
+    "send a push or card tonight about the missed study today",
+    "offer or place an evening study block",
+    "use guilt words (behind, missed, slipped)",
+    "mention ADHD back to her or explain hyperfocus",
+    "do, write or check the discussion post",
+    "re-plan the other items already inside her routine",
+    "offer a catch-up block tonight or an extra evening block for the Business post"
+  ],
+  "stay_quiet": true,
+  "tags": [
+    "student",
+    "community college",
+    "nursing",
+    "roommates",
+    "part-time job",
+    "3 classes",
+    "moodle",
+    "afternoon steady",
+    "adhd",
+    "task slid",
+    "stay quiet",
+    "routine fit",
+    "no shame"
+  ],
+  "assumptions": [
+    "Tomorrow's afternoon is free of work and class on Wednesdays for this persona (checked in the generated timeline).",
+    "The ask 'only ping me when it's really close' means after her afternoon window passes with the post not ticked; Dev would then say it once."
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "id": "s0050-student-overnight-warehouse-im-swamped-dev-books-three-blocks",
+  "title": "Part-time community college student (with family, overnight warehouse four nights, 3 classes, Canvas) texts 'I'm swamped' on Friday afternoon with four things due Sunday to Tuesday; Dev acts: three blocks in her after-class and Sunday windows with Undo, nothing around her night shifts or Sunday dinner.",
+  "persona": "p1027-cc-overnight-warehouse-four-nights",
+  "now": "2026-11-20T15:10",
+  "history_days": 90,
+  "future_days": 30,
+  "seed": 7050,
+  "changes": [
+    {
+      "id": "m-swamped",
+      "type": "memory",
+      "content": "I'm swamped. Bio quiz and English post are due Sunday, Psych quiz Monday, Bio worksheet Tuesday, and I'm at work all weekend nights.",
+      "category": "project",
+      "via": "chat",
+      "told_at": "2026-11-20T15:05"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-swamped",
+      "check": "time",
+      "what": "Four items in four days (m-swamped): Bio chapter quiz 13 and English discussion 13 Sun Nov 22 11:59 PM (asg-bio-105-chapter-quiz-13, asg-eng-101-discussion-post-13), Psych module quiz 12 Mon Nov 23 (asg-psy-101-module-quiz-12), Bio lab worksheet 13 Tue Nov 24 (asg-bio-105-lab-worksheet-13). She works Friday and Saturday nights 10 PM to 6:30 AM and sleeps 7:15 AM to about 2 PM after. Her real study time is Sunday 3:30 to 6 PM and Monday and Tuesday after class from 3 PM; Sunday dinner with her mom and brothers is 6:30 to 7:45 PM.",
+      "by_when": "2026-11-20T15:30",
+      "facts": [
+        "m-swamped",
+        "asg-bio-105-chapter-quiz-13",
+        "asg-eng-101-discussion-post-13",
+        "asg-psy-101-module-quiz-12",
+        "asg-bio-105-lab-worksheet-13",
+        "m-study",
+        "m-availability"
+      ]
+    }
+  ],
+  "best_fix": {
+    "for": "n-swamped",
+    "action": "plan",
+    "needs_user": false,
+    "send_at": "2026-11-20T15:15",
+    "what": "Dev acts and says in two lines: 'Four things, and your real time covers all of them. I put three blocks on your calendar: Sunday 3:30 to 5:30 PM for the Bio quiz and the English post, Monday 3:00 to 4:30 PM for the Psych quiz, Tuesday 3:00 to 4:30 PM for the Bio worksheet. Tap Undo to remove any.' Nothing tonight or Saturday.",
+    "why": "The blocks use the windows she has: Sunday afternoon before dinner, Monday and Tuesday after class (Monday English ends 1:15 PM, Tuesday's Bio lab ends 2:20 PM). Her nights and her post-night sleep are left whole. Undo is shown.",
+    "placements": [
+      {
+        "id": "pl-sun",
+        "activity": "study",
+        "label": "Bio quiz 13 and English post",
+        "start": "2026-11-22T15:30",
+        "end": "2026-11-22T17:30"
+      },
+      {
+        "id": "pl-mon",
+        "activity": "study",
+        "label": "Psych module quiz 12",
+        "start": "2026-11-23T15:00",
+        "end": "2026-11-23T16:30"
+      },
+      {
+        "id": "pl-tue",
+        "activity": "study",
+        "label": "Bio lab worksheet 13",
+        "start": "2026-11-24T15:00",
+        "end": "2026-11-24T16:30"
+      }
+    ]
+  },
+  "routine_fit": {
+    "placements": [
+      {
+        "placement": "pl-sun",
+        "routine": "study",
+        "window": "sun-afternoon",
+        "fits": true
+      },
+      {
+        "placement": "pl-mon",
+        "routine": "study",
+        "window": "after-class",
+        "fits": true
+      },
+      {
+        "placement": "pl-tue",
+        "routine": "study",
+        "window": "after-class",
+        "fits": true
+      }
+    ],
+    "tempting": [
+      {
+        "suggestion": "book study Friday or Saturday afternoon or evening before her night shift, or on Sunday evening during dinner",
+        "routine": "study",
+        "why_wrong": "she sleeps until about 2 PM after nights and needs the rest before the next shift; Sunday 6:30 PM is family dinner and Sunday night is her one real night of sleep",
+        "facts": [
+          "m-availability",
+          "m-study"
+        ]
+      }
+    ]
+  },
+  "must_not": [
+    "book study Friday or Saturday before a night shift, or in her post-night sleep (7:15 AM to 2 PM)",
+    "book over Sunday dinner (6:30 to 7:45 PM) or Sunday night's sleep",
+    "suggest using her saved unpaid time off hours (m-upt) or skipping a shift",
+    "do, write or check the quizzes, post or worksheet",
+    "use guilt words or say she is overcommitted",
+    "add blocks without showing Undo",
+    "book study Friday or Saturday afternoon or evening before her night shift, or on Sunday evening during dinner"
+  ],
+  "stay_quiet": false,
+  "tags": [
+    "student",
+    "community college",
+    "with family",
+    "overnight job",
+    "3 classes",
+    "canvas",
+    "i'm swamped",
+    "dev acts",
+    "undo",
+    "night shift",
+    "time",
+    "routine fit"
+  ],
+  "assumptions": [
+    "The simulator's Sunday after a Saturday night shift ends 6:30 AM, so her Sunday afternoon is awake time; her usual Sunday study window is 3:30 to 6 PM.",
+    "Today's four items already exist in Canvas; Dev adds blocks only, never tasks that aren't there."
+  ]
+}
