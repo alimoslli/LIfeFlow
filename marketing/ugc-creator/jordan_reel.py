@@ -101,7 +101,7 @@ def wt(key, word, n=0):
 def build(sheet=False):
     s1 = clip_frames(f"{UGC}/shot1.mp4"); s2 = clip_frames(f"{UGC}/shot2.mp4")
     s3 = clip_frames(f"{UGC}/shot3.mp4", vf=f"scale={W}:{H}:flags=lanczos,fps={FPS},colorbalance=rs=-0.04:gs=-0.01:bs=0.03:rm=-0.03:bm=0.02,eq=saturation=0.93")
-    n3 = int(round(11.12 * FPS)) + 6; t_tap = wt("n3", "tap"); app = app_frames(APP_TAP - t_tap, n3)
+    n3 = int(round(10.88 * FPS)) + 6; t_tap = wt("n3", "tap"); app = app_frames(APP_TAP - t_tap, n3)
     quads = [screen_quad(f) for f in s1]; q0 = next((q for q in quads if q[0] is not None), (None, None)); quads = [q if q[0] is not None else q0 for q in quads]
     shot_app = np.asarray(APP_SHOT)
     bg, pmask = app_bg(); t_sky = wt("n3", "skyling"); t_now = wt("n3", "what's", 0); t_next = wt("n3", "next")
@@ -128,6 +128,8 @@ def build(sheet=False):
                 uu = (t - t_tap + 0.15) / 0.65; cx, cy = PX0 + PW * 0.5, PY0 + PH * 0.22; rr = 30 + 60 * uu
                 cv2.circle(a, (int(cx), int(cy)), int(rr), (255, 255, 255), 6)
             img = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).convert("RGBA")
+            ph = Image.new("RGBA", (W, H), (0, 0, 0, 0)); dph = ImageDraw.Draw(ph); dph.rounded_rectangle([140, 64, 940, 128], 20, fill=(200, 40, 40, 230))
+            dph.text((540, 96), "PLACEHOLDER: production app recording goes here", font=FG(28), fill=(255, 255, 255, 255), anchor="mm"); img.alpha_composite(ph)
             label(img, "Now", 230, 300, S.clamp((t - t_now) / 0.25)); label(img, "Next", 850, 300, S.clamp((t - t_next) / 0.25))
             caption(img, "n3", t)
         elif i < body:
@@ -149,7 +151,7 @@ def build(sheet=False):
     def put(bus, x, at, g=0.0):
         q = int(max(0, at) * SR); x = x[: max(0, len(bus) - q)]; bus[q:q + len(x)] += x * 10 ** (g / 20)
     put(voice, S.load(f"{UGC}/shot1.mp4"), starts["s1"] / FPS); put(voice, S.load(f"{UGC}/shot2.mp4"), starts["s2"] / FPS)
-    put(voice, S.load(f"{UGC}/line3.mp3"), starts["n3"] / FPS); put(voice, S.load(f"{UGC}/shot3.mp4"), starts["s3"] / FPS)
+    put(voice, S.load(f"{UGC}/line3b.mp3"), starts["n3"] / FPS); put(voice, S.load(f"{UGC}/shot3.mp4"), starts["s3"] / FPS)
     r = np.sqrt((voice[np.abs(voice).max(1) > 0.01] ** 2).mean()) + 1e-9; voice *= 0.12 / r
     rng = np.random.default_rng(1); room = rng.normal(0, 1, (len(voice), 2)).astype(np.float32); room = np.cumsum(room, 0); room -= np.convolve(room[:, 0], np.ones(2400) / 2400, "same")[:, None]
     room *= 0.0025 / (np.sqrt((room ** 2).mean()) + 1e-9); voice[: starts["n3"] * SR // FPS] += room[: starts["n3"] * SR // FPS]
@@ -164,7 +166,7 @@ def build(sheet=False):
     mix = np.tanh(voice + bed)[:ns]
     with wave.open(f"{HERE}/_pre.wav", "wb") as wv: wv.setnchannels(2); wv.setsampwidth(2); wv.setframerate(SR); wv.writeframes((np.clip(mix, -1, 1) * 32767).astype(np.int16).tobytes())
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", f"{HERE}/_pre.wav", "-af", "loudnorm=I=-14:TP=-1.5:LRA=9", "-ar", "48000", f"{HERE}/_mix.wav"], check=True)
-    out = f"{HERE}/Jordan_Reel_v1.mp4"
+    out = f"{HERE}/Jordan_Reel_v2.mp4"
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", f"{HERE}/_silent.mp4", "-i", f"{HERE}/_mix.wav", "-c:v", "copy", "-c:a", "aac", "-b:a", "224k", "-shortest", "-movflags", "+faststart", out], check=True)
     print("done", out, round(T, 2), "s", {k: round(v / FPS, 2) for k, v in starts.items()}, flush=True)
 build(sheet=len(sys.argv) > 1 and sys.argv[1] == "sheet")
