@@ -1,8 +1,10 @@
-import { createHash, randomInt, timingSafeEqual } from "node:crypto";
+import { randomInt, timingSafeEqual } from "node:crypto";
 import { eq, lt } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { smsInbound, users, type UserPreferences } from "../db/schema";
 import { normalizePhone, sendSms, smsConfig, type SmsConfig } from "../integrations/twilio";
+import { keyedHash } from "../crypto";
+import { rateLimit } from "../rate-limit";
 import { ServiceError } from "./errors";
 import { appOpenFor } from "./waitlist";
 
@@ -13,7 +15,12 @@ import { appOpenFor } from "./waitlist";
  */
 type Sms = NonNullable<UserPreferences["sms"]>;
 const CODE_MINUTES = 10;
-const hash = (code: string) => createHash("sha256").update(code).digest("hex");
+const SENDS_PER_ACCOUNT_HOUR = 5;
+const SENDS_PER_NUMBER_HOUR = 3;
+const TRIES_PER_CODE_WINDOW = 5;
+/** A keyed hash bound to the account and number, so a leaked row can't be brute-forced offline and a code works only where it was sent. */
+const hash = (userId: string, phone: string, code: string) => keyedHash("sms-link-code", `${userId}:${phone}:${code}`);
+const CLASH = "That number can't be linked. Try a different one.";
 
 async function prefsOf(db: Database, userId: string) {
   const [u] = await db.select({ preferences: users.preferences, smsPhone: users.smsPhone }).from(users).where(eq(users.id, userId));
@@ -40,11 +47,16 @@ export async function startPhoneLink(db: Database, userId: string, raw: string, 
   const phone = normalizePhone(raw);
   if (!phone) throw new ServiceError("Enter your mobile number, like (404) 555-0134 or +44 7700 900123.");
   const [taken] = await db.select({ id: users.id }).from(users).where(eq(users.smsPhone, phone));
-  if (taken && taken.id !== userId) throw new ServiceError("That number is linked to another account.");
+  if (taken && taken.id !== userId) throw new ServiceError(CLASH); // never says the number is linked elsewhere
+  // Limits count before the text goes out: per account and per number (the number key is hashed, never the digits).
+  if (!(await rateLimit(db, `sms-link:send:user:${userId}`, SENDS_PER_ACCOUNT_HOUR, 3600)).allowed)
+    throw new ServiceError("Too many codes sent. Try again in an hour.");
+  if (!(await rateLimit(db, `sms-link:send:phone:${keyedHash("sms-link-phone", phone)}`, SENDS_PER_NUMBER_HOUR, 3600)).allowed)
+    throw new ServiceError("Too many codes sent to that number. Try again in an hour.");
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
   await setSms(db, userId, {
     pendingPhone: phone,
-    codeHash: hash(code),
+    codeHash: hash(userId, phone, code),
     codeExpiresAt: new Date(Date.now() + CODE_MINUTES * 60_000).toISOString(),
     attempts: 0,
   });
@@ -56,17 +68,24 @@ export async function verifyPhoneLink(db: Database, userId: string, code: string
   const u = await prefsOf(db, userId);
   const s = u.preferences.sms;
   if (!s?.pendingPhone || !s.codeHash || !s.codeExpiresAt) throw new ServiceError("Send a code first.");
-  if (new Date(s.codeExpiresAt) < new Date() || (s.attempts ?? 0) >= 5) throw new ServiceError("That code expired. Send a new one.");
-  const ok = timingSafeEqual(Buffer.from(hash(code.trim())), Buffer.from(s.codeHash));
-  if (!ok) {
-    await setSms(db, userId, { attempts: (s.attempts ?? 0) + 1 });
-    throw new ServiceError("That code doesn't match.");
-  }
+  if (new Date(s.codeExpiresAt) < new Date()) throw new ServiceError("That code expired. Send a new one.");
+  // One atomic counter row decides every guess, so parallel guesses can't pass 5 tries (a new code doesn't reset it).
+  if (!(await rateLimit(db, `sms-link:try:user:${userId}`, TRIES_PER_CODE_WINDOW, CODE_MINUTES * 60)).allowed)
+    throw new ServiceError("Too many tries. Wait a few minutes and send a new code.");
   const phone = s.pendingPhone;
-  await db
-    .update(users)
-    .set({ smsPhone: phone, preferences: { ...u.preferences, sms: { money: s.money, conversationId: s.conversationId } } })
-    .where(eq(users.id, userId));
+  const ok = timingSafeEqual(Buffer.from(hash(userId, phone, code.trim())), Buffer.from(s.codeHash));
+  if (!ok) throw new ServiceError("That code doesn't match.");
+  // The number must still be free now (someone else may have linked it since the code went out).
+  const [taken] = await db.select({ id: users.id }).from(users).where(eq(users.smsPhone, phone));
+  if (taken && taken.id !== userId) throw new ServiceError(CLASH);
+  try {
+    await db
+      .update(users)
+      .set({ smsPhone: phone, preferences: { ...u.preferences, sms: { money: s.money, conversationId: s.conversationId } } })
+      .where(eq(users.id, userId));
+  } catch {
+    throw new ServiceError(CLASH);
+  }
   return phone;
 }
 

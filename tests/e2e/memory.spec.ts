@@ -13,8 +13,11 @@ test("Jarvis suggests a memory; it's used only after the user taps Keep", async 
   await expect(card).toContainText("Prefers evening study sessions.");
   expect(await queryAsUser(email, "select status from memories")).toEqual([{ status: "proposed" }]);
 
-  await card.getByRole("button", { name: "Keep" }).click();
-  await expect(card).toContainText("✓ Saved to memory");
+  // A tap before the chat has hydrated is lost (the button has no handler yet): tap again until the card moves on.
+  await expect(async () => {
+    if (await card.getByRole("button", { name: "Keep" }).isVisible()) await card.getByRole("button", { name: "Keep" }).click({ timeout: 2000 });
+    await expect(card).toContainText("✓ Saved to memory", { timeout: 2000 });
+  }).toPass({ timeout: 20_000 });
   await expect.poll(async () => (await queryAsUser<{ status: string }>(email, "select status from memories"))[0]?.status).toBe("active");
 
   // The decision survives a reload of the conversation.

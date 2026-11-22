@@ -63,7 +63,7 @@ describe("texting Jarvis", () => {
     expect(await verifyPhoneLink(db, user.id, code)).toBe("+14045550134");
     expect(await userForPhone(db, "404-555-0134")).toBe(user.id);
     const other = await makeUser("Other");
-    await expect(startPhoneLink(db, other.user.id, "4045550134", CFG, t.fetchImpl)).rejects.toThrow(/another account/);
+    await expect(startPhoneLink(db, other.user.id, "4045550134", CFG, t.fetchImpl)).rejects.toThrow(/can't be linked/);
 
     const send = async (to: string, text: string) => t.sent.push({ to, body: text });
     const deps = { provider: () => new ScriptedProvider(), send };
@@ -109,6 +109,26 @@ describe("texting Jarvis", () => {
     expect(log).toHaveBeenCalledWith("[sms] reply failed:", "Error", 503);
     expect(JSON.stringify(log.mock.calls)).not.toMatch(/1450|9921|rent|Failed query/);
     log.mockRestore();
+  });
+});
+
+describe("phone-link code limits", () => {
+  it("holds 5 tries under parallel guesses and limits sends", async () => {
+    const db = getDb();
+    const { user } = await makeUser("Par");
+    const t = twilio();
+    await startPhoneLink(db, user.id, "(404) 555-0211", CFG, t.fetchImpl);
+    const code = t.sent[0].body.match(/\d{6}/)![0];
+    const wrong = code === "000000" ? "111111" : "000000";
+    const results = await Promise.allSettled(Array.from({ length: 40 }, () => verifyPhoneLink(db, user.id, wrong)));
+    const checked = results.filter((r) => r.status === "rejected" && /doesn't match/.test(String(r.reason))).length;
+    expect(checked).toBe(5);
+    await expect(verifyPhoneLink(db, user.id, code)).rejects.toThrow(/Too many tries/);
+    const b = await makeUser("Sender");
+    for (let i = 0; i < 3; i++) await startPhoneLink(db, b.user.id, "(404) 555-0212", CFG, t.fetchImpl);
+    await expect(startPhoneLink(db, b.user.id, "(404) 555-0212", CFG, t.fetchImpl)).rejects.toThrow(/Too many codes/);
+    await startPhoneLink(db, b.user.id, "(404) 555-0213", CFG, t.fetchImpl);
+    await expect(startPhoneLink(db, b.user.id, "(404) 555-0214", CFG, t.fetchImpl)).rejects.toThrow(/Too many codes/);
   });
 });
 
