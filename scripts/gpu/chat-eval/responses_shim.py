@@ -415,7 +415,8 @@ def guard_notes(original, msg):
                     "and offer to set it up; do it when they say yes."]
     # Humane blocks (2026-11-22: asked for help before an exam it booked 10:50 AM to 4:00 PM and 2:15 PM to 10:00 PM, whole free
     # windows as "study"). Nobody studies eight hours straight; a block it chooses itself is two hours at most.
-    onto = over_busy(msg, original)
+    # ...unless they said to book it anyway: their calendar, their call
+    onto = [] if re.search(r"\b(anyway|any way|regardless|i know|double.?book|on top|still (add|book|put))\b", last_user(original) or "", re.I) else over_busy(msg, original)
     if onto:
         return [onto[0] + ". Do not save it. Tell them about the clash in one line and offer a free time instead; book only when they pick one."]
     clash = over_exam(msg, original)
