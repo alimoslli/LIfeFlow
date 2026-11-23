@@ -569,6 +569,17 @@ Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playboo
 - For AI people: phone-camera realism (natural light, a little handheld shake, real room noise, a natural voice with ums and pauses; no glossy AI look, perfect skin or plastic motion). When posted, the platform's AI-generated label is turned on, and the character never claims to be a real paying user with results he didn't have (FTC fake-testimonial line).
 - Why: the three overnight ADHD reels of 2026-11-22 (made by LF Main) failed every point. No character, no sound, Pinterest-style stills unrelated to LifeFlow, the app small in a corner on a grey screen, and screens from a local test build. The owner: "0 standards. Our standards are way higher than this."
 
+**Rules for the Jordan reels (AI student creator), 2026-11-23.** From `docs/research/2026-11-23-adhd-planners-and-ugc.md` (section 6), with the owner's calls on top (via the COO):
+- **ADHD:** Jordan may say he has ADHD himself; the owner asked for it. He never tells the viewer they have it ("Do you have ADHD?", "your ADHD brain"), and there are no symptom lists, tests or "signs".
+- **No results:** no results, grades or testimonials. Jordan is never presented as a real customer, student or reviewer, so no "I tried this and..." outcomes (FTC rule on testimonials by people who don't exist). He shows what the app does.
+- **Only real features:** only what the app really does today. No timer, widget, Watch, Siri, body double or "snap a paper" until they ship. Don't copy Tiimo's "AI co-planner" line.
+- **No unsourced stats:** for example "71% decide in 3 seconds" or "80% have time blindness".
+- **Natural acting:** no stiff gestures, flat voice or flat face; show small tired and relieved moments. Never a real person's likeness, never anyone under 18.
+- **Labels:** the owner posts and handles the AI labels himself (platform label; the research also recommends an on-screen note).
+- **No ad pixels:** viewer data from ad pixels is never tied to a health-looking choice in the app.
+- **Test before trusting:** vendor ROI claims for AI UGC aren't evidence; test our own ads first.
+- **Angles for the next scripts:** "your day, already on one line"; "nothing piles up"; "a star for what you actually did"; "class, work and rent on one screen". Format: 15 to 30 s, Jordan to camera for about 2 s, then the app.
+
 **So the plan is:**
 - Post the drafts that already passed (v8, v13) first, fixed for the open items: "calm place", the Sienna voice, and the 15% code (it must exist in Stripe).
 - Then post steadily with free screen-recording reels and carousels. Use credits only for what the numbers show is working.
