@@ -2,11 +2,25 @@
 
 Updated by the situation writer after every batch. Run `python3 docs/situations/validate.py` for live counts.
 
-**Cases:** 50 (s0046 to s0050 batch 8, 2026-11-22; s0001 to s0015 batch 1, s0016 to s0020 batch 2, s0021 to s0025 batch 3, s0026 to s0030 batch 4, s0031 to s0035 batch 5, s0036 to s0040 batch 6, s0041 to s0045 batch 7, 2026-11-12) · **Stay-quiet share:** 12 of 50 (24%) · **Student share:** 37 of 50 (74%; batch 8 is 5 of 5) · **Routine-fit share:** 39 of 50 (78%) · **Targets:** 30 before Dev's brain is built (reached), 300 before the 10-student test, about a quarter stay-quiet, **at least 70% students** (owner, 2026-11-05), at least one in five testing routine fit.
+**Cases:** 55 (s0051 to s0055 batch 9, 2026-11-24; s0046 to s0050 batch 8, 2026-11-22; s0001 to s0015 batch 1, s0016 to s0020 batch 2, s0021 to s0025 batch 3, s0026 to s0030 batch 4, s0031 to s0035 batch 5, s0036 to s0040 batch 6, s0041 to s0045 batch 7, 2026-11-12) · **Stay-quiet share:** 13 of 55 (24%) · **Student share:** 41 of 55 (75%; batch 9 is 4 of 5) · **Routine-fit share:** 44 of 55 (80%) · **Targets:** 30 before Dev's brain is built (reached), 300 before the 10-student test, about a quarter stay-quiet, **at least 70% students** (owner, 2026-11-05), at least one in five testing routine fit.
 
 Worked examples (full cases with generated connections, not counted above): `examples/e0001-student-aunt-away-short-before-payday` (community college student who works) and `examples/e0002-night-nurse-school-closure`.
 
-Stay-quiet cases: s0043 (eating out a little above usual, nothing due, no fix), s0039 (the week told again, all already saved), s0010 (pay $18.40 lower after daylight saving), s0012 (cancelled tutorial, essay already handled by her morning routine), s0013 (sick day covered by paid sick leave), s0014 (food spending spike from hosting Thanksgiving), s0023 (full week already handled), s0020, s0030 (retired, covered, index fund up but not needed).
+Stay-quiet cases: s0043 (eating out a little above usual, nothing due, no fix), s0039 (the week told again, all already saved), s0010 (pay $18.40 lower after daylight saving), s0012 (cancelled tutorial, essay already handled by her morning routine), s0013 (sick day covered by paid sick leave), s0014 (food spending spike from hosting Thanksgiving), s0023 (full week already handled), s0020, s0030 (retired, covered, index fund up but not needed), s0052 (Venmo cash-out and Zelle split between her own money and a roommate).
+
+## Batch 9 (s0051 to s0055, 2026-11-24): Thanksgiving week, own-money moves, an overnight student, a promise, a shift worker's flight
+
+Four students on existing personas with new seeds, one shift worker who is not a student. By kind: university athlete, dorm, far from home, campus job, 6 classes, Moodle, evening (p1009); university, roommates, campus job, 5 classes, Canvas, evening (p2040); part-time community college, with family, overnight warehouse, 3 classes, Canvas (p1027); first-generation university, dorm, campus job, 6 classes, morning crammer (p2048); warehouse worker on a 4 on 4 off rotation (p6004).
+
+| Case | Covers |
+|---|---|
+| s0051 | Thanksgiving break shown as a day off, flight home Fri to Sun booked on a card; Friday practice and the rec desk are already skipped or closed, so Dev says nothing about them and plans only three free evenings (Wed, Thu after the team dinner, Sunday after landing) before Monday quizzes and two midterms; no reminder for the Saturday call (she is home); tuition not warned about (checking $1,300.00) |
+| s0052 | Stay quiet: a $140.00 Venmo cash-out of her own balance and a $62.50 Zelle to a roommate are not income, spending or a new bill; Available now $912.40 covers $669.44 of bills before payday; nothing sent in her Tuesday study window |
+| s0053 | Overnight warehouse student offered an extra Sunday night shift (5th night in a row, ends 6:30 AM Monday, class at 10): rest check, two drafts she sends herself, reply by Wed noon, never her saved unpaid time off; Thanksgiving dinner at her aunt's already fits |
+| s0054 | Promise kept or broken: she promised her part of the group project Saturday morning; one 9 PM check-in with three answers, never inferred from the empty calendar or the $18.86 restaurant charge; no study block offered at night |
+| s0055 | Not a student: warehouse worker's flight to Boston, 4 hours of sleep before the 3 AM start Thursday night and 4 hours 40 minutes Monday night before the 6 AM run; a Thursday reminder he can accept and one ask about an earlier flight home; no Saturday workout while away |
+
+Routine-fit cases: all five (s0052 and s0054 stay-quiet or ask with no placements; s0051 has three placements in her firm evening window). Stay-quiet: s0052. Simulator notes: a `purchase` cannot be money in, so a cash-out is a `refund` change (it files as a refund with the Household category, not a transfer; the case argues from its description); the simulator already skips Friday Nov 27 practice and closes the rec desk (`closed_on`) in p1009; persona time zones can be the destination's too, so a trip to a same-zone city carries no time difference. Gaps still open: a refund landing, a due date moved later, a transfer type for own money moves, a break shown only by the school's calendar feed (the persona's term breaks add no calendar event), a promise kept by a finished linked to-do.
 
 ## Batch 8 (s0046 to s0050, 2026-11-22): exams not booked over, ADHD without shame, "I'm behind" answered by acting
 

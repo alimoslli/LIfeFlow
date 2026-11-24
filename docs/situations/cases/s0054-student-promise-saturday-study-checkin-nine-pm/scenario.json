@@ -1,0 +1,86 @@
+{
+  "id": "s0054-student-promise-saturday-study-checkin-nine-pm",
+  "title": "First-generation university student (dorm, campus job, 6 classes, morning crammer, break week) promised Dev she would finish her part of the BUS 256 group project Saturday morning; at 9 PM Dev asks once with three answers, whatever the empty Saturday calendar or the $18.86 restaurant charge seem to say.",
+  "persona": "p2048-university-dorm-campus-job",
+  "now": "2026-11-28T20:55",
+  "history_days": 90,
+  "future_days": 30,
+  "seed": 7054,
+  "changes": [
+    {
+      "id": "m-promise",
+      "type": "memory",
+      "content": "I promise I'll finish my part of the BUS 256 group project Saturday morning, before I go out tonight.",
+      "category": "project",
+      "via": "chat",
+      "told_at": "2026-11-27T16:10"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-promise",
+      "check": "time",
+      "what": "On Fri Nov 27 at 4:10 PM she promised Dev she would finish her part of the BUS 256 group project Saturday morning (m-promise); the group project final is due Thu Dec 3 at 11:59 PM (asg-bus-256-group-project-final). Saturday morning is her usual study window, 9 to 11:30 AM (m-01 and the study routine), but nothing records whether she did it: the calendar has no study block that morning, a promise is kept or broken only by her answer, and Dev has no linked to-do. It is 8:55 PM Saturday, the promise's check-in time is 9 PM.",
+      "by_when": "2026-11-28T21:05",
+      "facts": [
+        "m-promise",
+        "asg-bus-256-group-project-final",
+        "m-01"
+      ]
+    }
+  ],
+  "best_fix": {
+    "for": "n-promise",
+    "action": "ask",
+    "needs_user": true,
+    "send_at": "2026-11-28T21:00",
+    "what": "One check-in at 9 PM, one line: 'You said you'd finish your part of the BUS 256 project this morning. How did it go?' with three buttons: [Yes, I did it] [Tomorrow instead] [It didn't happen]. Nothing else on the card. A yes gets a warm line; 'tomorrow instead' (first time, so allowed) moves the promise to Sunday and offers to put a block on Sunday morning; 'didn't happen' gets an honest, gentle line and an offer of a smaller promise for Monday's window (Mon 7:30 to 9:30 AM), never a lecture.",
+    "why": "A promise is kept or broken only by her own answer. Dev has no way to know from a calendar, a charge or silence, and guessing wrong would shame someone who finished, or praise someone who did not. The check-in is the only time Dev asks, once, in her words."
+  },
+  "must_not": [
+    "mark the promise kept or broken from the calendar, Canvas, a purchase or silence: only her answer decides",
+    "mention the $18.86 restaurant charge (tx-2026-11-28-eating-out), the empty Saturday study slot or her going out tonight on the card",
+    "use guilt words or 'you missed'",
+    "offer a study block tonight after the check-in",
+    "do, write or check any of the group project",
+    "send the check-in earlier than 9 PM or again after she answers",
+    "count 'no answer' as broken: an unanswered check-in is dropped after 7 days"
+  ],
+  "stay_quiet": false,
+  "tags": [
+    "student",
+    "university",
+    "dorm",
+    "first-generation",
+    "campus job",
+    "6 classes",
+    "morning crammer",
+    "thanksgiving",
+    "break week",
+    "promise",
+    "check-in",
+    "three answers",
+    "never guessed",
+    "time",
+    "routine fit"
+  ],
+  "assumptions": [
+    "The promise check-in is the proactive kind promise_check at 9 PM on the day it was due (ADR 0031); Saturday morning is the promised time, so 9 PM that day is the default check.",
+    "The simulator has no to-do records, so a linked to-do is described, not planted; nothing in her data finishes or breaks the promise.",
+    "The Saturday restaurant charge is only the ordinary spending of a night out ($18.86); it is in the data to show Dev must not use it.",
+    "'Tomorrow instead' is allowed twice; this is the first time."
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "offer a study block tonight after the check-in",
+        "routine": "study",
+        "why_wrong": "she studies mornings before class and can't focus at night (m-01); the card only asks how it went",
+        "facts": [
+          "m-01"
+        ]
+      }
+    ]
+  }
+}
