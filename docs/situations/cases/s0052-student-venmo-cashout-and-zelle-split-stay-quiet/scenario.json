@@ -1,0 +1,94 @@
+{
+  "id": "s0052-student-venmo-cashout-and-zelle-split-stay-quiet",
+  "title": "University student (roommates, campus job, 5 classes, Canvas, evening steady) cashes out her own Venmo balance and Zelles a roommate her share of Thanksgiving groceries; money between her own accounts and people is not spending or income, so Dev stays quiet.",
+  "persona": "p2040-university-roommates-campus-job",
+  "now": "2026-11-24T19:20",
+  "history_days": 90,
+  "future_days": 30,
+  "seed": 7052,
+  "money": {
+    "available_now_cents": 91240
+  },
+  "changes": [
+    {
+      "id": "m-venmo",
+      "type": "memory",
+      "content": "Friends paid me back on Venmo for the Friendsgiving groceries, so I cashed out my Venmo balance to my checking today. I also Zelled my roommate my half of the turkey and sides.",
+      "category": "fact",
+      "via": "chat",
+      "told_at": "2026-11-24T18:55"
+    },
+    {
+      "id": "x-venmo-cashout",
+      "type": "refund",
+      "description": "VENMO CASHOUT 4417",
+      "at": "2026-11-24T18:30",
+      "amount_cents": 14000
+    },
+    {
+      "id": "x-zelle-roommate",
+      "type": "purchase",
+      "at": "2026-11-24T18:40",
+      "account": "acc-checking",
+      "description": "ZELLE TO ROOMMATE CONF# K4D8Q2LM",
+      "merchant_name": null,
+      "amount_cents": -6250,
+      "pfc": "TRANSFER_OUT_ACCOUNT_TRANSFER",
+      "pending": false
+    }
+  ],
+  "dev_must_notice": [],
+  "best_fix": {
+    "action": "none",
+    "needs_user": false,
+    "what": "Nothing. Dev says nothing about the Venmo cash-out or the Zelle to her roommate, shows Available now as $912.40, and keeps the rent share on Dec 1 as the next bill.",
+    "why": "Both lines are money moving between her own accounts and a friend, not spending, income or a new bill, and she already explained them herself. The rent share, transit pass and utilities share come to $669.44 before the next paycheck, so $242.96 is left with no pay counted."
+  },
+  "must_not": [
+    "count the $140.00 Venmo cash-out (x-venmo-cashout) as income, a refund or a paycheck: it is her own money moving into checking",
+    "count the $62.50 Zelle to her roommate (x-zelle-roommate) as spending, or flag it as a spike in eating or grocery spending",
+    "add the $62.50 Zelle to the rent share series or list it as a new bill: only the $569.72 rent share on Dec 1 is a bill she tracks",
+    "ask her to log, categorize or explain either line (she already told Dev in m-venmo)",
+    "add the $140.00 to what she can spend, or count the Nov 27 paycheck before it lands",
+    "send a money push or a card about the Venmo and Zelle lines at 7:20 PM on a Tuesday",
+    "suggest moving the $140.00 anywhere"
+  ],
+  "stay_quiet": true,
+  "tags": [
+    "student",
+    "university",
+    "roommates",
+    "campus job",
+    "5 classes",
+    "canvas",
+    "evening steady",
+    "stay quiet",
+    "venmo",
+    "zelle",
+    "own money moves",
+    "transfer not spending",
+    "not a bill",
+    "money",
+    "routine fit",
+    "thanksgiving"
+  ],
+  "assumptions": [
+    "She told Dev herself (m-venmo): friends repaid her on Venmo, she cashed the Venmo balance out to checking, and she Zelled her roommate half of the turkey and sides. The bank shows the two lines only as 'VENMO CASHOUT 4417' (money in, $140.00) and 'ZELLE TO ROOMMATE' (money out, $62.50, pending).",
+    "In the real app a cash-out of her own app balance is a transfer, and money to a person is never a bill; the simulator can only file the cash-out as a refund (a known gap), so the case argues from the description, not the simulator's label.",
+    "Available now is $912.40 with the pending Zelle; before the next paycheck it owes the Dec 1 rent share $569.72, the Dec 5 transit pass $50.00 and the Dec 9 utilities share $49.72, $669.44 in all, so $242.96 is left and the Nov 27 paycheck is not counted.",
+    "A quiet day is the right answer: nothing is short, nothing clashes on the timeline, and her Tuesday evening is her study window."
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "send a money push or a card about the Venmo and Zelle lines at 7:20 PM on a Tuesday",
+        "routine": "study",
+        "why_wrong": "Tuesday 7 to 9:45 PM is her firm study window and there is nothing to act on",
+        "facts": [
+          "m-01"
+        ]
+      }
+    ]
+  }
+}
