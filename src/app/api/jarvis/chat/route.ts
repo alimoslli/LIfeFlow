@@ -12,7 +12,7 @@ import { refusalMessage } from "@/server/services/ai-limits";
 import { turnStateOf } from "@/server/jarvis/turn-state";
 import { withUser } from "@/server/db/with-user";
 import { getDb } from "@/server/db/client";
-import { rateLimit } from "@/server/rate-limit";
+import { rateLimit, rateLimitCount } from "@/server/rate-limit";
 import { AI_CONSENT_NEEDED, aiAllowed } from "@/lib/ai-consent";
 import { assistantProfile, nameAtStart } from "@/lib/assistant";
 
@@ -40,12 +40,19 @@ export async function POST(req: Request) {
     if (!aiAllowed(user.preferences)) throw new HttpError(403, AI_CONSENT_NEEDED);
     await enforceRateLimit(`jarvis:min:${user.id}`, 20, 60);
     await enforceRateLimit(`jarvis:day:${user.id}`, 400, 86_400);
-    if (!isPro(user) && !(await rateLimit(getDb(), `jarvis:free:${user.id}`, FREE_JARVIS_PER_DAY, 86_400)).allowed)
-      throw new HttpError(402, `You've used today's ${FREE_JARVIS_PER_DAY} free messages. LifeFlow Pro has a much bigger daily allowance (Settings → Plan).`);
-    // Allowances (messages, the monthly amount, the company's ceiling): a friendly "no" before anything is saved. The real check,
-    // which sets the cost aside in one step, is inside the turn. A retry of a send that was already received skips this look.
+    // A retry of a send that was already received is the same message: it is never looked at again or counted again.
     const resend = parsed.data.clientMessageId ? await withUser(user.id, (s) => turnStateOf(s, parsed.data.clientMessageId!)) : null;
-    if (!resend?.conversationId) {
+    const isRetry = !!resend?.conversationId;
+    const freeKey = `jarvis:free:${user.id}`;
+    const freeFull = new HttpError(
+      402,
+      `You've used today's ${FREE_JARVIS_PER_DAY} free messages. LifeFlow Pro has a much bigger daily allowance (Settings → Plan).`,
+    );
+    const free = !isPro(user) && !isRetry;
+    if (free && (await rateLimitCount(getDb(), freeKey, 86_400)) >= FREE_JARVIS_PER_DAY) throw freeFull;
+    // Allowances (messages, the monthly amount, the company's ceiling): a friendly "no" before anything is saved. The real check,
+    // which sets the cost aside in one step, is inside the turn.
+    if (!isRetry) {
       const subject = await subjectFor(user.id, {
         id: user.id,
         timezone: user.timezone,
@@ -56,6 +63,8 @@ export async function POST(req: Request) {
       const refused = await peekAi(subject, { feature: "chat", firstStep: true, estimateMicros: 1 });
       if (refused) throw new HttpError(refused.scope === "company" ? 503 : 429, refusalMessage(refused, subject, new Date()));
     }
+    // Counted only now: the allowance check passed and this is a new message.
+    if (free && !(await rateLimit(getDb(), freeKey, FREE_JARVIS_PER_DAY, 86_400)).allowed) throw freeFull;
     const locked = await moneyLocked(user);
 
     let provider;
