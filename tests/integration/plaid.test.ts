@@ -282,6 +282,54 @@ describe("Plaid", () => {
     expect(o.month.netSpendingCents).toBe(0); // the excluded $42 is not in spent
   });
 
+  it("a pending charge the person set to Transfer (no category) is still a transfer when it posts or is modified (review 2026-11-24)", async () => {
+    const pages = [
+      { added: [txn("pend-t", 42, { pending: true })], modified: [], removed: [], next_cursor: "c1", has_more: false },
+      { added: [txn("post-t", 42, { pending_transaction_id: "pend-t" })], modified: [], removed: [], next_cursor: "c2", has_more: false },
+      { added: [], modified: [txn("post-t", 42, { name: "Changed line" })], removed: [], next_cursor: "c3", has_more: false },
+    ];
+    const fake = fakePlaid({ pages, noInvestments: true });
+    const { user, run, item } = await connected(fake);
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    await run((s) =>
+      s.tx
+        .update(transactions)
+        .set({ kind: "transfer", categoryId: null })
+        .where(and(eq(transactions.userId, user.id), eq(transactions.providerTransactionId, "pend-t"))),
+    );
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    let tx = await run((s) => s.tx.select().from(transactions).where(eq(transactions.userId, user.id)));
+    expect(tx).toHaveLength(1);
+    expect(tx[0]).toMatchObject({ providerTransactionId: "post-t", kind: "transfer" });
+    expect((await run((s) => moneyOverview(s, "2026-10-28"))).month.netSpendingCents).toBe(0);
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    tx = await run((s) => s.tx.select().from(transactions).where(eq(transactions.userId, user.id)));
+    expect(tx[0]).toMatchObject({ kind: "transfer", description: "Changed line" });
+    expect((await run((s) => moneyOverview(s, "2026-10-28"))).month.netSpendingCents).toBe(0);
+  });
+
+  it("edits survive when the pending row's removal comes on an earlier page than the posted row (review 2026-11-24)", async () => {
+    const pages = [
+      { added: [txn("pend-2", 42, { pending: true })], modified: [], removed: [], next_cursor: "c1", has_more: false },
+      { added: [], modified: [], removed: [{ transaction_id: "pend-2" }], next_cursor: "c2", has_more: true },
+      { added: [], modified: [], removed: [], next_cursor: "c3", has_more: true },
+      { added: [txn("post-2", 42, { pending_transaction_id: "pend-2" })], modified: [], removed: [], next_cursor: "c4", has_more: false },
+    ];
+    const fake = fakePlaid({ pages, noInvestments: true });
+    const { user, run, item } = await connected(fake);
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    await run((s) =>
+      s.tx
+        .update(transactions)
+        .set({ notes: "split with Sam", excluded: true })
+        .where(and(eq(transactions.userId, user.id), eq(transactions.providerTransactionId, "pend-2"))),
+    );
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    const tx = await run((s) => s.tx.select().from(transactions).where(eq(transactions.userId, user.id)));
+    expect(tx.map((t) => t.providerTransactionId)).toEqual(["post-2"]);
+    expect(tx[0]).toMatchObject({ notes: "split with Sam", excluded: true });
+  });
+
   it("a move between their own accounts stays a transfer when the bank sends it again (QA, 2026-11-18)", async () => {
     const zIn = txn("z-in", -400, {
       account_id: "acc-card",
@@ -621,6 +669,19 @@ describe("Plaid webhook verification", () => {
     expect(calls).toBe(1);
     expect(await verifyWebhook(body, t, unknown, now + KEY_MISS_MS + 1)).toBe(false); // asked again after the wait
     expect(calls).toBe(2);
+  });
+
+  it("a failed key fetch (network or server trouble) is not remembered as a missing key, so real webhooks still work", async () => {
+    resetWebhookKeyCache();
+    let down = true;
+    const flaky = (async () => {
+      if (down) return new Response(JSON.stringify({ error_code: "INTERNAL_SERVER_ERROR" }), { status: 500 });
+      return new Response(JSON.stringify({ key: jwk }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const t = token(body, now / 1000, "k-flaky");
+    expect(await verifyWebhook(body, t, flaky, now)).toBe(false);
+    down = false;
+    expect(await verifyWebhook(body, t, flaky, now + 1000)).toBe(true); // not blocked for 5 minutes
   });
 
   it("fetches the key again once when a cached key fails, so a rotation doesn't stall webhooks", async () => {

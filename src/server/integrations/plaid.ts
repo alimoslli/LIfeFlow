@@ -427,10 +427,6 @@ export async function syncItem(scope: UserScope, integrationId: string, tz: stri
   return result.stats;
 }
 
-/** A person-app row we settled as their own transfer: the bank still calls it money in or out, and keeps sending that. */
-const keepsOwnTransfer = (existing: { kind: string; merchantName: string | null }, values: { kind: string; description: string }) =>
-  existing.kind === "transfer" && values.kind !== "transfer" && !!personPaymentApp(existing.merchantName, values.description);
-
 /**
  * Syncs in its own transaction. If it fails, the failure is recorded in a
  * separate transaction (the sync's own writes roll back), so the user sees
@@ -533,6 +529,7 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
 
   // 2. Transactions (cursor-based: only what changed since last time)
   let cursor = restart ? null : creds.cursor;
+  const removedIds = new Set<string>();
   for (let page = 0; page < 50; page++) {
     const r = await call<{ added: PlaidTxn[]; modified: PlaidTxn[]; removed: { transaction_id: string }[]; next_cursor: string; has_more: boolean }>(
       "/transactions/sync",
@@ -542,6 +539,7 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
     for (const t of [...r.added, ...r.modified]) {
       const accountId = idByPlaid.get(t.account_id);
       if (!accountId) continue;
+      removedIds.delete(t.transaction_id); // removed, then sent again later in this sync: it stays
       const amountCents = -Math.round(t.amount * 100); // Plaid: positive = money out
       const description = t.name.slice(0, 300);
       const rawMerchant = t.merchant_name?.slice(0, 200) ?? null;
@@ -588,8 +586,8 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
             // a time the bank gave once stays, if a later update leaves it out
             authorizedAt: values.authorizedAt ?? existing.authorizedAt,
             categoryId: existing.categoryId ?? values.categoryId,
-            // and a move between their own accounts that `settleOwnMoves` made a transfer stays one (QA, 2026-11-18)
-            kind: existing.categoryId || keepsOwnTransfer(existing, values) ? existing.kind : values.kind,
+            // a kind the person set (or `settleOwnMoves` made, QA 2026-11-18) stays: nothing marks who set it, so a saved kind is kept
+            kind: existing.kind,
           })
           .where(eq(transactions.id, existing.id));
         stats.modified++;
@@ -623,7 +621,7 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
               categoryId: pending.categoryId ?? values.categoryId,
               notes: pending.notes,
               excluded: pending.excluded,
-              kind: pending.categoryId || keepsOwnTransfer(pending, values) ? pending.kind : values.kind,
+              kind: pending.kind, // same rule as a modified row: a saved kind is kept, even with no category
             }),
           })
           .returning({ id: transactions.id });
@@ -639,23 +637,18 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
       if (t.pending_transaction_id)
         await scope.tx.delete(transactions).where(and(eq(transactions.userId, scope.userId), eq(transactions.providerTransactionId, t.pending_transaction_id)));
     }
-    if (r.removed.length) {
-      const del = await scope.tx
-        .delete(transactions)
-        .where(
-          and(
-            eq(transactions.userId, scope.userId),
-            inArray(
-              transactions.providerTransactionId,
-              r.removed.map((x) => x.transaction_id),
-            ),
-          ),
-        )
-        .returning({ id: transactions.id });
-      stats.removed += del.length;
-    }
+    // Removals wait until every page is read: a pending row removed on an earlier page than the posted row that
+    // replaces it must still be there for that row to take the person's edits from it.
+    for (const x of r.removed) removedIds.add(x.transaction_id);
     cursor = r.next_cursor;
     if (!r.has_more) break;
+  }
+  if (removedIds.size) {
+    const del = await scope.tx
+      .delete(transactions)
+      .where(and(eq(transactions.userId, scope.userId), inArray(transactions.providerTransactionId, [...removedIds])))
+      .returning({ id: transactions.id });
+    stats.removed += del.length;
   }
 
   // 3 and 4 are optional products. Only asked for when the bank has those accounts (asking can add a paid
@@ -821,6 +814,7 @@ const keyMisses = new Map<string, number>();
 const keyRefetched = new Map<string, number>();
 export const KEY_MISS_MS = 5 * 60_000;
 const KEY_REFETCH_MS = 60_000;
+const KEY_UNKNOWN = new Set(["INVALID_FIELD", "INVALID_INPUT", "INVALID_REQUEST"]);
 const KEY_TTL_MS = 24 * 3600_000;
 const KEY_MAPS_MAX = 500;
 
@@ -839,9 +833,12 @@ async function fetchKey(kid: string, f: Fetch | undefined, now: number) {
     keyCache.set(kid, entry);
     keyMisses.delete(kid);
     return entry;
-  } catch {
-    if (keyMisses.size >= KEY_MAPS_MAX) keyMisses.clear();
-    keyMisses.set(kid, now);
+  } catch (e) {
+    // Only Plaid saying "no such key" is remembered; a network or server problem is tried again on the next webhook.
+    if (e instanceof PlaidError && e.code && KEY_UNKNOWN.has(e.code)) {
+      if (keyMisses.size >= KEY_MAPS_MAX) keyMisses.clear();
+      keyMisses.set(kid, now);
+    }
     return null;
   }
 }
