@@ -1,0 +1,113 @@
+{
+  "id": "s0055-warehouse-worker-flight-east-back-monday-night-6am-shift",
+  "title": "Warehouse worker (four days on, four off, 6 AM shifts, not a student) books a Thanksgiving flight to his mother's, back Monday night; the late landing leaves about five hours of sleep before Tuesday's 6 AM shift, and Dev names it once with the choices.",
+  "persona": "p6004-shift-worker",
+  "now": "2026-11-23T20:30",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 7055,
+  "changes": [
+    {
+      "id": "x-flight-east",
+      "type": "trip",
+      "destination": "Boston",
+      "title": "Flight to Boston for Thanksgiving",
+      "booked_at": "2026-11-23T20:05",
+      "depart": "2026-11-27T06:10",
+      "arrive_local": "2026-11-27T09:25",
+      "destination_time_zone": "America/New_York",
+      "return_depart_local": "2026-11-30T20:55",
+      "return": "2026-11-30T22:55",
+      "from": "the airport",
+      "purchase": {
+        "account": "acc-card",
+        "fund_from": "acc-checking",
+        "description": "JETBLUE 2791 WEB BOOKING",
+        "merchant_name": "JetBlue",
+        "amount_cents": -41800,
+        "pfc": "TRAVEL_FLIGHTS"
+      },
+      "email_sender": [
+        "Airline reservations",
+        "reservations-air@example.com"
+      ]
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-short-nights",
+      "check": "rest",
+      "what": "He booked a flight to Boston, out Fri Nov 27 at 6:10 AM and back Mon Nov 30, leaving at 8:55 PM and landing 10:55 PM (x-flight-east, x-flight-east.return). Two nights get short. Thursday is Thanksgiving and his last shift of the run ends 4:30 PM (shift-main-2026-11-26), then his usual 6 PM gym; with the airport 40 minutes away he is up about 3 AM, so a bed time of 11 PM gives 4 hours. Monday he lands at 10:55 PM, is home around 12:20 AM, and the next run starts Tue Dec 1 at 6 AM (shift-main-2026-12-01), up at 5:00, so he sleeps about 4 hours 40 minutes. Both nights are fixable only before they happen. Nothing else collides: the weekend is days off, and the Saturday gym is not needed in Boston.",
+      "by_when": "2026-11-23T21:00",
+      "facts": [
+        "x-flight-east",
+        "x-flight-east.return",
+        "shift-main-2026-11-26",
+        "shift-main-2026-12-01",
+        "m-01"
+      ]
+    }
+  ],
+  "best_fix": [
+    {
+      "for": "n-short-nights",
+      "action": "reminder",
+      "needs_user": false,
+      "send_at": "2026-11-26T20:00",
+      "what": "Thursday 8:00 PM, after the gym and dinner: 'Flight is at 6:10, so you're up around 3. Bed by 8:30 gives you about 6 hours. Want it?' with [Remind me at 8:15] [Not tonight]. Dev sets nothing without the tap and gives no gym advice.",
+      "why": "The gym stays at 6 PM (his usual window) and the evening still has two hours at home before a bed time that works. The reminder only helps if he wants it."
+    },
+    {
+      "for": "n-short-nights",
+      "action": "ask",
+      "needs_user": true,
+      "send_at": "2026-11-23T20:50",
+      "what": "One line after he booked: 'Heads up, Monday's flight lands at 10:55 PM and your next run starts at 6 AM, about 4 hours 40 minutes of sleep. Want me to look at an earlier flight home on Monday, or keep this one?' with [Look at earlier flights] [Keep it]. Dev shows options and prices from the airline's own site and rebooks nothing.",
+      "why": "The choice is his and it costs money to change, so Dev asks once and offers to look; keeping the flight is fine and Dev drops it."
+    }
+  ],
+  "must_not": [
+    "book a Saturday 6 PM workout while he is in Boston",
+    "tell him the Thursday gym should be skipped, or move his Thursday gym",
+    "rebook, cancel or change the flight, or tell him a flight is better without showing it",
+    "count the paycheck or the first run's pay as money he has for the trip",
+    "use guilt words about the trip, the booking or sleep",
+    "remind him of the weekly grocery run on Wed Nov 25 as a problem, or call the missed Saturday gym a miss"
+  ],
+  "stay_quiet": false,
+  "tags": [
+    "shift worker",
+    "not a student",
+    "lives with family",
+    "warehouse",
+    "rotation 4 on 4 off",
+    "6 AM shifts",
+    "thanksgiving",
+    "trip",
+    "rest",
+    "routine fit",
+    "reminder",
+    "ask",
+    "far from home"
+  ],
+  "assumptions": [
+    "His rotation is 4 days on, 4 off from the persona (Nov 23 to 26 on, Nov 27 to 30 off, Dec 1 to 4 on); Thanksgiving Thursday is a regular shift, not a holiday day off.",
+    "Home and Boston are both in the persona's time zone; the flights are 3 hours 15 minutes out and 2 hours back as the case states them (a made-up route).",
+    "Leaving for the airport about 3:30 AM puts him up at about 3 AM; Monday's landing is 10:55 PM with the airport 40 minutes away, and the simulator's timeline puts him at home 12:20 AM.",
+    "Money is not part of this case: checking is $3,817.25 and the Dec 1 rent is $1,464.77."
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "book a Saturday 6 PM workout while he is in Boston",
+        "routine": "gym",
+        "why_wrong": "he is away Fri to Mon; his Tue, Thu and Sat 6 PM gym (m-01) does not apply on the trip and Dev must not count it as missed",
+        "facts": [
+          "m-01",
+          "x-flight-east"
+        ]
+      }
+    ]
+  }
+}

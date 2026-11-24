@@ -1,0 +1,170 @@
+{
+  "id": "s0051-athlete-flight-home-thanksgiving-three-free-evenings",
+  "title": "University student athlete (dorm, far from home, rec desk job, 6 classes, Moodle, evening steady) books a flight home for Thanksgiving break: the break is a day off, Friday practice and the rec desk are already skipped, so Dev only plans the three evenings that are really free before Monday's quizzes and two midterms.",
+  "persona": "p1009-university-dorm-athlete-rec-desk",
+  "now": "2026-11-23T20:30",
+  "history_days": 90,
+  "future_days": 30,
+  "seed": 7051,
+  "money": {
+    "available_now_cents": 130000,
+    "savings_cents": 294440
+  },
+  "changes": [
+    {
+      "id": "x-flight-home",
+      "type": "trip",
+      "destination": "home",
+      "title": "Flight home for Thanksgiving",
+      "booked_at": "2026-11-23T20:10",
+      "depart": "2026-11-27T11:15",
+      "arrive_local": "2026-11-27T14:05",
+      "destination_time_zone": "America/Chicago",
+      "return_depart_local": "2026-11-29T16:40",
+      "return": "2026-11-29T19:30",
+      "from": "campus airport",
+      "purchase": {
+        "account": "acc-card",
+        "fund_from": "acc-checking",
+        "description": "DELTA AIR 0062 WEB BOOKING",
+        "merchant_name": "Delta Air Lines",
+        "amount_cents": -29840,
+        "pfc": "TRAVEL_FLIGHTS"
+      },
+      "email_sender": [
+        "Airline reservations",
+        "reservations-air@example.com"
+      ]
+    },
+    {
+      "id": "x-break",
+      "type": "calendar_event",
+      "title": "Thanksgiving break, no classes",
+      "start": "2026-11-25",
+      "end": "2026-11-30",
+      "state": "other",
+      "source": "google",
+      "created_at": "2026-11-02T10:00"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-break-week",
+      "check": "time",
+      "what": "She booked a flight home Fri Nov 27 at 11:15 AM and back Sun Nov 29 at 4:40 PM, landing 7:30 PM and home about 8:35 PM (x-flight-home, x-flight-home.return). Break is a day off from Wed Nov 25 (x-break), so the days read free, but the work due right after it is not: Math quiz 12 and Bio quiz 12 are due Mon Nov 30 11:59 PM (asg-math-135-quiz-12, asg-bio-197-quiz-12), Bio homework 14 Tue Dec 1, the Spanish midterm Wed Dec 2 at 1 PM (exam-span-249-midterm-2) and the Math midterm Fri Dec 4 at 11 AM (exam-math-135-midterm-2), then the conference tournament bus on Sat Dec 5 at 7 AM (ev-tournament-1). The free time is only Wed and Thu evenings in her 7 to 9:45 PM study window (practice ends 5:45 on Wed, the team dinner ends 7 PM Thu) and Sunday night after she lands. The rest is already handled: Friday's practice is skipped on her calendar (ev-practice), the rec desk is closed Nov 27 and 29, and Saturday she is with her family.",
+      "by_when": "2026-11-23T21:00",
+      "facts": [
+        "x-flight-home",
+        "x-flight-home.return",
+        "x-break",
+        "asg-math-135-quiz-12",
+        "asg-bio-197-quiz-12",
+        "asg-bio-197-homework-14",
+        "exam-span-249-midterm-2",
+        "exam-math-135-midterm-2",
+        "ev-team-thanksgiving",
+        "ev-practice",
+        "ev-tournament-1",
+        "m-01"
+      ]
+    }
+  ],
+  "best_fix": {
+    "for": "n-break-week",
+    "action": "plan",
+    "needs_user": false,
+    "send_at": "2026-11-23T20:45",
+    "what": "One line after the booking: 'Flight is in. Break is free of class, but the quizzes land Monday night and the Spanish midterm is Wednesday. I put three evening blocks on your calendar: Wed 7:05 to 8:35 PM for the Math and Bio quizzes, Thu 7:05 to 8:35 PM after the team dinner for Spanish midterm review, and Sunday 8:50 to 9:35 PM once you're back for Bio homework 14. Tap Undo to remove any.' Nothing Friday or Saturday, no reminder about the Saturday call (she is home with her family), nothing about the rec desk or Friday practice.",
+    "why": "The blocks use her firm evening window on the three evenings she is on campus and awake; Friday and Saturday are travel and family. Everything else on the break is already settled on her calendar, so Dev adds nothing about it. Undo is shown on each block.",
+    "placements": [
+      {
+        "id": "pl-wed",
+        "activity": "study",
+        "label": "Math quiz 12 and Bio quiz 12",
+        "start": "2026-11-25T19:05",
+        "end": "2026-11-25T20:35"
+      },
+      {
+        "id": "pl-thu",
+        "activity": "study",
+        "label": "Spanish midterm review",
+        "start": "2026-11-26T19:05",
+        "end": "2026-11-26T20:35"
+      },
+      {
+        "id": "pl-sun",
+        "activity": "study",
+        "label": "Bio homework 14",
+        "start": "2026-11-29T20:50",
+        "end": "2026-11-29T21:35"
+      }
+    ]
+  },
+  "routine_fit": {
+    "placements": [
+      {
+        "placement": "pl-wed",
+        "routine": "study",
+        "window": "evening-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-thu",
+        "routine": "study",
+        "window": "evening-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-sun",
+        "routine": "study",
+        "window": "evening-1",
+        "fits": true
+      }
+    ],
+    "tempting": [
+      {
+        "suggestion": "put study on Friday or Saturday of the break, or at the airport and on the flights",
+        "routine": "study",
+        "why_wrong": "she studies evenings in her dorm room; Friday is the flight and Saturday is time with her family, and the Saturday 7 PM call home is not needed when she is there",
+        "facts": [
+          "m-01",
+          "m-03",
+          "x-flight-home"
+        ]
+      }
+    ]
+  },
+  "must_not": [
+    "put study on Friday or Saturday of the break, or at the airport and on the flights",
+    "remind her to call home on Saturday (m-03): she is home with her family",
+    "warn about Friday's practice (ev-practice already skips Nov 27) or the rec desk (closed Nov 27 and 29)",
+    "warn about the $909.00 tuition payment on Dec 5: checking is $1,300.00 after the flight",
+    "book a block over the team Thanksgiving dinner (Thu 3 to 7 PM) or after 10:30 PM",
+    "do, write or check the quizzes, homework or midterm answers",
+    "add blocks without showing Undo"
+  ],
+  "stay_quiet": false,
+  "tags": [
+    "student",
+    "university",
+    "athlete",
+    "dorm",
+    "far from home",
+    "campus job",
+    "6 classes",
+    "moodle",
+    "evening steady",
+    "thanksgiving",
+    "break day off",
+    "trip",
+    "time",
+    "routine fit",
+    "undo"
+  ],
+  "assumptions": [
+    "The persona's practice already skips Fri Nov 27 and the rec desk is already closed Nov 27 and 29 (typical for a school's break); Dev reads that from the calendar and posted schedule and adds nothing.",
+    "Thursday practice does not run: the team dinner (3 to 7 PM) is the team's Thanksgiving plan.",
+    "The flights are paid by card and funded from checking the same night; checking $1,300.00 is pinned and covers the Dec 5 tuition draft of $909.00 (it posts Mon Dec 7) without counting any paycheck.",
+    "Home is in a time zone one hour later; times on the flights are each in local time."
+  ]
+}

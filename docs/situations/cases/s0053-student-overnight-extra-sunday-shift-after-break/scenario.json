@@ -1,0 +1,106 @@
+{
+  "id": "s0053-student-overnight-extra-sunday-shift-after-break",
+  "title": "Part-time community college student (with family, overnight warehouse, 3 classes, Canvas) is offered an extra Sunday night shift after Thanksgiving break that ends at 6:30 AM before her 10 AM Monday class.",
+  "persona": "p1027-cc-overnight-warehouse-four-nights",
+  "now": "2026-11-24T17:35",
+  "history_days": 90,
+  "future_days": 30,
+  "seed": 7053,
+  "changes": [
+    {
+      "id": "x-peak-shift",
+      "type": "shift_add",
+      "job": "job-warehouse",
+      "start": "2026-11-29T22:00",
+      "end": "2026-11-30T06:30",
+      "break_minutes": 30,
+      "posted_at": "2026-11-24T12:05",
+      "notes": "Holiday peak extra shift. Reply to your lead by Wed noon if you can't."
+    },
+    {
+      "id": "x-thanksgiving",
+      "type": "calendar_event",
+      "title": "Thanksgiving dinner at Aunt Rosa's",
+      "start": "2026-11-26T15:00",
+      "end": "2026-11-26T18:00",
+      "state": "with people",
+      "place": "out",
+      "source": "google",
+      "created_at": "2026-11-01T18:00"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-five-nights",
+      "check": "rest",
+      "what": "Her employer posted an extra holiday-peak shift Sun Nov 29, 10 PM to 6:30 AM (x-peak-shift), posted at 12:05 PM today with 'reply to your lead by Wed noon if you can't'. It would be her fifth night in a row (shift-warehouse-2026-11-25, -26, -27 and -28, then this one) and it ends 6:30 AM Monday Nov 30, with BIO 105 at 10 AM and ENG 101 at noon (class-bio-105-2026-11-30, class-eng-101-2026-11-30) after break. Home at 6:55, her usual sleep after nights is 7:15 to 2:15 (m-day-sleep), so before the 10 AM class she would get 7:15 to 9:00, an hour and 45 minutes. She told Dev Sunday night is her one real night of sleep before Monday class (m-availability), and Sunday 6:30 to 7:45 PM is dinner with her mom and brothers (m-family). Thanksgiving dinner at her aunt's (x-thanksgiving, Thu 3 to 6 PM) already fits between her post-night sleep and her 10 PM shift; nothing to say about it.",
+      "by_when": "2026-11-24T17:45",
+      "facts": [
+        "x-peak-shift",
+        "shift-warehouse-2026-11-28",
+        "class-bio-105-2026-11-30",
+        "class-eng-101-2026-11-30",
+        "m-availability",
+        "m-day-sleep",
+        "m-family",
+        "x-thanksgiving"
+      ]
+    }
+  ],
+  "best_fix": {
+    "for": "n-five-nights",
+    "action": "draft for them",
+    "needs_user": true,
+    "send_at": "2026-11-24T17:40",
+    "what": "One push after her study block ends: 'Your lead posted an extra Sunday night shift, Nov 29, 10 PM to 6:30 AM. It would be five nights in a row and leave you 7:15 to 9:00 AM of sleep before BIO at 10. You reply by Wednesday noon. I wrote two replies you can send: [Say no, family dinner and class Monday] [Ask to leave at 3 AM]. Or skip both.' Dev does not decide for her, sends nothing, and says nothing about her saved unpaid time off. A second line Wednesday 11:00 AM (after her free-day sleep, before noon): 'Reply to your lead about Sunday by noon' only if she has not replied or chosen.",
+    "why": "It is a real choice with a clock on it (Wed noon) and she is the only one who can make it. Dev names the cost in her own facts (five nights, 1 h 45 min of sleep before class, Sunday dinner and her one real night of sleep) and makes either answer one tap, with her words in a draft she sends herself."
+  },
+  "must_not": [
+    "decide for her, accept or decline the shift, or message her lead",
+    "use or suggest her saved unpaid time off hours (m-upt) or skipping a class",
+    "suggest she study or sleep in the gap before Monday class so she can take the Sunday shift",
+    "count extra pay from the shift as money she has or predict her hourly pay",
+    "warn about Thanksgiving dinner at her aunt's (Thu 3 to 6 PM): it fits her sleep and her 10 PM shift",
+    "use guilt words or say she is overworking",
+    "send the push during her post-night sleep or her Tuesday study window (3 to 5:30 PM)"
+  ],
+  "stay_quiet": false,
+  "tags": [
+    "student",
+    "community college",
+    "with family",
+    "overnight job",
+    "3 classes",
+    "canvas",
+    "afternoon steady",
+    "thanksgiving",
+    "break",
+    "extra shift",
+    "rest",
+    "five nights in a row",
+    "draft for them",
+    "late fact",
+    "routine fit",
+    "night shift"
+  ],
+  "assumptions": [
+    "The employer posts holiday-peak extra shifts the week before and asks for a reply by a set time; here Wed noon. She is not required to take it (typical for warehouse peak).",
+    "Her workweek starts Sunday, so the Sunday shift opens a new week of Sun Nov 29 plus Wed to Sat Dec 2 to 5, 40 paid hours with 30 minute unpaid breaks, no overtime. Dev says nothing about pay.",
+    "Wed Nov 25 is the first day of break and she has no class, so she is awake by about 10 AM after a free-day night; Tuesday's study block ends 5:30 PM, so 5:40 PM is the first calm moment after the posting.",
+    "Checking is $3,797.96 (pay of about $600 a week, a financial aid refund earlier); money is not part of this case."
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "suggest she study or sleep in the gap before Monday class so she can take the Sunday shift",
+        "routine": "sleep",
+        "why_wrong": "her post-night sleep is firm (7:15 AM to 2:15 PM) and the Sunday shift would leave her 1 h 45 min before class, so Dev does not engineer the shift to fit; it names the cost and lets her choose",
+        "facts": [
+          "m-day-sleep",
+          "m-availability"
+        ]
+      }
+    ]
+  }
+}
