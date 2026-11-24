@@ -1,6 +1,6 @@
 import { createHash, generateKeyPairSync, sign } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { closeDb, getDb } from "@/server/db/client";
 import { connectionRegistry, financialAccounts, holdings, integrations, syncJobs, transactions, users } from "@/server/db/schema";
 import {
@@ -14,6 +14,8 @@ import {
   setPlaidAccountIncluded,
   syncConnection,
   verifyWebhook,
+  resetWebhookKeyCache,
+  KEY_MISS_MS,
 } from "@/server/integrations/plaid";
 import { moneyOverview } from "@/server/services/finance/overview";
 import { archiveAccount, listAccounts, listTurnedOffAccounts } from "@/server/services/finance/accounts";
@@ -255,6 +257,29 @@ describe("Plaid", () => {
     expect(tx[0]).toMatchObject({ amountCents: -4_200, categoryId: shopping.id });
     const syncCalls = fake.calls.filter((c) => c.path === "/transactions/sync");
     expect(syncCalls.map((c) => c.body.cursor)).toEqual([undefined, "c1", "c2"]);
+  });
+
+  it("a posted charge keeps what the person did to its pending version: category, note, excluded (audit 2026-11-24)", async () => {
+    const pages = [
+      { added: [txn("pend-1", 42, { pending: true })], modified: [], removed: [], next_cursor: "c1", has_more: false },
+      { added: [txn("post-1", 42, { pending_transaction_id: "pend-1" })], modified: [], removed: [], next_cursor: "c2", has_more: false },
+    ];
+    const fake = fakePlaid({ pages, noInvestments: true });
+    const { user, run, item } = await connected(fake);
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    const clothing = (await run((s) => getCategoryByName(s, "Clothing")))!;
+    await run((s) =>
+      s.tx
+        .update(transactions)
+        .set({ categoryId: clothing.id, notes: "split with Sam", excluded: true, merchantName: "Sam's dinner" })
+        .where(and(eq(transactions.userId, user.id), eq(transactions.providerTransactionId, "pend-1"))),
+    );
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    const tx = await run((s) => s.tx.select().from(transactions).where(eq(transactions.userId, user.id)));
+    expect(tx.map((t) => t.providerTransactionId)).toEqual(["post-1"]);
+    expect(tx[0]).toMatchObject({ categoryId: clothing.id, notes: "split with Sam", excluded: true, merchantName: "Sam's dinner", pending: false });
+    const o = await run((s) => moneyOverview(s, "2026-10-28"));
+    expect(o.month.netSpendingCents).toBe(0); // the excluded $42 is not in spent
   });
 
   it("a move between their own accounts stays a transfer when the bank sends it again (QA, 2026-11-18)", async () => {
@@ -580,5 +605,47 @@ describe("Plaid webhook verification", () => {
     const forged = token(body, now / 1000).split(".");
     forged[2] = Buffer.from("x".repeat(64)).toString("base64url");
     expect(await verifyWebhook(body, forged.join("."), keyFetch, now)).toBe(false);
+  });
+
+  it("remembers a key id Plaid doesn't know for a few minutes, so forged ids don't call Plaid each time", async () => {
+    resetWebhookKeyCache();
+    let calls = 0;
+    const unknown = (async () => {
+      calls++;
+      return new Response(JSON.stringify({ error_code: "INVALID_FIELD" }), { status: 400 });
+    }) as unknown as typeof fetch;
+    const t = token(body, now / 1000, "forged-kid");
+    expect(await verifyWebhook(body, t, unknown, now)).toBe(false);
+    expect(await verifyWebhook(body, t, unknown, now + 1000)).toBe(false);
+    expect(await verifyWebhook(body, token(body, now / 1000 + 2, "forged-kid"), unknown, now + 60_000)).toBe(false);
+    expect(calls).toBe(1);
+    expect(await verifyWebhook(body, t, unknown, now + KEY_MISS_MS + 1)).toBe(false); // asked again after the wait
+    expect(calls).toBe(2);
+  });
+
+  it("fetches the key again once when a cached key fails, so a rotation doesn't stall webhooks", async () => {
+    resetWebhookKeyCache();
+    const old = generateKeyPairSync("ec", { namedCurve: "P-256" }).publicKey.export({ format: "jwk" });
+    let calls = 0;
+    let served: unknown = old;
+    const rotating = (async () => {
+      calls++;
+      return new Response(JSON.stringify({ key: served }), { status: 200 });
+    }) as unknown as typeof fetch;
+    // first the old key is cached (a forged-signature check against it fails)
+    expect(await verifyWebhook(body, token(body, now / 1000, "rot"), rotating, now)).toBe(false);
+    expect(calls).toBe(1);
+    // Plaid rotates: the same key id now serves the key that signs real webhooks
+    served = jwk;
+    expect(await verifyWebhook(body, token(body, now / 1000, "rot"), rotating, now + 120_000)).toBe(true);
+    expect(calls).toBe(2);
+    // a bad signature against a cached key does not make us call Plaid every time
+    const bad = token(body, now / 1000, "rot").split(".");
+    bad[2] = Buffer.from("x".repeat(64)).toString("base64url");
+    expect(await verifyWebhook(body, bad.join("."), rotating, now + 130_000)).toBe(false);
+    expect(await verifyWebhook(body, bad.join("."), rotating, now + 131_000)).toBe(false);
+    expect(calls).toBe(2); // within a minute of the last fetch: no second call
+    expect(await verifyWebhook(body, bad.join("."), rotating, now + 200_000)).toBe(false);
+    expect(calls).toBe(3); // a minute later it may look once more
   });
 });

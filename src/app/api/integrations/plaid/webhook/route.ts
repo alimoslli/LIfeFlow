@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
+import { ipFromHeaders } from "@/server/auth/current-user";
+import { rateLimit } from "@/server/rate-limit";
 import { getDb } from "@/server/db/client";
 import { withPlaidSyncLock } from "@/server/db/job-lock";
 import { users } from "@/server/db/schema";
@@ -11,6 +13,9 @@ import { idleSyncDue, isIdle, lastSeenOf } from "@/server/services/idle";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
+/** Per address and minute. Real Plaid traffic is a handful; this only stops a loop. */
+const WEBHOOK_PER_MINUTE = 300;
+
 const SYNC = new Set(["SYNC_UPDATES_AVAILABLE", "DEFAULT_UPDATE", "INITIAL_UPDATE", "HISTORICAL_UPDATE", "TRANSACTIONS_REMOVED"]);
 
 /**
@@ -20,6 +25,16 @@ const SYNC = new Set(["SYNC_UPDATES_AVAILABLE", "DEFAULT_UPDATE", "INITIAL_UPDAT
  */
 export async function POST(req: Request) {
   try {
+    // Counted before any key lookup, per address, generously (Plaid sends a few a minute at most); if the counter itself
+    // fails the webhook goes on (fail open: the signature check below is the real gate, and the cron syncs anyway).
+    const limited = await (async () => {
+      try {
+        return !(await rateLimit(getDb(), `plaid-webhook:ip:${ipFromHeaders(req.headers)}`, WEBHOOK_PER_MINUTE, 60)).allowed;
+      } catch {
+        return false;
+      }
+    })();
+    if (limited) return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": "60" } });
     const raw = await req.text();
     if (raw.length > 100_000) throw new HttpError(413, "Too large");
     if (!(await verifyWebhook(raw, req.headers.get("plaid-verification")))) throw new HttpError(401, "Invalid signature");

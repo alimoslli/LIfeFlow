@@ -4,7 +4,7 @@ import { GET as cron } from "@/app/api/cron/sync/route";
 import { POST as webhook } from "@/app/api/integrations/plaid/webhook/route";
 import { closeDb, getDb } from "@/server/db/client";
 import { withJobLock, withPlaidSyncLock } from "@/server/db/job-lock";
-import { connectionRegistry, integrations, jobLocks, syncJobs } from "@/server/db/schema";
+import { connectionRegistry, integrations, jobLocks, rateLimitBuckets, syncJobs } from "@/server/db/schema";
 import { exchangePublicToken, markNeedsReauth, reconnectLinkToken } from "@/server/integrations/plaid";
 import { makeUser } from "../helpers";
 
@@ -61,6 +61,33 @@ const hook = (code: string) =>
   );
 type Run = <T>(fn: (s: import("@/server/db/with-user").UserScope) => Promise<T>) => Promise<T>;
 const row = async (run: Run, id: string) => (await run((s) => s.tx.select().from(integrations).where(eq(integrations.id, id))))[0];
+
+describe("Plaid webhook rate limit", () => {
+  const from = (ip: string) =>
+    webhook(
+      new Request("https://lifeflow.test/api/integrations/plaid/webhook", {
+        method: "POST",
+        headers: { "x-vercel-forwarded-for": ip },
+        body: JSON.stringify({ webhook_type: "ITEM", webhook_code: "LOGIN_REPAIRED" }),
+      }),
+    );
+
+  it("answers 429 over the per-address limit, and other addresses are not affected", async () => {
+    const ip = "203.0.113.77";
+    const windowStart = new Date(Math.floor(Date.now() / 60_000) * 60_000);
+    await getDb()
+      .insert(rateLimitBuckets)
+      .values({ key: `plaid-webhook:ip:${ip}`, windowStart, count: 300 });
+    const res = await from(ip);
+    expect(res.status).toBe(429);
+    expect(res.headers.get("retry-after")).toBeTruthy();
+    expect((await from("203.0.113.78")).status).toBe(200);
+  });
+
+  it("normal volume is never blocked", async () => {
+    for (let i = 0; i < 20; i++) expect((await from("203.0.113.90")).status).toBe(200);
+  });
+});
 
 describe("Plaid cron and item webhooks", () => {
   it("the 30-minute cron skips a connection that needs the user to sign in again (no sync, no failed record)", async () => {

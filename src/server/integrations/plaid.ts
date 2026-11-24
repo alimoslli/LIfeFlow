@@ -7,6 +7,7 @@ import {
   financialAccounts,
   holdings,
   integrations,
+  paychecks,
   syncJobs,
   transactions,
   users,
@@ -593,7 +594,45 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
           .where(eq(transactions.id, existing.id));
         stats.modified++;
       } else {
-        await scope.tx.insert(transactions).values({ ...values, userId: scope.userId, source: "plaid", providerTransactionId: t.transaction_id });
+        // The pending version of this charge, if the bank says this posted row replaces one: what the person did to it
+        // (category, note, excluded, a name) comes with it, or the charge would come back into spent (audit 2026-11-24).
+        const [pending] = t.pending_transaction_id
+          ? await scope.tx
+              .select({
+                id: transactions.id,
+                categoryId: transactions.categoryId,
+                kind: transactions.kind,
+                notes: transactions.notes,
+                excluded: transactions.excluded,
+                merchantName: transactions.merchantName,
+                authorizedAt: transactions.authorizedAt,
+              })
+              .from(transactions)
+              .where(and(eq(transactions.userId, scope.userId), eq(transactions.providerTransactionId, t.pending_transaction_id)))
+          : [];
+        const [created] = await scope.tx
+          .insert(transactions)
+          .values({
+            ...values,
+            userId: scope.userId,
+            source: "plaid",
+            providerTransactionId: t.transaction_id,
+            ...(pending && {
+              merchantName: pending.merchantName ?? values.merchantName,
+              authorizedAt: values.authorizedAt ?? pending.authorizedAt,
+              categoryId: pending.categoryId ?? values.categoryId,
+              notes: pending.notes,
+              excluded: pending.excluded,
+              kind: pending.categoryId || keepsOwnTransfer(pending, values) ? pending.kind : values.kind,
+            }),
+          })
+          .returning({ id: transactions.id });
+        // Anything that pointed at the pending row now points at the posted one (the delete would only blank it).
+        if (pending)
+          await scope.tx
+            .update(paychecks)
+            .set({ transactionId: created.id })
+            .where(and(eq(paychecks.userId, scope.userId), eq(paychecks.transactionId, pending.id)));
         stats.added++;
       }
       // A posted transaction replaces its pending version.
@@ -776,10 +815,55 @@ export async function removeItem(scope: UserScope, integrationId: string, f?: Fe
 // ------------------------------------------------------------ webhooks
 
 const keyCache = new Map<string, { key: JsonWebKey; at: number }>();
+/** Key ids Plaid had no key for (or we couldn't fetch): not asked again for a few minutes, so forged ids can't make us call Plaid each time. */
+const keyMisses = new Map<string, number>();
+/** When a cached key was last fetched again after a failed check, at most once a minute per key id. */
+const keyRefetched = new Map<string, number>();
+export const KEY_MISS_MS = 5 * 60_000;
+const KEY_REFETCH_MS = 60_000;
+const KEY_TTL_MS = 24 * 3600_000;
+const KEY_MAPS_MAX = 500;
+
+/** Test hook: forget every cached key and miss. */
+export function resetWebhookKeyCache() {
+  keyCache.clear();
+  keyMisses.clear();
+  keyRefetched.clear();
+}
+
+async function fetchKey(kid: string, f: Fetch | undefined, now: number) {
+  try {
+    const r = await call<{ key: JsonWebKey }>("/webhook_verification_key/get", { key_id: kid }, f);
+    const entry = { key: r.key, at: now };
+    if (keyCache.size >= KEY_MAPS_MAX) keyCache.clear();
+    keyCache.set(kid, entry);
+    keyMisses.delete(kid);
+    return entry;
+  } catch {
+    if (keyMisses.size >= KEY_MAPS_MAX) keyMisses.clear();
+    keyMisses.set(kid, now);
+    return null;
+  }
+}
+
+const signatureOk = (parts: string[], key: JsonWebKey) => {
+  try {
+    return verifySig(
+      "sha256",
+      Buffer.from(`${parts[0]}.${parts[1]}`),
+      { key: createPublicKey({ key, format: "jwk" }), dsaEncoding: "ieee-p1363" },
+      Buffer.from(parts[2], "base64url"),
+    );
+  } catch {
+    return false;
+  }
+};
 
 /**
  * Verifies the Plaid-Verification JWT: ES256 signature with Plaid's published
  * key, issued within 5 minutes, and a SHA-256 of the exact body we received.
+ * A key id Plaid doesn't know is remembered for a few minutes (no call to Plaid per forged request); a signature that
+ * fails against a cached key gets one fresh copy of the key (at most once a minute), so a rotation doesn't stall webhooks.
  */
 export async function verifyWebhook(rawBody: string, jwt: string | null, f?: Fetch, now = Date.now()): Promise<boolean> {
   if (!jwt) return false;
@@ -794,22 +878,23 @@ export async function verifyWebhook(rawBody: string, jwt: string | null, f?: Fet
     return false;
   }
   if (header.alg !== "ES256" || !header.kid) return false;
-  let cached = keyCache.get(header.kid);
-  if (!cached || now - cached.at > 24 * 3600_000) {
-    try {
-      const r = await call<{ key: JsonWebKey }>("/webhook_verification_key/get", { key_id: header.kid }, f);
-      cached = { key: r.key, at: now };
-      keyCache.set(header.kid, cached);
-    } catch {
-      return false;
-    }
+  const kid = header.kid;
+  const missedAt = keyMisses.get(kid);
+  if (missedAt !== undefined && now - missedAt < KEY_MISS_MS) return false;
+  let cached = keyCache.get(kid);
+  let fresh = false;
+  if (!cached || now - cached.at > KEY_TTL_MS) {
+    cached = (await fetchKey(kid, f, now)) ?? undefined;
+    if (!cached) return false;
+    fresh = true;
   }
-  const ok = verifySig(
-    "sha256",
-    Buffer.from(`${parts[0]}.${parts[1]}`),
-    { key: createPublicKey({ key: cached.key, format: "jwk" }), dsaEncoding: "ieee-p1363" },
-    Buffer.from(parts[2], "base64url"),
-  );
+  let ok = signatureOk(parts, cached.key);
+  if (!ok && !fresh && now - (keyRefetched.get(kid) ?? 0) >= KEY_REFETCH_MS) {
+    if (keyRefetched.size >= KEY_MAPS_MAX) keyRefetched.clear();
+    keyRefetched.set(kid, now);
+    const again = await fetchKey(kid, f, now);
+    if (again) ok = signatureOk(parts, again.key);
+  }
   if (!ok) return false;
   if (!payload.iat || Math.abs(now / 1000 - payload.iat) > 300) return false;
   return createHash("sha256").update(rawBody).digest("hex") === payload.request_body_sha256;
