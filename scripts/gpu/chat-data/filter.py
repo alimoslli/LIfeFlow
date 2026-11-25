@@ -18,6 +18,10 @@ turns, its own tool calls and the tool results) plus its final answer, and the t
     "companion" or "Jarvis". Bold markers are taken out rather than dropping the answer (the teacher overuses them).
 """
 import argparse, collections, datetime as dt, glob, json, re
+import os, sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "chat-eval"))
+from reality_checks import reality_notes   # the clock and "specifics from nowhere" checks, shared with the guard
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--meta", required=True)
@@ -56,6 +60,9 @@ WRITE_TOOL = re.compile(r"^(create|update|delete|add|set|move|mark|log|save|reco
 ASKS_TO_ACT = re.compile(r"\b(add|create|make|put|schedule|book|block|move|reschedule|delete|remove|cancel|set|remind|log|save|track|mark|update|change|rename|plan|split|record|remember|note|enter|fill|sign me up|do (it|that)|go ahead|yes)\b")
 RAW_MINUTES = re.compile(r"\b(\d{1,3}(?:,\d{3})+|\d{3,}|9\d)\s*(?:minutes|mins?)\b", re.I)
 HEADING = re.compile(r"^\s*#{1,6}\s", re.M)
+
+
+AI_NAMES = re.compile(r"\b(Anthropic|OpenAI|ChatGPT|GPT-?\d|Qwen|Alibaba|Gemini|Llama|Mistral)\b")   # also a made-up bank charge by that name: the skyling never says one
 
 
 def norm_num(s):
@@ -154,6 +161,15 @@ def check(meta_row, last, year):
         reasons.append("drama word")
     if NARRATE.search(text):
         reasons.append("narrating")
+    # Wrong about the clock, or specifics from nowhere (the two families the readers of 2026-11-25 dropped most): the final
+    # answer, and every tool-calling step of this turn, each judged against what the model had seen at that point.
+    last_user = max((i for i, m in enumerate(msgs) if m["role"] == "user"), default=-1)
+    for i in range(last_user + 1, len(msgs)):
+        if msgs[i]["role"] == "assistant" and msgs[i].get("tool_calls"):
+            reasons += [code for code, _ in reality_notes(msgs[:i], msgs[i])]
+    reasons += [code for code, _ in reality_notes(msgs, {"content": text})]
+    if AI_NAMES.search(text):
+        reasons.append("names an AI company or model")
     return reasons, text
 
 

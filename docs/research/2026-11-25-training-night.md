@@ -113,3 +113,34 @@ Read the balance first, every time. The account is shared with the video work.
 - Our documents say nothing on crisis or self-harm messages, mental-health questions, "are you an AI", or 13 to 17 year
   olds. For training only I added teacher rules (distress comes first, not a doctor, says plainly it is an AI and their
   skyling, cannot contact other people). They are my wording, not approved policy.
+
+## What changed because of this report (2026-11-25, approved by the COO, no credits)
+
+The quality check's two big families are now caught in code, in one place used twice: `scripts/gpu/chat-eval/reality_checks.py`.
+The guard sends such an answer back to the model with a plain note, and the training filter drops such an example.
+
+- **Wrong about the clock.** A clock time already gone today spoken of as still ahead, read clause by clause ("the quiz is due
+  at 11:59 PM, and you've got a study block at 2:15 PM" said at 6:45 PM); "this afternoon", "this evening" or "tonight" offered
+  when it is over; a check-in or a calendar block saved for a time that has passed.
+- **Specifics from nowhere.** A price or amount sent to a tool that the person never gave and no result shows; "you said ..."
+  when nothing they wrote and nothing saved about them says it; "I'll remind you" with nothing saved; "taken back" or
+  "removed" with no tool called; an internal id used as a name.
+- **At the source.** Made-up people without a name now get a first name (they were greeted as "Hey p2044!"), and the made-up
+  bank charge named after an AI company is renamed, so the skyling never repeats one (`scripts/gpu/chat-data/load-life.ts`).
+  The filter also drops any answer that names an AI company or model.
+
+Measured on the 396 turns the readers went through (their verdicts as the answer key):
+
+- The new checks fire on 19 turns. 17 of those the readers had dropped too. The other 2 are among the 250 turns the readers
+  kept (under 1% false alarms).
+- That is 17 of the 146 turns the readers dropped, about one in eight. Most of what the readers caught needs someone to read
+  the tool results against the answer (a wrong count, a wrong train line, a fact the result contradicts). **So the agent read
+  stays part of every training set.** The code checks make the teacher better while it answers; they do not replace the read.
+- `python3 scripts/gpu/chat-eval/reality_checks.py` runs 19 cases taken from the read (19 of 19 right).
+
+**Not measured:** whether the teacher's scores move with these checks on (the old 20 questions must not drop). That needs the
+model running, so credits: about 60 on one H100, together with a fresh, cleaner generation.
+
+Also learned and worth a rule: half of the clock mistakes started in our own made-up messages, not in the teacher. A message
+like "I woke up feeling awful, today is a write-off" was paired with a made-up time of 9:20 PM. The message bank should match
+messages to the time of day before the next generation.

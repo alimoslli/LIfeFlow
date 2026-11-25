@@ -28,6 +28,35 @@ const oneOf = <T extends readonly string[]>(list: T, v: unknown, fallback: T[num
 /** "2026-08-24T10:00:00-05:00" is already local time: its date and HH:MM. */
 const localParts = (iso: string) => ({ date: iso.slice(0, 10), time: iso.slice(11, 16) });
 
+const FIRST_NAMES = [
+  "Maya",
+  "Jordan",
+  "Sam",
+  "Priya",
+  "Leo",
+  "Nora",
+  "Diego",
+  "Amara",
+  "Eli",
+  "Zoe",
+  "Omar",
+  "Tess",
+  "Kai",
+  "Ruth",
+  "Mateo",
+  "Ivy",
+  "Noah",
+  "Lena",
+  "Theo",
+  "Aisha",
+];
+/** A stable first name for a made-up person that has only an id. */
+export const firstNameFor = (id: string) => FIRST_NAMES[[...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7) % FIRST_NAMES.length];
+
+/** The made-up bank data had a subscription named after an AI company, and the skyling repeated the name in answers. The
+ * skyling never names an AI company, so the made-up charge gets a made-up name. */
+const notAnAiCompany = (bank: J): J => JSON.parse(JSON.stringify(bank).replace(/\b(Anthropic|OpenAI|ChatGPT)\b/g, "Notewise")) as J;
+
 export type LoadedLife = { session: SessionUser; tz: string; now: Date; nowLocal: string; persona: J; counts: Record<string, number> };
 
 export async function loadLife(caseDir: string): Promise<LoadedLife> {
@@ -35,13 +64,15 @@ export async function loadLife(caseDir: string): Promise<LoadedLife> {
   const scenario = read(caseDir, "scenario.json");
   const tz = String(persona.time_zone);
   const c = (f: string) => read(join(caseDir, "connections"), f);
-  const bank = c("bank.json"),
+  const bank = notAnAiCompany(c("bank.json")),
     calendar = c("calendar.json"),
     school = c("school.json"),
     work = c("work.json"),
     memories = c("memories.json");
 
-  const u = await makeUser(String(persona.name ?? persona.id));
+  // A made-up person without a name used to be created under their id, and the skyling greeted them with it ("Hey p2044!",
+  // found by the readers of 2026-11-25). They get a first name instead, the same one every time for the same id.
+  const u = await makeUser(String(persona.name ?? firstNameFor(String(persona.id))));
   await getDb().update(users).set({ timezone: tz }).where(eq(users.id, u.user.id));
   const session: SessionUser = { id: u.user.id, email: u.user.email, name: u.user.name, timezone: tz, accountKind: "standard" };
   const counts: Record<string, number> = {};

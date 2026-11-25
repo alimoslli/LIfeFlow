@@ -8,6 +8,8 @@ message and function_call items and token usage). Stdlib only. Made for the step
 import argparse, json, re, sys, threading, time, uuid, urllib.request, urllib.error
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+from reality_checks import reality_notes   # the clock and "specifics from nowhere" checks, shared with the training filter
+
 ap = argparse.ArgumentParser()
 ap.add_argument("--upstream", default="http://127.0.0.1:8000/v1")
 ap.add_argument("--port", type=int, default=8100)
@@ -429,9 +431,12 @@ def guard_notes(original, msg):
         return ["You booked " + long[0] + ", a whole free window. Nobody can use a block that long. Book blocks of 1 to 2 hours inside the "
                 "free window (at most three), with a gap between them and room to eat. Call create_events again with shorter blocks."]
     if calls:
-        return []
+        # A save for a time already gone, or a price nobody gave (2026-11-25: readers dropped 146 of 396 teacher turns, mostly
+        # for being wrong about the clock or for specifics from nowhere; see reality_checks.py)
+        return [note for _, note in reality_notes(original, msg)][:1]
     notes = []
     text = (msg.get("content") or "").split("</think>")[-1].strip()
+    notes += [note for _, note in reality_notes(original, msg)]
     if cut_off(msg):
         notes.append("Your answer stopped in the middle of a sentence. Write the whole answer again, complete.")
     # "Added ..." with no saving tool called in this message: nothing was saved, and the skyling never claims what it did not do.
