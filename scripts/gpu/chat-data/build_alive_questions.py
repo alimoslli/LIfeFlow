@@ -50,17 +50,58 @@ CUT = ["I have to spend less every month, where do I start?", "where can I save 
 BAD = ["pretty sure I tanked my quiz", "I failed my midterm", "I did really badly on {o}", "I messed up {o} and I feel awful"]
 LIFE = ["I got the internship!!", "I just got hired for a campus job", "today was rough", "today was the best day", "I'm so nervous about tomorrow",
         "hi", "good morning", "yo", "[opened the app]", "[opened the app]", "[opened the app]"]
+# From the three reviews of 2026-11-25 (the student's side, the app's own rules, trust and safety): the lines a skyling must
+# hold every time, and everyday moments the bank was missing. Generic wording, never the test messages.
+GRADED = ["write my intro paragraph for {o}", "just give me the answer to number 4", "my teacher said AI is allowed, write my discussion post",
+          "fix my essay and make it sound better", "rewrite this so it doesn't sound like AI wrote it", "can you just do {o} for me",
+          "solve these three problems for my homework", "what's the answer to question 7 on my quiz"]
+MOVE = ["move $200 to savings", "pay my rent for me", "transfer $50 to my roommate", "put $100 toward my credit card",
+        "should I get a cash advance to cover rent?", "can you invest my extra money for me"]
+PAY = ["how much will I make this week?", "I get paid Friday so I can afford it, right?", "how much is my next paycheck going to be?",
+       "can I spend my paycheck before it lands?"]
+WIPE = ["delete everything from last week", "clear my whole calendar", "remove all my to-dos", "delete my bio class"]
+REACH = ["text my manager I quit", "email my professor that I'll be late", "tell my boss I can't come in tomorrow", "message my landlord about rent",
+         "cancel my gym membership for me"]
+HEALTH = ["am I depressed?", "do I have ADHD?", "why am I so tired all the time, is something wrong with me?", "should I be taking something for my anxiety?"]
+SECRET = ["remember my card number 4111 1111 1111 1111", "save my bank password, it's sunflower22", "keep my social security number for me",
+          "remember that my PIN is 4821"]
+WHO = ["are you an AI?", "what model are you?", "are you chatgpt?", "are you a real person?", "who made you?"]
+CRISIS = ["I don't want to be here anymore", "sometimes I think everyone would be better off without me", "I can't do this anymore, what's the point"]
+DECIDE = ["go out tonight or nah", "should I skip the gym and study tonight?", "movie tonight or get ahead on {o}?", "is it dumb to take a nap right now?",
+          "can I afford to go out this weekend?"]
+CHANGE = ["my next exam got moved up two days", "they added me to a shift Tuesday 6 to 9, does that work?", "my class got cancelled tomorrow, what now?",
+          "I picked up an extra shift Saturday morning", "I think I got charged twice for something", "is my savings goal still realistic?",
+          "is there anything I'm forgetting this week?", "which day is going to be the worst this week?"]
+LINES = [(GRADED, ["writing-helper", "tutor", "study-coach"]), (MOVE, ["budget-coach", "savings-goals"]), (PAY, ["shift-manager", "paycheck-planner"]),
+         (WIPE, ["app-operator"]), (REACH, ["message-drafter"]), (HEALTH, ["health-basics", "wellbeing-check-in"]), (SECRET, ["memory-manager"]),
+         (WHO, ["daily-planner"]), (CRISIS, ["wellbeing-check-in"]), (DECIDE, ["daily-planner", "purchase-advisor"]),
+         (CHANGE, ["smart-scheduler", "shift-manager", "transaction-review", "weekly-review"])]
+# What a person says next after the skyling did or offered something: taking it back, changing their mind, saying no, saying yes.
+NEXT = ["take that back", "actually make it the day after instead", "not right now", "yes please", "ok do that", "no thanks", "can you make it shorter?",
+        "thanks, that helps", "wait, move it an hour later", "never mind, take that off"]
+
 NEW = [(DONE, ["study-coach", "daily-planner"]), (PROMISE, ["study-coach", "daily-planner"]), (BREAK, ["study-coach", "exam-prep"]),
        (SICK, ["daily-planner"]), (NOW, ["daily-planner"]), (SLIDE, ["weekly-review", "daily-planner"]), (ABOUT, ["memory-manager"]),
        (CUT, ["subscription-hunter", "budget-coach"]), (BAD, ["study-coach", "exam-prep"]), (LIFE, ["daily-planner"])]
 
 
 def one():
+    q = _one()
+    # a third of them get a second turn (the bank's two-turn chats: generate.ts asks "followUp" after the first answer)
+    if q["text"] not in CRISIS and rng.random() < 0.33:
+        q["followUp"] = rng.choice(NEXT)
+    return q
+
+
+def _one():
     k = rng.random()
-    if k < 0.45:   # nearly half of the alive share: the newer abilities, spread evenly over the ten kinds
+    if k < 0.30:   # the lines it must hold and the missing everyday moments, spread evenly over the eleven kinds
+        texts, skills = rng.choice(LINES)
+        return {"text": rng.choice(texts).format(o=rng.choice(OBJ)), "skill": rng.choice(skills)}
+    if k < 0.62:   # the abilities added on 2026-11-22, spread evenly over the ten kinds
         texts, skills = rng.choice(NEW)
         return {"text": rng.choice(texts).format(o=rng.choice(OBJ)), "skill": rng.choice(skills)}
-    k = (k - 0.45) / 0.55
+    k = (k - 0.62) / 0.38
     if k < 0.40:
         return {"text": rng.choice(BEHIND).format(o=rng.choice(OBJ)), "skill": rng.choice(["smart-scheduler", "study-coach", "daily-planner", "exam-prep"])}
     if k < 0.65:
