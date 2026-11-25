@@ -135,7 +135,10 @@ def check(meta_row, last, year):
     wrote = [c["function"]["name"] for m in msgs if m["role"] == "assistant" for c in (m.get("tool_calls") or [])
              if WRITE_TOOL.match(c["function"]["name"])]
     if a.alive:
-        wrote = [w for w in wrote if w not in ("create_events", "create_tasks")]
+        # the same short list the guard allows (responses_shim.py MAY_DO_UNASKED): its own blocks and to-dos, a memory, a promise,
+        # marking a finished thing done, changing the item it just made
+        wrote = [w for w in wrote if w not in ("create_events", "create_tasks", "save_memory", "make_promise", "resolve_promise",
+                                               "update_assignment", "update_task", "update_event")]
     if wrote and not ASKS_TO_ACT.search(user_text):
         reasons.append("unasked write")
     # "You have 1,249 minutes free" (the owner, 2026-11-22: "who wants to hear that"): lengths are said in hours and minutes.
