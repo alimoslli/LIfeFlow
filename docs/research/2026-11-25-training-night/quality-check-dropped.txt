@@ -1,0 +1,146 @@
+p0001-student-who-works-0~1~0 States "your aunt already packs lunch Mon and Wed" with no tool call and the person never said it.
+p0001-student-who-works-1~0~1 Says "just got off" a 3:30 PM shift and "rest of tonight is yours" at 11:30 PM; unsourced gym at 7 AM.
+p0001-student-who-works-1~1~0 unsure: "you study best in the mornings" not shown anywhere and a non sequitur to Sundays; promises to keep days clear on unsaved memory.
+p0001-student-who-works-1~3~0 own check: an AI company or model name in the answer
+p0001-student-who-works-4~0~0 unsure: misreads message ("You're right, the dog isn't in my notes"), long memory dump
+p0001-student-who-works-4~1~0 unsure: unsourced claim "your Sunday mornings being all yours"; nothing in message or results supports it.
+p0001-student-who-works-5~0~1 unsure: promises "I'll pull the live prices then" on its own; saved task has reminder false though a reminder was asked.
+p0001-student-who-works-5~1~0 Calls three items overdue when only one is; blames Friday work for Saturday overload; offers "this evening" block at 11:30 PM
+p0001-student-who-works-5~3~0 unsure: search was down, yet states "you'll need vehicle registration and proof of insurance" as fact.
+p0002-night-nurse-parent-0~2~0 Says off until 7 PM Thursday though results show a shift ending 7:30 AM Thursday; dismissive "it's not the schedule".
+p0002-night-nurse-parent-2~1~0 unsure: five to-dos created (limit three) for a midterm not on record, never asks which or when; numbered dump
+p0002-night-nurse-parent-3~2~0 unsure: unsourced "you sleep till about 2:15"; advises studying Saturday morning after outing, "reason you skip" wording.
+p0002-night-nurse-parent-3~3~0 Addresses person by internal id "p0002"; at 9:20 PM talks of being free from 7:30 AM and sleeping till 2:15 PM
+p0002-night-nurse-parent-4~0~1 unsure: after a thanks, asks assignment name, course and due date that a lookup could answer; three questions at once.
+p0002-night-nurse-parent-4~2~0 Promises "I'll check the consulate site when search is back" with nothing saved; dubious visa specifics after failed search
+p0002-night-nurse-parent-4~3~0 No tool called, yet states 4 hours' notice rule, 7 PM shift start and 3 PM cutoff: unsourced specifics.
+p0002-night-nurse-parent-5~2~0 unsure: offers to check a shift swap it cannot do; sleep/pickup specifics not in results; repeats itself, near 100 words
+p0003-retired-pension-widow-lives-alone-0~0~0 Made-up fact: "call with Ellen at 4 PM" while schedule in results is empty
+p0003-retired-pension-widow-lives-alone-1~1~0 Promise is for tomorrow morning but check-in saved for tonight 9 PM, before the promised time; wrong tool arguments.
+p0003-retired-pension-widow-lives-alone-1~2~0 Rude and useless: "you're retired and living alone, do you actually need these books"; exposes persona, does not help
+p0003-retired-pension-widow-lives-alone-2~0~1 "Yes please" to removing to-dos answered with a generic daily and money summary; never addresses the to-dos.
+p0003-retired-pension-widow-lives-alone-3~0~0 unsure: search was unavailable but answer implies it checked; never says it could not look
+p0003-retired-pension-widow-lives-alone-3~1~0 unsure: says "I can nudge you" but only a habit was created, no reminder visibly saved; habit created on a vague ask.
+p0003-retired-pension-widow-lives-alone-4~1~0 unsure: says upcoming list is empty, then offers to look at next week's assignments, which results already answer
+p0003-retired-pension-widow-lives-alone-5~2~1 unsure: ambiguous "make it shorter"; cancels and recreates the promise instead of just shortening the reply.
+p0004-university-dorm-freelance-photographer-0~2~1 Says "taken back" with no tool call in this turn; claim without the act.
+p0004-university-dorm-freelance-photographer-0~3~0 At 6:45 PM presents the 2:15 PM study block as still ahead; time in the past relative to now.
+p0004-university-dorm-freelance-photographer-1~0~0 Senseless check_affordability ($20) for a gym-vs-study question; unsourced "you said you study best in the afternoons"; money talk irrelevant.
+p0004-university-dorm-freelance-photographer-3~3~0 Says it won't guess then guesses 11:30 PM last train; claims no study session on calendar without checking calendar.
+p0004-university-dorm-freelance-photographer-4~1~0 Cites a Thursday 2:15 PM study block already past at 23:30, wrong course (ANTH not history), unasked deadline dump, repeats question.
+p0004-university-dorm-freelance-photographer-5~0~0 unsure: "map my week" covers only Fri/Sat; says Saturday fully free right after booking Saturday blocks; mechanical dump
+p0004-university-dorm-freelance-photographer-5~2~0 Deadline dump instead of the weekly plan; "Friday" and two different "Sunday"s are ambiguous since today is Friday.
+p0005-cc-family-private-tutor-0~3~0 "Bills before then" lists a Sept 21 bill after the Sept 17 run-out; offers to check what is due after listing it.
+p0005-cc-family-private-tutor-1~0~0 Broken sentence "so you don't groggy"; raw "80 minutes"; offers 8:30 alarm that contradicts the 20-minute nap.
+p0005-cc-family-private-tutor-2~0~0 unsure: "you eat dinner at home most nights" appears in no result and was not said; rest of numbers correct.
+p0005-cc-family-private-tutor-2~1~0 Made-up fact: 5G claim "started as a joke in 2020"; sloppy science, no source checked
+p0005-cc-family-private-tutor-2~2~1 unsure: goals follow-up answered with a deadline list, no goals looked up; week's specifics beyond the visible result.
+p0005-cc-family-private-tutor-2~3~0 Guilt wording "check in when you slip"; promises streak tracking and check-ins with nothing saved.
+p0005-cc-family-private-tutor-3~2~0 Bullet-point dump; counts add to 42 against 40 found; oddly suggests parent payments could be "Salary".
+p0005-cc-family-private-tutor-4~2~0 Now is 11:30 PM; answer plans a "free 9:50 AM to 5:00 PM today" window that is already past.
+p0005-cc-family-private-tutor-5~0~0 own check: a dash character
+p0006-cc-roommates-nursing-marketplace-seller-1~1~0 unsure: lists free windows that overlap the blocks just made, calls tonight both "tonight" and "Thursday"; cluttered.
+p0006-cc-roommates-nursing-marketplace-seller-1~2~0 unsure: claims it can only make one reminder at a time (recurrence appears to exist); no call, asks instead.
+p0006-cc-roommates-nursing-marketplace-seller-2~0~0 unsure: eBay and Poshmark reselling detail from no visible source, no call made
+p0006-cc-roommates-nursing-marketplace-seller-2~3~0 At 6:45 PM speaks of 9:30 AM class and 2:05 PM block as still ahead; ignores two posts due tonight.
+p0006-cc-roommates-nursing-marketplace-seller-3~0~0 Bills given by bare weekday though they fall Dec 3, 4, 6 and 20; reads as this week, misleading dates.
+p0006-cc-roommates-nursing-marketplace-seller-3~1~0 Invented $1,200 rent as tool argument and in answer, then asks for the real rent amount.
+p0006-cc-roommates-nursing-marketplace-seller-3~2~1 Follow-up about goal progress answered with an unrelated schedule and money dump; goals never addressed.
+p0006-cc-roommates-nursing-marketplace-seller-3~3~0 unsure: "everything else can slide" beside classes; Wednesday group meeting mislabelled as a class
+p0006-cc-roommates-nursing-marketplace-seller-4~0~1 Follow-up handled badly: unverifiable quiz fact with no call, offers study reminder the day after the quiz is due
+p0006-cc-roommates-nursing-marketplace-seller-4~2~0 Search failed, then states from memory that Munich is one terminal (it has two); unverified invented travel facts.
+p0006-cc-roommates-nursing-marketplace-seller-4~3~0 unsure: bullet list with robotic free-window parentheticals; help-desk voice.
+p0007-university-dorm-delivery-driver-0~1~0 States QuickDrop shifts Friday and Saturday evenings with no tool call; Friday is not before the Thursday test
+p0007-university-dorm-delivery-driver-0~1~1 Says "I'll nudge you then" but the created task has reminder false; no reminder was saved.
+p0007-university-dorm-delivery-driver-0~3~0 "Housing deposit" and "emergency fund" appear in no result; balance "as of Wednesday" is after now (Saturday Nov 21).
+p0007-university-dorm-delivery-driver-1~1~0 unsure: states "dining hall covers 14 meals a week" with no tool call and the person never said it.
+p0007-university-dorm-delivery-driver-1~2~0 unsure: web search for "weather forecast next week" with no destination known; pointless call we would not want copied.
+p0007-university-dorm-delivery-driver-1~3~0 unsure: claims every entry already has a category and none are misfiled; result only shows an empty review list.
+p0007-university-dorm-delivery-driver-3~0~0 unsure: "overdue since Wednesday" misleads, homework was due Oct 21, nine days earlier
+p0007-university-dorm-delivery-driver-3~0~1 unsure: "the day after" booked as Monday Nov 2 from Friday night; date unjustified, new event created instead of moving.
+p0007-university-dorm-delivery-driver-3~1~0 unsure: unsourced "usually deliver for QuickDrop Friday and Saturday evenings"; ambiguous week assumed without saying so.
+p0007-university-dorm-delivery-driver-3~3~0 Offers to rewrite text so it does not sound AI-written (likely graded work); odd mid-chat self-introduction, "I'm not really a writer".
+p0007-university-dorm-delivery-driver-4~1~0 unsure: states no pay expected though forecast never predicts hourly pay and person mentioned payday; offers lookup it may not do
+p0007-university-dorm-delivery-driver-5~2~0 Five tasks created when only asked to break it down (limit three); numbered dump; offers study "tonight" at 11:30 PM.
+p0007-university-dorm-delivery-driver-5~2~1 unsure: says "the steps are saved" with no tool call in this turn to back it.
+p0008-university-dorm-tutor-two-stats-classes-0~0~0 unsure: asked to add a fixed-time shift, refuses over conflict and offers another slot, which does not fit a signed-up shift
+p0008-university-dorm-tutor-two-stats-classes-0~1~0 unsure: en dash characters in "3–5 PM" (twice), close cousin of the banned em dash.
+p0008-university-dorm-tutor-two-stats-classes-0~1~1 Help-desk tone with a bullet menu of clarifying options; cold, not the skyling voice.
+p0008-university-dorm-tutor-two-stats-classes-0~3~0 Task due 23:00 is already past at 23:30; offers 45-minute block for quiz due in 29 minutes; numbered list dump.
+p0008-university-dorm-tutor-two-stats-classes-1~1~0 Search failed and is ignored; assumes which campus, asserts travel facts with no source; offers unrelated study block
+p0008-university-dorm-tutor-two-stats-classes-1~2~0 Asked to fix a clash; none found, yet creates a new event and never says no clash or prep existed.
+p0008-university-dorm-tutor-two-stats-classes-1~3~0 Addresses the person by internal id "p0008"; at 9:20 PM talks of classes at 11 AM and 1 PM as still to miss.
+p0008-university-dorm-tutor-two-stats-classes-2~3~0 unsure: bullet-point list answer.
+p0008-university-dorm-tutor-two-stats-classes-3~0~0 Calls create_tasks with invented steps and no result, while the answer asks questions and says it will add them later.
+p0008-university-dorm-tutor-two-stats-classes-3~0~1 Asks what the project is about and due date although person said climate change, before spring break; does not make anything shorter.
+p0008-university-dorm-tutor-two-stats-classes-3~3~0 Says all four are due Sunday; results show two due Friday tonight. Study blocks booked Saturday, after those deadlines.
+p0008-university-dorm-tutor-two-stats-classes-4~1~0 unsure: lists homework due tonight but offers only Wednesday/Friday morning slots; numbered list; none is a problem set
+p0008-university-dorm-tutor-two-stats-classes-5~1~0 unsure: offers to "break down the quiz" and walk through it together, close to helping with graded work.
+p0008-university-dorm-tutor-two-stats-classes-5~2~0 Wrong fact (LIRR does not serve LGA); cold "can't cite" tone; guessed transit times after failed search.
+p0008-university-dorm-tutor-two-stats-classes-5~3~0 Claims "you said you study best in the mornings" unsupported; mixes today and tomorrow; omits project draft due today.
+p1009-university-dorm-athlete-rec-desk-0~0~0 Wrong fact from memory: FL2 does not run Termini to Fiumicino (the regional airport line is FL1, not from Termini).
+p1009-university-dorm-athlete-rec-desk-0~0~1 Wrong fact: names FL2 as the airport regional train from Termini; that line is FL1 and does not serve Termini.
+p1009-university-dorm-athlete-rec-desk-0~3~0 Says six things due tonight (four are, two overdue); claims free 3:30 to 11 PM though a study block sits 3:30 to 5:30.
+p1009-university-dorm-athlete-rec-desk-0~3~1 Offers to block study on Thursday for four items due tonight (Wednesday) at 11:59 PM; makes no sense.
+p1009-university-dorm-athlete-rec-desk-1~1~0 Created five to-dos unasked (limit three); "practice at 3:30 PM" and "after dinner" are not in the results.
+p1009-university-dorm-athlete-rec-desk-3~0~0 Tool called with invented $120 price; answer gives verdict and leftover without saying the amount was guessed
+p1009-university-dorm-athlete-rec-desk-4~1~0 unsure: "Hulu $9.99 Friday" reads as Sept 25 but the bill is Friday October 2.
+p1009-university-dorm-athlete-rec-desk-5~1~0 At 9:20 PM presents 11 AM class as ahead; calls sick person's write-off day "actually light"
+p1022-cc-retail-fri-to-mon-grandma-0~3~0 Says trip covered up to $990 though that must last until Dec 3; mentions bills after the 3rd that no result shows.
+p1022-cc-retail-fri-to-mon-grandma-1~3~0 Tool called with an invented $20 price the person never gave; wrong tool use to copy.
+p1022-cc-retail-fri-to-mon-grandma-2~0~1 unsure: reply to "thanks, that helps" ignores the thanks and pushes the payment again
+p1022-cc-retail-fri-to-mon-grandma-2~1~0 unsure: names a "First Generation Student Association" at their school that comes from nowhere; search was unavailable.
+p1022-cc-retail-fri-to-mon-grandma-2~2~0 Made-up source details: "1950s biography" and "German grade where 1 was best" are not the real origin of the myth.
+p1022-cc-retail-fri-to-mon-grandma-4~1~0 Made-up: "free Wednesday afternoon at the library" with no free-time call; Wednesday afternoon already past
+p1022-cc-retail-fri-to-mon-grandma-5~0~0 Cold refusal and lecture ("I can't help with that one", "Was this a mix-up"); unverified facts from own knowledge.
+p1026-university-first-gen-roommates-aid-held-1~0~1 Follow-up misread after quadratic lesson; offers to block time tomorrow for a post due tonight; shift already started.
+p1026-university-first-gen-roommates-aid-held-1~3~0 unsure: unsourced "after your family call"; treats a hypothetical example as a stated fact to remember.
+p1026-university-first-gen-roommates-aid-held-3~0~0 unsure: says "I can see your week" with no week looked up, then offers to look; presumes little sleep
+p1026-university-first-gen-roommates-aid-held-3~1~0 unsure: uses "slipping"; only checked to-dos for "unfinished business" and asks before checking assignments it could have checked.
+p1026-university-first-gen-roommates-aid-held-3~3~1 Says "I'll nudge you each month" but only one one-off to-do saved, with reminder false.
+p1026-university-first-gen-roommates-aid-held-4~2~1 Misreads "ok do that" (split topics) as booking; says "Already done, I booked" with no call this turn; bullets
+p1026-university-first-gen-roommates-aid-held-4~3~1 unsure: garbled phrase "you're $6.18 in cash"; unasked money and overdue pile-on.
+p1026-university-first-gen-roommates-aid-held-5~0~1 unsure: "which one first?" in a chat about a club answered with assignment list; does not fit the chat, no clarifying.
+p1027-cc-overnight-warehouse-four-nights-0~2~0 Looked only in the completed list to find a midterm to mark done; open assignments never checked, so reasoning is wrong.
+p1027-cc-overnight-warehouse-four-nights-1~0~0 Affordability check run with an invented $20 amount, then asks what they want to buy; made-up figure.
+p1027-cc-overnight-warehouse-four-nights-1~0~1 unsure: states $3,484.31 and $20 with no tool call and neither in the person's messages.
+p1027-cc-overnight-warehouse-four-nights-1~1~0 unsure: "just wrapped" a shift that ended six hours ago; unsourced Sunday study habit; long, three paragraphs.
+p1027-cc-overnight-warehouse-four-nights-2~0~0 Bullet dump; calls made-up 6 PM start times "due" dates, contradicting real deadlines; "broke into steps" untrue; four items.
+p1027-cc-overnight-warehouse-four-nights-2~1~0 Created five to-dos unasked; person asked only for a breakdown and time estimates, and the unasked limit is three.
+p1027-cc-overnight-warehouse-four-nights-3~2~0 Search failed, then gives a wrong route from memory: Line 6 does not reach Palais Royal-Musee du Louvre.
+p1027-cc-overnight-warehouse-four-nights-3~2~1 Venus de Milo is not in the Denon wing; asks if it is an art history trip, which the person already said.
+p1027-cc-overnight-warehouse-four-nights-5~1~1 unsure: person asked for a reminder; task created with reminder false, so nothing will actually remind them.
+p1027-cc-overnight-warehouse-four-nights-5~2~0 Declares hours legally "in the clear" as certain legal fact; hours are scheduled, not recorded; "fingers crossed" contradicts it.
+p1032-university-international-library-desk-0~2~0 Says "rent fits easily" without knowing the rent; "one tap" misleads after saying it cannot pay; balance dated after now.
+p1032-university-international-library-desk-0~3~0 Now is Friday morning, "by Friday this week" means today; promise saved for Nov 6, a week later.
+p1032-university-international-library-desk-1~1~1 unsure: ambiguous follow-up "is that a lot?" answered with an assumed meaning and a workload dump
+p1032-university-international-library-desk-1~2~0 unsure: flat refusal to compare, then offers to find unused subscriptions, which it cannot see
+p1032-university-international-library-desk-1~3~0 own check: quotes a balance timestamp from the future
+p1032-university-international-library-desk-2~1~0 Recommends dropping a work shift (red line); senseless $20 affordability call; Saturday is not the overloaded day.
+p1032-university-international-library-desk-4~0~0 own check: an AI company or model name in the answer
+p1032-university-international-library-desk-4~1~0 Calls Nov 13 "next Friday" when now is Fri Oct 30; pushes cancelling a subscription without knowing its use.
+p2040-university-roommates-campus-job-1~1~0 unsure: "I can't save that one, even if you asked" does not fit, since the person did ask.
+p2040-university-roommates-campus-job-2~0~1 "Move it an hour later" answered with bullet list of assignment deadlines; misreads, offers to "update" due dates.
+p2040-university-roommates-campus-job-2~1~0 unsure: asks what the message is about (rent was stated) and for landlord's email though it only drafts.
+p2040-university-roommates-campus-job-3~0~0 Says "the tool didn't find"; invented $100 amount passed to affordability check as if stated
+p2044-university-international-campus-job-1~0~0 Greets person with internal id: "Hey p2044!"
+p2044-university-international-campus-job-1~0~1 unsure: "take that back" answered with no call; ART 415 meeting specifics have no visible source this turn.
+p2044-university-international-campus-job-3~0~0 Mentions "your Saturday morning family call" with no calendar call; it is Saturday 11:30 PM, so that is already past.
+p2044-university-international-campus-job-4~0~0 unsure: asks for the topic though the person said market trends; offers talking points for a seminar.
+p2044-university-international-campus-job-4~0~1 "No free gaps between them" contradicts results (gaps of hours); suggests study after a shift ending 10 PM.
+p2047-university-dorm-none-0~2~0 unsure: odd tool use, loads calendar group unused and searches notes instead of just asking
+p2047-university-dorm-none-0~3~0 At 9:20 PM treats noon class and 2:15 PM study block as still ahead; offers to move a block already past.
+p2047-university-dorm-none-1~1~0 Logged expense on a guessed account (Visa) and today's date though person said last week; then asks accounts for the others
+p2047-university-dorm-none-1~3~0 At 11:30 PM says "free all day" and offers a slot "this afternoon"; time in the past; "pile behind you" guilt tone.
+p2047-university-dorm-none-4~0~1 unsure: "overdue since Sunday" misleads (it was Nov 8); tonight's study block claim has no call this turn.
+p2048-university-dorm-campus-job-0~0~0 unsure: "your morning focus hours" from no visible source, no call made
+p2048-university-dorm-campus-job-4~0~0 Suggests missing part of CHEM 331 class; says 15 minutes missed when it is 30; did not add the requested event.
+p2049-adult-learner-six-shifts-unpaid-lunch-5~0~0 Never searches transactions for online orders; claims none missing, then dumps seven unrelated recurring bills
+p2049-adult-learner-six-shifts-unpaid-lunch-5~1~0 Refuses to add the asked event ("I can't put it there") and proposes moving a group session the person does not control.
+p2049-adult-learner-six-shifts-unpaid-lunch-5~2~0 own check: an AI company or model name in the answer
+p4004-adult-learner-parent-blackboard-1~0~0 unsure: says log "was due tonight" at 6:45 PM (still due); presumes the cause of nervousness instead of asking.
+p4004-adult-learner-parent-blackboard-1~1~0 unsure: off-topic lecture about IRS tips and credit report site after declining; cold "life planner" wording
+p4004-adult-learner-parent-blackboard-1~1~1 unsure: confusing follow-up; says nothing was offered, then guesses an offer; never restates it will not keep the number.
+p4004-adult-learner-parent-blackboard-1~2~0 unsure: "since you're a night owl" appears in no result or message; person has a 6 AM shift tomorrow.
+p4006-cc-family-grocer-car-insurance-0~1~0 unsure: contradicts a sick person ("not actually a write-off"); offers 4 PM reminder in the middle of their noon to 7 shift.
+p4012-cc-roommates-nursing-part-time-savings-5~0~0 At 6:45 PM offers heads-up to manager for a shift that ended 5 PM; says log due tonight can wait; bullets

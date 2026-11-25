@@ -12,7 +12,9 @@
 # kept; qc.jsonl: the short records; details.jsonl), traindata/gen1-kept.jsonl, gen1-status.txt, steps.log.
 GEN_MIN="${1:-75}"; STOP_MIN="${2:-100}"; PER="${3:-9}"; AT_ONCE="${4:-24}"; KEEP="$5"
 # With "keep" as the fifth argument the box is left set up for a training stage on the same box (train_big.sh): the teacher is
-# stopped so the GPU is free, and a quiet waiting loop keeps the box from idling out for up to 20 minutes.
+# stopped so the GPU is free. WARNING (2026-11-25): the waiting loop below does NOT hold the box. A box whose GPU sits idle is
+# taken away after its idle limit whatever is sleeping on it; start the next stage within that limit, or use train_night.sh
+# on a fresh box (it sets itself up and the examples are safe on /workspace).
 HERE=$(cd "$(dirname "$0")" && pwd)
 T=/workspace/ownmodel; D=$T/gen1; L=/root/job; REPO=$L/LIfeFlow; H=$L/gen
 START=$(date +%s); END=$(( START + STOP_MIN * 60 ))
@@ -108,7 +110,7 @@ kill $TIMER 2> /dev/null
 if [ "$KEEP" = keep ]; then
   pkill -f "[v]llm serve"; sleep 4; pkill -f "[V]LLM::EngineCore"
   echo "STEP teacher stopped, box kept for training $(date -u +%H:%M:%S)" >> $T/steps.log
-  (N=0; while [ $N -lt 240 ] && [ ! -f $T/gen1-release ]; do sleep 5; N=$((N + 1)); done) &   # keeps the box from idling out
+  (N=0; while [ $N -lt 240 ] && [ ! -f $T/gen1-release ]; do sleep 5; N=$((N + 1)); done) &   # does not hold the box, see the warning at the top
 else
   shutdown_all
 fi

@@ -67,3 +67,14 @@ Full report: `docs/research/2026-11-22-skyling-alive.md`. Short version:
 - **Spent:** 223.01 of the 350 cap (box c9a62122, stopped 10:07 UTC); about 127 kept for the owner's test chat.
 - **Not done:** no training (agreed with the COO: train when the rules stop changing), nothing built into the app.
 - **One mistake:** a stop timer left running from an earlier round cut round 4 short (about 8 credits). `runplan.sh` now stops its timer when the plan ends.
+
+## Step 7: the training night (2026-11-25, owner's cap: 350 credits)
+
+Full report: `docs/research/2026-11-25-training-night.md`. Short version:
+
+- **No trained model yet.** Training of the 27B started and was cut off after 47 minutes when the shared account ran out of credits (another chat's video generation that morning; I had not re-read the balance). Nothing changed in the app.
+- **Saved and ready:** 435 training examples that passed the automatic filter and a full read by eight quality-check agents (146 of 396 turns dropped: wrong about the clock, specifics from nowhere, follow-ups misread).
+- **Measured:** the 27B with nothing of ours scores 9 of 20 (Skyling 1.1 with our rules: 18 to 19). Training the 27B the plain way takes 27 seconds an example on an H100 and fills its memory: about 360 credits a pass, five times my estimate.
+- **Spent:** 224.18 credits on two boxes. One box was lost to idling between stages (a sleeping loop does not hold a box).
+- **Next, each needs the owner's yes:** train Qwen3-8B on the 435 examples (about 60 credits); a 10-minute speed test of the big model with the fast kernels (about 20); fix the teacher's two big mistakes in code before making more examples.
+
