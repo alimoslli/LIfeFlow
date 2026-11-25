@@ -10,7 +10,9 @@
 # Next to this script, optional: up-qc.txt with a presigned upload URL (Content-Type application/zip) for the quality-check file.
 # Saved on GPU storage: /workspace/ownmodel/gen1/ (dump.jsonl and meta.jsonl: the recording; train-new.jsonl: what the filter
 # kept; qc.jsonl: the short records; details.jsonl), traindata/gen1-kept.jsonl, gen1-status.txt, steps.log.
-GEN_MIN="${1:-75}"; STOP_MIN="${2:-100}"; PER="${3:-9}"; AT_ONCE="${4:-24}"
+GEN_MIN="${1:-75}"; STOP_MIN="${2:-100}"; PER="${3:-9}"; AT_ONCE="${4:-24}"; KEEP="$5"
+# With "keep" as the fifth argument the box is left set up for a training stage on the same box (train_big.sh): the teacher is
+# stopped so the GPU is free, and a quiet waiting loop keeps the box from idling out for up to 20 minutes.
 HERE=$(cd "$(dirname "$0")" && pwd)
 T=/workspace/ownmodel; D=$T/gen1; L=/root/job; REPO=$L/LIfeFlow; H=$L/gen
 START=$(date +%s); END=$(( START + STOP_MIN * 60 ))
@@ -59,24 +61,31 @@ su postgres -c "psql -c \"create role budgetflow login superuser password 'budge
 su postgres -c "psql -c \"alter system set max_connections = 300\"" || true
 service postgresql restart; sleep 3
 su postgres -c "createdb -O budgetflow budgetflow_gen_test" || true
+su postgres -c "createdb -O budgetflow budgetflow_test_d" || true
 curl -fsSL https://nodejs.org/dist/v22.23.5/node-v22.23.5-linux-x64.tar.gz | tar -xz -C $L && export PATH=$L/node-v22.23.5-linux-x64/bin:$PATH
 git clone -q --depth 3 -b claude/skill-router-pilot https://github.com/alimoslli/LIfeFlow.git $REPO || fail "could not fetch the code"
 cd $REPO && git log --oneline -1
 npm ci --ignore-scripts --no-audit --no-fund > $D/npm.log 2>&1 || fail "npm ci"
 TEST_DATABASE_URL=postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_gen_test npm run db:migrate:test > $D/migrate-gen.log 2>&1
+TEST_DATABASE_URL=postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_test_d npm run db:migrate:test > $D/migrate.log 2>&1
 # superuser only for the migrations: a superuser skips row-level security
 su postgres -c "psql -c \"alter role budgetflow nosuperuser nobypassrls\""
+N=0; while [ ! -f $L/vllm.ready ] || [ ! -f $L/model.ready ]; do sleep 5; N=$((N + 1)); [ $N -gt 300 ] && fail "the model server or the model did not arrive in 25 minutes"; done
+# The teacher with nothing of ours around it (no rules, no cards, no checks) on the 20 questions: the "before" that the trained
+# model's "after" is compared with. runplan.sh also fetches the newest code and leaves the teacher serving.
+step "teacher baseline"
+echo "eval|n1-teacher-bare-old20|--no-retry --alive-rules|--think off" > $D/plan-baseline.txt
+sh scripts/gpu/own-model/runplan.sh qwen38-27b 12 "--max-model-len 65536 --reasoning-parser qwen3 --tool-call-parser qwen3_coder" $D/plan-baseline.txt keep > $D/baseline.log 2>&1
+grep "^RESULT n1-teacher-bare" $T/board.txt | cut -c1-240 >> $ST
+curl -sf http://127.0.0.1:8000/v1/models > /dev/null || fail "the teacher is not serving (see $D/baseline.log and $T/vllm-plan-qwen38-27b.log)"
+VPID=$(pgrep -f "[v]llm serve" | head -1)
+service postgresql start > /dev/null 2>&1; sleep 2
+cd $REPO && git log --oneline -1
 python3 scripts/gpu/chat-data/make_lives.py --out $L/lives --per-persona 6 > $D/lives.log 2>&1 || fail "lives"
 LIVES=$(ls $L/lives | wc -l)
 python3 scripts/gpu/chat-data/build_questions.py --teacher /workspace/router/out/train.json --out $L/questions.json > $D/questions.log 2>&1 || fail "question bank"
 python3 scripts/gpu/chat-data/build_alive_questions.py --base $L/questions.json --out $L/questions-alive.json --share 0.5 --total $(( LIVES * PER )) > $D/alive-q.log 2>&1 || fail "alive questions"
 cat $D/alive-q.log
-N=0; while [ ! -f $L/vllm.ready ] || [ ! -f $L/model.ready ]; do sleep 5; N=$((N + 1)); [ $N -gt 300 ] && fail "the model server or the model did not arrive in 25 minutes"; done
-step "serve teacher"
-nohup $L/venv/bin/vllm serve $L/models/qwen38-27b --served-model-name qwen38-27b --port 8000 --gpu-memory-utilization 0.92 --max-num-seqs 48 --enable-auto-tool-choice \
-  --max-model-len 65536 --reasoning-parser qwen3 --tool-call-parser qwen3_coder > $D/vllm-teacher.log 2>&1 &
-VPID=$!
-until curl -sf http://127.0.0.1:8000/v1/models > /dev/null; do kill -0 $VPID 2> /dev/null || fail "the teacher server stopped while loading (see $D/vllm-teacher.log)"; sleep 5; done
 
 # ---- generate for a fixed time
 step "generate: $LIVES lives x $PER messages, $AT_ONCE at a time, up to $GEN_MIN minutes"
@@ -95,5 +104,11 @@ done
 step "generate over after $(( ($(date +%s) - G0) / 60 )) minutes"
 finish
 step "gen1 done"
-shutdown_all
 kill $TIMER 2> /dev/null
+if [ "$KEEP" = keep ]; then
+  pkill -f "[v]llm serve"; sleep 4; pkill -f "[V]LLM::EngineCore"
+  echo "STEP teacher stopped, box kept for training $(date -u +%H:%M:%S)" >> $T/steps.log
+  (N=0; while [ $N -lt 240 ] && [ ! -f $T/gen1-release ]; do sleep 5; N=$((N + 1)); done) &   # keeps the box from idling out
+else
+  shutdown_all
+fi
