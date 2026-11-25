@@ -222,13 +222,15 @@ for q in written:
 names = [k for k in FAMILIES]
 weights = [FAMILIES[k][5] for k in names]
 n_new = int(a.total * a.share) if a.base else a.total
-new = []
+new, left = [], collections.defaultdict(list)
 while len(new) < n_new:
     fam = rng.choices(names, weights)[0]
     pool = by_family.get(fam) or []
     # two in three from the written voices when there are any (more ways of saying it), the rest from the slot lines
     if pool and fam != "opened" and rng.random() < 0.67:
-        new.append(dict(rng.choice(pool)))
+        if not left[fam]:   # every written message is used once before any is used twice
+            left[fam] = rng.sample(pool, len(pool))
+        new.append(dict(left[fam].pop()))
     else:
         new.append(from_family(fam))
 

@@ -96,7 +96,7 @@ python3 scripts/gpu/chat-data/make_trainset.py --kept "$W/train-new.jsonl" --dro
 # ---- the trainer on a tiny copy of the big model (optional: needs torch, transformers, peft and the model's small files)
 if [ -n "$TRAIN_PY" ] && [ -n "${TINY_MODEL:-}" ] && [ -s "$W/train.jsonl" ]; then
   "$TRAIN_PY" scripts/gpu/chat-train/train_big.py --tiny --model "$TINY_MODEL" --data "$W/train.jsonl" --smoke-data "$W/train.jsonl" --smoke 2 \
-    --adapter "$W/adapter" --out "$W/merged" --max-minutes 0.5 --holdout 2 --accum 2 --save-minutes 0.2 > "$W/train.log" 2>&1
+    --adapter "$W/adapter" --out "$W/merged" --max-minutes 0.5 --holdout 2 --accum 2 --save-minutes 0.2 --clip-tokens 400 > "$W/train.log" 2>&1
   grep -q "^MERGED" "$W/train.log" && ok "trainer, tiny copy: $(grep "^TRAIN DONE" "$W/train.log" | cut -c1-120)" || bad "trainer (see $W/train.log)"
 else
   echo "skip  trainer (give a training python as the second argument and TINY_MODEL=<folder with the big model's config and tokenizer>)"

@@ -10,6 +10,7 @@
 # a box whose GPU sits idle for five minutes is taken away, and a sleeping loop does not count (learned 2026-11-25).
 # Results: /workspace/ownmodel/night1/ (train.log, adapter/ the small trained part, status.txt), board.txt for the scores.
 TRAIN_MIN="${1:-80}"; STOP_AT="${2:-23:59}"
+TAG="${TAG:-n$(date -u +%m%d%H)}"   # the scores of this run on the board (a label already there is skipped, so every run has its own)
 T=/workspace/ownmodel; N=$T/night1; L=/root/job; REPO=$L/LIfeFlow
 mkdir -p $N
 START=$(date +%s); END=$(date -u -d "$STOP_AT" +%s); ST=$N/status.txt; : > $ST
@@ -55,8 +56,6 @@ else
   echo ok > $L/app.ready
 fi
 cd $REPO && git log --oneline -1
-# The optional fast kernels for this model's linear-attention layers (fla, causal-conv1d) are left out on purpose: the plain
-# path is the one that was tested end to end, and this night gets one attempt.
 $L/venv/bin/python -c "import torch, transformers, peft; print('torch', torch.__version__, 'transformers', transformers.__version__, 'peft', peft.__version__)" || fail "the training libraries do not load"
 N0=0; until [ "$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits | head -1)" -lt 3000 ]; do sleep 3; N0=$((N0 + 1)); [ $N0 -gt 40 ] && fail "the GPU's memory was not freed"; done
 
@@ -65,34 +64,62 @@ N0=0; until [ "$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounit
 BASE=$L/models/qwen38-27b; [ -f /dev/shm/qwen38-27b.ready ] && BASE=/dev/shm/qwen38-27b
 mkdir -p /dev/shm/skyling-27b && ln -sfn /dev/shm/skyling-27b $L/models/skyling-27b
 RESERVE=24   # minutes kept before the hard stop for merging, serving and scoring
+TRAINER="$L/venv/bin/python scripts/gpu/chat-train/train_big.py"
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+
+# ---- measure before training (2026-11-25: a night was planned on a guessed 5 seconds an example; the real figure was 27).
+# A few examples the plain way, then the same examples with the fast kernels for this model's special layers (fla-core; the
+# package "flash-linear-attention" is only a wrapper around it). The fast way is used only when it gives the same losses, faster.
+# A verdict from an earlier box on the same model is reused (RETEST=1 measures again).
+SPEED_DATA=$N/train.jsonl; [ -s $SPEED_DATA ] || SPEED_DATA=$T/gen1/train-new.jsonl
+speed_run() { $TRAINER --data $SPEED_DATA --smoke-data $SPEED_DATA --smoke 5 --smoke-only --model $BASE --adapter $N/speed-adapter > "$1" 2>&1; }
+if [ -s $N/speed.json ] && [ -z "${RETEST:-}" ]; then
+  note "SPEED (measured on an earlier box): $(cat $N/speed.txt 2> /dev/null | tr '\n' ' ' | cut -c1-300)"
+  grep -q '"use": "fast"' $N/speed.json && $L/venv/bin/pip install -q --no-deps fla-core einops >> $N/pip.log 2>&1
+else
+  step "speed test, the plain way"
+  $L/venv/bin/pip uninstall -y -q fla-core >> $N/pip.log 2>&1
+  speed_run $N/speed-plain.log
+  step "speed test, the fast kernels"
+  if $L/venv/bin/pip install -q --no-deps fla-core einops >> $N/pip.log 2>&1; then speed_run $N/speed-fast.log; else : > $N/speed-fast.log; fi
+  ROOM=$(( $(left) - RESERVE - 3 )); [ "$TRAIN_MIN" -gt "$ROOM" ] && TRAIN_MIN=$ROOM
+  python3 scripts/gpu/chat-train/speed_verdict.py --plain $N/speed-plain.log --fast $N/speed-fast.log --minutes "$TRAIN_MIN" \
+    --examples "$(wc -l < $SPEED_DATA)" > $N/speed.txt 2>&1 || fail "neither way of training ran one example (see $N/speed-plain.log and speed-fast.log)"
+  grep "^JSON " $N/speed.txt | cut -c6- > $N/speed.json
+  note "$(grep -v "^JSON " $N/speed.txt | tr '\n' ' ' | cut -c1-400)"
+  grep -q "^USE fast" $N/speed.txt || $L/venv/bin/pip uninstall -y -q fla-core >> $N/pip.log 2>&1
+fi
+
+# Carries on from what an earlier box saved (the trained part is saved every four minutes on storage that outlives the box).
 run_train() {
-  PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True $L/venv/bin/python scripts/gpu/chat-train/train_big.py --data $N/train.jsonl --smoke-data $T/gen1/train-new.jsonl --smoke 4 --wait-minutes 20 \
-    --model $BASE --adapter $N/adapter --out /dev/shm/skyling-27b --epochs 2 --max-minutes "$1" --until $(( END - RESERVE * 60 )) > $N/train.log 2>&1
+  # shellcheck disable=SC2046
+  $TRAINER --data $N/train.jsonl $([ -s $N/train.jsonl ] || echo "--smoke-data $T/gen1/train-new.jsonl --smoke 2 --wait-minutes 20") \
+    --model $BASE --adapter $N/adapter --out /dev/shm/skyling-27b --epochs "${EPOCHS:-2}" --resume --save-minutes 4 \
+    --max-minutes "$1" --until $(( END - RESERVE * 60 )) > $N/train.log 2>&1
 }
 # never train into the hard stop
 ROOM=$(( $(left) - RESERVE - 4 )); [ "$TRAIN_MIN" -gt "$ROOM" ] && TRAIN_MIN=$ROOM
 [ "$TRAIN_MIN" -ge 10 ] || fail "only $ROOM minutes left for training"
 step "load, try, then train up to $TRAIN_MIN minutes"
 run_train "$TRAIN_MIN" || fail "training stopped (see $N/train.log): $(grep -v "^step \|Warning\|warn" $N/train.log | tail -3 | tr '\n' ' ' | cut -c1-300)"
-note "SMOKE: $(grep "^SMOKE [0-9]" $N/train.log | tr '\n' ';' | cut -c1-400)"
-note "TRAIN: $(grep "^train [0-9]" $N/train.log | cut -c1-120); $(grep "holdout loss before" $N/train.log); $(grep "^TRAIN DONE" $N/train.log | cut -c1-260)"
+note "TRAIN: $(grep "^train [0-9]\|^RESUMED" $N/train.log | tr '\n' ' ' | cut -c1-200); $(grep "holdout loss before" $N/train.log); $(grep "^TRAIN DONE" $N/train.log | cut -c1-300)"
 grep -q "^MERGED" $N/train.log || fail "the trained model was not saved (see $N/train.log)"
 step "trained and merged"
 
 # score the trained model: with nothing of ours around it (before training that was the n1-teacher-bare-old20 line), then with our rules, cards and checks
 CARDS="--think off --guard --system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive2.txt --situations scripts/gpu/own-model/skyling-situations.txt"
 cat > $N/plan-trained.txt <<PLAN
-eval|n1-trained-bare-old20|--no-retry --alive-rules|--think off
-eval|n1-trained-full-old20|--no-retry --alive-rules|$CARDS
-eval|n1-trained-bare-alive6|--no-retry --exam alive|--think off
-eval|n1-trained-full-alive6|--no-retry --exam alive|$CARDS
-eval|n1-trained-full-trust4|--no-retry --exam trust|$CARDS
-eval|n1-trained-full-day4|--no-retry --exam day|$CARDS
+eval|$TAG-trained-bare-old20|--no-retry --alive-rules|--think off
+eval|$TAG-trained-full-old20|--no-retry --alive-rules|$CARDS
+eval|$TAG-trained-bare-alive6|--no-retry --exam alive|--think off
+eval|$TAG-trained-full-alive6|--no-retry --exam alive|$CARDS
+eval|$TAG-trained-full-trust4|--no-retry --exam trust|$CARDS
+eval|$TAG-trained-full-day4|--no-retry --exam day|$CARDS
 PLAN
 W=0; until [ -f $L/app.ready ]; do sleep 5; W=$((W + 1)); [ $W -gt 36 ] && fail "the app side of the box was not ready for scoring (see $N/app-setup.log, npm.log, migrate.log); the trained part is saved in $N/adapter"; done
 step "score the trained model, $(left) minutes left"
 sh scripts/gpu/own-model/runplan.sh skyling-27b $(( $(left) - 1 )) "--max-model-len 65536 --reasoning-parser qwen3 --tool-call-parser qwen3_coder" $N/plan-trained.txt > $N/evals.log 2>&1
-grep "^RESULT n1-" $T/board.txt | cut -c1-230 >> $ST
+grep "^RESULT $TAG-" $T/board.txt | cut -c1-230 >> $ST
 note "ALL DONE in $(( ($(date +%s) - START) / 60 )) minutes"
 step "train night done"
 shutdown_all

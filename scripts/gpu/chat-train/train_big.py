@@ -39,6 +39,7 @@ ap.add_argument("--save-minutes", type=float, default=4, help="the trained part 
                 "(idle, out of credits: both happened on 2026-11-25) loses minutes, not the run")
 ap.add_argument("--resume", action="store_true", help="carry on from what is saved in --adapter (same data file), instead of starting over")
 ap.add_argument("--smoke-only", action="store_true", help="try a few examples, print seconds and memory for each, and stop: the speed test")
+ap.add_argument("--clip-tokens", type=int, default=0, help="dry runs only: keep just the last N tokens of each prompt, so a CPU can get through real examples")
 ap.add_argument("--tiny", action="store_true", help="a test of this script on a small random model of the same kind (no GPU needed)")
 a = ap.parse_args()
 t_start = time.time()
@@ -73,6 +74,8 @@ def encode(r):
         target = target.rstrip() + "<|im_end|>"
     p = tok(prompt, add_special_tokens=False)["input_ids"]
     t = tok(target.rstrip("\n"), add_special_tokens=False)["input_ids"]
+    if a.clip_tokens and len(p) + len(t) > a.clip_tokens:
+        p = p[-max(8, a.clip_tokens - len(t)):]
     if len(p) + len(t) > a.max_len or not t:
         return None
     return p + t, [-100] * len(p) + t
@@ -116,6 +119,7 @@ if a.tiny:
     t_.hidden_size, t_.intermediate_size, t_.num_hidden_layers, t_.num_attention_heads, t_.num_key_value_heads, t_.head_dim = 64, 128, 8, 4, 2, 16
     t_.layer_types = t_.layer_types[:8]
     v_.hidden_size, v_.intermediate_size, v_.out_hidden_size, v_.depth, v_.num_heads = 32, 64, 64, 2, 2
+    torch.manual_seed(0)   # the same tiny model every time, so two runs (say, with and without the fast kernels) can be compared
     model = AutoModelForImageTextToText.from_config(cfg).to(dev)
     a.from_layer = min(a.from_layer, 5)
 else:
