@@ -33,6 +33,7 @@ ap.add_argument("--holdout", type=int, default=24)
 ap.add_argument("--smoke", type=int, default=0)
 ap.add_argument("--smoke-data", default=None, help="run the smoke test on this file first, then wait for --data to appear and train on it "
                 "(one model load for both: the checked training set can arrive while the model is loading and being tried)")
+ap.add_argument("--until", type=float, default=0, help="unix time: training also stops here (the box has a hard stop and needs room to save and score)")
 ap.add_argument("--wait-minutes", type=float, default=20, help="how long to wait for --data after the smoke test")
 ap.add_argument("--tiny", action="store_true", help="a test of this script on a small random model of the same kind (no GPU needed)")
 a = ap.parse_args()
@@ -207,7 +208,7 @@ for i in order:
             log["holdout_loss"].append((step, hl))
             print("holdout loss", step, round(hl, 4), flush=True)
             model.save_pretrained(a.adapter)
-        if (time.time() - t_start) / 60 > a.max_minutes:
+        if (time.time() - t_start) / 60 > a.max_minutes or (a.until and time.time() > a.until):
             stopped = True
             break
 hl = holdout_loss()

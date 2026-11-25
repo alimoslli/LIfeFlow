@@ -37,10 +37,10 @@ N0=0; until [ "$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounit
 
 run_train() {
   $L/venv/bin/python scripts/gpu/chat-train/train_big.py --data $N/train.jsonl --smoke-data $T/gen1/train-new.jsonl --smoke 4 --wait-minutes 20 \
-    --model $L/models/qwen38-27b --adapter $N/adapter --out $L/models/skyling-27b --max-minutes "$1" > $N/train.log 2>&1
+    --model $L/models/qwen38-27b --adapter $N/adapter --out $L/models/skyling-27b --epochs 2 --max-minutes "$1" --until $(( END - 22 * 60 )) > $N/train.log 2>&1
 }
-# never train into the hard stop: 17 minutes are kept for merging, serving and scoring
-ROOM=$(( $(left) - 17 - 4 )); [ "$TRAIN_MIN" -gt "$ROOM" ] && TRAIN_MIN=$ROOM
+# never train into the hard stop: training ends 22 minutes before it at the latest, kept for merging, serving and scoring
+ROOM=$(( $(left) - 22 - 4 )); [ "$TRAIN_MIN" -gt "$ROOM" ] && TRAIN_MIN=$ROOM
 [ "$TRAIN_MIN" -ge 10 ] || fail "only $ROOM minutes left for training"
 step "load, try, then train up to $TRAIN_MIN minutes"
 if ! run_train "$TRAIN_MIN"; then
@@ -48,7 +48,7 @@ if ! run_train "$TRAIN_MIN"; then
     # the first tries failed: once more without the optional fast kernels
     cp $N/train.log $N/train-first-try.log; note "NOTE: first try failed before training ($(grep -i "error" $N/train.log | tail -1 | cut -c1-160)); retrying without the optional kernels"
     $P uninstall -y -q flash-linear-attention causal-conv1d >> $N/pip.log 2>&1
-    ROOM=$(( $(left) - 17 - 4 )); [ "$TRAIN_MIN" -gt "$ROOM" ] && TRAIN_MIN=$ROOM
+    ROOM=$(( $(left) - 22 - 4 )); [ "$TRAIN_MIN" -gt "$ROOM" ] && TRAIN_MIN=$ROOM
     run_train "$TRAIN_MIN" || fail "training failed twice (see $N/train.log and train-first-try.log)"
   else
     fail "training stopped (see $N/train.log): $(tail -2 $N/train.log | tr '\n' ' ' | cut -c1-200)"
