@@ -32,7 +32,17 @@ const OUT = arg("out")!;
 const BASE = arg("base-url", "http://127.0.0.1:8100/v1")!;
 const MODEL = arg("model", "teacher")!;
 
-type Q = { text: string; skill?: string; source: string; followUp?: string };
+type Q = { text: string; skill?: string; source: string; followUp?: string; family?: string; needs?: string[]; hours?: [number, number] | null };
+
+/** Does this message fit this made-up life right now? A message says which traits the life must have ("student", "job",
+ * "money") and at which hours of the day a person would type it (2026-11-25: "I woke up feeling awful" was asked at a
+ * made-up 9:20 PM and a retired widow said "tell my boss I can't come in"; the readers dropped what came of it). */
+export function fits(q: Q, traits: Set<string>, hour: number): boolean {
+  if ((q.needs ?? []).some((n) => !traits.has(n))) return false;
+  if (!q.hours) return true;
+  const [from, to] = q.hours;
+  return (hour >= from && hour < to) || (hour + 24 >= from && hour + 24 < to);
+}
 
 async function main() {
   const url = process.env.TEST_DATABASE_URL;
@@ -75,8 +85,20 @@ async function main() {
     // Spread the bank evenly: each (life, k) takes its own question, stepping by a prime through the whole bank, so every
     // skill is asked (a seeded random per life clustered on 6 of 37 skills, 2026-11-21) and no life gets a question twice.
     const base = allLives.indexOf(life) * PER_LIFE;
+    const c = loaded.counts;
+    const traits = new Set<string>([
+      ...((c.courses ?? 0) > 0 ? ["student"] : []),
+      ...((c.jobs ?? 0) > 0 || (c.shifts ?? 0) > 0 ? ["job"] : []),
+      ...((c.accounts ?? 0) > 0 ? ["money"] : []),
+    ]);
+    const hour = Number(loaded.nowLocal.slice(11, 13));
+    const used = new Set<number>();
     for (let k = 0; k < PER_LIFE; k++) {
-      const q = questions[((base + k + OFFSET) * 7919) % questions.length];
+      // from this life's own starting point, the first message that fits the life and the hour and that it has not had yet
+      let at = ((base + k + OFFSET) * 7919) % questions.length;
+      for (let tries = 0; tries < questions.length && (used.has(at) || !fits(questions[at], traits, hour)); tries++) at = (at + 1) % questions.length;
+      used.add(at);
+      const q = questions[at];
       // The testing allowance (30 messages a day, ADR 0035) would end a long run; this is a throwaway test database.
       await withUser(loaded.session.id, (s) => s.tx.execute(sql`delete from ai_budgets where key like ${`u:${loaded.session.id}:%`}`));
       let conversationId: string | null = null;
@@ -107,7 +129,17 @@ async function main() {
       }
       appendFileSync(
         OUT,
-        JSON.stringify({ life, k, conv: `${life}~${k}`, question: q, persona: loaded.persona.id, nowLocal: loaded.nowLocal, tz: loaded.tz, turns }) + "\n",
+        JSON.stringify({
+          life,
+          k,
+          conv: `${life}~${k}`,
+          question: q,
+          persona: loaded.persona.id,
+          nowLocal: loaded.nowLocal,
+          tz: loaded.tz,
+          traits: [...traits],
+          turns,
+        }) + "\n",
       );
     }
     console.log(`[w${WORKER}] ${life} done`);

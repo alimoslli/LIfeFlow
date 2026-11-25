@@ -8,7 +8,7 @@ message and function_call items and token usage). Stdlib only. Made for the step
 import argparse, json, re, sys, threading, time, uuid, urllib.request, urllib.error
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from reality_checks import reality_notes   # the clock and "specifics from nowhere" checks, shared with the training filter
+from reality_checks import now_of, reality_notes, said_clock   # the clock and "specifics from nowhere" checks, shared with the training filter
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--upstream", default="http://127.0.0.1:8000/v1")
@@ -209,12 +209,43 @@ def remind(sent):
         return
     if only_a_question(asked):
         extra.append("They only asked whether it would fit or work. Look, answer, and save nothing; offer to save it.")
+    extra += moment_notes(sent, asked)
     math = house_math(sent) if last["role"] == "tool" else []
     if math:
         extra.append("Worked out by LifeFlow from the results, use these figures as they are: " + "; ".join(math) + ".")
     note = "\n".join([note] + ["- " + e for e in extra]).strip()
     if note:
         last["content"] = (last["content"] or "") + "\n\n<house_reminder>\n" + note + "\n</house_reminder>"
+
+
+SHORT_REPLY = re.compile(r"^\W*(yes|yeah|yep|yup|sure|ok|okay|please|do it|do that|go ahead|no|nope|nah|not now|not right now|maybe later|later|thanks|thank you|perfect)\b", re.I)
+UNDO = re.compile(r"\b(undo|take (it|that) (back|off)|scratch that|never ?mind|revert)\b", re.I)
+
+
+def moment_notes(sent, asked):
+    """Told, not asked (2026-11-25, from the readers' verdicts): what time it is, what a short reply is answering, and whether
+    there is anything of the skyling's own to undo. All three are read by our code from the chat itself."""
+    out = []
+    now = now_of(sent)
+    if now:
+        day, minute = now
+        line = f"It is {said_clock(minute)} on {day.strftime('%A')} now. Anything earlier today is over: speak of it in the past, and offer only time that is still ahead."
+        if minute >= 22 * 60 + 30 or minute < 5 * 60:
+            line += " It is late: do not plan work for tonight. Offer tomorrow, and say \"tomorrow\"."
+        out.append(line + " When you mean another day, name the day.")
+    earlier = [m for m in sent if m["role"] == "assistant"]
+    words = len((asked or "").split())
+    made = [c["function"]["name"] for m in earlier for c in (m.get("tool_calls") or []) if WRITE_TOOL.match(c["function"]["name"])]
+    if UNDO.search(asked or "") and words <= 8:
+        out.append("They want something taken back. " + ("Your own last saved item in this chat is what they mean: remove or change it with the id from your own result, then say it is gone."
+                   if made else "You have saved nothing in this chat, so there is nothing of yours to undo: say that plainly and ask what they mean. Never say it is taken back."))
+    elif words <= 5 and SHORT_REPLY.search(asked or ""):
+        said = next((text_of(m.get("content")) for m in reversed(earlier) if text_of(m.get("content")).strip()), "")
+        offer = [q.strip() for q in re.findall(r"[^.?!\n]*\?", said.split("</think>")[-1])][-1:]
+        if offer:
+            out.append(f"Their short reply answers your own last question: \"{offer[0][:200]}\" A yes means do exactly that now, with the tool, and say what you did. "
+                       "A no or a not now means say okay in a few words and stop: no second offer.")
+    return out
 
 
 ORDER_TO_BOOK = re.compile(r"\b(find me|book (it|me|a|an|the|that|this|one)|block (out|off|me|a|an|the|some|it)|schedule (it|me|a|an|the|that|this)|put (it|this|that|them) on (my|the) calendar)\b", re.I)
