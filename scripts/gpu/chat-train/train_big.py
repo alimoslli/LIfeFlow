@@ -35,6 +35,10 @@ ap.add_argument("--smoke-data", default=None, help="run the smoke test on this f
                 "(one model load for both: the checked training set can arrive while the model is loading and being tried)")
 ap.add_argument("--until", type=float, default=0, help="unix time: training also stops here (the box has a hard stop and needs room to save and score)")
 ap.add_argument("--wait-minutes", type=float, default=20, help="how long to wait for --data after the smoke test")
+ap.add_argument("--save-minutes", type=float, default=4, help="the trained part and how far it got are saved this often, so a box that is taken away "
+                "(idle, out of credits: both happened on 2026-11-25) loses minutes, not the run")
+ap.add_argument("--resume", action="store_true", help="carry on from what is saved in --adapter (same data file), instead of starting over")
+ap.add_argument("--smoke-only", action="store_true", help="try a few examples, print seconds and memory for each, and stop: the speed test")
 ap.add_argument("--tiny", action="store_true", help="a test of this script on a small random model of the same kind (no GPU needed)")
 a = ap.parse_args()
 t_start = time.time()
@@ -155,10 +159,14 @@ def peak():
 too_long = 10**9   # set when an example runs out of memory: examples at least this long are skipped from then on
 model.train()
 if a.smoke:
-    pool = smoke_set if smoke_set is not None else train
-    longest = sorted(pool, key=lambda x: -len(x[0]))[: max(1, a.smoke // 2)] + pool[: a.smoke - max(1, a.smoke // 2)]
+    pool = sorted(smoke_set if smoke_set is not None else train, key=lambda x: len(x[0]))
+    # a warm-up example first (its time is not a measurement), then typical ones, then long ones up to the longest
+    spots = [0.5] + [0.5] * max(1, a.smoke - 3) + [0.9, 1.0]
+    longest = [pool[min(len(pool) - 1, int(q * (len(pool) - 1)) + (k % 3 if q == 0.5 else 0))] for k, q in enumerate(spots[: max(2, a.smoke)])]
     fits = 0
-    for ids, labels in longest:
+    for n_smoke, (ids, labels) in enumerate(longest):
+        if dev == "cuda":
+            torch.cuda.empty_cache(); torch.cuda.reset_peak_memory_stats()
         t0 = time.time()
         try:
             loss = loss_of(ids, labels)
@@ -171,13 +179,14 @@ if a.smoke:
             continue
         fits += 1
         got = sum(1 for p in model.parameters() if p.requires_grad and p.grad is not None and p.grad.abs().sum() > 0)
-        print(f"SMOKE {len(ids)} tokens: loss {loss.item():.3f}, {time.time() - t0:.1f}s, peak memory {peak()}, LoRA tensors with a gradient {got}", flush=True)
+        print(f"SMOKE {len(ids)} tokens: loss {loss.item():.4f}, {time.time() - t0:.1f}s{' (warm-up)' if n_smoke == 0 else ''}, peak memory {peak()}, "
+              f"LoRA tensors with a gradient {got}", flush=True)
         opt.zero_grad()
     if not fits:
         print("SMOKE FAILED: no example fits in memory", flush=True)
         raise SystemExit(4)
     print("SMOKE OK", flush=True)
-    if not a.smoke_data:
+    if not a.smoke_data or a.smoke_only:
         raise SystemExit(0)
     waited, k = time.time(), 0
     while not os.path.exists(a.data):
@@ -204,18 +213,47 @@ sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1, (s + 1) / warm) 
 t_start = time.time()   # the minutes allowed count from here: loading, the smoke test and the wait are not training
 log = {"model": a.model, "examples": len(rows), "train": len(train), "holdout": len(hold), "from_layer": a.from_layer, "layers": n_layers, "rank": a.rank,
        "lr": a.lr, "accum": a.accum, "epochs_planned": a.epochs, "holdout_loss": []}
-h0 = holdout_loss()
-print("holdout loss before", round(h0, 4), flush=True)
-log["holdout_loss"].append((0, h0))
+PROGRESS = os.path.join(a.adapter, "progress.json")
+start, step = 0, 0
+if a.resume and os.path.exists(PROGRESS) and os.path.exists(os.path.join(a.adapter, "adapter_model.safetensors")):
+    from peft import set_peft_model_state_dict
+    from safetensors.torch import load_file
+    was = json.load(open(PROGRESS))
+    if was.get("train") != len(train) or was.get("rank") != a.rank or was.get("from_layer") != a.from_layer:
+        print(f"CANNOT RESUME: what is saved was trained on {was.get('train')} examples at rank {was.get('rank')} from layer {was.get('from_layer')}, "
+              f"this run has {len(train)} at rank {a.rank} from layer {a.from_layer}", flush=True)
+        raise SystemExit(5)
+    set_peft_model_state_dict(model, load_file(os.path.join(a.adapter, "adapter_model.safetensors")))
+    start, step, h0 = was["pos"], was["step"], was["holdout_before"]
+    log["holdout_loss"] = [tuple(x) for x in was.get("holdout_loss", [])]
+    for _ in range(step):
+        sched.step()
+    print(f"RESUMED at example {start} of the planned order, step {step}; holdout loss before training was {h0:.4f}", flush=True)
+else:
+    h0 = holdout_loss()
+    print("holdout loss before", round(h0, 4), flush=True)
+    log["holdout_loss"].append((0, h0))
 order = []
 for ep in range(math.ceil(a.epochs)):
     idx = list(range(len(train)))
     random.Random(ep).shuffle(idx)
     order += idx
 order = order[: int(len(train) * a.epochs)]
-step, seen, stopped, t_train = 0, 0, False, time.time()
+seen, stopped, t_train, t_saved = 0, False, time.time(), time.time()
 left_out = 0
-for i in order:
+
+
+def save_progress(pos):
+    """The trained part and where it stands, written so that a half-written file is never read back."""
+    model.save_pretrained(a.adapter)
+    json.dump({"pos": pos, "step": step, "train": len(train), "rank": a.rank, "from_layer": a.from_layer, "holdout_before": h0,
+               "holdout_loss": log["holdout_loss"], "saved_at": time.strftime("%H:%M:%S", time.gmtime())}, open(PROGRESS + ".tmp", "w"))
+    os.replace(PROGRESS + ".tmp", PROGRESS)
+
+
+pos = start - 1
+for pos in range(start, len(order)):
+    i = order[pos]
     if len(train[i][0]) >= too_long:
         left_out += 1
         continue
@@ -236,7 +274,9 @@ for i in order:
             hl = holdout_loss()
             log["holdout_loss"].append((step, hl))
             print("holdout loss", step, round(hl, 4), flush=True)
-            model.save_pretrained(a.adapter)
+        if step % 25 == 0 or time.time() - t_saved > a.save_minutes * 60:
+            save_progress(pos + 1)
+            t_saved = time.time()
         if (time.time() - t_start) / 60 > a.max_minutes or (a.until and time.time() > a.until):
             stopped = True
             break
@@ -244,7 +284,7 @@ hl = holdout_loss()
 log["holdout_loss"].append((step, hl))
 log.update({"steps": step, "examples_seen": seen, "left_out_too_long": left_out, "stopped_at_time_limit": stopped, "minutes": (time.time() - t_start) / 60,
             "seconds_per_example": (time.time() - t_train) / max(1, seen)})
-model.save_pretrained(a.adapter)
+save_progress(pos + 1)
 json.dump(log, open(a.adapter.rstrip("/") + "-train.json", "w"), indent=1)
 print("TRAIN DONE", json.dumps({k: log[k] for k in ("steps", "examples_seen", "left_out_too_long", "minutes", "stopped_at_time_limit", "seconds_per_example")}),
       "holdout loss", round(h0, 4), "->", round(hl, 4), flush=True)
