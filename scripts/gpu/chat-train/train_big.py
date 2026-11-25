@@ -152,17 +152,30 @@ def peak():
     return f"{torch.cuda.max_memory_allocated() / 2**30:.1f} GB" if dev == "cuda" else "cpu"
 
 
+too_long = 10**9   # set when an example runs out of memory: examples at least this long are skipped from then on
 model.train()
 if a.smoke:
     pool = smoke_set if smoke_set is not None else train
     longest = sorted(pool, key=lambda x: -len(x[0]))[: max(1, a.smoke // 2)] + pool[: a.smoke - max(1, a.smoke // 2)]
+    fits = 0
     for ids, labels in longest:
         t0 = time.time()
-        loss = loss_of(ids, labels)
-        loss.backward()
+        try:
+            loss = loss_of(ids, labels)
+            loss.backward()
+        except torch.OutOfMemoryError:   # an example too long for this card is left out, it never stops the run
+            too_long = min(too_long, len(ids))
+            loss = None
+            opt.zero_grad(); torch.cuda.empty_cache()
+            print(f"SMOKE {len(ids)} tokens: out of memory, examples this long or longer are left out", flush=True)
+            continue
+        fits += 1
         got = sum(1 for p in model.parameters() if p.requires_grad and p.grad is not None and p.grad.abs().sum() > 0)
         print(f"SMOKE {len(ids)} tokens: loss {loss.item():.3f}, {time.time() - t0:.1f}s, peak memory {peak()}, LoRA tensors with a gradient {got}", flush=True)
         opt.zero_grad()
+    if not fits:
+        print("SMOKE FAILED: no example fits in memory", flush=True)
+        raise SystemExit(4)
     print("SMOKE OK", flush=True)
     if not a.smoke_data:
         raise SystemExit(0)
@@ -195,8 +208,18 @@ for ep in range(math.ceil(a.epochs)):
     order += idx
 order = order[: int(len(train) * a.epochs)]
 step, seen, stopped, t_train = 0, 0, False, time.time()
+left_out = 0
 for i in order:
-    (loss_of(*train[i]) / a.accum).backward()
+    if len(train[i][0]) >= too_long:
+        left_out += 1
+        continue
+    try:
+        (loss_of(*train[i]) / a.accum).backward()
+    except torch.OutOfMemoryError:
+        too_long = min(too_long, len(train[i][0])); left_out += 1
+        opt.zero_grad(); torch.cuda.empty_cache()
+        print(f"out of memory at {len(train[i][0])} tokens: left out, and so is everything that long", flush=True)
+        continue
     seen += 1
     if seen % a.accum == 0:
         torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0)
@@ -213,11 +236,11 @@ for i in order:
             break
 hl = holdout_loss()
 log["holdout_loss"].append((step, hl))
-log.update({"steps": step, "examples_seen": seen, "stopped_at_time_limit": stopped, "minutes": (time.time() - t_start) / 60,
+log.update({"steps": step, "examples_seen": seen, "left_out_too_long": left_out, "stopped_at_time_limit": stopped, "minutes": (time.time() - t_start) / 60,
             "seconds_per_example": (time.time() - t_train) / max(1, seen)})
 model.save_pretrained(a.adapter)
 json.dump(log, open(a.adapter.rstrip("/") + "-train.json", "w"), indent=1)
-print("TRAIN DONE", json.dumps({k: log[k] for k in ("steps", "examples_seen", "minutes", "stopped_at_time_limit", "seconds_per_example")}),
+print("TRAIN DONE", json.dumps({k: log[k] for k in ("steps", "examples_seen", "left_out_too_long", "minutes", "stopped_at_time_limit", "seconds_per_example")}),
       "holdout loss", round(h0, 4), "->", round(hl, 4), flush=True)
 
 if a.out:

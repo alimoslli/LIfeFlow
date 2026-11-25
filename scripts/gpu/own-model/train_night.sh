@@ -41,7 +41,7 @@ BASE=$L/models/qwen38-27b; [ -f /dev/shm/qwen38-27b.ready ] && BASE=/dev/shm/qwe
 mkdir -p /dev/shm/skyling-27b && ln -sfn /dev/shm/skyling-27b $L/models/skyling-27b
 RESERVE=24   # minutes kept before the hard stop for merging, serving and scoring
 run_train() {
-  $L/venv/bin/python scripts/gpu/chat-train/train_big.py --data $N/train.jsonl --smoke-data $T/gen1/train-new.jsonl --smoke 4 --wait-minutes 20 \
+  PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True $L/venv/bin/python scripts/gpu/chat-train/train_big.py --data $N/train.jsonl --smoke-data $T/gen1/train-new.jsonl --smoke 4 --wait-minutes 20 \
     --model $BASE --adapter $N/adapter --out /dev/shm/skyling-27b --epochs 2 --max-minutes "$1" --until $(( END - RESERVE * 60 )) > $N/train.log 2>&1
 }
 # never train into the hard stop
