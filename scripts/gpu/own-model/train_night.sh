@@ -11,7 +11,9 @@
 # Results: /workspace/ownmodel/night1/ (train.log, adapter/ the small trained part, status.txt), board.txt for the scores.
 TRAIN_MIN="${1:-80}"; STOP_AT="${2:-23:59}"
 TAG="${TAG:-n$(date -u +%m%d%H)}"   # the scores of this run on the board (a label already there is skipped, so every run has its own)
-T=/workspace/ownmodel; N=$T/night1; L=/root/job; REPO=$L/LIfeFlow
+# NIGHT names this round's folder on storage (its checked training set, trained part, logs). INIT, when given, is the folder
+# of an earlier round's trained part to start from: a second round on more examples builds on the first instead of starting over.
+T=/workspace/ownmodel; N=$T/${NIGHT:-night1}; L=/root/job; REPO=$L/LIfeFlow
 mkdir -p $N
 START=$(date +%s); END=$(date -u -d "$STOP_AT" +%s); ST=$N/status.txt; : > $ST
 export PATH=$L/node-v22.23.5-linux-x64/bin:$PATH
@@ -73,9 +75,9 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 # A verdict from an earlier box on the same model is reused (RETEST=1 measures again).
 SPEED_DATA=$N/train.jsonl; [ -s $SPEED_DATA ] || SPEED_DATA=$T/gen1/train-new.jsonl
 speed_run() { $TRAINER --data $SPEED_DATA --smoke-data $SPEED_DATA --smoke 5 --smoke-only --model $BASE --adapter $N/speed-adapter > "$1" 2>&1; }
-if [ -s $N/speed.json ] && [ -z "${RETEST:-}" ]; then
-  note "SPEED (measured on an earlier box): $(cat $N/speed.txt 2> /dev/null | tr '\n' ' ' | cut -c1-300)"
-  grep -q '"use": "fast"' $N/speed.json && $L/venv/bin/pip install -q --no-deps fla-core einops >> $N/pip.log 2>&1
+if [ -s $T/speed.json ] && [ -z "${RETEST:-}" ]; then
+  note "SPEED (measured on an earlier box): $(cat $T/speed.txt 2> /dev/null | tr '\n' ' ' | cut -c1-300)"
+  grep -q '"use": "fast"' $T/speed.json && $L/venv/bin/pip install -q --no-deps fla-core einops >> $N/pip.log 2>&1
 else
   step "speed test, the plain way"
   $L/venv/bin/pip uninstall -y -q fla-core >> $N/pip.log 2>&1
@@ -84,17 +86,17 @@ else
   if $L/venv/bin/pip install -q --no-deps fla-core einops >> $N/pip.log 2>&1; then speed_run $N/speed-fast.log; else : > $N/speed-fast.log; fi
   ROOM=$(( $(left) - RESERVE - 3 )); [ "$TRAIN_MIN" -gt "$ROOM" ] && TRAIN_MIN=$ROOM
   python3 scripts/gpu/chat-train/speed_verdict.py --plain $N/speed-plain.log --fast $N/speed-fast.log --minutes "$TRAIN_MIN" \
-    --examples "$(wc -l < $SPEED_DATA)" > $N/speed.txt 2>&1 || fail "neither way of training ran one example (see $N/speed-plain.log and speed-fast.log)"
-  grep "^JSON " $N/speed.txt | cut -c6- > $N/speed.json
-  note "$(grep -v "^JSON " $N/speed.txt | tr '\n' ' ' | cut -c1-400)"
-  grep -q "^USE fast" $N/speed.txt || $L/venv/bin/pip uninstall -y -q fla-core >> $N/pip.log 2>&1
+    --examples "$(wc -l < $SPEED_DATA)" > $T/speed.txt 2>&1 || fail "neither way of training ran one example (see $N/speed-plain.log and speed-fast.log)"
+  grep "^JSON " $T/speed.txt | cut -c6- > $T/speed.json
+  note "$(grep -v "^JSON " $T/speed.txt | tr '\n' ' ' | cut -c1-400)"
+  grep -q "^USE fast" $T/speed.txt || $L/venv/bin/pip uninstall -y -q fla-core >> $N/pip.log 2>&1
 fi
 
 # Carries on from what an earlier box saved (the trained part is saved every four minutes on storage that outlives the box).
 run_train() {
   # shellcheck disable=SC2046
   $TRAINER --data $N/train.jsonl $([ -s $N/train.jsonl ] || echo "--smoke-data $T/gen1/train-new.jsonl --smoke 2 --wait-minutes 20") \
-    --model $BASE --adapter $N/adapter --out /dev/shm/skyling-27b --epochs "${EPOCHS:-2}" --resume --save-minutes 4 \
+    --model $BASE --adapter $N/adapter --out /dev/shm/skyling-27b --epochs "${EPOCHS:-2}" --resume --save-minutes 4 ${INIT:+--init-adapter $INIT} \
     --max-minutes "$1" --until $(( END - RESERVE * 60 )) > $N/train.log 2>&1
 }
 # never train into the hard stop
