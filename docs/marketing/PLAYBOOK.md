@@ -589,6 +589,13 @@ Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playboo
 
 ## 6. Decisions and preferences (keep adding)
 
+- 2026-11-25 (Ali, on the MAGI-2 skyling ads): **the winning format and what to avoid.**
+  - **The format that worked ("It already knows"):** UGC-style footage of a realistic person through an ordinary day, with a 3D pixel skyling (glossy cubes, the app's own shapes) floating beside them. Short, calm exchanges where the skyling already knows and warns or helps: a free trial about to charge, eating out or shopping above the usual, an important email with the reply ready, a fitness goal hit, tomorrow's plan. Make it as realistic as possible, with a hook on screen in the first 2 s, short ad lines and word-by-word captions.
+  - **Avoid:** cutesy or feminine tone (high voices, giggles, lullabies, high-fives), animated "AI worlds", a phone frame, punchlines that need you to know the app ("he thinks he found them"), the overused rent/school/work/shift list, and anything that doesn't really happen (a flight moved an hour earlier, a forgotten mom's birthday). Every line must be accurate and real.
+  - **The skyling changes through the day** ("Changes with the sky": Dawn morning, Ray daytime, Goldie golden hour, Twinkle after sunset, Dreamy night). Build it into the generation: give each scene its own skyling as the reference. Pasting skylings in afterwards looked fake.
+  - **The app's wheel, timeline and icons come from the app** (real captures, `pixel-icons.ts`), never from the model.
+  - **Credits:** the Higgsfield account is shared. Read the balance right before any generation, tell the COO first about anything over about 100 credits, and show the script before spending.
+
 - 2026-11-16 (Ali, on the skit v3 and the campfire open): **who the camera is on, and intro length.**
   - **The camera is on whoever is speaking.** Don't play a person's line over a shot of something else, and never cut to a person who isn't saying anything (no silent reaction shots).
   - **Intros stay short:** about 4 seconds was already "long". Don't add time to one.
