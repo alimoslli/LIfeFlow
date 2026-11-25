@@ -179,12 +179,18 @@ if a.smoke:
     print("SMOKE OK", flush=True)
     if not a.smoke_data:
         raise SystemExit(0)
-    waited = time.time()
+    waited, k = time.time(), 0
     while not os.path.exists(a.data):
         if time.time() - waited > a.wait_minutes * 60:
             print(f"NO DATA: {a.data} did not appear in {a.wait_minutes} minutes", flush=True)
             raise SystemExit(3)
-        time.sleep(5)
+        # real work while waiting: a rented box whose GPU sits idle for five minutes is taken away, and sleeping does not count
+        with torch.no_grad():
+            ids, labels = smoke_set[k % len(smoke_set)]
+            if len(ids) < too_long:
+                loss_of(ids, labels)
+        k += 1
+        time.sleep(0.5)
     time.sleep(3)   # let the writer finish
     rows, data = load(a.data)
     hold, train = data[: a.holdout], data[a.holdout:]
