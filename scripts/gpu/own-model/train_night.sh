@@ -35,12 +35,17 @@ $P install -q peft accelerate > $N/pip.log 2>&1 || fail "peft did not install (s
 $L/venv/bin/python -c "import torch, transformers, peft; print('torch', torch.__version__, 'transformers', transformers.__version__, 'peft', peft.__version__)" || fail "the training libraries do not load"
 N0=0; until [ "$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits | head -1)" -lt 3000 ]; do sleep 3; N0=$((N0 + 1)); [ $N0 -gt 40 ] && fail "the GPU's memory was not freed"; done
 
+# The box has 413 GB of memory: the trained model is written to memory (/dev/shm) instead of disk, and the base model is read
+# from there too when a copy was put there beforehand. That saves minutes of disk time twice.
+BASE=$L/models/qwen38-27b; [ -f /dev/shm/qwen38-27b.ready ] && BASE=/dev/shm/qwen38-27b
+mkdir -p /dev/shm/skyling-27b && ln -sfn /dev/shm/skyling-27b $L/models/skyling-27b
+RESERVE=24   # minutes kept before the hard stop for merging, serving and scoring
 run_train() {
   $L/venv/bin/python scripts/gpu/chat-train/train_big.py --data $N/train.jsonl --smoke-data $T/gen1/train-new.jsonl --smoke 4 --wait-minutes 20 \
-    --model $L/models/qwen38-27b --adapter $N/adapter --out $L/models/skyling-27b --epochs 2 --max-minutes "$1" --until $(( END - 22 * 60 )) > $N/train.log 2>&1
+    --model $BASE --adapter $N/adapter --out /dev/shm/skyling-27b --epochs 2 --max-minutes "$1" --until $(( END - RESERVE * 60 )) > $N/train.log 2>&1
 }
-# never train into the hard stop: training ends 22 minutes before it at the latest, kept for merging, serving and scoring
-ROOM=$(( $(left) - 22 - 4 )); [ "$TRAIN_MIN" -gt "$ROOM" ] && TRAIN_MIN=$ROOM
+# never train into the hard stop
+ROOM=$(( $(left) - RESERVE - 4 )); [ "$TRAIN_MIN" -gt "$ROOM" ] && TRAIN_MIN=$ROOM
 [ "$TRAIN_MIN" -ge 10 ] || fail "only $ROOM minutes left for training"
 step "load, try, then train up to $TRAIN_MIN minutes"
 run_train "$TRAIN_MIN" || fail "training stopped (see $N/train.log): $(grep -v "^step \|Warning\|warn" $N/train.log | tail -3 | tr '\n' ' ' | cut -c1-300)"
