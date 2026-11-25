@@ -5,21 +5,26 @@
 # answers; every turn, kept or not, is exported as a short record for a quality check by a reader before any training.
 #
 #   nohup sh gen_box.sh <generate minutes, default 75> <hard stop minutes, default 100> <messages per life, default 9> \
-#       <at a time, default 24> > /workspace/ownmodel/gen1.log 2>&1 &
+#       <at a time, default 24> > /workspace/ownmodel/gen.log 2>&1 &
 #
-# Next to this script, optional: up-qc.txt with a presigned upload URL (Content-Type application/zip) for the quality-check file.
-# Saved on GPU storage: /workspace/ownmodel/gen1/ (dump.jsonl and meta.jsonl: the recording; train-new.jsonl: what the filter
-# kept; qc.jsonl: the short records; details.jsonl), traindata/gen1-kept.jsonl, gen1-status.txt, steps.log.
+# Next to this script, optional: up-qc.txt with a presigned upload URL for the quality-check file (a .zip slot is signed with
+# Content-Type application/octet-stream and needs the header If-None-Match: *).
+# Saved on GPU storage: /workspace/ownmodel/<RUN>/ (dump.jsonl and meta.jsonl: the recording; train-new.jsonl: what the filter
+# kept; qc.jsonl: the short records; details.jsonl), traindata/<RUN>-kept.jsonl, <RUN>-status.txt, steps.log.
 GEN_MIN="${1:-75}"; STOP_MIN="${2:-100}"; PER="${3:-9}"; AT_ONCE="${4:-24}"; KEEP="$5"
 # With "keep" as the fifth argument the box is left set up for a training stage on the same box (train_big.sh): the teacher is
 # stopped so the GPU is free. WARNING (2026-11-25): the waiting loop below does NOT hold the box. A box whose GPU sits idle is
 # taken away after its idle limit whatever is sleeping on it; start the next stage within that limit, or use train_night.sh
 # on a fresh box (it sets itself up and the examples are safe on /workspace).
 HERE=$(cd "$(dirname "$0")" && pwd)
-T=/workspace/ownmodel; D=$T/gen1; L=/root/job; REPO=$L/LIfeFlow; H=$L/gen
+# RUN names this generation's folder on storage. A folder that already holds a recording is never written over: the first
+# generation's examples (gen1, 2026-11-25) are the only copy there is.
+RUN="${RUN:-gen$(date -u +%m%d)}"
+T=/workspace/ownmodel; D=$T/$RUN; L=/root/job; REPO=$L/LIfeFlow; H=$L/gen
+[ -s "$D/dump.jsonl" ] && { echo "REFUSED: $D already holds a recording. Give another name: RUN=gen-b sh gen_box.sh ..."; exit 1; }
 START=$(date +%s); END=$(( START + STOP_MIN * 60 ))
 mkdir -p $T $D $T/traindata $L/models $H
-ST=$T/gen1-status.txt; : > $ST
+ST=$T/$RUN-status.txt; : > $ST
 step() { echo "STEP $1 $(date -u +%H:%M:%S) +$(( ($(date +%s) - START) / 60 ))min" | tee -a $T/steps.log; }
 note() { echo "$1" | tee -a $ST; }
 shutdown_all() {
@@ -36,11 +41,11 @@ finish() {
   cd $REPO || return
   cp $H/dump.jsonl $D/dump.jsonl 2> /dev/null; cat $H/meta-*.jsonl > $D/meta.jsonl 2> /dev/null
   python3 scripts/gpu/chat-data/filter.py --meta "$H/meta-*.jsonl" --dump $H/dump.jsonl --out $D/train-new.jsonl --report $D/filter-report.json --alive --details $D/details.jsonl > $D/filter.log 2>&1
-  cp $D/train-new.jsonl $T/traindata/gen1-kept.jsonl 2> /dev/null
+  cp $D/train-new.jsonl $T/traindata/$RUN-kept.jsonl 2> /dev/null
   python3 scripts/gpu/chat-data/qc_export.py --meta "$H/meta-*.jsonl" --dump $H/dump.jsonl --details $D/details.jsonl --out $D/qc.jsonl > $D/qc.log 2>&1
   (cd $D && python3 -c "import zipfile; z = zipfile.ZipFile('qc.zip', 'w', zipfile.ZIP_DEFLATED); z.write('qc.jsonl'); z.write('filter-report.json'); z.close()")
   UPL="not uploaded (no up-qc.txt)"
-  [ -s "$HERE/up-qc.txt" ] && UPL="upload http $(curl -sS -m 180 -o /dev/null -w '%{http_code}' -X PUT -H 'Content-Type: application/zip' -H 'If-None-Match: *' --data-binary @$D/qc.zip "$(cat "$HERE/up-qc.txt")")"
+  [ -s "$HERE/up-qc.txt" ] && UPL="upload http $(curl -sS -m 180 -o /dev/null -w '%{http_code}' -X PUT -H 'Content-Type: application/octet-stream' -H 'If-None-Match: *' --data-binary @$D/qc.zip "$(cat "$HERE/up-qc.txt")")"
   TURNS=$(wc -l < $D/qc.jsonl 2> /dev/null); KEPT=$(wc -l < $D/train-new.jsonl 2> /dev/null)
   note "DATA: $TURNS turns recorded, $(grep -c '"ok": true' $D/details.jsonl 2> /dev/null) passed the filter, $KEPT examples kept (every tool-calling step is its own example); quality-check file: $UPL"
   note "FILTER: $(head -12 $D/filter.log | tr '\n' ' ' | cut -c1-500)"
@@ -52,7 +57,7 @@ finish() {
 TIMER=$!
 
 # ---- set up
-step "gen1 start"
+step "$RUN start"
 (python3 -m venv $L/venv && $L/venv/bin/pip install -q vllm > $D/pip.log 2>&1 && echo ok > $L/vllm.ready) &
 (python3 -m venv $L/hfenv && $L/hfenv/bin/pip install -q huggingface_hub > $D/pip-hf.log 2>&1 \
   && $L/hfenv/bin/hf download Qwen/Qwen3.8-27B --exclude "original/*" --exclude "metal/*" --local-dir $L/models/qwen38-27b > $D/dl-teacher.log 2>&1 && echo ok > $L/model.ready) &
@@ -73,12 +78,16 @@ TEST_DATABASE_URL=postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetfl
 # superuser only for the migrations: a superuser skips row-level security
 su postgres -c "psql -c \"alter role budgetflow nosuperuser nobypassrls\""
 N=0; while [ ! -f $L/vllm.ready ] || [ ! -f $L/model.ready ]; do sleep 5; N=$((N + 1)); [ $N -gt 300 ] && fail "the model server or the model did not arrive in 25 minutes"; done
-# The teacher with nothing of ours around it (no rules, no cards, no checks) on the 20 questions: the "before" that the trained
-# model's "after" is compared with. runplan.sh also fetches the newest code and leaves the teacher serving.
+# The teacher as it will write the examples (rules, cards and every check, the clock and made-up-figure checks of 2026-11-25
+# included) on the 20 questions: they must not have dropped (18 to 19 before those checks). The bare model's own score is known
+# (9 of 20, 2026-11-25) and is measured again only when the board has no such line. runplan.sh also fetches the newest code
+# and leaves the teacher serving.
 step "teacher baseline"
-echo "eval|n1-teacher-bare-old20|--no-retry --alive-rules|--think off" > $D/plan-baseline.txt
+TAG="${TAG:-g$(date -u +%m%d%H)}"
+echo "eval|$TAG-teacher-cards-old20|--no-retry --alive-rules|$CARDS" > $D/plan-baseline.txt
+grep -q "^RESULT n1-teacher-bare-old20 " $T/board.txt 2> /dev/null || echo "eval|n1-teacher-bare-old20|--no-retry --alive-rules|--think off" >> $D/plan-baseline.txt
 sh scripts/gpu/own-model/runplan.sh qwen38-27b 12 "--max-model-len 65536 --reasoning-parser qwen3 --tool-call-parser qwen3_coder" $D/plan-baseline.txt keep > $D/baseline.log 2>&1
-grep "^RESULT n1-teacher-bare" $T/board.txt | cut -c1-240 >> $ST
+grep "^RESULT $TAG-teacher\|^RESULT n1-teacher-bare" $T/board.txt | cut -c1-240 >> $ST
 curl -sf http://127.0.0.1:8000/v1/models > /dev/null || fail "the teacher is not serving (see $D/baseline.log and $T/vllm-plan-qwen38-27b.log)"
 VPID=$(pgrep -f "[v]llm serve" | head -1)
 service postgresql start > /dev/null 2>&1; sleep 2
@@ -86,7 +95,7 @@ cd $REPO && git log --oneline -1
 python3 scripts/gpu/chat-data/make_lives.py --out $L/lives --per-persona 6 > $D/lives.log 2>&1 || fail "lives"
 LIVES=$(ls $L/lives | wc -l)
 python3 scripts/gpu/chat-data/build_questions.py --teacher /workspace/router/out/train.json --out $L/questions.json > $D/questions.log 2>&1 || fail "question bank"
-python3 scripts/gpu/chat-data/build_alive_questions.py --base $L/questions.json --out $L/questions-alive.json --share 0.5 --total $(( LIVES * PER )) > $D/alive-q.log 2>&1 || fail "alive questions"
+python3 scripts/gpu/chat-data/build_alive_questions.py --base $L/questions.json --out $L/questions-alive.json --share 0.6 --total $(( LIVES * PER + 200 )) > $D/alive-q.log 2>&1 || fail "alive questions"
 cat $D/alive-q.log
 
 # ---- generate for a fixed time
@@ -105,12 +114,12 @@ while pgrep -f "[g]enerate.ts" > /dev/null && [ $(( $(date +%s) - G0 )) -lt $(( 
 done
 step "generate over after $(( ($(date +%s) - G0) / 60 )) minutes"
 finish
-step "gen1 done"
+step "$RUN done"
 kill $TIMER 2> /dev/null
 if [ "$KEEP" = keep ]; then
   pkill -f "[v]llm serve"; sleep 4; pkill -f "[V]LLM::EngineCore"
   echo "STEP teacher stopped, box kept for training $(date -u +%H:%M:%S)" >> $T/steps.log
-  (N=0; while [ $N -lt 240 ] && [ ! -f $T/gen1-release ]; do sleep 5; N=$((N + 1)); done) &   # does not hold the box, see the warning at the top
+  (N=0; while [ $N -lt 240 ] && [ ! -f $T/$RUN-release ]; do sleep 5; N=$((N + 1)); done) &   # does not hold the box, see the warning at the top
 else
   shutdown_all
 fi

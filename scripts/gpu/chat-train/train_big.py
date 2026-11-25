@@ -38,6 +38,7 @@ ap.add_argument("--wait-minutes", type=float, default=20, help="how long to wait
 ap.add_argument("--save-minutes", type=float, default=4, help="the trained part and how far it got are saved this often, so a box that is taken away "
                 "(idle, out of credits: both happened on 2026-11-25) loses minutes, not the run")
 ap.add_argument("--resume", action="store_true", help="carry on from what is saved in --adapter (same data file), instead of starting over")
+ap.add_argument("--init-adapter", default=None, help="start from the trained part of an earlier round (another folder), then train on this round's data")
 ap.add_argument("--smoke-only", action="store_true", help="try a few examples, print seconds and memory for each, and stop: the speed test")
 ap.add_argument("--clip-tokens", type=int, default=0, help="dry runs only: keep just the last N tokens of each prompt, so a CPU can get through real examples")
 ap.add_argument("--tiny", action="store_true", help="a test of this script on a small random model of the same kind (no GPU needed)")
@@ -234,6 +235,11 @@ if a.resume and os.path.exists(PROGRESS) and os.path.exists(os.path.join(a.adapt
         sched.step()
     print(f"RESUMED at example {start} of the planned order, step {step}; holdout loss before training was {h0:.4f}", flush=True)
 else:
+    if a.init_adapter:
+        from peft import set_peft_model_state_dict
+        from safetensors.torch import load_file
+        set_peft_model_state_dict(model, load_file(os.path.join(a.init_adapter, "adapter_model.safetensors")))
+        print(f"started from the trained part in {a.init_adapter}", flush=True)
     h0 = holdout_loss()
     print("holdout loss before", round(h0, 4), flush=True)
     log["holdout_loss"].append((0, h0))
