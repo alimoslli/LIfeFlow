@@ -30,8 +30,8 @@ cd $REPO && git fetch -q --depth 3 origin claude/skill-router-pilot && git reset
 pkill -f "[v]llm serve"; sleep 2; pkill -f "[V]LLM::EngineCore"
 P=$L/venv/bin/pip
 $P install -q peft accelerate > $N/pip.log 2>&1 || fail "peft did not install (see $N/pip.log)"
-# the fast kernels for this model's linear-attention layers; without them the library falls back to a slower plain version
-(timeout 200 $P install -q flash-linear-attention >> $N/pip.log 2>&1; timeout 200 $P install -q causal-conv1d >> $N/pip.log 2>&1) || true
+# The optional fast kernels for this model's linear-attention layers (fla, causal-conv1d) are left out on purpose: the plain
+# path is the one that was tested end to end, and this night gets one attempt.
 $L/venv/bin/python -c "import torch, transformers, peft; print('torch', torch.__version__, 'transformers', transformers.__version__, 'peft', peft.__version__)" || fail "the training libraries do not load"
 N0=0; until [ "$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits | head -1)" -lt 3000 ]; do sleep 3; N0=$((N0 + 1)); [ $N0 -gt 40 ] && fail "the GPU's memory was not freed"; done
 
@@ -43,17 +43,7 @@ run_train() {
 ROOM=$(( $(left) - 22 - 4 )); [ "$TRAIN_MIN" -gt "$ROOM" ] && TRAIN_MIN=$ROOM
 [ "$TRAIN_MIN" -ge 10 ] || fail "only $ROOM minutes left for training"
 step "load, try, then train up to $TRAIN_MIN minutes"
-if ! run_train "$TRAIN_MIN"; then
-  if ! grep -q "SMOKE OK" $N/train.log; then
-    # the first tries failed: once more without the optional fast kernels
-    cp $N/train.log $N/train-first-try.log; note "NOTE: first try failed before training ($(grep -i "error" $N/train.log | tail -1 | cut -c1-160)); retrying without the optional kernels"
-    $P uninstall -y -q flash-linear-attention causal-conv1d >> $N/pip.log 2>&1
-    ROOM=$(( $(left) - 22 - 4 )); [ "$TRAIN_MIN" -gt "$ROOM" ] && TRAIN_MIN=$ROOM
-    run_train "$TRAIN_MIN" || fail "training failed twice (see $N/train.log and train-first-try.log)"
-  else
-    fail "training stopped (see $N/train.log): $(tail -2 $N/train.log | tr '\n' ' ' | cut -c1-200)"
-  fi
-fi
+run_train "$TRAIN_MIN" || fail "training stopped (see $N/train.log): $(grep -v "^step \|Warning\|warn" $N/train.log | tail -3 | tr '\n' ' ' | cut -c1-300)"
 note "SMOKE: $(grep "^SMOKE [0-9]" $N/train.log | tr '\n' ';' | cut -c1-400)"
 note "TRAIN: $(grep "^train [0-9]" $N/train.log | cut -c1-120); $(grep "holdout loss before" $N/train.log); $(grep "^TRAIN DONE" $N/train.log | cut -c1-260)"
 grep -q "^MERGED" $N/train.log || fail "the trained model was not saved (see $N/train.log)"
