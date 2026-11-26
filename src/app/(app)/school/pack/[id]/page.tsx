@@ -39,7 +39,9 @@ export default async function PaperPackPage({ params }: { params: Promise<{ id: 
           <EmptyState icon={<PixelIcon name="find" className="h-8 w-8" />} title="No pack yet">
             <p>Your skyling can find sources and questions to start from. The writing stays yours.</p>
             <div className="mt-4">
-              <AskJarvisButton prompt={`Make me a paper pack for ${work.title}`}>Find sources</AskJarvisButton>
+              <AskJarvisButton prompt={`Make me a paper pack for ${work.title}`} className="lf-sb lf-sb-sun lf-sb-sm lf-touch">
+                Find sources
+              </AskJarvisButton>
             </div>
           </EmptyState>
         </Card>
@@ -71,8 +73,12 @@ export default async function PaperPackPage({ params }: { params: Promise<{ id: 
             </Card>
           )}
           <div className="flex flex-wrap gap-2">
-            <AskJarvisButton prompt={`Find time this week to work on ${work.title}`}>Plan sessions</AskJarvisButton>
-            <AskJarvisButton prompt={`Make me a paper pack for ${work.title} again`}>Find new sources</AskJarvisButton>
+            <AskJarvisButton prompt={`Find time this week to work on ${work.title}`} className="lf-sb lf-sb-sun lf-sb-sm lf-touch">
+              Plan sessions
+            </AskJarvisButton>
+            <AskJarvisButton prompt={`Make me a paper pack for ${work.title} again`} className="lf-sb lf-sb-app lf-sb-sm lf-touch">
+              Find new sources
+            </AskJarvisButton>
           </div>
         </div>
       )}
