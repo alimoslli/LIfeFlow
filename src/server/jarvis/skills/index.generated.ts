@@ -3,6 +3,52 @@ import type { SkillFile } from "./types";
 
 export const SKILLS: SkillFile[] = [
   {
+    "name": "admin-deadlines",
+    "title": "School admin dates",
+    "description": "Finds the official registration, add/drop, tuition, financial aid and scholarship dates for the user's school, with sources, and saves only the ones they pick as to-dos.",
+    "triggers": [
+      "registration",
+      "registration deadline",
+      "add drop",
+      "drop deadline",
+      "financial aid deadline",
+      "fafsa",
+      "scholarship deadline",
+      "tuition due",
+      "withdrawal deadline"
+    ],
+    "modules": [
+      "school"
+    ],
+    "tools": [
+      "find_school_dates",
+      "create_tasks"
+    ],
+    "body": "## Steps\n1. Use the school they name; if you don't know it, ask once.\n2. Call find_school_dates and list the dates with their source links.\n3. Ask which to save, then save only those with create_tasks, each due on its date.\n\n## Quality rules\n- Never a date that isn't in the result, and never save one they didn't pick.\n- If nothing came back, say so and point them to the school's own calendar.\n\n## Example\nUser: When's the drop deadline and FAFSA stuff for Valencia?\nAssistant: From Valencia's own calendar: last day to withdraw is Friday, Nov 14 ([Academic calendar](https://valenciacollege.edu/...)), and their priority aid date is Jan 15. Want me to add either as a to-do?",
+    "evals": [
+      {
+        "prompt": "When is the drop deadline at my school?",
+        "expect": "routes to admin-deadlines"
+      },
+      {
+        "prompt": "What are the financial aid deadlines for Valencia College?",
+        "expect": "routes to admin-deadlines"
+      },
+      {
+        "prompt": "When is registration for next term?",
+        "expect": "routes to admin-deadlines"
+      },
+      {
+        "prompt": "Find the FAFSA deadline and add it to my to-dos",
+        "expect": "routes to admin-deadlines"
+      },
+      {
+        "prompt": "When is tuition due this semester?",
+        "expect": "routes to admin-deadlines"
+      }
+    ]
+  },
+  {
     "name": "app-operator",
     "title": "App operator",
     "description": "Creates, edits and deletes anything in LifeFlow on command and confirms what changed.",
@@ -55,6 +101,49 @@ export const SKILLS: SkillFile[] = [
       {
         "prompt": "Remove the gym habit",
         "expect": "routes to app-operator"
+      }
+    ]
+  },
+  {
+    "name": "bill-date-move",
+    "title": "Move a bill's date",
+    "description": "Writes a ready message asking a landlord or biller to move this month's due date to after payday, from the real bill. Never sends it.",
+    "triggers": [
+      "move my due date",
+      "rent before payday",
+      "pay rent late",
+      "ask my landlord",
+      "push my bill",
+      "due date after payday"
+    ],
+    "modules": [
+      "finances"
+    ],
+    "tools": [
+      "recurring_payments",
+      "draft_bill_date_move"
+    ],
+    "body": "## Steps\n1. Find the bill (recurring_payments).\n2. Use their payday only if they said it or a real deposit shows it; otherwise leave it out.\n3. Call draft_bill_date_move and show the text as written.\n\n## Quality rules\n- Never send it, never say it was sent, and never guess a payday or an amount.\n\n## Example\nUser: My rent is due before I get paid, can you help me ask my landlord to move it?\nAssistant: Here's a message you can send: \"Hi, this is Ali. My Rent payment is due Monday, December 1, and I'm paid Friday, December 5. Could we move this month's due date to Friday, December 5? I'll pay in full then. Thank you!\"",
+    "evals": [
+      {
+        "prompt": "My rent is due before payday, help me ask my landlord to move it",
+        "expect": "routes to bill-date-move"
+      },
+      {
+        "prompt": "Write a message to move my due date for the phone bill",
+        "expect": "routes to bill-date-move"
+      },
+      {
+        "prompt": "Can you help me push my bill until after payday?",
+        "expect": "routes to bill-date-move"
+      },
+      {
+        "prompt": "Ask my landlord if I can pay rent late this month",
+        "expect": "routes to bill-date-move"
+      },
+      {
+        "prompt": "I want my due date after payday, write the text",
+        "expect": "routes to bill-date-move"
       }
     ]
   },
@@ -282,6 +371,49 @@ export const SKILLS: SkillFile[] = [
     ]
   },
   {
+    "name": "exam-practice",
+    "title": "Exam practice",
+    "description": "Quizzes the student on their course's topics before an exam, records what they got right, and the night before quizzes only what they missed.",
+    "triggers": [
+      "practice questions",
+      "practice for my exam",
+      "the ones i missed",
+      "test me before"
+    ],
+    "modules": [
+      "school"
+    ],
+    "tools": [
+      "list_assignments",
+      "course_materials",
+      "missed_practice",
+      "record_practice"
+    ],
+    "body": "## Steps\n1. Find the exam or quiz (list_assignments) and its topics (course_materials) if saved.\n2. For \"the ones I missed\", get them with missed_practice and ask only those.\n3. Ask 3 to 5 short questions one at a time, waiting for each answer, and say gently what the right idea is.\n4. After the round, save each question and whether they got it with record_practice.\n\n## Quality rules\n- Practice questions you write from the course's topics only; never a question from a graded assignment or its answers.\n- One question at a time; keep each short.\n\n## Example\nUser: Quiz me on just the ones I missed for my Bio exam\nAssistant: Two from last time. First: what does the mitochondria make for the cell?",
+    "evals": [
+      {
+        "prompt": "Quiz me on just the ones I missed for my Bio exam",
+        "expect": "routes to exam-practice"
+      },
+      {
+        "prompt": "Give me practice questions for my chem midterm",
+        "expect": "routes to exam-practice"
+      },
+      {
+        "prompt": "Can you test me before my quiz tomorrow?",
+        "expect": "routes to exam-practice"
+      },
+      {
+        "prompt": "Practice for my exam with me",
+        "expect": "routes to exam-practice"
+      },
+      {
+        "prompt": "Quiz me on the ones I missed",
+        "expect": "routes to exam-practice"
+      }
+    ]
+  },
+  {
     "name": "exam-prep",
     "title": "Exam prep",
     "description": "Counts down to exams and plans which topics to cover each day.",
@@ -325,6 +457,49 @@ export const SKILLS: SkillFile[] = [
       {
         "prompt": "Prep me for my chemistry final",
         "expect": "routes to exam-prep"
+      }
+    ]
+  },
+  {
+    "name": "extension-email",
+    "title": "Extension email",
+    "description": "Writes a short, polite email to a professor asking for an extension on one assignment, with the real due date. Never sends it.",
+    "triggers": [
+      "ask for an extension",
+      "an extension",
+      "extension",
+      "ask for more time",
+      "more time on",
+      "late submission"
+    ],
+    "modules": [
+      "school"
+    ],
+    "tools": [
+      "list_assignments",
+      "draft_extension_email"
+    ],
+    "body": "## Steps\n1. Find the assignment (list_assignments).\n2. Ask what new date they want if they didn't say, and what they've done so far only if it helps.\n3. Call draft_extension_email and show the subject and body as written, with the professor's address if saved.\n\n## Quality rules\n- Never send it, and never say it was sent.\n- Never invent a reason, a date or progress they didn't give.\n\n## Example\nUser: Email my professor for an extension on Essay 2 until Monday\nAssistant: Here's a draft for Professor Ruiz. Subject: \"Extension request: Essay 2 (ENG 102)\". Dear Professor Ruiz, I'm writing to ask whether I could have an extension on Essay 2, which is due Friday, November 21. Would Monday be possible? ...",
+    "evals": [
+      {
+        "prompt": "Email my professor asking for an extension on my essay",
+        "expect": "routes to extension-email"
+      },
+      {
+        "prompt": "Can you write an extension request for my lab report until Monday?",
+        "expect": "routes to extension-email"
+      },
+      {
+        "prompt": "I need more time on Essay 2, help me ask for an extension",
+        "expect": "routes to extension-email"
+      },
+      {
+        "prompt": "Write an email to my prof to ask for an extension",
+        "expect": "routes to extension-email"
+      },
+      {
+        "prompt": "Ask for more time on my history paper",
+        "expect": "routes to extension-email"
       }
     ]
   },
@@ -842,7 +1017,7 @@ export const SKILLS: SkillFile[] = [
     "body": "## Steps\n1. Ask for the key point if unclear.\n2. Draft a short, polite message in the right tone.\n3. Use draft_email for Gmail drafts; sending always needs the user's confirmation.\n\n## Quality rules\n- Never claim a message was sent without the provider's confirmation.\n\n## Example\nUser: Email my professor for an extension\nAssistant: Subject: Extension request for Lab 4. Hi Dr. Lee, ... Want me to save this as a Gmail draft?",
     "evals": [
       {
-        "prompt": "Email my professor asking for an extension",
+        "prompt": "Email my professor asking to meet in office hours",
         "expect": "routes to message-drafter"
       },
       {
@@ -906,6 +1081,52 @@ export const SKILLS: SkillFile[] = [
       {
         "prompt": "What's the weather for my trip?",
         "expect": "routes to packing-prep"
+      }
+    ]
+  },
+  {
+    "name": "paper-pack",
+    "title": "Paper pack",
+    "description": "Finds real sources and open questions for a paper, essay or report, saves them as a pack and offers work sessions in free time. Never writes the paper.",
+    "triggers": [
+      "paper pack",
+      "sources for my paper",
+      "sources for my essay",
+      "research for my paper",
+      "research paper",
+      "find sources",
+      "help me research",
+      "start my essay"
+    ],
+    "modules": [
+      "school"
+    ],
+    "tools": [
+      "list_assignments",
+      "make_paper_pack",
+      "create_events"
+    ],
+    "body": "## Steps\n1. Find the piece of work with list_assignments (match the title they used); if it isn't there, ask which one.\n2. Call make_paper_pack with its id, and their chosen angle as focus if they said one.\n3. List the sources as markdown links with their one line, then ask one or two of the questions back.\n4. Offer the sessions it found by day and time; block them with create_events only on a yes.\n\n## Quality rules\n- Never write any of the paper: no thesis, outline, arguments, paragraphs or summary of what it should say.\n- Only the sources the tool returned; never add one from memory.\n- If it returns none or isn't available, say so plainly.\n\n## Example\nUser: Help me research my history paper\nAssistant: I saved a pack of 7 sources for \"WWI propaganda paper\", starting with [The Library of Congress poster collection](https://www.loc.gov/...) (posters from 1914 to 1918). One question to chew on: who was each poster meant to persuade? You're free Tuesday at 4 PM and Wednesday at 7 PM. Want me to block an hour each?",
+    "evals": [
+      {
+        "prompt": "Make me a paper pack for my history essay",
+        "expect": "routes to paper-pack"
+      },
+      {
+        "prompt": "Can you find sources for my paper on climate policy?",
+        "expect": "routes to paper-pack"
+      },
+      {
+        "prompt": "Help me research my sociology paper",
+        "expect": "routes to paper-pack"
+      },
+      {
+        "prompt": "I need to start my essay, find sources for it",
+        "expect": "routes to paper-pack"
+      },
+      {
+        "prompt": "Research paper due Friday, help me research it",
+        "expect": "routes to paper-pack"
       }
     ]
   },
@@ -1157,6 +1378,53 @@ export const SKILLS: SkillFile[] = [
       {
         "prompt": "Lunch is unpaid on my 9 hour shifts, so I get paid 8 hours",
         "expect": "routes to shift-manager"
+      }
+    ]
+  },
+  {
+    "name": "shift-swap",
+    "title": "Shift swap",
+    "description": "Writes a ready text asking coworkers or a manager to take a shift that clashes with an exam or deadline, from the real shift and assignment. Never sends it.",
+    "triggers": [
+      "swap my shift",
+      "asking to swap",
+      "swap my",
+      "swap text",
+      "cover my shift",
+      "take my shift",
+      "trade shifts",
+      "get my shift covered"
+    ],
+    "modules": [
+      "work",
+      "school"
+    ],
+    "tools": [
+      "list_shifts",
+      "list_assignments",
+      "draft_shift_swap"
+    ],
+    "body": "## Steps\n1. Find the shift (list_shifts) and the exam or deadline it clashes with (list_assignments).\n2. Call draft_shift_swap with both ids.\n3. Show the text as written so they can copy it, and say they can send it to their group chat or manager.\n\n## Quality rules\n- Never send it, and never say it was sent.\n- Only the real shift times and the real reason.\n\n## Example\nUser: Write a text asking to swap my Wednesday shift so I can study for my Bio final\nAssistant: Here's one you can paste in your work chat: \"Hi, I have my BIO 101 exam Thursday morning. Could anyone take my Wednesday 5 to 11 PM shift at Target? I can cover one of yours another time. Thank you!\"",
+    "evals": [
+      {
+        "prompt": "Write a text asking to swap my Wednesday shift so I can get my essay done",
+        "expect": "routes to shift-swap"
+      },
+      {
+        "prompt": "Can you help me get my shift covered for my exam?",
+        "expect": "routes to shift-swap"
+      },
+      {
+        "prompt": "I need someone to take my shift Friday, write the swap text",
+        "expect": "routes to shift-swap"
+      },
+      {
+        "prompt": "Help me trade shifts with a coworker this week",
+        "expect": "routes to shift-swap"
+      },
+      {
+        "prompt": "Write something to ask my team to cover my shift",
+        "expect": "routes to shift-swap"
       }
     ]
   },

@@ -470,6 +470,20 @@
       "when": 1799200000000,
       "tag": "0073_hq_ailab",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1799300000000,
+      "tag": "0074_paper_packs",
+      "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1799400000000,
+      "tag": "0075_practice_questions",
+      "breakpoints": true
     }
   ]
 }

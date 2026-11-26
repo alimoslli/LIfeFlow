@@ -14,7 +14,7 @@ import { makeToolContext } from "./agent";
 import { createConversation } from "./conversations";
 import { executeToolCall, serializeResult } from "./executor";
 import { describeToolCall, describeToolResult, memoryProposalOf } from "./labels";
-import { selectMemories } from "./memory-retrieval";
+import { memoriesForTurn } from "./memory-retrieval";
 import { recordRun } from "./metrics";
 import { recordAiQuiet, settleVoiceUsage } from "../services/ai-usage";
 import { reserveAi, subjectFor } from "../services/ai-gate";
@@ -62,8 +62,8 @@ async function recentLines(user: SessionUser, conversationId: string, limit = 12
 
 export async function buildVoiceSession(user: SessionUser, module: JarvisModule | null, now = new Date(), history: string[] = []) {
   const approved = await withUser(user.id, (s) => listActiveMemories(s, now));
-  // No spoken request yet: standing instructions only; the model can call list_memories for more.
-  const memories = selectMemories(approved, { text: "", module });
+  // No spoken request yet: standing instructions and the small core; the model can call recall_memories for more.
+  const memories = memoriesForTurn(approved, { text: "", module }, { lean: true, now });
   const profile = assistantProfile(user.preferences, user.timezone);
   const instructions =
     buildSystemPrompt({

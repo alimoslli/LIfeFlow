@@ -10,6 +10,10 @@ import { overviewTools } from "./tools/overview";
 import { personalGoalTools } from "./tools/personal-goals";
 import { promiseTools } from "./tools/promises";
 import { schoolTools } from "./tools/school";
+import { paperPackTools } from "./tools/paper-pack";
+import { draftTools } from "./tools/drafts";
+import { practiceTools } from "./tools/practice";
+import { schoolDateTools } from "./tools/school-dates";
 import { setupTools } from "./tools/setup";
 import { taskTools } from "./tools/tasks";
 import { tonightTools } from "./tools/tonight";
@@ -22,6 +26,10 @@ export const ALL_TOOLS: ToolDefinition[] = [
   ...overviewTools,
   ...taskTools,
   ...schoolTools,
+  ...paperPackTools,
+  ...draftTools,
+  ...practiceTools,
+  ...schoolDateTools,
   ...calendarTools,
   ...financeTools,
   ...moneyCoachTools,

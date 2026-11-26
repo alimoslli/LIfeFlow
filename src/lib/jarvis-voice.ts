@@ -75,11 +75,32 @@ const KINDS: Record<string, (f: F) => Parts> = {
     ask: f.done ? `I blocked 90 minutes ${s(f, "blockWhen")}.` : "Want me to block 90 minutes then?",
     mood: "info",
   }),
+  // gamechanger 1 (owner, 2026-11-26): the skyling offers to do the hunting; the writing stays theirs
+  // gamechanger 2 (owner, 2026-11-26): the night before, only what they missed
+  exam_eve: (f) => ({
+    headline: `${s(f, "what")} tomorrow`,
+    fact: `${plural(n(f, "missedCount"), "practice question")} from your last round ${n(f, "missedCount") === 1 ? "needs" : "need"} another go.`,
+    ask: "Want a quick round on just those?",
+    mood: "info",
+  }),
+  // gamechanger 7 (owner, 2026-11-26): learned from their own clock-outs, never a guess
+  sunday_learned: (f) => ({
+    headline: `Keep ${s(f, "day")} night free?`,
+    fact: `Your ${s(f, "day")} shifts at ${s(f, "workplace")} ran about ${n(f, "typicalMin")} minutes long ${n(f, "long")} of the last ${n(f, "worked")} times. Next ${s(f, "day")}'s ends at ${s(f, "endsAt")}.`,
+    ask: f.done ? "I kept the hour after it free." : "Want me to keep the hour after it free?",
+    mood: "info",
+  }),
+  paper_pack: (f) => ({
+    headline: `Sources for ${s(f, "assignment")}`,
+    fact: `${s(f, "assignment")} is due ${s(f, "dueDay")}. I can find sources and questions to start from.`,
+    ask: "Want me to gather them?",
+    mood: "info",
+  }),
   deadline_conflict: (f) => ({
     headline: `${s(f, "assignment")} vs. your shift`,
     fact: `${s(f, "assignment")} is due ${s(f, "dueDay")} and you work ${s(f, "shiftWhen")}.`,
     ask: f.noFreeBlock
-      ? "There's no free 2-hour stretch before then. Want to look at your week together?"
+      ? "There's no free 2-hour stretch before then. Want a ready text to ask someone to swap the shift?"
       : f.done
         ? `I blocked ${s(f, "blockWhen")} for it.`
         : `Want me to block ${s(f, "blockWhen")}?`,
@@ -360,6 +381,9 @@ export const KIND_LABELS: Record<string, string> = {
   deadline_conflict: "Deadlines that clash with shifts",
   exam_study: "Study time before exams",
   start_earlier: "A head start on big assignments",
+  paper_pack: "Sources for papers and essays",
+  exam_eve: "One more practice round before an exam",
+  sunday_learned: "What Sunday learned from your week",
   subscription_total: "What your subscriptions add up to",
   bill_short: "Bills you might be short for",
   bill_due: "Bills coming due",

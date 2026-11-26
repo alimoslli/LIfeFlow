@@ -208,7 +208,7 @@ describe("Jarvis tool loop", () => {
     expect(mems.map((m) => m.content)).toEqual(["Prefers studying in the morning."]);
   });
 
-  it("puts only relevant approved memories into the prompt, after a cacheable static prefix", async () => {
+  it("puts the core and the relevant approved memories into the prompt, after a cacheable static prefix", async () => {
     const { session, run } = await jarvisUser();
     await turn(
       session,
@@ -229,8 +229,9 @@ describe("Jarvis tool loop", () => {
     await runJarvisTurn({ user: session, text: "hi", provider: spy, emit: () => {}, now: NOW });
     expect(seen[0]).toContain("Works at the campus library on Thursday evenings.");
     expect(seen[0]).toContain("Today is 2026-10-26");
-    expect(seen[1]).not.toContain("campus library");
-    expect(seen[1]).toContain("1 other saved memory wasn't relevant");
+    // smart memory (owner, 2026-11-26): a routine is part of the small core, so it goes with every turn, even "hi"
+    expect(seen[1]).toContain("campus library");
+    expect(seen[1]).not.toContain("wasn't relevant");
     for (const sys of seen) expect(sys).not.toContain("Spanish"); // unapproved suggestions never reach the model
 
     // The instructions before "# Right now" are identical for every user and time.

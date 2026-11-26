@@ -36,7 +36,8 @@ import { transactionsToReview } from "../finance/categorize";
 import { lifeLoad } from "../life-load";
 import { billsToReview, findSavings, listSavings } from "../finance/savings-finder";
 import { webSearchClient } from "../../integrations/web-search";
-import { examStudy, startEarlier } from "./study";
+import { examEveReview, examStudy, paperPackOffer, startEarlier } from "./study";
+import { sundayLearned } from "./sunday";
 import { eveningWrap, goalForecast, habitCoach, monthlyReview, morningBrief, weeklyLearned, weeklyReview } from "./reviews";
 
 /** "09:00" -> "9 AM", "15:30" -> "3:30 PM". */
@@ -222,7 +223,12 @@ const deadlineConflicts: Detector = async ({ scope, tz, today, now, fresh }) => 
           shiftWhen: `${formatDateStr(shift.date, "EEEE")} ${Number(shift.startTime.slice(0, 2)) >= 16 ? "night" : `at ${clockTime(shift.startTime)}`}`,
           noFreeBlock: true,
         },
-        action: { type: "open", label: "See my week", href: "/plan" },
+        // gamechanger 3 (owner, 2026-11-26): with no time to fix it, a ready swap text is the real way out; the tap fills the bar
+        action: {
+          type: "ask",
+          label: "Write a swap text",
+          prompt: `Write a text asking to swap my ${formatDateStr(shift.date, "EEEE")} shift so I can get ${a.title} done`,
+        },
         priority: 75,
       });
       continue;
@@ -761,6 +767,9 @@ export const DETECTORS = {
   weekAhead,
   examStudy,
   startEarlier,
+  paperPackOffer,
+  examEveReview,
+  sundayLearned,
 };
 export type DetectorName = keyof typeof DETECTORS;
 
@@ -777,14 +786,26 @@ export const RUNS: Record<string, DetectorName[]> = {
     "deadlineConflicts",
     "examStudy",
     "startEarlier",
+    "paperPackOffer",
     "goalMilestones",
     "savedMore",
   ],
   midday: ["spendingPace", "unusualSpend", "billsDue", "overdueTasks", "subscriptionWatch", "moneyFinds", "reviewTransactions"],
   // The evening wrap-up offers to move what's left, so late to-dos are raised at midday.
-  evening: ["goalCheckin", "eveningWrap", "weeklyLearned", "goalForecast", "habitCoach", "taskStreak", "goalMilestones", "deadlineConflicts", "examStudy"],
+  evening: [
+    "goalCheckin",
+    "eveningWrap",
+    "weeklyLearned",
+    "goalForecast",
+    "habitCoach",
+    "taskStreak",
+    "goalMilestones",
+    "deadlineConflicts",
+    "examStudy",
+    "examEveReview",
+  ],
   // Sundays from 6 PM, once (owner, 2026-11-12): the look back at the week and the look ahead at the next one.
-  sunday: ["weeklyReview", "weekAhead"],
+  sunday: ["weeklyReview", "weekAhead", "sundayLearned"],
   transaction: ["spendingPace", "unusualSpend", "billsDue", "goalMilestones", "moneyFinds"],
   shift: ["deadlineConflicts"],
   goal: ["goalMilestones"],

@@ -1,0 +1,7 @@
+[
+  { "prompt": "Email my professor asking for an extension on my essay", "expect": "routes to extension-email" },
+  { "prompt": "Can you write an extension request for my lab report until Monday?", "expect": "routes to extension-email" },
+  { "prompt": "I need more time on Essay 2, help me ask for an extension", "expect": "routes to extension-email" },
+  { "prompt": "Write an email to my prof to ask for an extension", "expect": "routes to extension-email" },
+  { "prompt": "Ask for more time on my history paper", "expect": "routes to extension-email" }
+]

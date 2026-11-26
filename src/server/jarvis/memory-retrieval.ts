@@ -27,7 +27,7 @@ export type RetrievalQuery = {
   module?: JarvisModule | null;
 };
 
-export type Scored<M> = M & { score: number; why: "instruction" | "relevant" };
+export type Scored<M> = M & { score: number; why: "instruction" | "relevant" | "core" };
 
 export const RETRIEVAL_DEFAULTS = { limit: 12, maxChars: 2400, minScore: 0.35, maxInstructions: 15 };
 
@@ -170,4 +170,56 @@ export function selectMemories<M extends RetrievableMemory>(all: M[], q: Retriev
     chars += m.content.length;
   }
   return out;
+}
+
+/**
+ * The small core (owner, 2026-11-26: "strong on memories ... but not costly"): the few facts that shape almost every answer
+ * (who they are, their routines, the goals they're working on), always in front of the model, capped small. Picked by our
+ * code from their own approved memories: kind first (facts, routines, goals), then what they said themselves, then what was
+ * used lately. Short-lived ("temporary") memories and standing instructions aren't core (instructions always go anyway).
+ */
+export const CORE_DEFAULTS = { maxChars: 600, maxItems: 6 };
+const CORE_WEIGHT: Partial<Record<MemoryCategory, number>> = { fact: 3, routine: 2.5, goal: 2, project: 1.5, preference: 1.5 };
+
+export function coreMemories<M extends RetrievableMemory>(all: M[], now = new Date(), opts: Partial<typeof CORE_DEFAULTS> = {}): Scored<M>[] {
+  const o = { ...CORE_DEFAULTS, ...opts };
+  const month = 30 * 86_400_000;
+  const ranked = all
+    .filter((m) => CORE_WEIGHT[m.category] && m.content.trim())
+    .map((m) => ({
+      m,
+      w:
+        CORE_WEIGHT[m.category]! +
+        (m.basis === "stated" ? 0.5 : 0) +
+        (m.lastUsedAt && now.getTime() - m.lastUsedAt.getTime() < month ? 1 : 0) +
+        (now.getTime() - m.updatedAt.getTime() < month ? 0.25 : 0),
+    }))
+    .sort((a, b) => b.w - a.w || b.m.updatedAt.getTime() - a.m.updatedAt.getTime());
+  const out: Scored<M>[] = [];
+  let chars = 0;
+  for (const { m, w } of ranked) {
+    if (out.length >= o.maxItems) break;
+    if (chars + m.content.length > o.maxChars) continue;
+    out.push({ ...m, score: w, why: "core" });
+    chars += m.content.length;
+  }
+  return out;
+}
+
+/**
+ * What one turn gets: standing instructions and the core always; for anything beyond a plain lookup, the memories relevant
+ * to the request too. A lookup ("when's my shift?") gets no more (cheap by default); the skyling can still ask for more with
+ * recall_memories when an answer depends on something it can't see.
+ */
+export function memoriesForTurn<M extends RetrievableMemory>(all: M[], q: RetrievalQuery, opts: { lean?: boolean; now?: Date } = {}): Scored<M>[] {
+  const relevant = selectMemories(all, opts.lean ? { text: "" } : q);
+  const picked = opts.lean ? relevant.filter((m) => m.why === "instruction") : relevant;
+  const seen = new Set(picked.map((m) => m.id));
+  return [...picked, ...coreMemories(all, opts.now).filter((m) => !seen.has(m.id))];
+}
+
+/** recall_memories: the skyling's own lookup, by what it's looking for, without dumping everything. */
+export function recallMemories<M extends RetrievableMemory>(all: M[], query: string, limit = 8): Scored<M>[] {
+  const others = all.filter((m) => m.category !== "instruction");
+  return selectMemories(others, { text: query }, { limit, minScore: 0.2, maxChars: 4000 }).filter((m) => m.why === "relevant");
 }

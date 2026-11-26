@@ -1,6 +1,6 @@
 [
   {
-    "prompt": "Email my professor asking for an extension",
+    "prompt": "Email my professor asking to meet in office hours",
     "expect": "routes to message-drafter"
   },
   {

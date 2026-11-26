@@ -28,7 +28,7 @@ const WORDS: [ToolGroup, RegExp][] = [
   ["savings", /\bsav(e|es|ed|ing|ings)\b|\bgoals?\b|\bdebt|\bloans?\b|invest|emergency fund|paycheck|stocks?\b|crypto|\broth\b|401k|retire|credit score/],
   [
     "school",
-    /\bclass|course|assignment|homework|\bhw\b|\bexams?\b|midterm|\bfinals?\b|\bquiz|\btests?\b|\bgrades?\b|\bgpa\b|canvas|syllabus|professor|\bprof\b|lecture|\bstudy|studying|essay|\blabs?\b|\bdue\b|semester|school|college|tutor/,
+    /\bclass|course|assignment|homework|\bhw\b|\bexams?\b|midterm|\bfinals?\b|\bquiz|\btests?\b|\bgrades?\b|\bgpa\b|canvas|syllabus|professor|\bprof\b|lecture|\bstudy|studying|essay|\bpapers?\b|research|\bsources?\b|\blabs?\b|\bdue\b|semester|school|college|tutor|registration|fafsa|financial aid|scholarships?|tuition|add.?drop|withdraw/,
   ],
   // Plain dates ("Friday", "this weekend") don't count: the briefing already covers a day. These are about the schedule itself.
   [
@@ -44,7 +44,7 @@ const WORDS: [ToolGroup, RegExp][] = [
     /\bhabits?\b|streak|daily routine|\bgoals?\b|run a|read \d+|books?\b|marathon|\b5k\b|milestone|achiev|accomplish|graduat|proud|promot|\bhired\b|got (a|the|my) job|first (job|car|apartment|time)|moved (out|to)|dean'?s list|my (life|past)/,
   ],
   ["projects", /\bprojects?\b/],
-  ["memory", /\bforget\b|memor|what do you (know|remember)|know about me|that's (wrong|not right)|actually i/],
+  ["memory", /\bforget\b|memor|remember|what do you (know|remember)|know about me|that's (wrong|not right)|actually i|what did i (say|tell)/],
   ["tasks_more", /\bdelete\b|\bremove\b|get rid of|\bsubtasks?\b|\bdetails?\b/],
   ["promises", /\bpromis|did it\b|didn'?t (do|happen|get)|\bkept\b|tomorrow instead|check[- ]?in/],
   ["connect", /\bconnect|\bsync|canvas|google|gmail|outlook|\bteams\b|plaid|bank account|apple health|integration|linked/],

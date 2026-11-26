@@ -1,11 +1,12 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { addDaysStr, daysBetween, formatDateStr, localDateOf, localTimeOf } from "@/lib/dates";
-import { jarvisMessages, users } from "../../db/schema";
+import { jarvisMessages, paperPacks, users } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { busyAgenda, freeSlots, type AgendaItem } from "../calendar";
 import { listAssignments } from "../school";
 import type { Candidate, Detector } from "./detectors";
 import { lastMinutePattern } from "./reviews";
+import { missedPractice } from "../practice";
 import { courseLabel, examLabel } from "@/lib/course-label";
 
 /**
@@ -166,6 +167,73 @@ export const startEarlier: Detector = async (ctx) => {
         },
         action: { type: "block_time", label: "Block it", date: block.date, start: block.start, end: block.end, title: `Start ${a.title}` },
         priority: 60,
+      },
+    ];
+  }
+  return [];
+};
+
+/** Written work, where the hunting for sources is the hard first step. */
+const WRITTEN = /\b(essay|paper|report|thesis|proposal|research|literature review|annotated bibliography)\b/i;
+
+/**
+ * Gamechanger 1 (owner, 2026-11-26: "3 days before it'll say ... and the skyling can assist ... do the research"): a paper,
+ * essay or report due in 3 to 5 days with no pack yet gets one offer of a paper pack (sources and questions; the writing is
+ * theirs, ADR 0016). The tap fills the bar, never sends, so a paid search only runs when they ask. Offered once.
+ */
+export const paperPackOffer: Detector = async ({ scope, tz, today, now }) => {
+  const due = (await listAssignments(scope, tz, { view: "upcoming", now, limit: 60 })).filter((a) => {
+    if (!a.dueAt || a.dueAt <= now || a.kind === "exam" || a.kind === "quiz" || !WRITTEN.test(a.title)) return false;
+    const away = daysBetween(today, localDateOf(a.dueAt, tz));
+    return away >= 3 && away <= 5;
+  });
+  if (!due.length) return [];
+  const offered = await alreadyOffered(
+    scope,
+    due.map((a) => `paper_pack:${a.id}`),
+  );
+  const packed = new Set((await scope.tx.select({ id: paperPacks.assignmentId }).from(paperPacks).where(eq(paperPacks.userId, scope.userId))).map((r) => r.id));
+  const a = due.find((x) => !offered.has(`paper_pack:${x.id}`) && !packed.has(x.id));
+  if (!a) return [];
+  return [
+    {
+      kind: "paper_pack",
+      topic: "school",
+      dedupeKey: `paper_pack:${a.id}`,
+      facts: { assignment: a.title, course: courseLabel(a.course) ?? "", dueDay: formatDateStr(localDateOf(a.dueAt!, tz), "EEEE") },
+      action: { type: "ask", label: "Find sources", prompt: `Make me a paper pack for ${a.title}` },
+      priority: 64,
+    },
+  ];
+};
+
+/**
+ * Gamechanger 2 (owner, 2026-11-26): the evening before an exam or quiz, when practice rounds left questions they missed,
+ * one offer of a short round on only those. The tap fills the bar. Offered once per exam.
+ */
+export const examEveReview: Detector = async ({ scope, tz, today, now }) => {
+  const tomorrow = addDaysStr(today, 1);
+  const exams = (await listAssignments(scope, tz, { view: "upcoming", now, limit: 60 })).filter(
+    (a) => (a.kind === "exam" || a.kind === "quiz") && a.dueAt && a.dueAt > now && localDateOf(a.dueAt, tz) === tomorrow,
+  );
+  if (!exams.length) return [];
+  const offered = await alreadyOffered(
+    scope,
+    exams.map((e) => `exam_eve:${e.id}`),
+  );
+  for (const a of exams) {
+    if (offered.has(`exam_eve:${a.id}`)) continue;
+    const { missed } = await missedPractice(scope, a.id);
+    if (!missed.length) continue;
+    const what = examLabel(courseLabel(a.course), a.kind, a.title);
+    return [
+      {
+        kind: "exam_eve",
+        topic: "school",
+        dedupeKey: `exam_eve:${a.id}`,
+        facts: { what, missedCount: missed.length },
+        action: { type: "ask", label: "Quiz me", prompt: `Quiz me on just the ones I missed for ${what}` },
+        priority: 70,
       },
     ];
   }

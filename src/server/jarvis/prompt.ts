@@ -73,7 +73,7 @@ const INSTRUCTIONS = `You are the user's skyling inside LifeFlow (a little chara
 - Memories marked "inferred" were your own conclusions that the user approved; if one conflicts with fresh data or what the user says now, trust the newer information and offer to update the memory.
 
 # Memory
-- Memories persist across conversations. Only approved memories are shown to you; there may be more saved than you see (use list_memories if you need them).
+- Memories persist across conversations. You always see their standing instructions and a few core facts; for most requests also the ones that bear on it. There are usually more saved than you see: when an answer depends on something about them you can't see (a person, a preference, a detail they told you before), call recall_memories with what you need first, instead of guessing or asking again. Use list_memories only when they ask what you remember.
 - When the user shares something lasting that would help later (a preference, goal, routine, ongoing project, or how they want you to work), call save_memory with basis "stated". When you notice a durable pattern yourself, use basis "inferred". At most one suggestion per reply unless asked.
 - The server saves a memory immediately only if the user explicitly asked you to remember it; otherwise it becomes a suggestion with Keep / Not now buttons. Report the returned status truthfully; never say "saved" for a suggestion.
 - When the user corrects something you remember, call update_memory with that memory's id. When they ask you to forget something, call forget_memory.
@@ -214,7 +214,7 @@ export function buildContext(p: PromptInput): string {
   const facts = p.memories.filter((m) => m.category !== "instruction");
   const line = (m: PromptMemory) => `- [${m.id}] (${m.category}; ${BASIS_LABEL[m.basis]}) ${m.content}`;
   const more = p.otherMemoryCount
-    ? `\n(${p.otherMemoryCount} other saved ${p.otherMemoryCount === 1 ? "memory wasn't" : "memories weren't"} relevant to this request; call list_memories if you need them.)`
+    ? `\n(${p.otherMemoryCount} other saved ${p.otherMemoryCount === 1 ? "memory wasn't" : "memories weren't"} relevant to this request; call recall_memories when an answer depends on them.)`
     : "";
 
   const a = p.assistant ?? assistantProfile(p.preferences, p.tz);
@@ -245,7 +245,7 @@ ${prefs.length ? prefs.map((x) => `- ${x}`).join("\n") : "(defaults)"}
 # How ${p.userName} wants you to work (standing instructions)
 ${instructions.length ? instructions.map(line).join("\n") : "(none)"}
 
-# What you know about ${p.userName} (approved memories relevant to this request)
+# What you know about ${p.userName} (approved memories: the core, plus the ones relevant to this request)
 ${facts.length ? facts.map(line).join("\n") : "(nothing relevant saved)"}${more}${p.coachMode ? `\n\n${COACH_MODE}` : ""}${
     p.openQuestions?.length ? `\n\n# Open questions (things you don't know about ${p.userName} yet)\n${p.openQuestions.map((q) => `- ${q}`).join("\n")}` : ""
   }${

@@ -1,0 +1,7 @@
+[
+  { "prompt": "Make me a paper pack for my history essay", "expect": "routes to paper-pack" },
+  { "prompt": "Can you find sources for my paper on climate policy?", "expect": "routes to paper-pack" },
+  { "prompt": "Help me research my sociology paper", "expect": "routes to paper-pack" },
+  { "prompt": "I need to start my essay, find sources for it", "expect": "routes to paper-pack" },
+  { "prompt": "Research paper due Friday, help me research it", "expect": "routes to paper-pack" }
+]

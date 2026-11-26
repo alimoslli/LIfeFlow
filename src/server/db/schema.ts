@@ -1459,6 +1459,49 @@ export const skyRewards = pgTable(
   (t) => [uniqueIndex("sky_rewards_user_key_uq").on(t.userId, t.key), index("sky_rewards_user_kind_idx").on(t.userId, t.kind, t.earnedAt), ownerPolicy()],
 );
 
+/**
+ * A paper pack (owner, 2026-11-26, gamechanger 1): for a paper, essay or report, the sources the skyling found (each cited
+ * by its page) and open questions to research. Never the paper, a thesis, an outline or an argument (ADR 0016). One per
+ * piece of work; making it again replaces it.
+ */
+export type PaperSource = { title: string; url: string; why: string };
+export const paperPacks = pgTable(
+  "paper_packs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    assignmentId: uuid("assignment_id")
+      .notNull()
+      .references(() => assignments.id, { onDelete: "cascade" }),
+    sources: jsonb("sources").$type<PaperSource[]>().notNull().default([]),
+    questions: jsonb("questions").$type<string[]>().notNull().default([]),
+    searchedAt: tstz("searched_at").notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex("paper_packs_user_assignment_uq").on(t.userId, t.assignmentId), ownerPolicy()],
+);
+
+/**
+ * Exam practice (owner, 2026-11-26, gamechanger 2): the practice questions the skyling asked before an exam and whether the
+ * student got each one, so the night before it quizzes only what they missed. Practice from their own material, never a
+ * graded question (ADR 0016).
+ */
+export const practiceQuestions = pgTable(
+  "practice_questions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    assignmentId: uuid("assignment_id")
+      .notNull()
+      .references(() => assignments.id, { onDelete: "cascade" }),
+    question: text("question").notNull(),
+    gotIt: boolean("got_it").notNull(),
+    askedAt: tstz("asked_at").notNull().defaultNow(),
+  },
+  (t) => [index("practice_questions_user_assignment_idx").on(t.userId, t.assignmentId, t.askedAt), ownerPolicy()],
+);
+
 // ---------------------------------------------------------------------------
 // Proactive Jarvis: everything he says on his own, and how the user responded
 

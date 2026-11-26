@@ -16,6 +16,8 @@ import { moveToTrash } from "../../services/trash";
 import { withPlaidSyncLock } from "../../db/job-lock";
 import { BANK_UNAVAILABLE, listPlaidConnections, PlaidError, syncConnection } from "../../integrations/plaid";
 import { centsToDollarsDeep } from "./finance";
+import { billMoveDraft } from "../../services/drafts";
+import { signName } from "./drafts";
 import { dateArg, defineTool, idArg, moneyArg, toCents } from "../tool";
 
 /**
@@ -28,6 +30,21 @@ const usd = (dollars: number) => `$${dollars.toLocaleString("en-US", { maximumFr
 const PURPOSES = ["emergency", "travel", "car", "home", "debt", "investing", "education", "big_purchase", "other"] as const;
 
 export const moneyCoachTools = [
+  // Gamechanger 5 (owner, 2026-11-26): a bill due before the money comes in; a ready note, written by our code, never sent for them
+  defineTool({
+    name: "draft_bill_date_move",
+    description:
+      "Write a ready message asking a landlord or biller to move this month's due date to after the user's payday, from the real bill. Use when a bill lands before money comes in and they want to ask. Pass payday only as a date they told you or a deposit you can see; never guess one. Show the text exactly as returned so they can copy it; you never send it.",
+    schema: z.object({
+      billId: idArg("Bill (from recurring_payments)"),
+      payday: z.string().max(40).optional().describe("When their money comes in, in plain words, only from them or a real deposit"),
+    }),
+    mutates: false,
+    async execute(a, ctx) {
+      const text = await ctx.run(async (s) => billMoveDraft(s, a.billId, { payday: a.payday, name: await signName(s) }));
+      return { draft: text, note: "Show it exactly as written. You never send it." };
+    },
+  }),
   defineTool({
     name: "sync_bank_accounts",
     description:

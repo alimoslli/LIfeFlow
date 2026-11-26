@@ -1,0 +1,7 @@
+[
+  { "prompt": "Write a text asking to swap my Wednesday shift so I can get my essay done", "expect": "routes to shift-swap" },
+  { "prompt": "Can you help me get my shift covered for my exam?", "expect": "routes to shift-swap" },
+  { "prompt": "I need someone to take my shift Friday, write the swap text", "expect": "routes to shift-swap" },
+  { "prompt": "Help me trade shifts with a coworker this week", "expect": "routes to shift-swap" },
+  { "prompt": "Write something to ask my team to cover my shift", "expect": "routes to shift-swap" }
+]

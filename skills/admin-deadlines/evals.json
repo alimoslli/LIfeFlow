@@ -1,0 +1,7 @@
+[
+  { "prompt": "When is the drop deadline at my school?", "expect": "routes to admin-deadlines" },
+  { "prompt": "What are the financial aid deadlines for Valencia College?", "expect": "routes to admin-deadlines" },
+  { "prompt": "When is registration for next term?", "expect": "routes to admin-deadlines" },
+  { "prompt": "Find the FAFSA deadline and add it to my to-dos", "expect": "routes to admin-deadlines" },
+  { "prompt": "When is tuition due this semester?", "expect": "routes to admin-deadlines" }
+]

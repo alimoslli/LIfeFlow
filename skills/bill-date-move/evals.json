@@ -1,0 +1,7 @@
+[
+  { "prompt": "My rent is due before payday, help me ask my landlord to move it", "expect": "routes to bill-date-move" },
+  { "prompt": "Write a message to move my due date for the phone bill", "expect": "routes to bill-date-move" },
+  { "prompt": "Can you help me push my bill until after payday?", "expect": "routes to bill-date-move" },
+  { "prompt": "Ask my landlord if I can pay rent late this month", "expect": "routes to bill-date-move" },
+  { "prompt": "I want my due date after payday, write the text", "expect": "routes to bill-date-move" }
+]

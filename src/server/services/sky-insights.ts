@@ -23,6 +23,8 @@ const STORED: Record<string, (f: Record<string, unknown>) => Weather> = {
   exam_study: (f) => (f.noFreeBlock ? "storm" : "grey"),
   deadline_conflict: (f) => (f.noFreeBlock ? "storm" : "grey"),
   start_earlier: () => "clear",
+  paper_pack: () => "clear",
+  exam_eve: () => "clear",
   weekly_review: () => "clear",
   double_charge: () => "storm",
   trial_ending: () => "grey",

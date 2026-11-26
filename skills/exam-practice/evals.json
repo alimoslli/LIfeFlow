@@ -1,0 +1,7 @@
+[
+  { "prompt": "Quiz me on just the ones I missed for my Bio exam", "expect": "routes to exam-practice" },
+  { "prompt": "Give me practice questions for my chem midterm", "expect": "routes to exam-practice" },
+  { "prompt": "Can you test me before my quiz tomorrow?", "expect": "routes to exam-practice" },
+  { "prompt": "Practice for my exam with me", "expect": "routes to exam-practice" },
+  { "prompt": "Quiz me on the ones I missed", "expect": "routes to exam-practice" }
+]

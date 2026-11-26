@@ -17,6 +17,7 @@ import {
 } from "../../services/memory";
 import { createNote, getNote, searchNotes, updateNote } from "../../services/notes";
 import { defineTool, idArg, type ToolContext } from "../tool";
+import { recallMemories } from "../memory-retrieval";
 
 export const noteTools = [
   defineTool({
@@ -146,6 +147,19 @@ export const memoryTools = [
               ? "Not changed: memory suggestions are off. Ask the user to say 'update your memory…' or edit it in Settings."
               : "Nothing to change.";
       return { status: r.status, note, memory: r.memory && { id: r.memory.id, content: r.memory.content }, replaces: r.replaces, manageAt: "/jarvis/memory" };
+    },
+  }),
+  defineTool({
+    name: "recall_memories",
+    description:
+      'Look up what you remember about the user that bears on something specific ("my manager", "how I study best", "my brother\'s birthday"). ' +
+      "Call it when the answer depends on something about them that isn't in your context; it returns only the memories that match, never all of them.",
+    schema: z.object({ query: z.string().min(2).max(200).describe("What you're trying to recall, in a few words") }),
+    mutates: false,
+    async execute({ query }, ctx) {
+      const rows = await ctx.run((s) => listActiveMemories(s, ctx.now));
+      const found = recallMemories(rows, query);
+      return { found: found.map((m) => ({ id: m.id, content: m.content, category: m.category, basis: m.basis })), none: found.length === 0 || undefined };
     },
   }),
   defineTool({

@@ -10,7 +10,19 @@ import { skyInsights } from "../sky-insights";
  * the Sunday review, a double charge, what subscriptions add up to, and what the morning's Gmail look found. Kinds the
  * `noticing` producer already says (a clash, bills, trials, a busy day) are left to it.
  */
-const OURS = new Set(["tonight", "gap", "due", "exam", "exam_study", "start_earlier", "weekly_review", "double_charge", "subscription_total", "from_email"]);
+const OURS = new Set([
+  "tonight",
+  "gap",
+  "due",
+  "exam",
+  "exam_study",
+  "start_earlier",
+  "paper_pack",
+  "weekly_review",
+  "double_charge",
+  "subscription_total",
+  "from_email",
+]);
 
 const TONE: Record<Weather, InsightTone> = { clear: "tip", grey: "heads_up", storm: "storm" };
 
@@ -23,6 +35,8 @@ const ABOUT: Record<string, string[]> = {
   exam: ["exam"],
   exam_study: ["exam"],
   start_earlier: ["start"],
+  paper_pack: ["paper"],
+  exam_eve: ["exam"],
   weekly_review: ["review"],
   double_charge: ["charges"],
   subscription_total: ["subs"],

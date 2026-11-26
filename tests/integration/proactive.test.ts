@@ -718,13 +718,13 @@ describe("deadline warnings only when the shift really takes the evening (notici
     expect(next.map((c) => c.facts.assignment)).toEqual(["Lab report"]);
   });
 
-  it("warns about a long shift even with no free 2 hours left before it, pointing at the week", async () => {
+  it("warns about a long shift even with no free 2 hours left before it, offering a ready swap text", async () => {
     const out = await check(await setUp("09:00", "17:00"), "20:00");
     expect(out).toEqual([
       expect.objectContaining({
         kind: "deadline_conflict",
         facts: expect.objectContaining({ assignment: "Essay draft", noFreeBlock: true }),
-        action: { type: "open", label: "See my week", href: "/plan" },
+        action: expect.objectContaining({ type: "ask", label: "Write a swap text", prompt: expect.stringContaining("so I can get Essay draft done") }),
       }),
     ]);
     expect(pushText("deadline_conflict", out[0].facts)?.body).toMatch(/no free 2-hour stretch before then/);

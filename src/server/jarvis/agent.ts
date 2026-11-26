@@ -12,7 +12,7 @@ import { confirmCallIds, keepRecentToolSteps, type ConfirmOutcome } from "./hist
 import { stopRequested } from "./stop";
 import { claimContinuation, turnStateOf, TURN_DEADLINE_MS } from "./turn-state";
 import { executeToolCall, serializeResult, type ExecOutcome } from "./executor";
-import { selectMemories } from "./memory-retrieval";
+import { memoriesForTurn } from "./memory-retrieval";
 import { addUsage, errorKindOf, recordRun, type ModelPrices } from "./metrics";
 import { pickPrices, priceTokens } from "../services/ai-prices";
 import { AiRefusedError, providerRefusedBeforeWork, subjectFor, reserveAi, type AiHold } from "../services/ai-gate";
@@ -211,9 +211,16 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   const openedFrom = input.module ?? conversation.contextModule;
   // Only memories relevant to this request (and earlier messages in this chat) reach the model.
   const earlier = history.flatMap((h) => (h.type === "user" ? [h.text] : [])).slice(0, -1);
-  const memories = selectMemories(approved, { text: input.text, recent: earlier, module: openedFrom });
   const skills = routeSkills(input.text, openedFrom);
   const coachMode = looksLikeGradedWork(input.text);
+  // Only the tool groups this request needs (load_tools adds more), and a thinking level that fits the request.
+  const last = history[history.length - 1];
+  const hasFiles = last?.type === "user" && !!(last.images?.length || last.files?.length);
+  const groups = new Set<ToolGroup>(selectToolGroups({ text: input.text, module: openedFrom, skills, history }));
+  const effort = chooseEffort({ text: input.text, skills, hasFiles, coachMode, moneyTools: groups.has("money") || groups.has("money_edit") });
+  // Memory (owner, 2026-11-26): instructions and the small core always; a plain lookup gets nothing more (cheap), anything
+  // else gets the memories relevant to it too; recall_memories fetches more when an answer needs it (memory-retrieval.ts).
+  const memories = memoriesForTurn(approved, { text: input.text, recent: earlier, module: openedFrom }, { lean: effort === "low", now });
   const system = buildSystemPrompt({
     skills,
     coachMode,
@@ -238,10 +245,6 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
 
   // 3. Model/tool loop. Only the tool groups this request needs (load_tools adds more), a per-user cache key,
   // and a thinking level that fits the request.
-  const last = history[history.length - 1];
-  const hasFiles = last?.type === "user" && !!(last.images?.length || last.files?.length);
-  const groups = new Set<ToolGroup>(selectToolGroups({ text: input.text, module: openedFrom, skills, history }));
-  const effort = chooseEffort({ text: input.text, skills, hasFiles, coachMode, moneyTools: groups.has("money") || groups.has("money_edit") });
   // Short by default (owner, 2026-11-09); "detailed" tone gets medium, never an essay.
   const verbosity = user.preferences?.jarvisTone === "detailed" ? "medium" : "low";
   const turn = provider.startTurn({
