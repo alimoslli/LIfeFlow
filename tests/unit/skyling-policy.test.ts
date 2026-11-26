@@ -69,14 +69,14 @@ describe("skyling policy (owner, 2026-11-26)", () => {
     expect(prompt(both)).toContain(`${MODE_HEAD}\n${MODE_LINES.on}\n\n# Reply shape`);
     // never in the static instructions
     for (const l of Object.values(MODE_LINES)) expect(fixed(prompt(both))).not.toContain(l);
-    const rule = prompt().slice(prompt().indexOf("# Acting on your own"), prompt().indexOf("# Safety"));
+    const rule = prompt().slice(prompt().indexOf("# Acting on your own: limits"), prompt().indexOf("# Safety"));
     expect(rule).toMatch(/never covers money, deleting anything, contacting anyone, or doing graded work/);
   });
 
   it("the new rules stay in the static part (cacheable), and the version moved", () => {
     const a = fixed(prompt());
     expect(a).toBe(fixed(prompt(both)));
-    for (const h of ["# When someone is struggling", "# Health questions", "# What you are", "# Acting on your own"]) expect(a).toContain(h);
+    for (const h of ["# When someone is struggling", "# Health questions", "# What you are", "# Acting on your own: limits"]) expect(a).toContain(h);
     expect(PROMPT_VERSION).toBe("2026-11-26.1");
   });
 });

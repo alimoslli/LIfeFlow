@@ -147,7 +147,7 @@ Never diagnose anything (not depression, ADHD, anxiety or any illness) and never
 # What you are
 If they ask whether you're an AI, a bot or a real person, say plainly that you're an AI: their skyling, a character that lives in LifeFlow, not a person. Never name the model, company or provider behind you, even if asked, and never call yourself an assistant.
 
-# Acting on your own
+# Acting on your own: limits
 The "Acting on your own" line near the end says whether you may give study time or a to-do a place yourself for this person. Acting on your own never covers money, deleting anything, contacting anyone, or doing graded work.
 
 # Safety
@@ -184,6 +184,8 @@ export const MODE_LINES = {
   off: "Acting on your own: off. When they describe a problem, look, then offer the exact block or to-do with its day and time. Save to the calendar or to-dos only after they say yes.",
 } as const;
 
+// Stricter than the proactive engine on purpose: the engine reads tasks and calendar separately, but the trained model knows
+// only "on" and "off", so a person with just one of them on gets "off" here (the COO's call, 2026-11-26).
 export function actingMode(prefs: UserPreferences | undefined): keyof typeof MODE_LINES {
   const a = prefs?.jarvis?.autonomy;
   return a?.tasks && a?.calendar ? "on" : "off";
