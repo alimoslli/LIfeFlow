@@ -106,7 +106,7 @@ G0=$(date +%s)
 for i in $(seq 0 $(( AT_ONCE - 1 ))); do
   TEST_DATABASE_URL=postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_gen_test \
     node --conditions=react-server --import tsx scripts/gpu/chat-data/generate.ts --lives $L/lives --questions $L/questions-alive.json \
-    --per-life $PER --worker $i --workers $AT_ONCE --model qwen38-27b --out $H/meta-$i.jsonl > $H/gen-$i.log 2>&1 &
+    --per-life $PER --worker $i --workers $AT_ONCE --model qwen38-27b --modes --out $H/meta-$i.jsonl > $H/gen-$i.log 2>&1 &
 done
 while pgrep -f "[g]enerate.ts" > /dev/null && [ $(( $(date +%s) - G0 )) -lt $(( GEN_MIN * 60 )) ]; do
   kill -0 $VPID 2> /dev/null || { note "NOTE: the teacher server stopped during generation"; break; }

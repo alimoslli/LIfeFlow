@@ -31,6 +31,11 @@ const WORKERS = Number(arg("workers", "1"));
 const OUT = arg("out")!;
 const BASE = arg("base-url", "http://127.0.0.1:8100/v1")!;
 const MODEL = arg("model", "teacher")!;
+// Owner's decision of 2026-11-26: the prompt says whether the skyling may book on its own or offers first, and the examples
+// show both. With --modes, two lives in three are "on" and one in three is "off"; the translator writes the line into the prompt.
+const MODES = argv.includes("--modes");
+const OFFER_NEXT = ["yes please", "ok do that", "sure, go ahead", "yeah do it", "not right now", "no thanks"];
+const OFFERED_WHEN_OFF = new Set(["behind", "plan", "breakdown"]);
 
 type Q = { text: string; skill?: string; source: string; followUp?: string; family?: string; needs?: string[]; hours?: [number, number] | null };
 
@@ -65,12 +70,14 @@ async function main() {
     .sort();
   const lives = allLives.filter((_, i) => i % WORKERS === WORKER);
   let convId = "";
+  let mode = "";
   const provider = new OpenAIProvider({
     apiKey: "not-a-real-key",
     model: MODEL,
     reasoningEffort: "auto",
     baseURL: BASE,
-    fetch: (input, init) => fetch(input, { ...init, headers: { ...(init?.headers as Record<string, string>), "X-Conv-Id": convId } }),
+    fetch: (input, init) =>
+      fetch(input, { ...init, headers: { ...(init?.headers as Record<string, string>), "X-Conv-Id": convId, ...(mode && { "X-Mode": mode }) } }),
   });
 
   for (const life of lives) {
@@ -92,13 +99,17 @@ async function main() {
       ...((c.accounts ?? 0) > 0 ? ["money"] : []),
     ]);
     const hour = Number(loaded.nowLocal.slice(11, 13));
+    mode = MODES ? (allLives.indexOf(life) % 3 === 2 ? "off" : "on") : "";
     const used = new Set<number>();
     for (let k = 0; k < PER_LIFE; k++) {
       // from this life's own starting point, the first message that fits the life and the hour and that it has not had yet
       let at = ((base + k + OFFSET) * 7919) % questions.length;
       for (let tries = 0; tries < questions.length && (used.has(at) || !fits(questions[at], traits, hour)); tries++) at = (at + 1) % questions.length;
       used.add(at);
-      const q = questions[at];
+      let q = questions[at];
+      // With acting on its own off, a good first answer to "I'm so behind" is an offer, so most of these chats go on with a
+      // yes or a no: that second turn is where the booking (or the stopping) is learned.
+      if (mode === "off" && OFFERED_WHEN_OFF.has(q.family ?? "") && (base + k) % 5 < 3) q = { ...q, followUp: OFFER_NEXT[(base + k) % OFFER_NEXT.length] };
       // The testing allowance (30 messages a day, ADR 0035) would end a long run; this is a throwaway test database.
       await withUser(loaded.session.id, (s) => s.tx.execute(sql`delete from ai_budgets where key like ${`u:${loaded.session.id}:%`}`));
       let conversationId: string | null = null;
@@ -138,6 +149,7 @@ async function main() {
           nowLocal: loaded.nowLocal,
           tz: loaded.tz,
           traits: [...traits],
+          ...(mode && { mode }),
           turns,
         }) + "\n",
       );

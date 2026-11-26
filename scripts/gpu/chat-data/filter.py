@@ -141,7 +141,12 @@ def check(meta_row, last, year):
     user_text = " ".join(m["content"] for m in msgs if m["role"] == "user" and isinstance(m["content"], str)).lower()
     wrote = [c["function"]["name"] for m in msgs if m["role"] == "assistant" for c in (m.get("tool_calls") or [])
              if WRITE_TOOL.match(c["function"]["name"])]
-    if a.alive:
+    acting_off = any("Acting on your own: off" in (m["content"] if isinstance(m["content"], str) else "") for m in msgs if m["role"] in ("system", "developer"))
+    if a.alive and acting_off:
+        # this person's prompt says the skyling offers first: a block or a to-do nobody asked for is a mistake here, while a
+        # memory, a promise or a finished thing is still recorded (responses_shim.py MAY_RECORD_UNASKED)
+        wrote = [w for w in wrote if w not in ("save_memory", "make_promise", "resolve_promise", "update_assignment", "update_task")]
+    elif a.alive:
         # the same short list the guard allows (responses_shim.py MAY_DO_UNASKED): its own blocks and to-dos, a memory, a promise,
         # marking a finished thing done, changing the item it just made
         wrote = [w for w in wrote if w not in ("create_events", "create_tasks", "save_memory", "make_promise", "resolve_promise",

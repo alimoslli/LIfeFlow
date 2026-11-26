@@ -1,4 +1,37 @@
-# Five decisions the skyling's training is waiting on (2026-11-25)
+# Five decisions the skyling's training was waiting on (2026-11-25; decided 2026-11-26)
+
+**Decided by the owner on 2026-11-26, relayed by the COO ("i like your 1-5 decisions before the training run i approve"):
+all five recommendations below are approved.**
+
+1. Distress: the US wording is approved now; a qualified read before launch.
+2. Health: never diagnose, never suggest medicine; point to a professional.
+3. "Are you an AI": yes, plainly, an AI and their skyling; never names a model.
+4. 13 to 17: no change now; a legal read before launch.
+5. The 2026-11-22 "book it, with Undo" direction stays. The prompt states the mode, and round 2 has examples of both.
+
+What was built for decision 5 (2026-11-26, no credits): the generator puts two made-up lives in three in "on" and one in three
+in "off"; the translator writes the mode line into the prompt that is recorded; the guard holds an offer-first person's
+unasked blocks back and the filter drops them; most "I'm so behind" chats of an offer-first person go on with a yes or a no,
+which is where booking on a yes is learned. The dry run checks both modes.
+
+**For the app (not built, not mine to build: `src/` and the prompt belong to the product chat, and a prompt change bumps
+`PROMPT_VERSION`):** when the app states the mode, it must use the same words the examples are trained on, per person, in
+`buildContext`:
+
+```
+# Acting on your own
+Acting on your own: on. When they describe a problem (behind, stressed, a deadline), you may give study time or a to-do a place yourself: at most three, only in free time you looked up. Say what you saved and that it can be undone.
+```
+
+```
+# Acting on your own
+Acting on your own: off. When they describe a problem, look, then offer the exact block or to-do with its day and time. Save to the calendar or to-dos only after they say yes.
+```
+
+The source of truth for the wording is `MODE_LINES` in `scripts/gpu/chat-eval/responses_shim.py`. Round 1's 435 examples have
+no mode line and act on their own; a model trained only on round 1 does not know the "off" mode.
+
+The proposals as they were written, for the record:
 
 From the three reviews before the training night (the student's side, the app's own rules, trust and safety). Each is in the
 training examples today in the wording below, written by the GPU chat for the teacher only. None is approved policy. Once an

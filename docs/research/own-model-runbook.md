@@ -90,6 +90,8 @@ and undo (all three had no examples left in round 1). The teacher is told the ti
 RUN=gen2 nohup sh /root/job/boot/scripts/gpu/own-model/gen_box.sh <generate minutes> <hard stop minutes> 9 24 > /workspace/ownmodel/gen.log 2>&1 &
 ```
 
+- Two lives in three are in "acting on your own: on", one in three in "off" (owner's decision of 2026-11-26); the mode line is
+  in every recorded prompt.
 - It first scores the teacher with the new checks on the 20 questions (`...-teacher-cards-old20` on the board). **Below 17,
   stop:** the new checks hurt and must be looked at before any examples are made.
 - About 950 turns an hour were measured with 24 at a time. One hour is about 130 credits with setup.
@@ -105,7 +107,7 @@ Then, with no box running and no clock ticking: upload `qc.zip`, read every kept
 Same script, a new folder, starting from round 1's trained part:
 
 ```
-NIGHT=night2 INIT=/workspace/ownmodel/night1/adapter nohup sh /workspace/ownmodel/night2/train_night.sh <minutes> <hard stop> > ...
+NIGHT=night2 MODE=on INIT=/workspace/ownmodel/night1/adapter nohup sh /workspace/ownmodel/night2/train_night.sh <minutes> <hard stop> > ...
 ```
 
 Put round 1's examples into round 2's training set as well (`cat` the two files): a model trained only on new examples

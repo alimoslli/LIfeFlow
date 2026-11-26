@@ -48,7 +48,7 @@ python3 scripts/gpu/chat-eval/responses_shim.py --upstream http://127.0.0.1:8090
 sleep 2
 for i in 0 1 2; do
   TEST_DATABASE_URL=$DB node --conditions=react-server --import tsx scripts/gpu/chat-data/generate.ts --lives "$W/lives" --questions "$W/bank.json" \
-    --per-life 3 --worker $i --workers 3 --model fake --base-url http://127.0.0.1:8190/v1 --out "$W/meta-$i.jsonl" > "$W/gen-$i.log" 2>&1 &
+    --per-life 3 --worker $i --workers 3 --model fake --base-url http://127.0.0.1:8190/v1 --modes --out "$W/meta-$i.jsonl" > "$W/gen-$i.log" 2>&1 &
 done
 wait $(pgrep -f "[g]enerate.ts --lives $W/lives" | tr '\n' ' ') 2> /dev/null
 while pgrep -f "[g]enerate.ts --lives $W/lives" > /dev/null; do sleep 2; done
@@ -84,6 +84,11 @@ for line in open(sys.argv[1] + "/dump.jsonl"):
         ids += 1
 sys.exit(1 if ids else 0)
 PY
+
+ON=$(grep -c "Acting on your own: on" "$W/dump.jsonl"); OFF=$(grep -c "Acting on your own: off" "$W/dump.jsonl")
+[ "$ON" -gt 0 ] && [ "$OFF" -gt 0 ] && ok "both modes are in the recorded prompts ($ON on, $OFF off)" || bad "the mode line is missing from the recording ($ON on, $OFF off)"
+
+grep -q "Acting on your own is off" "$W/shim.jsonl" && ok "with acting on its own off, an unasked block was sent back" || bad "an unasked block was never sent back for an offer-first person"
 
 # ---- filter, quality-check export, training set
 python3 scripts/gpu/chat-data/filter.py --meta "$W/meta-*.jsonl" --dump "$W/dump.jsonl" --out "$W/train-new.jsonl" --report "$W/filter-report.json" --alive \

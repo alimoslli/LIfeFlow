@@ -30,11 +30,29 @@ ap.add_argument("--situations", default=None, help="a text file of situation car
 ap.add_argument("--guard", action="store_true", help="our own checks around the model, the same idea as the app's (the code decides, not the model): "
                 "a saving tool called when the person only asked a question is sent back once; an answer with an amount that is in no "
                 "tool result is sent back once; bold marks and long dashes are taken out of the answer")
+ap.add_argument("--mode", choices=["on", "off"], default=None, help="acting on its own: adds the mode line to the prompt (and to the recording), as the app "
+                "will state it per person. A request's X-Mode header wins. Left out: no line, the behaviour before 2026-11-26")
 ap.add_argument("--log", default="shim.jsonl")
 ap.add_argument("--dump", default=None, help="write each tagged request (X-Conv-Id header) and reply in chat format, for training data")
 ARGS = ap.parse_args()
 APPEND = "\n".join(open(f).read() for f in ARGS.system_append) if ARGS.system_append else ""
 REMIND = [p.strip() for p in open(ARGS.remind).read().split("\n---\n")] if ARGS.remind else []
+
+
+# Owner's decision of 2026-11-26 (proposal 5): the skyling books on its own with Undo, and the prompt says which mode a person
+# is in, so one trained model can do both. These two lines are the wording the examples are trained on; when the app states
+# the mode in its own prompt (buildContext, per person), it must use the same words.
+MODE_HEAD = "# Acting on your own"
+MODE_LINES = {
+    "on": "Acting on your own: on. When they describe a problem (behind, stressed, a deadline), you may give study time or a to-do a place "
+          "yourself: at most three, only in free time you looked up. Say what you saved and that it can be undone.",
+    "off": "Acting on your own: off. When they describe a problem, look, then offer the exact block or to-do with its day and time. "
+           "Save to the calendar or to-dos only after they say yes.",
+}
+
+
+def acting_off(msgs):
+    return any("Acting on your own: off" in text_of(m.get("content")) for m in msgs if m.get("role") in ("system", "developer"))
 
 
 def read_situations(path):
@@ -233,6 +251,9 @@ def moment_notes(sent, asked):
         if minute >= 22 * 60 + 30 or minute < 5 * 60:
             line += " It is late: do not plan work for tonight. Offer tomorrow, and say \"tomorrow\"."
         out.append(line + " When you mean another day, name the day.")
+    if acting_off(sent) and not ASKS.search(asked or ""):
+        out.append("Acting on your own is OFF for this person. Look, then offer the exact block or to-do with its day and time, and ask. "
+                   "Save nothing to the calendar or to-dos until they say yes. You still record what they tell you: a memory, a promise, a finished thing.")
     earlier = [m for m in sent if m["role"] == "assistant"]
     words = len((asked or "").split())
     made = [c["function"]["name"] for m in earlier for c in (m.get("tool_calls") or []) if WRITE_TOOL.match(c["function"]["name"])]
@@ -306,6 +327,8 @@ def cut_off(msg):
     return bool(text) and not msg.get("tool_calls") and not re.search(r"[.?!)\"'\u201d\u2019*:]$", text)
 
 
+# With acting on its own off, it still records what the person told it: a memory, a promise, a thing they say is finished.
+MAY_RECORD_UNASKED = {"save_memory", "make_promise", "resolve_promise", "update_assignment", "update_task"}
 MAY_DO_UNASKED = {"create_events", "create_tasks", "save_memory", "make_promise", "update_assignment", "update_task", "update_event", "resolve_promise"}
 SKIP_IT = re.compile(r"\b(skip|skipping|ditch|ditching|bail on|blow off)\b[^.!?\n]{0,40}\b(class|lecture|lab|shift|work|sleep|breakfast|lunch|dinner)\b", re.I)
 EXPECTED_PAY = re.compile(r"\b(paycheck|pay ?check|deposit|payday|get paid|gets? paid)\b(?:[^.!?\n]|\.\d){0,140}\b(cover|covers|make up|makes up|take care of|fix|fixes|solve|solves|close the gap|closes the gap)\b", re.I)
@@ -442,6 +465,12 @@ def guard_notes(original, msg):
     # Alive rules only: what it may change without being asked is a short list (its own calendar blocks and to-dos, a memory, a
     # promise, marking a finished thing done). Anything else nobody asked for is sent back (2026-11-22: told "I got a job at the
     # library", it added the job to the Work page by itself).
+    off = acting_off(original)
+    if off and not ASKS.search(last_user(original) or ""):
+        held = [c for c in writes if c not in MAY_RECORD_UNASKED]
+        if held:
+            return ["Acting on your own is off for this person, so do not call " + ", ".join(held) + ". Say what you found, offer the exact block or "
+                    "to-do with its day and time, and ask. Save it when they say yes."]
     if "Be alive" in (APPEND or "") and not ASKS.search(last_user(original) or ""):
         unasked = [c for c in writes if c not in MAY_DO_UNASKED]
         if unasked:
@@ -476,7 +505,7 @@ def guard_notes(original, msg):
                      "and only say it is saved after the tool result says so.")
     # Alive rules only: asked to break a big thing down, it listed the steps and then asked whether to save them (2026-11-22).
     # The steps belong on the to-do list in the same turn; offering is the old behaviour.
-    if "Be alive" in (APPEND or "") and BREAKDOWN.search(last_user(original) or "") and "create_tasks" not in used_calls(original):
+    if "Be alive" in (APPEND or "") and not off and BREAKDOWN.search(last_user(original) or "") and "create_tasks" not in used_calls(original):
         return ["They asked you to break it down. Do it, do not offer it: call create_tasks now with three to five steps, each with its own "
                 "due day before the deadline (the first one today or tomorrow). Then say the steps in one line each and that they are on the to-do list."]
     # It once told a student to "skip the BIO 110 class at 10:00 AM if you want the full block". The skyling plans around
@@ -520,8 +549,13 @@ def post(req):
         return json.loads(resp.read())
 
 
-def call_upstream(body):
+def call_upstream(body, mode=None):
     original = to_messages(body)
+    if mode in MODE_LINES:   # into the recorded prompt too: it is part of what the app will send, not one of our teacher's rules
+        for m in original:
+            if m.get("role") in ("system", "developer") and isinstance(m.get("content"), str):
+                m["content"] = m["content"].rstrip() + "\n\n" + MODE_HEAD + "\n" + MODE_LINES[mode]
+                break
     sent = [dict(m) for m in original]
     remind(sent)
     if APPEND:
@@ -640,7 +674,7 @@ class H(BaseHTTPRequestHandler):
         rid = uuid.uuid4().hex[:16]
         t0 = time.time()
         try:
-            req, chat = call_upstream(body)
+            req, chat = call_upstream(body, self.headers.get("X-Mode") or ARGS.mode)
         except urllib.error.HTTPError as e:
             msg = e.read().decode(errors="replace")[:2000]
             self.send_response(e.code)
