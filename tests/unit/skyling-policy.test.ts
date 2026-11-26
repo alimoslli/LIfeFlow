@@ -1,24 +1,38 @@
 import { describe, expect, it } from "vitest";
-import { buildSystemPrompt, howYouMayAct, PROMPT_VERSION } from "@/server/jarvis/prompt";
+import { actingMode, buildSystemPrompt, MODE_HEAD, MODE_LINES, PROMPT_VERSION } from "@/server/jarvis/prompt";
 import type { UserPreferences } from "@/server/db/schema";
 
 // The five skyling policy decisions (owner, 2026-11-26; docs/research/2026-11-25-skyling-policy-proposals.md).
 const prompt = (preferences?: UserPreferences) =>
   buildSystemPrompt({ userName: "Robin", tz: "America/New_York", now: new Date("2026-11-26T15:00:00Z"), accountKind: "standard", memories: [], preferences });
-const fixed = (s: string) => s.split("# Who you are")[0];
+const fixed = (s: string) => {
+  expect(s).toContain("# Who you are");
+  return s.split("# Who you are")[0];
+};
+const both = { jarvis: { autonomy: { tasks: true, calendar: true } } } as UserPreferences;
 
 describe("skyling policy (owner, 2026-11-26)", () => {
-  it("1. real distress: stops everything else, no tools, glad they told, someone they trust, 988 and the emergency number, stays", () => {
+  it("renders cleanly: no template leftovers anywhere in the prompt", () => {
+    for (const p of [prompt(), prompt(both)]) expect(p).not.toContain("${");
+  });
+
+  it("1. real distress: overrides the rest, no tools, glad they told, someone they trust, 988 and the emergency number, stays", () => {
     const p = prompt();
     const section = p.slice(p.indexOf("# When someone is struggling"), p.indexOf("# Health questions"));
-    expect(section).toContain("comes before everything else");
+    expect(section).toMatch(/overrides every other rule here: saving things with tools, the reply length/);
     expect(section).toMatch(/stop everything else: no tools, no plans/);
+    expect(section).toMatch(/wish they weren't here|have already hurt themselves|aren't safe at home/);
     expect(section).toContain("glad they told you");
     expect(section).toContain("someone they trust");
     expect(section).toContain("call or text 988");
     expect(section).toMatch(/911 or their local emergency number/);
+    expect(section).toMatch(/never make up a number/);
     expect(section).toContain("Stay with them");
+    // everyday stress is named so it isn't over-triggered
+    expect(section).toMatch(/"this week is killing me", "I'm dying of boredom"/);
     expect(section).not.toMatch(/—/);
+    // the save-with-tools rule steps aside for it
+    expect(p).toMatch(/SAVE it with tools \(never in a "When someone is struggling" reply\)/);
   });
 
   it("2. health: never diagnoses or advises medicine, points to a professional", () => {
@@ -32,28 +46,37 @@ describe("skyling policy (owner, 2026-11-26)", () => {
     const p = prompt();
     expect(p).toMatch(/say plainly that you're an AI: their skyling/);
     expect(p).toMatch(/Never name the model, company or provider behind you/);
-    // the fixed instructions never name a model or a provider themselves
     expect(fixed(p)).not.toMatch(/\b(gpt|openai|chatgpt|claude|anthropic|gemini|llama)\b/i);
   });
 
-  it("5. autonomy: the prompt says the person's own mode; the default stays offer first", () => {
-    expect(howYouMayAct(undefined)).toBe("offer first.");
-    expect(howYouMayAct({ jarvis: { autonomy: { tasks: false, calendar: false } } } as UserPreferences)).toBe("offer first.");
-    expect(howYouMayAct({ jarvis: { autonomy: { tasks: true, calendar: true } } } as UserPreferences)).toMatch(/^you may book on your own/);
-    expect(howYouMayAct({ jarvis: { autonomy: { tasks: true } } } as UserPreferences)).toMatch(/to-dos on your own.*calendar blocks, offer first/);
-    expect(howYouMayAct({ jarvis: { autonomy: { calendar: true } } } as UserPreferences)).toMatch(/study blocks on your own.*to-dos, offer first/);
-    expect(prompt()).toContain("How you may act: offer first.");
-    const rule = prompt().slice(prompt().indexOf("# Booking on your own"), prompt().indexOf("# Safety"));
+  it("5. autonomy: the app's two lines are word for word the training examples' MODE_LINES", () => {
+    // copied from scripts/gpu/chat-eval/responses_shim.py on claude/skill-router-pilot; change both together or neither
+    expect(MODE_HEAD).toBe("# Acting on your own");
+    expect(MODE_LINES.on).toBe(
+      "Acting on your own: on. When they describe a problem (behind, stressed, a deadline), you may give study time or a to-do a place yourself: at most three, only in free time you looked up. Say what you saved and that it can be undone.",
+    );
+    expect(MODE_LINES.off).toBe(
+      "Acting on your own: off. When they describe a problem, look, then offer the exact block or to-do with its day and time. Save to the calendar or to-dos only after they say yes.",
+    );
+  });
+
+  it("5. autonomy: per person in buildContext, from their own setting; the default stays off", () => {
+    expect(actingMode(undefined)).toBe("off");
+    expect(actingMode({ jarvis: { autonomy: { tasks: true } } } as UserPreferences)).toBe("off");
+    expect(actingMode({ jarvis: { autonomy: { calendar: true } } } as UserPreferences)).toBe("off");
+    expect(actingMode(both)).toBe("on");
+    expect(prompt()).toContain(`${MODE_HEAD}\n${MODE_LINES.off}\n\n# Reply shape`);
+    expect(prompt(both)).toContain(`${MODE_HEAD}\n${MODE_LINES.on}\n\n# Reply shape`);
+    // never in the static instructions
+    for (const l of Object.values(MODE_LINES)) expect(fixed(prompt(both))).not.toContain(l);
+    const rule = prompt().slice(prompt().indexOf("# Acting on your own"), prompt().indexOf("# Safety"));
     expect(rule).toMatch(/never covers money, deleting anything, contacting anyone, or doing graded work/);
-    expect(rule).toMatch(/at most 3/);
-    expect(rule).toMatch(/can be undone/);
   });
 
   it("the new rules stay in the static part (cacheable), and the version moved", () => {
     const a = fixed(prompt());
-    const b = fixed(prompt({ jarvis: { autonomy: { tasks: true, calendar: true } } } as UserPreferences));
-    expect(a).toBe(b);
-    for (const h of ["# When someone is struggling", "# Health questions", "# What you are", "# Booking on your own"]) expect(a).toContain(h);
+    expect(a).toBe(fixed(prompt(both)));
+    for (const h of ["# When someone is struggling", "# Health questions", "# What you are", "# Acting on your own"]) expect(a).toContain(h);
     expect(PROMPT_VERSION).toBe("2026-11-26.1");
   });
 });
