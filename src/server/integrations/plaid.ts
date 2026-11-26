@@ -569,6 +569,7 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
           id: transactions.id,
           categoryId: transactions.categoryId,
           kind: transactions.kind,
+          amountCents: transactions.amountCents,
           notes: transactions.notes,
           merchantName: transactions.merchantName,
           authorizedAt: transactions.authorizedAt,
@@ -587,7 +588,8 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
             authorizedAt: values.authorizedAt ?? existing.authorizedAt,
             categoryId: existing.categoryId ?? values.categoryId,
             // a kind the person set (or `settleOwnMoves` made, QA 2026-11-18) stays: nothing marks who set it, so a saved kind is kept
-            kind: existing.kind,
+            // while the amount keeps its sign, and a saved transfer is kept always; if the bank flips the sign, the kind comes from the new sign
+            kind: Math.sign(existing.amountCents) === Math.sign(amountCents) || existing.kind === "transfer" ? existing.kind : values.kind,
           })
           .where(eq(transactions.id, existing.id));
         stats.modified++;

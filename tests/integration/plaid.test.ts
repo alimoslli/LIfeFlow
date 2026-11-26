@@ -355,6 +355,26 @@ describe("Plaid", () => {
     expect(await kindOf()).toBe("transfer");
   });
 
+  it("a modified row whose amount flips sign gets its kind from the new sign; a person's transfer stays (night 2026-11-26)", async () => {
+    const pages = [
+      { added: [txn("flip-1", 42), txn("flip-2", 30)], modified: [], removed: [], next_cursor: "c1", has_more: false },
+      { added: [], modified: [txn("flip-1", -42), txn("flip-2", -30)], removed: [], next_cursor: "c2", has_more: false },
+    ];
+    const fake = fakePlaid({ pages, noInvestments: true });
+    const { user, run, item } = await connected(fake);
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    await run((s) =>
+      s.tx
+        .update(transactions)
+        .set({ kind: "transfer" })
+        .where(and(eq(transactions.userId, user.id), eq(transactions.providerTransactionId, "flip-2"))),
+    );
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    const tx = await run((s) => s.tx.select().from(transactions).where(eq(transactions.userId, user.id)));
+    expect(tx.find((t) => t.providerTransactionId === "flip-1")).toMatchObject({ amountCents: 4_200, kind: "refund" });
+    expect(tx.find((t) => t.providerTransactionId === "flip-2")).toMatchObject({ amountCents: 3_000, kind: "transfer" });
+  });
+
   // owner, 2026-11-12 (docs/backlog/2026-11-12-useful-sky.md): a purchase sits on the timeline at its real time, only when the bank says
   it("saves the bank's own time of a purchase, keeps it when a later update leaves it out, and never makes one up", async () => {
     const pages = [
