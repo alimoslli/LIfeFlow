@@ -20,6 +20,24 @@ One H100 costs 120 credits an hour: 2 credits a minute.
 6. **A box whose GPU is idle is taken away** (5 or 10 minutes). Never leave a gap between stages. The scripts do real work
    while they wait.
 
+## The owner's own grades (2026-11-26)
+
+The owner grades a batch of 30 answers on a private page: Good, Almost or Bad, with his own wording where he would say it
+differently. His verdicts are the standard. 22 of the 30 are turns the agent readers kept and 8 are turns they dropped; the
+page does not say which, so his verdicts are not led. Which turn is which is in
+`2026-11-25-training-night/grading/key.json`; the page's source is `grading/page.html`.
+
+When his grades are in (read them from the page's saved documents, collection `grades`, or from the text of its
+"Copy my grades" button):
+
+```
+python3 scripts/gpu/chat-data/apply_grades.py --grades grades.json --key docs/research/2026-11-25-training-night/grading/key.json --out-dir <folder>
+```
+
+It writes which turns to leave out, his own wording as the answer to train on (`make_trainset.py --rewrites`), and a report of
+where he and the readers disagree. Each disagreement is a change to the readers' brief or to a rule, before the next read.
+A turn the readers dropped stays dropped even if he likes it: he sees the answer, not the tool results it has to match.
+
 ## Step 1: train the big model on the 435 checked examples (round 1)
 
 The examples are on GPU storage: `/workspace/ownmodel/night1/train.jsonl`. First, rebuild them with the stricter filter (the

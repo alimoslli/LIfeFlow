@@ -1,0 +1,122 @@
+{
+ "g01": {
+  "conv": "p0004-university-dorm-freelance-photographer-0~2~0",
+  "readers": "kept"
+ },
+ "g02": {
+  "conv": "p0008-university-dorm-tutor-two-stats-classes-2~1~0",
+  "readers": "kept"
+ },
+ "g03": {
+  "conv": "p1022-cc-retail-fri-to-mon-grandma-4~1~0",
+  "readers": "dropped: Made-up: \"free Wednesday afternoon at the library\" with no free-time call; Wednesday afternoon already past"
+ },
+ "g04": {
+  "conv": "p1027-cc-overnight-warehouse-four-nights-2~3~0",
+  "readers": "kept"
+ },
+ "g05": {
+  "conv": "p1027-cc-overnight-warehouse-four-nights-2~2~0",
+  "readers": "kept"
+ },
+ "g06": {
+  "conv": "p1022-cc-retail-fri-to-mon-grandma-1~1~0",
+  "readers": "kept"
+ },
+ "g07": {
+  "conv": "p0002-night-nurse-parent-1~3~0",
+  "readers": "kept"
+ },
+ "g08": {
+  "conv": "p2044-university-international-campus-job-3~1~1",
+  "readers": "kept"
+ },
+ "g09": {
+  "conv": "p0003-retired-pension-widow-lives-alone-0~3~0",
+  "readers": "kept"
+ },
+ "g10": {
+  "conv": "p0003-retired-pension-widow-lives-alone-2~0~0",
+  "readers": "kept"
+ },
+ "g11": {
+  "conv": "p0006-cc-roommates-nursing-marketplace-seller-4~0~1",
+  "readers": "dropped: Follow-up handled badly: unverifiable quiz fact with no call, offers study reminder the day after the quiz is due"
+ },
+ "g12": {
+  "conv": "p0008-university-dorm-tutor-two-stats-classes-5~0~0",
+  "readers": "kept"
+ },
+ "g13": {
+  "conv": "p0008-university-dorm-tutor-two-stats-classes-3~0~0",
+  "readers": "dropped: Calls create_tasks with invented steps and no result, while the answer asks questions and says it will add them later."
+ },
+ "g14": {
+  "conv": "p2044-university-international-campus-job-1~2~0",
+  "readers": "kept"
+ },
+ "g15": {
+  "conv": "p4012-cc-roommates-nursing-part-time-savings-5~0~0",
+  "readers": "dropped: At 6:45 PM offers heads-up to manager for a shift that ended 5 PM; says log due tonight can wait; bullets"
+ },
+ "g16": {
+  "conv": "p1026-university-first-gen-roommates-aid-held-4~2~1",
+  "readers": "dropped: Misreads \"ok do that\" (split topics) as booking; says \"Already done, I booked\" with no call this turn; bullets"
+ },
+ "g17": {
+  "conv": "p0001-student-who-works-4~3~0",
+  "readers": "kept"
+ },
+ "g18": {
+  "conv": "p1009-university-dorm-athlete-rec-desk-1~0~0",
+  "readers": "kept"
+ },
+ "g19": {
+  "conv": "p1009-university-dorm-athlete-rec-desk-0~2~0",
+  "readers": "kept"
+ },
+ "g20": {
+  "conv": "p4004-adult-learner-parent-blackboard-1~3~0",
+  "readers": "kept"
+ },
+ "g21": {
+  "conv": "p1022-cc-retail-fri-to-mon-grandma-2~3~0",
+  "readers": "kept"
+ },
+ "g22": {
+  "conv": "p1027-cc-overnight-warehouse-four-nights-5~3~0",
+  "readers": "kept"
+ },
+ "g23": {
+  "conv": "p0001-student-who-works-5~2~0",
+  "readers": "kept"
+ },
+ "g24": {
+  "conv": "p2044-university-international-campus-job-1~1~0",
+  "readers": "kept"
+ },
+ "g25": {
+  "conv": "p1009-university-dorm-athlete-rec-desk-1~1~0",
+  "readers": "dropped: Created five to-dos unasked (limit three); \"practice at 3:30 PM\" and \"after dinner\" are not in the results."
+ },
+ "g26": {
+  "conv": "p1026-university-first-gen-roommates-aid-held-1~2~1",
+  "readers": "kept"
+ },
+ "g27": {
+  "conv": "p0008-university-dorm-tutor-two-stats-classes-5~3~0",
+  "readers": "dropped: Claims \"you said you study best in the mornings\" unsupported; mixes today and tomorrow; omits project draft due today."
+ },
+ "g28": {
+  "conv": "p0003-retired-pension-widow-lives-alone-4~0~0",
+  "readers": "kept"
+ },
+ "g29": {
+  "conv": "p0004-university-dorm-freelance-photographer-4~1~0",
+  "readers": "dropped: Cites a Thursday 2:15 PM study block already past at 23:30, wrong course (ANTH not history), unasked deadline dump, repeats question."
+ },
+ "g30": {
+  "conv": "p1009-university-dorm-athlete-rec-desk-3~2~0",
+  "readers": "kept"
+ }
+}
