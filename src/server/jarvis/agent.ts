@@ -30,6 +30,9 @@ import type { ToolContext } from "./tool";
 import { describeToolCall, describeToolResult, memoryProposalOf } from "./labels";
 import { looksLikeGradedWork } from "@/lib/integrity";
 import { openQuestions } from "../services/proactive/questions";
+import { recordError } from "../services/error-reports";
+import { getDb } from "../db/client";
+import { turnFailureReport } from "./turn-error";
 
 export type JarvisEvent =
   | { type: "conversation"; id: string; title: string }
@@ -448,6 +451,9 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       const timedOut = e instanceof TimedOutError || Date.now() >= deadline;
       outcome = "error";
       errorKind = timedOut ? "timeout" : errorKindOf(e, false);
+      // HQ's error feed: the user only reads "Something went wrong", and a thrown error used to reach only the server log.
+      // Class, scrubbed message and the first frame in our code; never the user's words or a tool's arguments.
+      await recordError(getDb(), { source: "server", ...turnFailureReport(e, errorKind) }).catch(() => undefined);
       const message = timedOut ? TOOK_TOO_LONG : friendlyProviderError(e, assistantProfile(user.preferences, user.timezone).name);
       await run((s) =>
         s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "assistant", content: message, status: "error" }),
