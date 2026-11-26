@@ -330,6 +330,10 @@ Last: done 2026-11-10 evening ([the walk and the numbers](audits/2026-11-10-prod
 
 **Price** (owner, 11-05): $9.99 a month, or $5.99 for students. Free while testing.
 
+**Before launch: the skyling's safety reads** (owner, 2026-11-26, the skyling policy decisions; `docs/research/2026-11-25-skyling-policy-proposals.md`):
+- A qualified read of the distress wording (the "When someone is struggling" rule in `src/server/jarvis/prompt.ts`), including what to say outside the US.
+- A legal read on minors (13 to 17): whether a younger person gets different handling anywhere (money moves, health questions, distress). No change until then.
+
 ## 10. The owner's list (only the owner can do these)
 Ask "what's on my list?" in LF Main and this is the list sent back. Checked against `docs/go-live-checklist.md` and `docs/native-app-plan.md` on 2026-11-21: nothing the app needs from the owner is missing from here. None are done yet (owner, 2026-11-21). In order of what they unblock:
 
@@ -381,6 +385,7 @@ Still open:
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-26, LF Main (owner, via the COO: five skyling policy decisions): the skyling's instructions now say what to do when someone is in real distress (stop everything else, no tools, someone they trust, 988 or the emergency number, stay with them), never diagnose or advise medicine, say plainly it is an AI (never a model or provider), and follow the person's own autonomy setting ("you may book on your own" or "offer first", default unchanged: offer first). 13 to 17: no change; a legal read on minors and a qualified read of the distress wording are launch items in section 9.
 - 2026-11-21, LF Main (owner: "yes do it, make sure everything stays simple and easy to organize and manage"): a seventh HQ room, AI Lab (role key `ailab`, agent `.claude/agents/ai-lab.md`), for the own-model and GPU work; its chat is "GPU rent work" (migration `0073_hq_ailab` maps it). It has no round: ready in its chat by day. Its pictures are copies of Research's for now.
 - 2026-11-21, LF Main (owner, on the pictures: "perfect i love it"): the one-page website shipped to main from `claude/one-page-landing`.
 - 2026-11-21, LF Main (owner: "I want it all on one page ... If they're signed in, that page will just be the land where the waitlist is and where they can try the app out"): the one-page website on `claude/one-page-landing`, held for his yes on pictures (spec `docs/backlog/2026-11-21-one-page-website.md`). About and the two people are on the front page; "How the waitlist works" and "Join the waitlist" while the switch is on; `/about` goes to `/#about`; sign-up goes straight to the waitlist with the birthday asked first (under 13 locks as in setup) and setup waits until they're let in.
