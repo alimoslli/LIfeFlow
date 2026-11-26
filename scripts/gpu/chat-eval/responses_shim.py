@@ -516,7 +516,7 @@ def guard_notes(original, msg):
     if EXPECTED_PAY.search(text):
         notes.append("Money that has not arrived is not money. Do not say a paycheck or deposit will cover, fix or make up anything. "
                      "You may say when pay is expected, and nothing more about it.")
-    # the length limit lives with the owner's other marks (reality_checks.owner_notes): 60 words, 90 when they asked for all of something
+    # length lives with the owner's other marks (reality_checks.owner_notes): no fixed limit, only a soft ceiling for a quick message
     raw = [m.group(0) for m in RAW_MINUTES.finditer(text)]
     if raw:
         notes.append("Nobody talks in minutes like \"" + raw[0] + "\". Say lengths of time in hours and minutes (\"5 hours 10 minutes\"), "

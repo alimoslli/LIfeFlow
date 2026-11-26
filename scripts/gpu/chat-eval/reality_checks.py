@@ -49,9 +49,16 @@ COULD_LOOK = re.compile(r"\b(which|what) (class|course|exam|test|midterm|quiz|as
 LOOKS = {"get_daily_briefing", "list_assignments", "list_tasks", "get_agenda", "life_load", "tonight", "list_courses", "find_free_time", "list_projects"}
 
 
+DEPTH = re.compile(r"\b(explain|how (do|does|can|should|would|to)\b|walk me through|help me (understand|with|write|study|prepare|figure|plan|decide|get)|"
+                   r"break\w* (it|this|that|the|my|down)|steps?|plan\b|tips|advice|why\b|tell me (more|about)|in detail|detail|options|compare|difference|"
+                   r"teach|quiz me|study guide|outline|draft|summar|what (should|do) i (know|need)|where do i (even )?(start|begin)|what (does|is) [a-z ]{3,40} mean)\b", re.I)
+
+
 def word_limit(asked):
-    """60 words, or 90 when they asked for all of something ("people hate reading and typing now")."""
-    return 90 if ASKS_ALL.search(asked or "") else 60
+    """No fixed limit (owner, 2026-11-26: "there shouldn't be a strict cap to messages as some do require a big response for
+    help, same for the breakdown and steps"). Only a quick message has a soft ceiling: one that asks for no explanation, no
+    plan, no breakdown and not for all of something. None = as long as it needs."""
+    return None if (ASKS_ALL.search(asked or "") or DEPTH.search(asked or "")) else 60
 
 
 def owner_notes(messages, text):
@@ -61,9 +68,10 @@ def owner_notes(messages, text):
     asked = next((text_of(m.get("content")) for m in reversed(messages) if m.get("role") == "user"), "").split("<house_")[0]
     used = [n for n, _ in calls_of(this_turn(messages))]
     words, limit = len(text.split()), word_limit(asked)
-    if words > limit:
-        notes.append(("too long", f"Your answer is {words} words and the limit here is {limit}. People hate reading. Write it again in at most {int(limit * 0.7)} words: "
-                      "the one thing that matters with its real time or figure, one next step, then stop."))
+    if limit and words > limit:
+        notes.append(("too long for a quick message", f"They sent a quick message and your answer is {words} words. People hate reading. Write it again in about "
+                      f"{int(limit * 0.7)} words: the one thing that matters with its real time or figure, one next step, then stop. "
+                      "(Had they asked for an explanation, a plan or a list, length would be fine.)"))
     if "make_promise" in used and (words > 30 or "?" in text):
         notes.append(("extras after a promise", "They gave their word and you saved it. Confirm in one short line with when you will check in, and stop: "
                       "nothing about what is due and no offer."))
@@ -326,7 +334,7 @@ def selfcheck():
         ("claims a change it did not make", chat(noon, ["got my project done last night", "take that back"]), {"content": "Okay, taken back. What's on your mind?"}),
         ("internal id", chat(noon, ["hi"]), {"content": "Hey p2044! Good to see you."}),
         # the owner's grades of 2026-11-26
-        ("too long", chat(noon, ["I have an hour free, what now?"], [("get_daily_briefing", {})], ['{"ok":true}']),
+        ("too long for a quick message", chat(noon, ["I have an hour free, what now?"], [("get_daily_briefing", {})], ['{"ok":true}']),
          {"content": "You are already in a study block right now and it runs for a while, and all three of the assignments for tonight are due at the same time, so use this hour on the first homework, then the quiz block starts after that, and then there is the discussion post that has been overdue for a long while now, which I can slot in for thirty minutes after your last block ends tonight if that works for you and your evening."}),
         (None, chat(noon, ["I have an hour free, what now?"], [("get_daily_briefing", {})], ['{"ok":true}']),
          {"content": "Homework 8, it's due at 11:59 PM tonight. The chapter quiz is next."}),
@@ -341,6 +349,11 @@ def selfcheck():
         ("says it will work later", chat(noon, ["find studies on video games"], [("web_search", {"query": "x"})], ['{"ok":true,"data":{"unavailable":"x"}}']),
          {"content": "I can't search the web right now. Want me to try again in a bit?"}),
         ("vague word", chat(noon, ["thanks, that helps"]), {"content": "You're welcome. Which of the three Sunday items is the one you've been putting off?"}),
+        # no strict cap: a request for real help may get a long answer (owner, 2026-11-26)
+        (None, chat(noon, ["can you explain how compound interest works and how I should think about my savings"]),
+         {"content": " ".join(["Compound interest means you earn on what you already earned."] * 14)}),
+        (None, chat(noon, ["my thesis feels huge, break it down for me"], [("create_tasks", {"tasks": [{"title": "Pick sources", "dueDate": "2026-11-23"}]})], ['{"ok":true}']),
+         {"content": "Eight steps, all saved: pick sources, read and note each one, find the threads, outline, draft the review, draft the methods, revise with your advisor, final pass. " * 2 + "First is pick sources, Monday."}),
     ]
     bad = 0
     for want, msgs, reply in cases:

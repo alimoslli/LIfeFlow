@@ -44,7 +44,7 @@ the tool results it has to match.
 ## The order changed on 2026-11-26: generate first, then train
 
 The owner's first grades (`2026-11-25-training-night/grading/owner-feedback-1.md`) showed that round 1's 435 examples are
-not at his standard: 114 of the 250 kept turns fail it in code (too long, extras, asking what a look would answer). Training
+not at his standard: 96 of the 250 kept turns fail it in code (too long for a quick message, extras, asking what a look would answer). Training
 the big model on them would teach the style he marked down. So:
 
 1. **First box: generation 2** (the section "Step 2" below) with `SPEEDTEST=1`, which also measures what training will cost
