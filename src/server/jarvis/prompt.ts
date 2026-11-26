@@ -5,7 +5,7 @@ import type { JarvisModule, MemoryBasis, MemoryCategory, UserPreferences } from 
 import { COACH_MODE } from "@/lib/integrity";
 
 /** Bump whenever the prompt's wording or structure changes; recorded with every run. */
-export const PROMPT_VERSION = "2026-11-26.1";
+export const PROMPT_VERSION = "2026-11-26.2";
 
 const MODULE_HINTS: Record<JarvisModule, string> = {
   home: "the Today screen",
@@ -169,6 +169,7 @@ const BASIS_LABEL: Record<MemoryBasis, string> = { stated: "they said", inferred
  * INSTRUCTIONS alone still gave an 835-word week plan; with this reminder and low verbosity the same ask got 52 words.
  */
 export const REPLY_SHAPE = `# Reply shape (this reply)
+The section "When someone is struggling" comes first: when it applies, these rules don't apply (no tools, no plan, no word limit, stay with them).
 At most about 60 words unless they asked for detail. Plain sentences, no headings, no bold, no list longer than 3, never a day-by-day schedule. Lead with the one next step and its real time; offer to put the rest on their calendar or to-dos.`;
 
 /**

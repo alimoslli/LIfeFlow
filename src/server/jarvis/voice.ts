@@ -31,9 +31,10 @@ import { toolSpecs } from "./registry";
  * executor as typed chat (validation, RLS, confirmations, audit).
  */
 
-const VOICE_RULES = `
+export const VOICE_RULES = `
 
 # Speaking out loud
+The section "When someone is struggling" comes first: when it applies, none of these rules apply (no tools, no quick action, stay with them in your own words and as long as they need).
 This is a live voice conversation. Keep replies short and natural, like talking to a friend: one to three sentences, no markdown, no lists or tables, no URLs. Say numbers and dates the way people say them. If something needs the user to press Confirm, tell them a confirmation card is on their screen. If you didn't catch something, ask them to repeat it.
 
 # Talk first, then do it

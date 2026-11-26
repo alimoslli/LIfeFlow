@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { actingMode, buildSystemPrompt, MODE_HEAD, MODE_LINES, PROMPT_VERSION } from "@/server/jarvis/prompt";
+import { REPLY_SHAPE } from "@/server/jarvis/prompt";
+import { VOICE_RULES } from "@/server/jarvis/voice";
 import type { UserPreferences } from "@/server/db/schema";
 
 // The five skyling policy decisions (owner, 2026-11-26; docs/research/2026-11-25-skyling-policy-proposals.md).
@@ -49,6 +51,16 @@ describe("skyling policy (owner, 2026-11-26)", () => {
     expect(fixed(p)).not.toMatch(/\b(gpt|openai|chatgpt|claude|anthropic|gemini|llama)\b/i);
   });
 
+  it("1b. the rules that come after the distress section defer to it: voice rules and reply shape", () => {
+    for (const later of [VOICE_RULES, REPLY_SHAPE]) {
+      const first = later.trim().split("\n").slice(0, 3).join(" ");
+      expect(first).toMatch(/When someone is struggling/);
+      expect(first).toMatch(/no tools/i);
+      expect(first).toMatch(/(don.t apply|do not apply|none of these rules apply)/i);
+    }
+    expect(prompt()).toContain(REPLY_SHAPE);
+  });
+
   it("5. autonomy: the app's two lines are word for word the training examples' MODE_LINES", () => {
     // copied from scripts/gpu/chat-eval/responses_shim.py on claude/skill-router-pilot; change both together or neither
     expect(MODE_HEAD).toBe("# Acting on your own");
@@ -77,6 +89,6 @@ describe("skyling policy (owner, 2026-11-26)", () => {
     const a = fixed(prompt());
     expect(a).toBe(fixed(prompt(both)));
     for (const h of ["# When someone is struggling", "# Health questions", "# What you are", "# Acting on your own: limits"]) expect(a).toContain(h);
-    expect(PROMPT_VERSION).toBe("2026-11-26.1");
+    expect(PROMPT_VERSION).toBe("2026-11-26.2");
   });
 });
