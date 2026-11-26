@@ -39,6 +39,47 @@ STOP = set("that this with from your you're have will would could about them the
            "than then also very much more most some such only over after before best like really always never usually need want going".split())
 
 
+# ---- the owner's own standard, from his grades of 2026-11-26 (docs/research/2026-11-25-training-night/grading/owner-feedback-1.md)
+ASKS_ALL = re.compile(r"\b(what('?s| is| are) (due|on|left)|everything|all (my|of)|list|what can (wait|slide|i (drop|push|skip))|push off|has to give|"
+                      r"my (bills|subscriptions|week|schedule|day)|this week|plan my|map out|where is my money|forgetting|worst)\b", re.I)
+LATER = re.compile(r"\b(try|check|search|look)( it| that| this)?( up)?( again)? (in a (bit|few|minute|moment|while)|later|soon|tomorrow)\b|\bretry\b|"
+                   r"\bwhen (it|search|that|the search|web search)('?s| is| comes) back\b|\bonce (it|search|the search)('?s| is) (back|working|up)\b", re.I)
+VAGUE = re.compile(r"\bitems?\b", re.I)
+COULD_LOOK = re.compile(r"\b(which|what) (class|course|exam|test|midterm|quiz|assignment|project|paper)\b[^.?!]*\?|\bwhen(('?s| is) (the|your|it)|\s+is it)\b[^.?!]{0,40}\?", re.I)
+LOOKS = {"get_daily_briefing", "list_assignments", "list_tasks", "get_agenda", "life_load", "tonight", "list_courses", "find_free_time", "list_projects"}
+
+
+def word_limit(asked):
+    """60 words, or 90 when they asked for all of something ("people hate reading and typing now")."""
+    return 90 if ASKS_ALL.search(asked or "") else 60
+
+
+def owner_notes(messages, text):
+    """What the owner marked down when he graded real answers: too long, extras after the job is done, asking what a look
+    would answer, promising that something unavailable will work later, vague words."""
+    notes = []
+    asked = next((text_of(m.get("content")) for m in reversed(messages) if m.get("role") == "user"), "").split("<house_")[0]
+    used = [n for n, _ in calls_of(this_turn(messages))]
+    words, limit = len(text.split()), word_limit(asked)
+    if words > limit:
+        notes.append(("too long", f"Your answer is {words} words and the limit here is {limit}. People hate reading. Write it again in at most {int(limit * 0.7)} words: "
+                      "the one thing that matters with its real time or figure, one next step, then stop."))
+    if "make_promise" in used and (words > 30 or "?" in text):
+        notes.append(("extras after a promise", "They gave their word and you saved it. Confirm in one short line with when you will check in, and stop: "
+                      "nothing about what is due and no offer."))
+    if text.count("?") > 2:
+        notes.append(("too many questions", "You asked more than two questions. People hate typing. One open question at most and one yes-or-no offer at most."))
+    if COULD_LOOK.search(text) and not any(u in LOOKS for u in used):
+        notes.append(("asks what it could look up", "You asked them something their records can answer. Look first (get_daily_briefing or list_assignments): the nearest exam or "
+                      "deadline is usually the one they mean, so name it. Ask only if the records cannot tell you."))
+    if LATER.search(text):
+        notes.append(("says it will work later", "Do not say it will work later and do not offer to retry: it works here or it does not. Say plainly that you cannot do that here, "
+                      "and give the next best thing now."))
+    if VAGUE.search(text) and not VAGUE.search(asked):
+        notes.append(("vague word", "\"Items\" says nothing. Name what they are: the quizzes, the lab report, the three things due Sunday."))
+    return notes
+
+
 def text_of(content):
     return content if isinstance(content, str) else json.dumps(content or "", ensure_ascii=False)
 
@@ -241,7 +282,7 @@ def reality_notes(messages, reply):
                       "so nothing changed. Make the change with the tool first, or say plainly that there was nothing of yours to undo."))
     if re.search(r"\bp\d{4}\b", text):
         notes.append(("internal id", "You called them by an internal id. Use their first name, or no name."))
-    return notes
+    return notes + owner_notes(messages, text)
 
 
 def selfcheck():
@@ -284,6 +325,22 @@ def selfcheck():
          {"content": "Saved \"Renew visa\" for next Saturday. I'll remind you that morning."}),
         ("claims a change it did not make", chat(noon, ["got my project done last night", "take that back"]), {"content": "Okay, taken back. What's on your mind?"}),
         ("internal id", chat(noon, ["hi"]), {"content": "Hey p2044! Good to see you."}),
+        # the owner's grades of 2026-11-26
+        ("too long", chat(noon, ["I have an hour free, what now?"], [("get_daily_briefing", {})], ['{"ok":true}']),
+         {"content": "You are already in a study block right now and it runs for a while, and all three of the assignments for tonight are due at the same time, so use this hour on the first homework, then the quiz block starts after that, and then there is the discussion post that has been overdue for a long while now, which I can slot in for thirty minutes after your last block ends tonight if that works for you and your evening."}),
+        (None, chat(noon, ["I have an hour free, what now?"], [("get_daily_briefing", {})], ['{"ok":true}']),
+         {"content": "Homework 8, it's due at 11:59 PM tonight. The chapter quiz is next."}),
+        ("extras after a promise", chat(noon, ["I swear I'll work on it after dinner"], [("make_promise", {"text": "work on it", "date": "2026-11-21", "time": "21:00"})], ['{"ok":true}']),
+         {"content": "That's a promise. I'll check in tonight at 9 PM. Want me to block some study time for it?"}),
+        (None, chat(noon, ["I swear I'll work on it after dinner"], [("make_promise", {"text": "work on it", "date": "2026-11-21", "time": "21:00"})], ['{"ok":true}']),
+         {"content": "That's a promise. I'll check in tonight at 9 PM."}),
+        ("asks what it could look up", chat(noon, ["can you just do my midterm for me"]),
+         {"content": "I can't do it for you, but I can help you prep. Which class is it, and when's the exam?"}),
+        (None, chat(noon, ["can you just do my midterm for me"], [("list_assignments", {})], ['{"ok":true}']),
+         {"content": "I can't take it for you. Your BIO midterm is Thursday at 6 PM: want a study block before it?"}),
+        ("says it will work later", chat(noon, ["find studies on video games"], [("web_search", {"query": "x"})], ['{"ok":true,"data":{"unavailable":"x"}}']),
+         {"content": "I can't search the web right now. Want me to try again in a bit?"}),
+        ("vague word", chat(noon, ["thanks, that helps"]), {"content": "You're welcome. Which of the three Sunday items is the one you've been putting off?"}),
     ]
     bad = 0
     for want, msgs, reply in cases:

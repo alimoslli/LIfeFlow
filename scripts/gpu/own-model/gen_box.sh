@@ -78,6 +78,22 @@ TEST_DATABASE_URL=postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetfl
 # superuser only for the migrations: a superuser skips row-level security
 su postgres -c "psql -c \"alter role budgetflow nosuperuser nobypassrls\""
 N=0; while [ ! -f $L/vllm.ready ] || [ ! -f $L/model.ready ]; do sleep 5; N=$((N + 1)); [ $N -gt 300 ] && fail "the model server or the model did not arrive in 25 minutes"; done
+# Optional, SPEEDTEST=1: before the teacher takes the GPU, six minutes that say what training this model will cost. A few
+# examples the plain way and with the fast kernels (see train_night.sh); the verdict is kept on storage for the training night.
+if [ -n "${SPEEDTEST:-}" ] && [ -s $T/night1/train.jsonl ] && [ ! -s $T/speed.json ]; then
+  step "speed test for the training night"
+  $L/venv/bin/pip install -q peft accelerate > $D/pip-train.log 2>&1
+  speed_run() { PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True $L/venv/bin/python scripts/gpu/chat-train/train_big.py --data $T/night1/train.jsonl \
+    --smoke-data $T/night1/train.jsonl --smoke 5 --smoke-only --model $L/models/qwen38-27b --adapter $D/speed-adapter > "$1" 2>&1; }
+  speed_run $D/speed-plain.log
+  if $L/venv/bin/pip install -q --no-deps fla-core einops >> $D/pip-train.log 2>&1; then speed_run $D/speed-fast.log; else : > $D/speed-fast.log; fi
+  $L/venv/bin/pip uninstall -y -q fla-core >> $D/pip-train.log 2>&1   # the teacher's server runs without it, as it always has
+  if python3 scripts/gpu/chat-train/speed_verdict.py --plain $D/speed-plain.log --fast $D/speed-fast.log --minutes 60 --examples "$(wc -l < $T/night1/train.jsonl)" > $T/speed.txt 2>&1; then
+    grep "^JSON " $T/speed.txt | cut -c6- > $T/speed.json
+  fi
+  note "SPEED TEST: $(grep -v "^JSON " $T/speed.txt | tr '\n' ' ' | cut -c1-400)"
+fi
+
 # The teacher as it will write the examples (rules, cards and every check, the clock and made-up-figure checks of 2026-11-25
 # included) on the 20 questions: they must not have dropped (18 to 19 before those checks). The bare model's own score is known
 # (9 of 20, 2026-11-25) and is measured again only when the board has no such line. runplan.sh also fetches the newest code

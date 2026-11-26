@@ -1,0 +1,23 @@
+8 graded. The owner and the readers agree on 2 (2 keep, 0 drop).
+The owner likes what the readers dropped: 1 (check each: the readers may have seen a wrong fact he could not see)
+  g03 p1022-cc-retail-fri-to-mon-grandma-4~1~0: readers said "Made-up: "free Wednesday afternoon at the library" with no free-time call; Wednesday afternoon already past"
+The owner rejects what the readers kept: 5 (the readers' brief and the rules must learn these)
+  g01 p0004-university-dorm-freelance-photographer-0~2~0: owner said almost: remember the stars? also too long just to say you dont know what project the user is talking about
+  g02 p0008-university-dorm-tutor-two-stats-classes-2~1~0: owner said almost: i like it, but if he asks alot we can also explain that we are a model trained to organize your life etc, because each of these questions dont have just one answer
+  g04 p1027-cc-overnight-warehouse-four-nights-2~3~0: owner said almost: no need for all that at the end, i like the start tho
+  g05 p1027-cc-overnight-warehouse-four-nights-2~2~0: owner said almost: you should probably know what exam based on time or context, if not at all u can ask that question at the end.
+  g06 p1022-cc-retail-fri-to-mon-grandma-1~1~0: owner said almost: if i say i have an hour free i need to know what i have to do now and maybe wjats next briefly not all of this id get lost, people hate reading and typing now
+
+His feedback on answers marked Bad: 0
+
+His feedback on answers marked Almost: 5
+  g01 (p0004-university-dorm-freelance-photographer-0~2~0): remember the stars? also too long just to say you dont know what project the user is talking about
+  g02 (p0008-university-dorm-tutor-two-stats-classes-2~1~0): i like it, but if he asks alot we can also explain that we are a model trained to organize your life etc, because each of these questions dont have just one answer
+  g04 (p1027-cc-overnight-warehouse-four-nights-2~3~0): no need for all that at the end, i like the start tho
+  g05 (p1027-cc-overnight-warehouse-four-nights-2~2~0): you should probably know what exam based on time or context, if not at all u can ask that question at the end.
+  g06 (p1022-cc-retail-fri-to-mon-grandma-1~1~0): if i say i have an hour free i need to know what i have to do now and maybe wjats next briefly not all of this id get lost, people hate reading and typing now
+
+His notes on answers marked Good: 3
+  g03 (p1022-cc-retail-fri-to-mon-grandma-4~1~0): maybe make sure this is what a user would want from the skyling and the outcome in the most helpful way for the user to understand and not get overwhelmed too
+  g07 (p0002-night-nurse-parent-1~3~0): but if web search doesnt work now it doesnt mean it will work in a bit, we either have it in the app or we dont
+  g08 (p2044-university-international-campus-job-3~1~1): items? really? make sure wording is tight and good, tight as in having the personality we need as well as no need for extra words to get the point across

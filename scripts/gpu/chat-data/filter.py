@@ -13,7 +13,7 @@ turns, its own tool calls and the tool results) plus its final answer, and the t
   - the turn finished cleanly (no error, a final answer, not cut off) and no tool failed;
   - every money amount and decimal in the answer is in the tool results or the person's own words (no invented numbers);
   - every weekday named next to a date is that date's real weekday;
-  - it follows the skyling's own rules (src/server/jarvis/prompt.ts, "how you sound"): at most about 100 words, no
+  - it follows the skyling's own rules (src/server/jarvis/prompt.ts, "how you sound"): at most 60 words (90 for a list they asked for), no
     headings, no app paths ("/work"), no drama words, no narrating ("Let me check"), no em dash, never "assistant",
     "companion" or "Jarvis". Bold markers are taken out rather than dropping the answer (the teacher overuses them).
 """
@@ -156,8 +156,7 @@ def check(meta_row, last, year):
     # "You have 1,249 minutes free" (the owner, 2026-11-22: "who wants to hear that"): lengths are said in hours and minutes.
     if RAW_MINUTES.search(text):
         reasons.append("raw minutes")
-    if len(text.split()) > 100:
-        reasons.append("too long")
+    # "too long" comes from reality_checks.owner_notes now: 60 words, 90 when they asked for all of something
     if HEADING.search(text):
         reasons.append("heading")
     if APP_PATH.search(text):

@@ -41,7 +41,18 @@ card for the teacher, a check in code where code can catch it, or a line in the 
 are written by the teacher under those. A turn the readers dropped stays dropped even if he likes it: he sees the answer, not
 the tool results it has to match.
 
-## Step 1: train the big model on the 435 checked examples (round 1)
+## The order changed on 2026-11-26: generate first, then train
+
+The owner's first grades (`2026-11-25-training-night/grading/owner-feedback-1.md`) showed that round 1's 435 examples are
+not at his standard: 114 of the 250 kept turns fail it in code (too long, extras, asking what a look would answer). Training
+the big model on them would teach the style he marked down. So:
+
+1. **First box: generation 2** (the section "Step 2" below) with `SPEEDTEST=1`, which also measures what training will cost
+   in its first six minutes. The teacher is scored on the 20 questions before any example is made.
+2. **No box: the agent read** against the brief (it now carries the owner's standard), and the owner grades a sample.
+3. **Second box: training** (the section "Step 1" below, on the new set plus what passes from round 1).
+
+## Step 1: train the big model on the checked examples
 
 The examples are on GPU storage: `/workspace/ownmodel/night1/train.jsonl`. First, rebuild them with the stricter filter (the
 clock and made-up-figure checks did not exist when they were filtered). Ten seconds on the box, no GPU:
@@ -108,7 +119,7 @@ with the lives and hours it fits, follow-ups that match what the first answer di
 and undo (all three had no examples left in round 1). The teacher is told the time and has the clock and made-up-figure checks.
 
 ```
-RUN=gen2 nohup sh /root/job/boot/scripts/gpu/own-model/gen_box.sh <generate minutes> <hard stop minutes> 9 24 > /workspace/ownmodel/gen.log 2>&1 &
+SPEEDTEST=1 RUN=gen2 nohup sh /root/job/boot/scripts/gpu/own-model/gen_box.sh <generate minutes> <hard stop minutes> 9 24 > /workspace/ownmodel/gen.log 2>&1 &
 ```
 
 - Two lives in three are in "acting on your own: on", one in three in "off" (owner's decision of 2026-11-26); the mode line is
