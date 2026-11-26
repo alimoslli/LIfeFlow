@@ -62,7 +62,7 @@ textarea { min-height: 4.5rem; resize: vertical; }
     <li><b>Good</b>: you would be proud if it answered exactly like this.</li>
     <li><b>Almost</b>: right idea, wrong wording or one thing off.</li>
     <li><b>Bad</b>: it should never answer like this.</li>
-    <li>If you would say it differently, write your version. That is the most useful thing you can give.</li>
+    <li>If something is off, say what in a few words. Your feedback shapes the next round of answers. It is never used as the answer itself.</li>
   </ul>
   <div class="bar" aria-live="polite">
     <div class="bar-row"><span class="count" id="count">0 of 30 graded</span><span class="save" id="save">Loading your grades</span></div>
@@ -116,8 +116,8 @@ textarea { min-height: 4.5rem; resize: vertical; }
     card.classList.toggle("done", !!g.verdict);
     card.querySelectorAll(".verdict button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.v === g.verdict)); });
     var rw = $("rw-" + id), why = $("why-" + id);
-    if (document.activeElement !== rw) rw.value = g.rewrite || "";
-    if (document.activeElement !== why) why.value = g.why || "";
+    if (document.activeElement !== rw) rw.value = g.why || "";
+    if (why && document.activeElement !== why) why.value = g.why || "";
   }
   EX.forEach(function (e, i) {
     var card = el("section", "card"); card.id = "card-" + e.id;
@@ -135,11 +135,11 @@ textarea { min-height: 4.5rem; resize: vertical; }
       });
       v.append(b);
     });
-    var l1 = el("label", null, "How you would say it (optional)"), rw = el("textarea"); rw.id = "rw-" + e.id; l1.append(rw);
+    var l1 = el("label", null, "Your feedback (optional): what is off, or what you would want"), rw = el("textarea"); rw.id = "rw-" + e.id; l1.append(rw);
     var l2 = el("label", null, "Why (optional)"), why = el("input"); why.type = "text"; why.id = "why-" + e.id; l2.append(why);
-    rw.addEventListener("input", function () { (grades[e.id] || (grades[e.id] = {})).rewrite = rw.value; push(e.id); });
+    rw.addEventListener("input", function () { (grades[e.id] || (grades[e.id] = {})).why = rw.value; push(e.id); });
     why.addEventListener("input", function () { (grades[e.id] || (grades[e.id] = {})).why = why.value; push(e.id); });
-    card.append(meta, chat, did, v, l1, l2);
+    card.append(meta, chat, did, v, l1);
     $("cards").append(card);
     paint(e.id);
   });

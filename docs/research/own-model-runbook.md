@@ -22,10 +22,11 @@ One H100 costs 120 credits an hour: 2 credits a minute.
 
 ## The owner's own grades (2026-11-26)
 
-The owner grades a batch of 30 answers on a private page: Good, Almost or Bad, with his own wording where he would say it
-differently. His verdicts are the standard. 22 of the 30 are turns the agent readers kept and 8 are turns they dropped; the
-page does not say which, so his verdicts are not led. Which turn is which is in
-`2026-11-25-training-night/grading/key.json`; the page's source is `grading/page.html`.
+The owner grades a batch of 30 answers on a private page: Good, Almost or Bad, with a few words of feedback where something
+is off. His verdicts are the standard. **His words are feedback, never the answer itself** (owner, 2026-11-26: "what I write
+won't be the new answer, I will just give feedback and I will trust the next generation"). 22 of the 30 are turns the agent
+readers kept and 8 are turns they dropped; the page does not say which, so his verdicts are not led. Which turn is which is
+in `2026-11-25-training-night/grading/key.json`; the page's source is `grading/page.html`.
 
 When his grades are in (read them from the page's saved documents, collection `grades`, or from the text of its
 "Copy my grades" button):
@@ -34,9 +35,11 @@ When his grades are in (read them from the page's saved documents, collection `g
 python3 scripts/gpu/chat-data/apply_grades.py --grades grades.json --key docs/research/2026-11-25-training-night/grading/key.json --out-dir <folder>
 ```
 
-It writes which turns to leave out, his own wording as the answer to train on (`make_trainset.py --rewrites`), and a report of
-where he and the readers disagree. Each disagreement is a change to the readers' brief or to a rule, before the next read.
-A turn the readers dropped stays dropped even if he likes it: he sees the answer, not the tool results it has to match.
+It writes which turns to leave out of training (Bad and Almost) and a report: his feedback by verdict, and where he and the
+readers disagree. Then, before the next generation, each piece of feedback becomes one of three things: a rule or a situation
+card for the teacher, a check in code where code can catch it, or a line in the readers' brief. The next generation's answers
+are written by the teacher under those. A turn the readers dropped stays dropped even if he likes it: he sees the answer, not
+the tool results it has to match.
 
 ## Step 1: train the big model on the 435 checked examples (round 1)
 
