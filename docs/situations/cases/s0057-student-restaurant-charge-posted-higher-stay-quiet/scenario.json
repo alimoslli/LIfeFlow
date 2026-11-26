@@ -1,0 +1,80 @@
+{
+  "id": "s0057-student-restaurant-charge-posted-higher-stay-quiet",
+  "title": "International university student (campus info desk, 4 classes, Canvas, evening crammer, first-gen) ate out with cousins: the card showed $40.00 pending, the slip had a tip, and the charge posted Friday as $48.00; Dev reads the one charge, finds no duplicate or error, and stays quiet.",
+  "persona": "p2044-university-international-campus-job",
+  "now": "2026-11-27T10:30",
+  "history_days": 90,
+  "future_days": 30,
+  "seed": 7057,
+  "changes": [
+    {
+      "id": "m-receipt",
+      "type": "memory",
+      "content": "Dinner with my cousins on Wednesday: the card showed $40.00 pending, I added a tip on the slip.",
+      "category": "fact",
+      "via": "chat",
+      "told_at": "2026-11-25T21:40"
+    },
+    {
+      "id": "x-dinner",
+      "type": "purchase",
+      "at": "2026-11-25T20:45",
+      "account": "acc-checking",
+      "description": "RIVERSIDE GRILL 0382",
+      "merchant_name": "Riverside Grill",
+      "amount_cents": -4800,
+      "pfc": "FOOD_AND_DRINK_RESTAURANT",
+      "pending": false
+    }
+  ],
+  "dev_must_notice": [],
+  "best_fix": {
+    "action": "none",
+    "needs_user": false,
+    "what": "Nothing. Dev replaces the pending $40.00 with the posted $48.00 at Riverside Grill (x-dinner, authorized Wed Nov 25, posted Fri Nov 27), keeps one charge, and says nothing. If she opens the card: 'That's the $40.00 plus your $8.00 tip.' Available now stays $1,046.54 and its bills before the next paycheck are covered.",
+    "why": "She told Dev herself (m-receipt) that she added a tip on the slip, so $48.00 is expected and not a duplicate, a wrong amount or a fee. The pending amount no longer exists, so nothing is counted twice. Her Nov 27 paycheck ($303.84) is already in; the next bill is the $75.00 transit pass on Dec 1 and nothing needs moving."
+  },
+  "must_not": [
+    "flag the Riverside Grill charge as a duplicate, an overcharge or a dispute (x-dinner is $40.00 plus her tip)",
+    "count both the $40.00 pending and the $48.00 posted amounts",
+    "ask her to log or confirm the tip (m-receipt already says it)",
+    "send a card or push about the charge on Saturday morning, during her family call (m-02)",
+    "tell her to cut back on eating out",
+    "send a card or push about the Riverside Grill charge being $8.00 more than the pending amount on Saturday morning"
+  ],
+  "stay_quiet": true,
+  "tags": [
+    "student",
+    "university",
+    "international",
+    "campus job",
+    "4 classes",
+    "canvas",
+    "evening crammer",
+    "first generation",
+    "pending charge",
+    "amount changed on posting",
+    "tip",
+    "stay quiet",
+    "routine fit"
+  ],
+  "assumptions": [
+    "Restaurants often add the tip when the charge posts; the bank shows the final amount two days after the card authorization.",
+    "The simulator posts the dinner on Fri Nov 27 with authorized date Wed Nov 25; the pending $40.00 itself exists only in what she told Dev (m-receipt).",
+    "Her Nov 27 paycheck of $303.84 is already in checking and is counted because it has landed."
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "send a card or push about the Riverside Grill charge being $8.00 more than the pending amount on Saturday morning",
+        "routine": "call-family",
+        "why_wrong": "Saturday 9:00 to 9:45 AM is her firm weekly call with family, and the difference is the tip she already told Dev about",
+        "facts": [
+          "m-receipt",
+          "m-02"
+        ]
+      }
+    ]
+  }
+}

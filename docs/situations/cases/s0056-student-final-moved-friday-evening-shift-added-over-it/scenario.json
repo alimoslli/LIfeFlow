@@ -1,0 +1,141 @@
+{
+  "id": "s0056-student-final-moved-friday-evening-shift-added-over-it",
+  "title": "Community college student (family, grocery cashier, 5 classes, 15 credits, Canvas, afternoon steady) gets her History final moved to Fri Dec 11, 4 to 6 PM, and a Friday 5 to 10 PM shift is added the same day; Dev drafts the schedule request, books review blocks before the exam and nothing over it.",
+  "persona": "p4006-cc-family-grocer-car-insurance",
+  "now": "2026-11-30T18:00",
+  "history_days": 90,
+  "future_days": 30,
+  "seed": 7056,
+  "changes": [
+    {
+      "id": "c-final",
+      "type": "exam_move",
+      "course": "HIST 199",
+      "exam": "Final exam",
+      "date": "2026-12-11",
+      "start": "16:00",
+      "end": "18:00",
+      "announced_at": "2026-11-30T14:20",
+      "title": "History final exam moved to Friday Dec 11, 4 to 6 PM",
+      "announcement": "Because of a scheduling conflict in the exam hall, the U.S. History final is now Friday Dec 11, 4:00 to 6:00 PM, in the Exam hall. It is no longer Monday Dec 14."
+    },
+    {
+      "id": "c-shift",
+      "type": "shift_add",
+      "job": "job-main",
+      "start": "2026-12-11T17:00",
+      "end": "2026-12-11T22:00",
+      "break_minutes": 30,
+      "posted_at": "2026-11-30T15:10",
+      "notes": "Holiday rush, Friday added"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-clash",
+      "check": "collision",
+      "what": "The U.S. History final moved to Friday Dec 11, 4:00 to 6:00 PM in the Exam hall (c-final.announcement, exam-hist-199-final-exam, announced 2:20 PM today). At 3:10 PM the store added a shift the same Friday, 5:00 to 10:00 PM (c-shift, 'Holiday rush, Friday added'). The two overlap from 5 to 6 PM, and she would arrive late to a closed-door exam or leave it early. Her usual study that afternoon (14:00 to 16:45, m-01) also runs into the exam, so nothing should be booked from 4 PM.",
+      "by_when": "2026-12-01T12:00",
+      "facts": [
+        "c-final.announcement",
+        "exam-hist-199-final-exam",
+        "c-shift",
+        "m-01"
+      ]
+    }
+  ],
+  "best_fix": [
+    {
+      "for": "n-clash",
+      "action": "draft for them",
+      "needs_user": true,
+      "send_at": "2026-11-30T18:05",
+      "what": "A draft message to her Northgate Grocers supervisor for her to send: 'Hi, my History final was just moved to Friday Dec 11, 4 to 6 PM, and I saw the new 5 to 10 PM shift that day. Could I start at 6:30 PM instead, or be taken off that shift? I can cover Saturday or Sunday as usual.' Dev sends nothing itself and does not count the shift's pay.",
+      "why": "The shift was posted after the exam moved and one reply fixes it. Asking now keeps the schedule (posted two weeks ahead) from being locked."
+    },
+    {
+      "for": "n-clash",
+      "action": "plan",
+      "needs_user": true,
+      "send_at": "2026-11-30T18:05",
+      "what": "One tap adds two History review blocks with Undo: Mon Dec 7 and Wed Dec 9, 2:05 to 3:35 PM, in her afternoon study window, and leaves Friday Dec 11 from 4 PM empty for the exam. Nothing is added to the shift day.",
+      "why": "Mondays and Wednesdays she already studies at 2 PM after BUS 145 ends at 9:50; the exam takes the Friday slot only from 4 PM.",
+      "placements": [
+        {
+          "id": "pl-hist-1",
+          "activity": "study",
+          "label": "History final review",
+          "start": "2026-12-07T14:05",
+          "end": "2026-12-07T15:35"
+        },
+        {
+          "id": "pl-hist-2",
+          "activity": "study",
+          "label": "History final review",
+          "start": "2026-12-09T14:05",
+          "end": "2026-12-09T15:35"
+        }
+      ]
+    }
+  ],
+  "must_not": [
+    "keep a study block on Fri Dec 11 at 4 PM or later, or leave the 5 PM shift unflagged",
+    "keep the old Monday Dec 14 date in any plan or reminder",
+    "send the supervisor message without her tap",
+    "count the added shift's pay before it is paid",
+    "write, solve or check anything for the exam (planning only)",
+    "book review in the evening or on Saturday or Sunday (she studies weekday afternoons; Sunday morning is free)",
+    "add blocks without showing Undo"
+  ],
+  "stay_quiet": false,
+  "tags": [
+    "student",
+    "community college",
+    "with family",
+    "grocery job",
+    "5 classes",
+    "15 credits",
+    "canvas",
+    "afternoon steady",
+    "exam week",
+    "moved exam",
+    "exam must not be booked over",
+    "shift clash",
+    "draft for them",
+    "routine fit",
+    "undo"
+  ],
+  "assumptions": [
+    "The store posts schedules two weeks ahead and sometimes adds Friday shifts in the holiday rush.",
+    "The simulator draws the exam on the timeline as 4 to 5 PM; the real record (exam-hist-199-final-exam) runs 4:00 to 6:00 PM, and the case uses the record.",
+    "She drives to campus on her own insurance; Dev does not say anything about the car."
+  ],
+  "routine_fit": {
+    "placements": [
+      {
+        "placement": "pl-hist-1",
+        "routine": "study",
+        "window": "afternoon-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-hist-2",
+        "routine": "study",
+        "window": "afternoon-1",
+        "fits": true
+      }
+    ],
+    "tempting": [
+      {
+        "suggestion": "keep a study block on Fri Dec 11 at 4 PM or later, or leave the 5 PM shift unflagged",
+        "routine": "study",
+        "why_wrong": "Friday 4 to 6 PM is the exam itself and the new shift starts inside it",
+        "facts": [
+          "c-final.announcement",
+          "c-shift",
+          "m-01"
+        ]
+      }
+    ]
+  }
+}
