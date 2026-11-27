@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>LifeFlow Creative Studio</title>
+<style>
+/* Layout: one column on a phone, two on a laptop. The left column is "make something" (new concept, requests, status),
+   the right is the work (projects with storyboards, drafts, QC and costs), then the GPU room underneath. */
+@font-face { font-family: "LF Fraunces"; src: url(/files/public/fonts/Fraunces-SemiBold.ttf); font-weight: 600; }
+@font-face { font-family: "LF Fraunces"; src: url(/files/public/fonts/Fraunces-Bold.ttf); font-weight: 700; }
+@font-face { font-family: "LF Geist"; src: url(/files/public/fonts/Geist-Regular.ttf); font-weight: 400; }
+@font-face { font-family: "LF Geist"; src: url(/files/public/fonts/Geist-Medium.ttf); font-weight: 500; }
+@font-face { font-family: "LF Geist"; src: url(/files/public/fonts/Geist-SemiBold.ttf); font-weight: 600; }
+:root {
+  color-scheme: dark;
+  --night-0: #040a18; --night-1: #07132c; --night-2: #0b1d42; --night-3: #123058; --line: #1f3a66;
+  --text: #eef3fb; --muted: #9fb2d3; --sun: #ffd77a; --accent: #8fb6ff; --good: #7be0a6; --warn: #ffc46b; --bad: #ff8f7a;
+  --display: "LF Fraunces", Georgia, serif; --ui: "LF Geist", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: radial-gradient(1200px 700px at 75% -10%, var(--night-3), var(--night-1) 55%, var(--night-0)); background-color: var(--night-1); color: var(--text); font: 15px/1.5 var(--ui);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 60px; }
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 980px) { .wrap { grid-template-columns: 360px minmax(0, 1fr); align-items: start; } .wide { grid-column: 1 / -1; } }
+header { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between; }
+h1 { font: 700 clamp(28px, 5vw, 40px)/1.05 var(--display); margin: 0; text-wrap: balance; }
+h1 span { color: var(--sun); }
+h2 { font: 600 21px/1.2 var(--display); margin: 0 0 12px; }
+h3 { font: 600 17px/1.25 var(--display); margin: 0; }
+.sub, .muted { color: var(--muted); }
+.panel { background: rgb(11 29 66 / 0.72); border: 1px solid var(--line); border-radius: 18px; padding: 16px; min-width: 0; }
+label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+textarea, select, input { width: 100%; font: inherit; color: var(--text); background: var(--night-1); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+textarea { min-height: 96px; resize: vertical; }
+textarea:focus, select:focus, input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; } .row > * { flex: 1 1 120px; }
+button { font: 600 15px var(--ui); color: #1a1405; background: var(--sun); border: 0; border-radius: 999px; padding: 10px 18px; cursor: pointer; margin-top: 12px; }
+button.quiet { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; border-radius: 999px; padding: 2px 10px; border: 1px solid currentColor; white-space: nowrap; }
+.chip.code { color: var(--good); } .chip.hybrid { color: var(--accent); } .chip.ai { color: var(--sun); }
+.chip.pass { color: var(--good); } .chip.warn { color: var(--warn); } .chip.fail { color: var(--bad); } .chip.todo { color: var(--muted); }
+.project { display: grid; gap: 14px; }
+.scenes { display: grid; gap: 8px; }
+.scene { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 10px 12px; background: rgb(7 19 44 / 0.6); border-radius: 12px; }
+.scene p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.sb { width: 100%; border-radius: 12px; border: 1px solid var(--line); }
+.renders { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.render video { width: 100%; max-height: 420px; background: #000; border-radius: 12px; }
+.render .meta { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+details summary { cursor: pointer; color: var(--accent); font-size: 14px; margin-top: 6px; }
+.qc li { font-size: 13px; margin: 3px 0; list-style: none; } .qc { padding: 0; margin: 6px 0 0; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.tablewrap { overflow-x: auto; }
+.status { font-size: 14px; }
+.bar { height: 8px; border-radius: 99px; background: var(--night-0); overflow: hidden; margin-top: 6px; }
+.bar i { display: block; height: 100%; background: var(--sun); width: 0; transition: width .5s; }
+.compare { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.req { font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.empty { color: var(--muted); font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="wide">
+    <div><h1>LifeFlow <span>Creative Studio</span></h1><div class="sub" id="appline">Loading…</div></div>
+    <div class="status" id="status"></div>
+  </header>
+
+  <div style="display:grid;gap:22px;min-width:0">
+    <section class="panel">
+      <h2>New video</h2>
+      <form id="concept">
+        <label for="c-text">What should the video be?</label>
+        <textarea id="c-text" placeholder="A 15-second video introducing Goldie, funny, for TikTok"></textarea>
+        <div class="row">
+          <div><label for="c-format">Shape</label><select id="c-format"><option value="9x16">Vertical 9:16</option><option value="1x1">Square 1:1</option><option value="16x9">Wide 16:9</option></select></div>
+          <div><label for="c-secs">Seconds</label><input id="c-secs" type="number" min="5" max="90" value="20" /></div>
+        </div>
+        <label for="c-mode">How it's made</label>
+        <select id="c-mode"><option value="auto">Recommend for each scene</option><option value="code">Code only (free)</option><option value="hybrid">Hybrid (asks before paid footage)</option><option value="ai">AI cinematic (asks before spending)</option></select>
+        <button type="submit">Send to the studio</button>
+        <div class="muted" id="c-msg" role="status"></div>
+      </form>
+    </section>
+    <section class="panel">
+      <h2>Requests</h2>
+      <div id="requests" class="empty">No requests yet.</div>
+    </section>
+    <section class="panel">
+      <h2>Compare versions</h2>
+      <div class="row"><select id="cmp-a" aria-label="First version"></select><select id="cmp-b" aria-label="Second version"></select></div>
+      <div class="compare" id="compare" style="margin-top:12px"></div>
+    </section>
+  </div>
+
+  <section style="display:grid;gap:22px;min-width:0" id="projects"></section>
+
+  <section class="panel wide" id="gpu"></section>
+</div>
+<script>
+const T = new URLSearchParams(location.search).get("t");
+const q = (p) => (T ? `${p}${p.includes("?") ? "&" : "?"}t=${encodeURIComponent(T)}` : p);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const $ = (id) => document.getElementById(id);
+let S = null;
+async function post(body) {
+  const r = await fetch(q("/api/requests"), { method: "POST", headers: { "Content-Type": "application/json", ...(T ? { "x-studio-token": T } : {}) }, body: JSON.stringify(body) });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || "That didn't save.");
+  return j;
+}
+$("concept").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  try {
+    await post({ kind: "concept", text: $("c-text").value, format: $("c-format").value, seconds: $("c-secs").value, mode: $("c-mode").value });
+    $("c-msg").textContent = "Saved. Claude picks it up and sends a storyboard first.";
+    $("c-text").value = "";
+    load();
+  } catch (err) { $("c-msg").textContent = err.message; }
+});
+function renderLabel(r) { return `${r.project} · ${r.format} · ${r.quality} v${r.version}`; }
+function draw() {
+  const s = S;
+  $("appline").textContent = s.app ? `Showing the app as of ${s.app.date.slice(0, 10)} (${s.app.commit.slice(0, 8)}): ${s.app.subject}` : "App not synced yet (npm run sync-app)";
+  const st = s.status || {};
+  $("status").innerHTML = st.state === "rendering" ? `Rendering ${esc(st.project)} · ${esc(st.scene)} (${esc(st.format)} ${esc(st.quality)})<div class="bar"><i style="width:${Math.round((st.progress || 0) * 100)}%"></i></div>` : st.state === "failed" ? `<span class="chip fail">Render failed</span> ${esc(st.error)}` : `<span class="muted">Nothing rendering</span>`;
+  $("requests").innerHTML = s.requests.length ? s.requests.map((r) => `<div class="req"><span class="chip ${r.status === "new" ? "warn" : "pass"}">${esc(r.status)}</span> ${esc(r.kind)}${r.project ? ` · ${esc(r.project)}${r.scene ? ` / ${esc(r.scene)}` : ""}` : ""}<div>${esc(r.text)}</div><div class="muted">${new Date(r.at).toLocaleString()}</div></div>`).join("") : "No requests yet.";
+  const all = s.projects.flatMap((p) => p.renders);
+  for (const id of ["cmp-a", "cmp-b"]) {
+    const cur = $(id).value;
+    $(id).innerHTML = `<option value="">Pick a version</option>` + all.map((r) => `<option value="${esc(r.file)}">${esc(renderLabel(r))}</option>`).join("");
+    $(id).value = cur;
+  }
+  $("projects").innerHTML = s.projects.length ? s.projects.map((p) => {
+    const paid = p.costs.reduce((a, c) => a + (c.credits || 0), 0);
+    const renderSec = p.costs.reduce((a, c) => a + (c.renderSec || 0), 0);
+    return `<article class="panel project">
+      <div><h2>${esc(p.title)}</h2><div class="muted">${esc(p.concept)}</div></div>
+      ${p.storyboards.map((f) => `<img class="sb" loading="lazy" src="${q(`/files/${f}`)}" alt="Storyboard for ${esc(p.title)}">`).join("")}
+      <div class="scenes">${p.scenes.map((sc) => `<div class="scene"><span class="chip ${sc.mode}">${sc.mode}</span><div><strong>${esc(sc.title)}</strong> <span class="muted">${sc.seconds}s</span><p>${esc(sc.why)}${sc.estimate ? ` Paid option: about ${sc.estimate.credits} credits on ${esc(sc.estimate.model)}.` : ""}</p></div><button class="quiet" data-change="${esc(p.id)}|${esc(sc.id)}">Change</button></div>`).join("")}</div>
+      <div class="renders">${p.renders.length ? p.renders.map((r) => `<div class="render"><video controls preload="metadata" src="${q(`/files/${r.file}`)}"></video>
+        <div><strong>${esc(r.format)} ${esc(r.quality)} v${r.version}</strong> <span class="chip ${r.qc.verdict}">QC ${r.qc.verdict}</span></div>
+        <div class="meta">${r.seconds}s video · ${r.renderSec}s to render (${r.realtimeFactor}x) · peak ${r.peakMemoryMb} MB · ${r.cost.paidCredits} credits</div>
+        <details><summary>Checks</summary><ul class="qc">${r.qc.checks.map((c) => `<li><span class="chip ${c.status}">${c.status}</span> ${esc(c.name)}: ${esc(c.detail)}</li>`).join("")}</ul></details>
+        <a href="${q(`/files/${r.file}`)}" download style="color:var(--accent);font-size:14px">Download</a></div>`).join("") : `<div class="empty">No drafts yet.</div>`}</div>
+      <div class="muted">Spent so far: ${paid} paid credits · ${Math.round(renderSec / 60)} min of local rendering</div>
+    </article>`;
+  }).join("") : `<div class="panel empty">No projects yet.</div>`;
+  for (const b of document.querySelectorAll("[data-change]")) b.onclick = async () => {
+    const [project, scene] = b.dataset.change.split("|");
+    const text = window.prompt ? null : null;
+    const box = document.createElement("div");
+    box.innerHTML = `<label>What should change in "${esc(scene)}"?</label><textarea></textarea><button>Send change</button>`;
+    b.closest(".scene").after(box);
+    b.remove();
+    box.querySelector("button").onclick = async () => {
+      try { await post({ kind: "change", project, scene, text: box.querySelector("textarea").value }); box.innerHTML = `<div class="muted">Saved. Only this scene is re-rendered; the rest come from the cache.</div>`; load(); }
+      catch (err) { box.querySelector("label").textContent = err.message; }
+    };
+  };
+  const g = s.gpu.catalog || {};
+  const bench = s.gpu.benchmark;
+  $("gpu").innerHTML = `<h2>GPU room (Higgsfield)</h2>
+    <p class="muted">Nothing here rents a GPU. Claude runs a plan only after you approve its cap. Prices read ${esc(g.readAt)}.</p>
+    <div class="tablewrap"><table><tr><th>GPU</th><th>Memory</th><th>Credits an hour</th><th>Starts in</th></tr>${Object.entries(g.gpus || {}).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${v.vramGb} GB</td><td>${v.creditsPerHour}</td><td>~${v.typicalStartS}s</td></tr>`).join("")}</table></div>
+    <h3 style="margin-top:16px">Open models</h3>
+    <div class="tablewrap"><table><tr><th>Model</th><th>Makes</th><th>Licence</th><th>Runs on</th></tr>${Object.entries(g.models || {}).map(([k, v]) => `<tr><td>${esc(k)}${v.blocked ? ' <span class="chip fail">not for us</span>' : ""}</td><td>${esc(v.kind)}</td><td>${esc(v.licence)}</td><td>${esc((v.gpus || []).join(", "))}</td></tr>`).join("")}</table></div>
+    ${bench ? `<h3 style="margin-top:16px">Benchmark plan (waiting for your yes)</h3><p>Estimate ${bench.estimateCredits} credits, cap ${bench.approveUpTo}. ${bench.boxes.map((b) => `${esc(b.gpu)}: ${esc(b.models.join(", "))} (~${Math.round(b.minutes)} min)`).join(" · ")}. The same video seconds on hosted MAGI-2: ${bench.compare.hostedMagi2Credits} credits.</p><button class="quiet" id="approve-bench">Approve the benchmark</button>` : ""}
+    <h3 style="margin-top:16px">Measured runs</h3>
+    <div class="tablewrap"><table><tr><th>Date</th><th>GPU</th><th>Task</th><th>Minutes</th><th>Credits</th></tr>${((s.gpu.measured || {}).runs || []).map((r) => `<tr><td>${esc(r.date)}</td><td>${esc(r.gpu)}</td><td>${esc(r.task)}</td><td>${r.minutes ?? ""}</td><td>${r.credits ?? ""}</td></tr>`).join("")}</table></div>`;
+  const ab = $("approve-bench");
+  if (ab) ab.onclick = async () => { await post({ kind: "approve-gpu", text: `Approve the GPU benchmark up to ${bench.approveUpTo} credits.` }); ab.textContent = "Sent"; ab.disabled = true; load(); };
+}
+function compare() {
+  const files = [$("cmp-a").value, $("cmp-b").value].filter(Boolean);
+  $("compare").innerHTML = files.map((f) => `<video controls muted playsinline src="${q(`/files/${f}`)}" style="width:100%;border-radius:12px;background:#000"></video>`).join("");
+}
+$("cmp-a").onchange = compare;
+$("cmp-b").onchange = compare;
+async function load() {
+  try {
+    const r = await fetch(q("/api/state"));
+    S = await r.json();
+    draw();
+  } catch { $("appline").textContent = "Can't reach the studio. Is npm run dashboard running?"; }
+}
+load();
+setInterval(() => { if (!document.hidden && !document.activeElement?.matches("textarea, input, select")) load(); }, 5000);
+</script>
+</body>
+</html>

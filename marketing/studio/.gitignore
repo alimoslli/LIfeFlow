@@ -1,0 +1,13 @@
+# the app checkout the studio renders from (npm run sync-app), and everything rebuildable
+.app/
+node_modules/
+cache/
+.app-version.json
+# big media: renders and captures live outside git; the manifest JSONs next to them are kept
+projects/*/renders/*.mp4
+projects/*/storyboard/*.jpg
+captures/
+# written by npm run sync-app from the app
+public/app-brand/
+src/app-bridge/brand.generated.json
+requests/*.json

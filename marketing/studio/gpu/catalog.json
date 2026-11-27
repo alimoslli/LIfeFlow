@@ -1,0 +1,37 @@
+{
+  "_about": "Snapshot of what our Higgsfield integration offers, read with the free tools gpu_list_gpus, gpu_list_models and gpu_list_loras on 2026-11-27. Refresh it before planning: prices and models change.",
+  "readAt": "2026-11-27",
+  "gpus": {
+    "L40S": { "vramGb": 48, "creditsPerHour": 71, "typicalStartS": 15, "availability": "high (1 GPU)" },
+    "RTX-PRO-6000": { "vramGb": 96, "creditsPerHour": 98, "typicalStartS": 15, "availability": "high (1 GPU)" },
+    "H100": { "vramGb": 80, "creditsPerHour": 120, "typicalStartS": 57, "availability": "high (1 GPU)" },
+    "H200": { "vramGb": 141, "creditsPerHour": 134, "typicalStartS": 40, "availability": "high (1 GPU)" },
+    "B200": { "vramGb": 180, "creditsPerHour": 176, "typicalStartS": 26, "availability": "high (1 GPU)" },
+    "B300": { "vramGb": 288, "creditsPerHour": 197, "typicalStartS": 40, "availability": "high (1 GPU)" }
+  },
+  "models": {
+    "z-image-turbo": { "kind": "image", "repo": "Tongyi-MAI/Z-Image-Turbo", "licence": "Apache-2.0", "minVramGb": 24, "gpus": ["L40S", "RTX-PRO-6000", "H100", "H200", "B200", "B300"], "path": "catalog (gpu_rental_prepare / gpu_generate)" },
+    "z-image-base": { "kind": "image", "repo": "Tongyi-MAI/Z-Image", "licence": "Apache-2.0", "minVramGb": 24, "gpus": ["L40S", "RTX-PRO-6000", "H100", "H200", "B200", "B300"], "path": "catalog" },
+    "qwen-image": { "kind": "image", "repo": "Qwen/Qwen-Image", "licence": "Apache-2.0", "minVramGb": 48, "gpus": ["RTX-PRO-6000", "H100", "H200", "B200", "B300"], "path": "catalog" },
+    "ltx-video": { "kind": "video", "repo": "Lightricks/LTX-Video", "licence": "LTX Video Open Weights License (read before commercial use)", "minVramGb": 24, "gpus": ["L40S", "RTX-PRO-6000", "H100", "H200", "B200", "B300"], "path": "catalog" },
+    "wan-2-2-t2v-a14b": { "kind": "video", "repo": "Wan-AI/Wan2.2-T2V-A14B", "licence": "Apache-2.0", "minVramGb": 80, "gpus": ["RTX-PRO-6000", "H100", "H200", "B200", "B300", "L40S"], "path": "catalog", "note": "Listed for L40S although its minimum is 80 GB: expect offloading and slower runs there." },
+    "wan-2-1-i2v-14b-480p": { "kind": "video", "repo": "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers", "licence": "Apache-2.0", "minVramGb": 80, "gpus": ["RTX-PRO-6000", "H100", "H200", "B200", "B300"], "path": "catalog" },
+    "minimax-h3": { "kind": "video", "repo": "MiniMaxAI/MiniMax-H3", "licence": "Not stated in the catalog. Public reports say it excludes use in the US, EU, UK and South Korea: do NOT use for LifeFlow (a US company) until a lawyer reads it.", "minVramGb": 80, "gpus": ["RTX-PRO-6000", "H100", "H200", "B200", "B300"], "path": "catalog", "blocked": true },
+    "flux-2-dev": { "kind": "image", "repo": "black-forest-labs/FLUX.2-dev", "licence": "FLUX non-commercial dev licence (commercial use needs a paid licence from Black Forest Labs)", "minVramGb": 48, "gpus": ["RTX-PRO-6000", "H100", "H200"], "path": "not in the catalog: save with gpu_private_models, runs in a Supercomputer chat or by hand with gpu_rental_exec (weights cached in /workspace/hf)", "blocked": true }
+  },
+  "loras": "34 curated LoRAs (mostly for z-image-turbo and wan-2-1-i2v), e.g. Pixel Art Style and PhotorealTouch for Z-Image Turbo, 360 Camera Orbit and Crash Zoom In for Wan 2.1 I2V. We have 0 of our own.",
+  "hosted": {
+    "magi_2": { "creditsPerSecond": 2.5, "measured": "8 clips of 15 s at 1080p cost 37.5 credits each (2026-11-25)", "audio": true, "maxSeconds": 30 }
+  },
+  "capabilities": {
+    "verified_tools": ["gpu_list_gpus", "gpu_list_models", "gpu_list_loras", "gpu_private_models", "gpu_my", "gpu_explore", "gpu_rent", "gpu_rental", "gpu_rental_prepare", "gpu_rental_generate", "gpu_generate", "gpu_rental_exec", "gpu_rental_logs", "gpu_rental_stop", "gpu_show_computer", "gpu_lora_import", "gpu_job_quote (staff only for now)", "gpu_job_start", "gpu_job_status"],
+    "remote_compute": "kind compute: a box for shell commands (gpu_rental_exec, 90 s per call; longer work with nohup and a log).",
+    "storage": "/workspace persists across boxes (5 TB cap on our plan, 22.8 GB used). Everything else, HF_HOME included, is wiped when a box stops: cache custom weights under /workspace/hf.",
+    "blender": "kind blender_studio: full Blender with a browser desktop, scriptable with gpu_rental_exec.",
+    "unreal": "kind desktop: Unreal Editor, Nuke, DaVinci Resolve or Houdini installed per the /gpu/references presets.",
+    "comfyui": "Not a catalog item. Installable on a compute box (pip into /workspace) if a workflow needs it; the catalog models run without it.",
+    "lora_training": "Not a separate tool here: training runs on a compute box with our own script (as the skill-router training did on 2026-11-21).",
+    "billing": "By the second from ready; auto-stops after auto_pause_minutes idle (default 10). Nothing rents above the max_credits_per_hour we pass.",
+    "where_it_runs": "Only through Claude's Higgsfield tools (MCP). There is no API key for the studio's scripts, so a person or Claude runs the plan the planner prints."
+  }
+}

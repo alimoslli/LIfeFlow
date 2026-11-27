@@ -1,0 +1,31 @@
+{
+  "name": "lifeflow-creative-studio",
+  "private": true,
+  "description": "LifeFlow Creative Studio: code-based video production. Isolated from the app (own package, own node_modules).",
+  "type": "module",
+  "scripts": {
+    "sync-app": "node scripts/sync-app.mjs",
+    "capture": "node scripts/capture.mjs",
+    "studio": "remotion studio src/index.ts",
+    "render": "node scripts/render.mjs",
+    "qc": "node scripts/qc.mjs",
+    "dashboard": "node dashboard/server.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@react-three/fiber": "9.3.0",
+    "@remotion/bundler": "4.0.542",
+    "@remotion/cli": "4.0.542",
+    "@remotion/renderer": "4.0.542",
+    "@remotion/three": "4.0.542",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "remotion": "4.0.542",
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "@types/three": "0.180.0",
+    "typescript": "5.9.3"
+  }
+}
