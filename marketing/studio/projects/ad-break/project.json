@@ -1,0 +1,135 @@
+{
+ "id": "ad-break",
+ "title": "Ad break (open-world game parody, free version)",
+ "concept": "A night in an open-world crime game: the TV in an NPC's apartment plays a LifeFlow ad, the camera goes through the screen into the ad (the NPC's real LifeFlow day with a casino heist on it), then back out. Original world and characters.",
+ "formats": [
+  "9x16"
+ ],
+ "captures": [
+  "nico-mission/today"
+ ],
+ "music": {
+  "file": "audio/music_bright.mp3",
+  "from": 4,
+  "gain": -11
+ },
+ "cues": [
+  {
+   "t": 0.1,
+   "sfx": "night_stars_twinkle",
+   "gain": -14
+  },
+  {
+   "t": 5.6,
+   "sfx": "whoosh_scene_change",
+   "gain": -6
+  },
+  {
+   "t": 7.6,
+   "sfx": "tap",
+   "gain": -6
+  },
+  {
+   "t": 12.2,
+   "sfx": "added_to_your_day",
+   "gain": -9
+  },
+  {
+   "t": 14.1,
+   "sfx": "whoosh_scene_change",
+   "gain": -9
+  },
+  {
+   "t": 14.3,
+   "sfx": "answer_lands",
+   "gain": -6
+  },
+  {
+   "t": 16.4,
+   "sfx": "tap",
+   "gain": -7
+  },
+  {
+   "t": 21.2,
+   "sfx": "sun_goal_reached",
+   "gain": -6
+  },
+  {
+   "t": 23.6,
+   "sfx": "whoosh_scene_change",
+   "gain": -8
+  },
+  {
+   "t": 24,
+   "sfx": "logo_ending_sound",
+   "gain": -7
+  },
+  {
+   "t": 27.5,
+   "sfx": "send",
+   "gain": -6
+  }
+ ],
+ "scenes": [
+  {
+   "id": "room-in",
+   "title": "Night in the apartment, the ad comes on, through the screen",
+   "seconds": 6,
+   "mode": "code",
+   "why": "Stylised 3D room in code. Paid version: a MAGI-2 room plate with a green TV screen, the ad pinned onto it in code.",
+   "estimate": {
+    "credits": 15,
+    "model": "magi_2 (6 s)"
+   }
+  },
+  {
+   "id": "ad-phone",
+   "title": "In the ad: the NPC's real LifeFlow day",
+   "seconds": 8,
+   "mode": "code",
+   "why": "The real app (nico-mission capture) on a 3D phone: always code.",
+   "estimate": null
+  },
+  {
+   "id": "ad-mission",
+   "title": "The heads-up becomes a mission",
+   "seconds": 3.5,
+   "mode": "code",
+   "why": "HUD graphics are code. Paid version: a MAGI-2 street plate behind them.",
+   "estimate": {
+    "credits": 10,
+    "model": "magi_2 (4 s)"
+   }
+  },
+  {
+   "id": "ad-punch",
+   "title": "Flowers: who are you?",
+   "seconds": 3.5,
+   "mode": "code",
+   "why": "Subtitles over the sky. Paid version: the MAGI-2 rooftop two-shot.",
+   "estimate": {
+    "credits": 10,
+    "model": "magi_2 (4 s)"
+   }
+  },
+  {
+   "id": "ad-cleared",
+   "title": "Day cleared",
+   "seconds": 2.5,
+   "mode": "code",
+   "why": "Type and particles.",
+   "estimate": null
+  },
+  {
+   "id": "room-out",
+   "title": "Back in the room: Where do I get that app?",
+   "seconds": 6.5,
+   "mode": "code",
+   "why": "Same room; the sign-off plays on the TV.",
+   "estimate": {
+    "credits": 17.5,
+    "model": "magi_2 (7 s)"
+   }
+  }
+ ]
+}

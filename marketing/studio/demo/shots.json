@@ -1,14 +1,125 @@
 {
-  "_about": "What to film from the real app, per demo profile. Each shot is played on a frozen clock (the app thinks it is `clock` on the day the profile was seeded) and stepped one video frame at a time, so a capture repeats exactly. Actions run at a time in seconds: tap a selector, drag across the screen, scroll, or go to a page.",
-  "profiles": {
-    "nico-mission": { "email": "nico@studio.lifeflow.local", "password": "studio-demo-only", "tz": "America/New_York", "clock": "17:10" },
-    "alex-student": { "email": "alex@studio.lifeflow.local", "password": "budgetflow-demo", "tz": "America/New_York", "clock": "12:20" }
+ "_about": "What to film from the real app, per demo profile. Each shot is played on a frozen clock (the app thinks it is `clock` on the day the profile was seeded) and stepped one video frame at a time, so a capture repeats exactly. Actions run at a time in seconds: tap a selector, drag across the screen, scroll, or go to a page.",
+ "profiles": {
+  "nico-mission": {
+   "email": "nico@studio.lifeflow.local",
+   "password": "studio-demo-only",
+   "tz": "America/New_York",
+   "clock": "10:40"
   },
-  "shots": [
-    { "id": "today", "profile": "nico-mission", "path": "/", "seconds": 7, "actions": [{ "at": 2.2, "tap": "[data-dc=\"today\"]" }, { "at": 4.2, "drag": [300, 120, 260, 1.1] }] },
-    { "id": "money", "profile": "nico-mission", "path": "/money", "seconds": 4, "actions": [{ "at": 2.0, "scroll": [500, 1.2] }] },
-    { "id": "todos", "profile": "nico-mission", "path": "/tasks", "seconds": 3, "actions": [] },
-    { "id": "today", "profile": "alex-student", "path": "/", "seconds": 7, "actions": [{ "at": 2.2, "tap": "[data-dc=\"today\"]" }, { "at": 4.2, "drag": [300, 120, 260, 1.1] }] },
-    { "id": "money", "profile": "alex-student", "path": "/money", "seconds": 4, "actions": [{ "at": 2.0, "scroll": [500, 1.2] }] }
-  ]
+  "alex-student": {
+   "email": "alex@studio.lifeflow.local",
+   "password": "budgetflow-demo",
+   "tz": "America/New_York",
+   "clock": "12:20"
+  }
+ },
+ "shots": [
+  {
+   "id": "today",
+   "profile": "alex-student",
+   "path": "/",
+   "seconds": 7,
+   "actions": [
+    {
+     "at": 2.2,
+     "tap": "[data-dc=\"today\"]"
+    },
+    {
+     "at": 4.2,
+     "drag": [
+      300,
+      120,
+      260,
+      1.1
+     ]
+    }
+   ]
+  },
+  {
+   "id": "money",
+   "profile": "alex-student",
+   "path": "/money",
+   "seconds": 4,
+   "actions": [
+    {
+     "at": 2.0,
+     "scroll": [
+      500,
+      1.2
+     ]
+    }
+   ]
+  },
+  {
+   "id": "today",
+   "profile": "nico-mission",
+   "path": "/",
+   "seconds": 10,
+   "actions": [
+    {
+     "at": 1.6,
+     "tap": "[data-dc=\"today\"]"
+    },
+    {
+     "at": 3.0,
+     "drag": [
+      330,
+      60,
+      260,
+      1.1
+     ]
+    },
+    {
+     "at": 4.5,
+     "drag": [
+      330,
+      60,
+      260,
+      1.1
+     ]
+    },
+    {
+     "at": 6.0,
+     "drag": [
+      330,
+      60,
+      260,
+      1.1
+     ]
+    },
+    {
+     "at": 7.5,
+     "drag": [
+      330,
+      120,
+      260,
+      1.0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "money",
+   "profile": "nico-mission",
+   "path": "/money",
+   "seconds": 4,
+   "actions": [
+    {
+     "at": 1.6,
+     "scroll": [
+      520,
+      1.4
+     ]
+    }
+   ]
+  },
+  {
+   "id": "todos",
+   "profile": "nico-mission",
+   "path": "/tasks",
+   "seconds": 3,
+   "actions": []
+  }
+ ]
 }

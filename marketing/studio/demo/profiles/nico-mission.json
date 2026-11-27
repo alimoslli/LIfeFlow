@@ -1,39 +1,234 @@
 {
-  "_about": "GTA-style parody profile for the mission ad. All made up: an original character (Nico) in an invented city (Port Solana). No real people, brands or game characters.",
-  "email": "nico@studio.lifeflow.local",
-  "name": "Nico Reyes",
-  "tz": "America/New_York",
-  "skyling": "star",
-  "accounts": [
-    { "key": "chk", "name": "Everyday Checking", "type": "depository", "subtype": "checking", "institution": "Port Solana Credit Union", "mask": "7781", "balance": 4120.37 },
-    { "key": "card", "name": "Night Owl Card", "type": "credit", "institution": "Bayside Card Co", "mask": "0420", "balance": 612.18, "limit": 5000 }
-  ],
-  "transactions": [
-    { "account": "card", "daysAgo": 0, "desc": "SUNSET DINER", "merchant": "Sunset Diner", "amount": -14.2, "category": "Restaurants" },
-    { "account": "card", "daysAgo": 0, "desc": "GAS & GO 12", "merchant": "Gas & Go", "amount": -52.1, "category": "Gas" },
-    { "account": "card", "daysAgo": 1, "desc": "SPARKLE CAR WASH", "merchant": "Sparkle Car Wash", "amount": -18, "category": "Transportation" },
-    { "account": "card", "daysAgo": 1, "desc": "NEON ARCADE", "merchant": "Neon Arcade", "amount": -25, "category": "Entertainment" },
-    { "account": "card", "daysAgo": 2, "desc": "HARBOR TAILORS", "merchant": "Harbor Tailors", "amount": -40, "category": "Clothing" },
-    { "account": "card", "daysAgo": 3, "desc": "MARINA FUEL DOCK", "merchant": "Marina Fuel Dock", "amount": -96.4, "category": "Gas" },
-    { "account": "chk", "daysAgo": 4, "desc": "SIDE GIGS LLC PAYROLL", "merchant": "Side Gigs LLC", "amount": 1850, "category": "Paycheck", "kind": "income" }
-  ],
-  "bills": [
-    { "name": "Garage rent", "amount": -350, "inDays": 2, "category": "Rent" },
-    { "name": "Phone plan", "amount": -30, "inDays": 5, "category": "Phone" }
-  ],
-  "goals": [{ "name": "Beach house fund", "target": 250000, "saved": 41300, "inDays": 700 }],
-  "events": [
-    { "title": "Morning run on the boardwalk", "day": 0, "start": "07:30", "end": "08:15", "location": "Ocean Drive" },
-    { "title": "Car wash (the getaway car)", "day": 0, "start": "11:00", "end": "11:30", "location": "Sparkle Car Wash" },
-    { "title": "Pick up the crew", "day": 0, "start": "14:00", "end": "14:30", "location": "Neon Arcade" },
-    { "title": "Dinner with Vale", "day": 0, "start": "18:30", "end": "20:00", "location": "Sunset Diner" },
-    { "title": "Casino job", "day": 0, "start": "21:30", "end": "23:30", "location": "Golden Reef Casino" },
-    { "title": "Return the borrowed van", "day": 1, "start": "10:00", "end": "10:30", "location": "Harbor Rentals" }
-  ],
-  "tasks": [
-    { "title": "Buy flowers for Vale", "day": 0, "priority": "high" },
-    { "title": "Pay the parking tickets (all 14)", "day": 2, "priority": "medium" },
-    { "title": "Ask the crew to stop calling it a heist in the group chat", "day": 0, "priority": "low" },
-    { "title": "Pick up the suit from the tailor", "day": 0, "priority": "medium", "done": true }
-  ]
+ "_about": "GTA-style parody profile for the mission ad. All made up: an original character (Nico) in an invented city (Port Solana). No real people, brands or game characters.",
+ "email": "nico@studio.lifeflow.local",
+ "name": "Nico Reyes",
+ "tz": "America/New_York",
+ "skyling": "star",
+ "accounts": [
+  {
+   "key": "chk",
+   "name": "Everyday Checking",
+   "type": "depository",
+   "subtype": "checking",
+   "institution": "Port Solana Credit Union",
+   "mask": "7781",
+   "balance": 4120.37
+  },
+  {
+   "key": "card",
+   "name": "Night Owl Card",
+   "type": "credit",
+   "institution": "Bayside Card Co",
+   "mask": "0420",
+   "balance": 612.18,
+   "limit": 5000
+  }
+ ],
+ "transactions": [
+  {
+   "account": "card",
+   "daysAgo": 0,
+   "desc": "SUNSET DINER",
+   "merchant": "Sunset Diner",
+   "amount": -14.2,
+   "category": "Restaurants"
+  },
+  {
+   "account": "card",
+   "daysAgo": 0,
+   "desc": "GAS & GO 12",
+   "merchant": "Gas & Go",
+   "amount": -52.1,
+   "category": "Gas"
+  },
+  {
+   "account": "card",
+   "daysAgo": 1,
+   "desc": "SPARKLE CAR WASH",
+   "merchant": "Sparkle Car Wash",
+   "amount": -18,
+   "category": "Transportation"
+  },
+  {
+   "account": "card",
+   "daysAgo": 1,
+   "desc": "NEON ARCADE",
+   "merchant": "Neon Arcade",
+   "amount": -25,
+   "category": "Entertainment"
+  },
+  {
+   "account": "card",
+   "daysAgo": 2,
+   "desc": "HARBOR TAILORS",
+   "merchant": "Harbor Tailors",
+   "amount": -40,
+   "category": "Clothing"
+  },
+  {
+   "account": "card",
+   "daysAgo": 3,
+   "desc": "MARINA FUEL DOCK",
+   "merchant": "Marina Fuel Dock",
+   "amount": -96.4,
+   "category": "Gas"
+  },
+  {
+   "account": "chk",
+   "daysAgo": 4,
+   "desc": "SIDE GIGS LLC PAYROLL",
+   "merchant": "Side Gigs LLC",
+   "amount": 1850,
+   "category": "Paycheck",
+   "kind": "income"
+  },
+  {
+   "account": "card",
+   "daysAgo": 8,
+   "desc": "SUNSET DINER",
+   "merchant": "Sunset Diner",
+   "amount": -14,
+   "category": "Restaurants"
+  },
+  {
+   "account": "card",
+   "daysAgo": 15,
+   "desc": "SUNSET DINER",
+   "merchant": "Sunset Diner",
+   "amount": -16,
+   "category": "Restaurants"
+  },
+  {
+   "account": "card",
+   "daysAgo": 22,
+   "desc": "SUNSET DINER",
+   "merchant": "Sunset Diner",
+   "amount": -12,
+   "category": "Restaurants"
+  },
+  {
+   "account": "card",
+   "daysAgo": 1,
+   "desc": "OCEAN GRILL",
+   "merchant": "Ocean Grill",
+   "amount": -45,
+   "category": "Restaurants"
+  },
+  {
+   "account": "card",
+   "daysAgo": 2,
+   "desc": "OCEAN GRILL",
+   "merchant": "Ocean Grill",
+   "amount": -52,
+   "category": "Restaurants"
+  },
+  {
+   "account": "card",
+   "daysAgo": 3,
+   "desc": "OCEAN GRILL",
+   "merchant": "Ocean Grill",
+   "amount": -59,
+   "category": "Restaurants"
+  }
+ ],
+ "bills": [
+  {
+   "name": "Garage rent",
+   "amount": -350,
+   "inDays": 2,
+   "category": "Rent"
+  },
+  {
+   "name": "Phone plan",
+   "amount": -30,
+   "inDays": 5,
+   "category": "Phone"
+  }
+ ],
+ "goals": [
+  {
+   "name": "Beach house fund",
+   "target": 250000,
+   "saved": 41300,
+   "inDays": 700
+  }
+ ],
+ "events": [
+  {
+   "title": "Buy flowers for Vale",
+   "day": 0,
+   "start": "11:00",
+   "end": "11:20",
+   "location": "Bloom & Co."
+  },
+  {
+   "title": "Gym",
+   "day": 0,
+   "start": "13:00",
+   "end": "14:00",
+   "location": "Muscle Beach Port Solana"
+  },
+  {
+   "title": "Move cash",
+   "day": 0,
+   "start": "15:00",
+   "end": "15:20",
+   "location": "Port Solana Credit Union"
+  },
+  {
+   "title": "Call the crew",
+   "day": 0,
+   "start": "16:00",
+   "end": "16:15"
+  },
+  {
+   "title": "Dinner with Vale",
+   "day": 0,
+   "start": "18:00",
+   "end": "19:30",
+   "location": "Sunset Diner"
+  },
+  {
+   "title": "Casino heist",
+   "day": 0,
+   "start": "20:00",
+   "end": "23:00",
+   "location": "Golden Reef Casino"
+  },
+  {
+   "title": "Return the getaway van",
+   "day": 1,
+   "start": "10:00",
+   "end": "10:30",
+   "location": "Harbor Rentals"
+  }
+ ],
+ "tasks": [
+  {
+   "title": "Buy flowers for Vale",
+   "day": 0,
+   "priority": "high"
+  },
+  {
+   "title": "Lay low (2 hrs)",
+   "day": 0,
+   "priority": "medium"
+  },
+  {
+   "title": "Pay the parking tickets (all 14)",
+   "day": 2,
+   "priority": "medium"
+  },
+  {
+   "title": "Ask the crew to stop calling it a heist in the group chat",
+   "day": 0,
+   "priority": "low"
+  },
+  {
+   "title": "Pick up the suit from the tailor",
+   "day": 0,
+   "priority": "medium",
+   "done": true
+  }
+ ]
 }

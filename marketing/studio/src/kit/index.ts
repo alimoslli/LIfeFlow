@@ -12,3 +12,5 @@ export * from "./FinanceChart";
 export * from "./fx";
 export * from "./BrandOutro";
 export * from "./City3D";
+export * from "./OnQuad";
+export * from "./Room3D";

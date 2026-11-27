@@ -73,3 +73,18 @@ export function Objective({ at, text, mark }: { at: number; text: string; mark?:
     </div>
   );
 }
+
+/** Cutscene subtitles: the speaker in gold capitals, the line in white, timed in seconds within the scene. */
+export function GameSubtitles({ lines }: { lines: { who: string; text: string; s: number; e: number }[] }) {
+  const frame = useCurrentFrame();
+  const L = useLayout();
+  const t = frame / L.fps;
+  const cur = lines.find((l) => t >= l.s && t <= l.e);
+  if (!cur) return null;
+  const a = Math.min(1, (t - cur.s) / 0.12, (cur.e - t) / 0.12);
+  return (
+    <div style={{ position: "absolute", left: L.safe.side, right: L.safe.side, bottom: L.safe.bottom * 0.55 + 340 * L.u, textAlign: "center", fontFamily: F.ui, fontWeight: 600, fontSize: 46 * L.u, lineHeight: 1.3, color: "#fff", opacity: a, textShadow: "0 2px 6px rgb(0 0 0 / 0.9), 0 0 2px #000" }}>
+      <span style={{ color: "#ffd77a", letterSpacing: "0.06em" }}>{cur.who.toUpperCase()}:</span> {cur.text}
+    </div>
+  );
+}

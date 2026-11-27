@@ -1,6 +1,6 @@
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { SUN, darkness, rgbCss, skyAt } from "../app-bridge";
-import { rng } from "./util";
+import { rng, useLayout } from "./util";
 
 /**
  * The app's sky at any minute (the app's own colour keys, lib/sky.ts), with its stars and clouds.
@@ -8,7 +8,8 @@ import { rng } from "./util";
  */
 export function Sky({ minute, clouds = 4, stars = true, seed = 7, sun = true }: { minute: number | [number, number]; clouds?: number; stars?: boolean; seed?: number; sun?: boolean }) {
   const frame = useCurrentFrame();
-  const { durationInFrames, width, height } = useVideoConfig();
+  const { durationInFrames } = useVideoConfig();
+  const { width, height } = useLayout();
   const m = Array.isArray(minute) ? interpolate(frame, [0, durationInFrames - 1], minute, { extrapolateRight: "clamp" }) : minute;
   const [top, mid, hor] = skyAt(m, SUN.rise, SUN.set);
   const dark = darkness(m, SUN.rise, SUN.set);

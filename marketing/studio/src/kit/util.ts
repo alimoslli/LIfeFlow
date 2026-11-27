@@ -1,3 +1,4 @@
+import { createContext, createElement, useContext, type ReactNode } from "react";
 import { Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 
 export type Format = "9x16" | "1x1" | "16x9";
@@ -16,8 +17,20 @@ export const prog = (f: number, a: number, b: number, e = ease) => interpolate(f
 export const sec = (s: number, fps = 30) => Math.round(s * fps);
 
 /** Layout helpers that work for vertical, square and wide: `u` is 1 at 1080 px on the short side. */
+const LayoutCtx = createContext<{ width: number; height: number } | null>(null);
+/** Lay out the kit inside a box of its own size (a TV screen, a picture-in-picture) instead of the whole video. */
+export function LayoutBox({ width, height, children }: { width: number; height: number; children: ReactNode }) {
+  return createElement(
+    LayoutCtx.Provider,
+    { value: { width, height } },
+    createElement("div", { style: { position: "relative", width, height, overflow: "hidden" } }, children),
+  );
+}
 export function useLayout() {
-  const { width, height, fps } = useVideoConfig();
+  const box = useContext(LayoutCtx);
+  const vc = useVideoConfig();
+  const { width, height } = box ?? vc;
+  const fps = vc.fps;
   const portrait = height > width;
   const u = Math.min(width, height) / 1080;
   return {
