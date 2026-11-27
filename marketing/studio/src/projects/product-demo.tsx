@@ -7,7 +7,7 @@ const Hook = () => {
   const L = useLayout();
   return (
     <Fade inF={0} outF={6}>
-      <Sky minute={[6 * 60 + 40, 8 * 60 + 30]} clouds={5} />
+      <Sky minute={[6 * 60 + 40, 8 * 60 + 30]} clouds={0} />
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
         <KineticTitle text="Your whole day, worked out before you ask." gold={["worked"]} size={L.portrait ? 104 : 84} y={L.height * 0.36} />
       </AbsoluteFill>
@@ -24,14 +24,14 @@ const PhoneToday = () => {
       <Stage3D
         handheld={1}
         cam={[
-          { f: 0, pos: [1.6, -0.9, 2.2], look: [0, 0.05, 0], fov: 30 },
-          { f: 80, pos: [0.35, 0.05, 2.35], look: [0, 0.05, 0], fov: 30 },
-          { f: 179, pos: [0.0, 0.0, 1.85], look: [0, 0.0, 0], fov: 30 },
+          { f: 0, pos: [2.2, -1.5, 3.9], look: [0, -0.3, 0], fov: 30 },
+          { f: 80, pos: [0.5, -0.25, 3.8], look: [0, -0.33, 0], fov: 30 },
+          { f: 179, pos: [0.0, -0.3, 3.35], look: [0, -0.36, 0], fov: 30 },
         ]}
       >
-        <Phone3D screenVideo="captures/alex-student/today.mp4" rotation={[0, -0.12 + f * 0.0007, 0]} />
+        <Phone3D screen="captures/alex-student/today" rotation={[0, -0.12 + f * 0.0007, 0]} />
       </Stage3D>
-      <KineticTitle text="Class, work and money on one sky." gold={["one", "sky."]} size={70} y={L.safe.top * 0.65} at={6} />
+      <KineticTitle text="Class, work and money on one sky." gold={["one", "sky."]} size={70} y={L.height - L.safe.bottom - 40 * L.u} at={6} />
       <Grain amount={0.06} />
     </Fade>
   );
@@ -44,15 +44,15 @@ const Money = () => {
       <Stage3D
         handheld={1}
         cam={[
-          { f: 0, pos: [-1.2, 0.5, 2.4], look: [0, 0, 0], fov: 30 },
-          { f: 119, pos: [-0.4, 0.1, 2.0], look: [0, -0.05, 0], fov: 30 },
+          { f: 0, pos: [-1.6, 0.3, 4.0], look: [0, -0.32, 0], fov: 30 },
+          { f: 119, pos: [-0.5, -0.15, 3.5], look: [0, -0.36, 0], fov: 30 },
         ]}
         warmth={0.8}
       >
-        <Phone3D screenVideo="captures/alex-student/money.mp4" rotation={[0.05, 0.25, 0.02]} />
+        <Phone3D screen="captures/alex-student/money" rotation={[0.05, 0.25, 0.02]} />
       </Stage3D>
       <Notification at={28} hold={80} title="Ray" body="Rent ($950) is due Tuesday. You have $1,842 in checking." />
-      <KineticTitle text="It tells you before the bill does." gold={["before"]} size={66} y={L.height - L.safe.bottom - 80 * L.u} at={8} />
+      <KineticTitle text="It tells you before the bill does." gold={["before"]} size={66} y={L.height - L.safe.bottom - 40 * L.u} at={8} />
       <Grain amount={0.06} />
     </Fade>
   );

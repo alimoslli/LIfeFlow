@@ -1,0 +1,106 @@
+{
+ "id": "mission",
+ "title": "Nico's day (crime-game parody)",
+ "concept": "A crime-game style sequence: night city, the phone buzzes, the skyling's heads-up becomes a mission (flowers before dinner), money ticks, day cleared. Nico's real LifeFlow day is on the phone.",
+ "formats": [
+  "9x16",
+  "1x1",
+  "16x9"
+ ],
+ "captures": [
+  "nico-mission/today"
+ ],
+ "music": {
+  "file": "audio/music_bright.mp3",
+  "from": 20,
+  "gain": -10
+ },
+ "cues": [
+  {
+   "t": 0.2,
+   "sfx": "whoosh_scene_change",
+   "gain": -12
+  },
+  {
+   "t": 4.2,
+   "sfx": "send",
+   "gain": -6
+  },
+  {
+   "t": 4.75,
+   "sfx": "answer_lands",
+   "gain": -6
+  },
+  {
+   "t": 10.1,
+   "sfx": "whoosh_scene_change",
+   "gain": -8
+  },
+  {
+   "t": 10.2,
+   "sfx": "added_to_your_day",
+   "gain": -6
+  },
+  {
+   "t": 12.5,
+   "sfx": "tap",
+   "gain": -6
+  },
+  {
+   "t": 13.6,
+   "sfx": "sun_goal_reached",
+   "gain": -6
+  },
+  {
+   "t": 16.6,
+   "sfx": "logo_ending_sound",
+   "gain": -6
+  }
+ ],
+ "scenes": [
+  {
+   "id": "street",
+   "title": "Night street, game HUD",
+   "seconds": 4,
+   "mode": "code",
+   "why": "A stylised code city reads as 'game' and costs nothing. For a photoreal open-world street with people and traffic, this is the scene to hand to MAGI-2 (hybrid) and keep the HUD in code.",
+   "estimate": {
+    "credits": 10,
+    "model": "magi_2 (4 s, 1080p)",
+    "note": "only if the owner wants photoreal footage here"
+   }
+  },
+  {
+   "id": "phone",
+   "title": "The phone buzzes: the real app",
+   "seconds": 6,
+   "mode": "code",
+   "why": "3D phone in code with the real Today screen captured from the current app.",
+   "estimate": null
+  },
+  {
+   "id": "mission",
+   "title": "The heads-up becomes a mission",
+   "seconds": 3.5,
+   "mode": "code",
+   "why": "Mission card, objective line and cash counter are HUD graphics: code does them crisply and repeatably.",
+   "estimate": null
+  },
+  {
+   "id": "passed",
+   "title": "Day cleared",
+   "seconds": 2.5,
+   "mode": "code",
+   "why": "Type and particles.",
+   "estimate": null
+  },
+  {
+   "id": "outro",
+   "title": "Sign-off",
+   "seconds": 3,
+   "mode": "code",
+   "why": "Brand.",
+   "estimate": null
+  }
+ ]
+}

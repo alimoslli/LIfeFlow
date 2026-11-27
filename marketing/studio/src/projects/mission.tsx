@@ -28,8 +28,8 @@ const PhoneUp = () => {
   return (
     <Fade>
       <AbsoluteFill style={{ background: "radial-gradient(ellipse at 50% 40%, #3a2c5c 0%, #120f26 70%)" }} />
-      <Stage3D handheld={1.4} cam={[{ f: 0, pos: [0.6, -1.6, 2.6], look: [0, 0, 0], fov: 32 }, { f: 60, pos: [0.15, -0.2, 2.25], look: [0, 0, 0], fov: 32 }, { f: 179, pos: [0, 0, 1.95], look: [0, 0.02, 0], fov: 32 }]} warmth={0.3}>
-        <Phone3D screenVideo="captures/nico-mission/today.mp4" rotation={[0.08, -0.1 + f * 0.0006, -0.04]} body="#3a3d46" />
+      <Stage3D handheld={1.4} cam={[{ f: 0, pos: [0.9, -2.2, 3.7], look: [0, 0, 0], fov: 32 }, { f: 60, pos: [0.2, -0.3, 3.3], look: [0, 0, 0], fov: 32 }, { f: 179, pos: [0, 0, 2.8], look: [0, 0.02, 0], fov: 32 }]} warmth={0.3}>
+        <Phone3D screen="captures/nico-mission/today" rotation={[0.08, -0.1 + f * 0.0006, -0.04]} body="#3a3d46" />
       </Stage3D>
       <Notification at={20} hold={100} title="Twinkle" body="Dinner with Vale at 6:30. Flowers are still on your list." />
       <CashCounter from={4120} to={4120} a={0} b={1} />
@@ -63,7 +63,7 @@ const Passed = () => {
       <Burst at={4} x={L.width / 2} y={L.height * 0.42} n={60} seed={5} />
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", flexDirection: "column", fontFamily: F.ui, fontStyle: "italic", textTransform: "uppercase", color: "#fff" }}>
         <div style={{ fontSize: 130 * L.u, fontWeight: 700, color: "#ffd77a", transform: `scale(${0.6 + 0.4 * prog(f, 0, 10)})`, WebkitTextStroke: `${6 * L.u}px #1a1030`, paintOrder: "stroke fill" }}>Day cleared</div>
-        <div style={{ fontSize: 40 * L.u, fontWeight: 600, opacity: prog(f, 12, 22), letterSpacing: "0.08em" }}>Flowers bought · Dinner on time · Casino job 9:30 PM</div>
+        <div style={{ fontSize: 40 * L.u, fontWeight: 600, opacity: prog(f, 12, 22), letterSpacing: "0.06em", textAlign: "center", lineHeight: 1.35 }}>Flowers bought · Dinner on time<br />Next: casino job, 9:30 PM</div>
       </AbsoluteFill>
       <CashCounter from={4075} to={4075} a={0} b={1} />
       <Grain amount={0.08} vignette={0.55} />

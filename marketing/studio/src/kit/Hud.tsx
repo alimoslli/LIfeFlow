@@ -64,7 +64,7 @@ export function Objective({ at, text, mark }: { at: number; text: string; mark?:
   const p = prog(frame, at, at + 8);
   if (frame < at) return null;
   return (
-    <div style={{ position: "absolute", left: L.safe.side, right: L.safe.side, bottom: L.safe.bottom * 0.9, textAlign: "center", fontFamily: F.ui, fontWeight: 600, fontSize: 46 * L.u, color: "#fff", opacity: p, WebkitTextStroke: `${6 * L.u}px #070a12`, paintOrder: "stroke fill" }}>
+    <div style={{ position: "absolute", left: L.safe.side, right: L.safe.side, bottom: L.safe.bottom * 0.55 + 340 * L.u, textAlign: "center", fontFamily: F.ui, fontWeight: 600, fontSize: 46 * L.u, color: "#fff", opacity: p, WebkitTextStroke: `${6 * L.u}px #070a12`, paintOrder: "stroke fill" }}>
       {text.split(" ").map((w, i) => (
         <span key={i} style={{ color: mark && w.toLowerCase().includes(mark.toLowerCase()) ? "#ffd77a" : undefined }}>
           {w}{" "}

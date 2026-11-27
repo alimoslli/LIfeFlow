@@ -52,7 +52,7 @@ function Lights({ warmth = 0.5, env = 0.55 }: { warmth?: number; env?: number })
 export function Stage3D({ cam, children, warmth, env, shadows = false, handheld = 0 }: { cam: CamKey[]; children: ReactNode; warmth?: number; env?: number; shadows?: boolean; handheld?: number }) {
   const { width, height } = useVideoConfig();
   return (
-    <ThreeCanvas width={width} height={height} shadows={shadows} flat gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }} camera={{ fov: 35, near: 0.05, far: 200 }}>
+    <ThreeCanvas width={width} height={height} shadows={shadows} flat gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }} camera={{ fov: 35, near: 0.2, far: 160 }}>
       <CameraRig keys={cam} handheld={handheld} />
       <Lights warmth={warmth} env={env} />
       {children}
