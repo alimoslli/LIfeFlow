@@ -8,6 +8,8 @@ import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const cat = JSON.parse(readFileSync(join(HERE, "catalog.json"), "utf8"));
+const house = JSON.parse(readFileSync(join(HERE, "house-models.json"), "utf8"));
+const HOUSE = new Set([house.image.base, house.video.base, house.video.image_to_video]);
 
 /**
  * Seconds per item on each GPU and minutes to load a model: measured where we have runs, otherwise a cautious guess
@@ -30,6 +32,10 @@ export function plan(jobs) {
   for (const [model, js] of Object.entries(byModel)) {
     const m = cat.models[model];
     if (!m) throw new Error(`Unknown model ${model}`);
+    if (!HOUSE.has(model) && !js.every((j) => j.reason)) {
+      steps.push({ model, skipped: true, why: `Not a house model (${[...HOUSE].join(", ")}). Use the house model so the work also trains it, or give each job a "reason".` });
+      continue;
+    }
     if (m.blocked) {
       steps.push({ model, skipped: true, why: m.licence });
       continue;
