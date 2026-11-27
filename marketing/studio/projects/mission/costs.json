@@ -6,5 +6,13 @@
   "renderSec": 626.6999999999999,
   "credits": 0,
   "usd": 0
+ },
+ {
+  "at": "2026-11-27T09:24:41.537Z",
+  "kind": "local-render",
+  "what": "9x16 preview v2",
+  "renderSec": 617.1,
+  "credits": 0,
+  "usd": 0
  }
 ]
