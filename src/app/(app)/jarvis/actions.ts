@@ -5,6 +5,7 @@ import { CHAT_COOKIE, parseChatCookie } from "@/lib/chat-session";
 import { mutate, type ActionState } from "@/server/actions";
 import { deleteConversation } from "@/server/jarvis/conversations";
 import { rateRun } from "@/server/jarvis/metrics";
+import { isRatingReason } from "@/lib/answer-rating";
 import { importMemories } from "@/server/services/memory";
 import { saveLifeImport } from "@/server/services/life-import";
 import { withCurrentUser } from "@/server/auth/current-user";
@@ -29,10 +30,12 @@ export async function deleteConversationAction(id: string): Promise<ActionState>
 }
 
 /** 👍 / 👎 on a chat answer. */
-export async function rateRunAction(runId: string, rating: 1 | -1 | null): Promise<ActionState> {
+export async function rateRunAction(runId: string, rating: 1 | -1 | null, reason?: string): Promise<ActionState> {
   if (rating !== 1 && rating !== -1 && rating !== null) return { ok: false, error: "Invalid rating.", at: Date.now() };
+  // why a thumbs-down: one of the fixed taps only (lib/answer-rating.ts); anything else is dropped, never stored
+  const why = rating === -1 && isRatingReason(reason) ? reason : null;
   return mutate("jarvis.answer.rated", async (s) => {
-    await rateRun(s, runId, rating);
+    await rateRun(s, runId, rating, why);
   });
 }
 

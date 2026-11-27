@@ -14,6 +14,7 @@ import type { SkyCounts } from "@/lib/sky-home";
 import { formatIn } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { jarvisStatus } from "@/server/jarvis/providers";
+import { env } from "@/server/env";
 import { deleteConversationAction } from "./actions";
 import { HistorySheet } from "./history-sheet";
 import { ChatViewport } from "@/components/jarvis/chat-viewport";
@@ -112,6 +113,7 @@ export function JarvisPage({
             home={home}
             module="home"
             availability={{ available: status.available, reason: status.reason, model: status.model }}
+            askWhy={env().SKYLING_RATING_WHY === "on"}
           />
         </div>
       </div>

@@ -96,6 +96,9 @@ export const EVAL: EvalCase[] = [
     budget: 1,
     facts: [
       '"subscriptionsYearly":1301.16',
+      // the monthly total and the count come from the tool (2026-11-27), so the answer's "8 subscriptions, $108.43 a month" is quoted, not added up
+      '"subscriptionsMonthly":108.43',
+      '"subscriptionCount":8',
       '"group":"Video streaming","names":["Netflix","Disney+","Hulu"],"yearly":401.64',
       '"name":"Hulu"',
       '"tracked":false',
@@ -129,7 +132,13 @@ export const EVAL: EvalCase[] = [
     skill: "smart-scheduler",
     plan: [{ tool: "life_load", args: {} }],
     budget: 1,
-    facts: ['"label":"Today","level":"heavy","hours":8.5', '"label":"Wednesday","level":"heavy","hours":7.2', '"label":"Tomorrow","level":"light","hours":3.2'],
+    facts: [
+      '"label":"Today","level":"heavy","hours":8.5',
+      '"label":"Wednesday","level":"heavy","hours":7.2',
+      '"label":"Tomorrow","level":"light","hours":3.2',
+      // the summary speaks in the day's own figure and names the nearest light day (2026-11-27; it used to say "about 9 hours")
+      "Today is the fullest day at 8.5 hours. The nearest light day is Tomorrow (3.2 hours).",
+    ],
     answer:
       "Today (8.5 hours): BIO 110 this morning, about 1.6 hours of Exam 2 prep, and work 4 to 9 PM. Wednesday is close behind (7.2 hours) with work 5 to 10 PM. Tomorrow is light (3.2 hours), so that's the day to get ahead on Exam 2 and the essay.",
   },

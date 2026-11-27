@@ -1,5 +1,6 @@
 import { and, eq, gte, sql } from "drizzle-orm";
 import { jarvisRuns, type JarvisRunOutcome } from "../db/schema";
+import type { RatingReason } from "@/lib/answer-rating";
 import type { UserScope } from "../db/with-user";
 import type { TokenUsage } from "./providers/types";
 
@@ -69,6 +70,10 @@ export type RunRecord = {
   memoryIds: string[];
   /** Skills routed for this turn. */
   skills?: string[];
+  /** What the answer checks found on the first answer (codes only, answer-checks.ts); empty when clean or when checks are off. */
+  answerChecks?: string[];
+  /** The answer was sent back once: true = the second one was clean, false = it was not. null = nothing was sent back. */
+  answerFixed?: boolean | null;
 };
 
 export async function recordRun(scope: UserScope, r: RunRecord) {
@@ -97,6 +102,8 @@ export async function recordRun(scope: UserScope, r: RunRecord) {
       costMicros: r.costMicros,
       memoryIds: r.memoryIds,
       skills: r.skills ?? [],
+      answerChecks: [...new Set(r.answerChecks ?? [])],
+      answerFixed: r.answerFixed ?? null,
     })
     .returning({ id: jarvisRuns.id });
   return row.id;
@@ -156,13 +163,60 @@ export async function jarvisStats(scope: UserScope, days = 30, now = new Date())
 }
 
 /** 👍 / 👎 on one of Jarvis's answers (the user's own runs only). Feeds the per-skill stats. */
-export async function rateRun(scope: UserScope, runId: string, rating: 1 | -1 | null) {
+export async function rateRun(scope: UserScope, runId: string, rating: 1 | -1 | null, reason: RatingReason | null = null) {
   const [row] = await scope.tx
     .update(jarvisRuns)
-    .set({ rating })
+    // a reason belongs to a thumbs-down only: a thumbs-up or taking the thumb back clears it
+    .set({ rating, ratingReason: rating === -1 ? reason : null })
     .where(and(eq(jarvisRuns.id, runId), eq(jarvisRuns.userId, scope.userId)))
     .returning({ id: jarvisRuns.id });
   return !!row;
+}
+
+/**
+ * How this person's answers did against the answer checks and their own thumbs, per prompt version (numbers and codes only,
+ * for the debug screen): how many answers were checked clean, what was found, how many were sent back and came back clean,
+ * and the thumbs with their reasons. An answer the checks flagged and the person thumbed down is the checks agreeing with them.
+ */
+export async function answerQuality(scope: UserScope, days = 90, now = new Date()) {
+  const rows = await scope.tx
+    .select({
+      promptVersion: jarvisRuns.promptVersion,
+      checks: jarvisRuns.answerChecks,
+      fixed: jarvisRuns.answerFixed,
+      rating: jarvisRuns.rating,
+      reason: jarvisRuns.ratingReason,
+    })
+    .from(jarvisRuns)
+    .where(and(eq(jarvisRuns.userId, scope.userId), eq(jarvisRuns.outcome, "ok"), gte(jarvisRuns.createdAt, new Date(now.getTime() - days * 86_400_000))));
+  type Row = {
+    runs: number;
+    flagged: number;
+    sentBack: number;
+    fixed: number;
+    up: number;
+    down: number;
+    downAndFlagged: number;
+    found: Record<string, number>;
+    reasons: Record<string, number>;
+  };
+  const by = new Map<string, Row>();
+  for (const r of rows) {
+    const x = by.get(r.promptVersion) ?? { runs: 0, flagged: 0, sentBack: 0, fixed: 0, up: 0, down: 0, downAndFlagged: 0, found: {}, reasons: {} };
+    x.runs++;
+    if (r.checks.length) x.flagged++;
+    for (const c of r.checks) x.found[c] = (x.found[c] ?? 0) + 1;
+    if (r.fixed != null) x.sentBack++;
+    if (r.fixed) x.fixed++;
+    if (r.rating === 1) x.up++;
+    if (r.rating === -1) {
+      x.down++;
+      if (r.checks.length) x.downAndFlagged++;
+      if (r.reason) x.reasons[r.reason] = (x.reasons[r.reason] ?? 0) + 1;
+    }
+    by.set(r.promptVersion, x);
+  }
+  return [...by.entries()].map(([promptVersion, x]) => ({ promptVersion, ...x })).sort((a, b) => (a.promptVersion < b.promptVersion ? 1 : -1));
 }
 
 /** Per-skill usage, success and ratings, for the debug screen. A skill is flagged when answers using it are rated down often. */

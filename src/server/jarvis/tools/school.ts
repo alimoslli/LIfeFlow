@@ -14,6 +14,7 @@ import {
   listMaterials,
   updateAssignment,
 } from "../../services/school";
+import { hasStar } from "../../services/sky-home";
 import { dateArg, defineTool, idArg, timeArg, type ToolContext } from "../tool";
 import { CANVAS_BUSY, syncCanvas, withCanvasLock } from "../../integrations/canvas";
 import { courseLabel } from "@/lib/course-label";
@@ -195,7 +196,8 @@ export const schoolTools = [
   }),
   defineTool({
     name: "update_assignment",
-    description: "Update an assignment (status, due date, title...). Mark done with status 'done'.",
+    description:
+      "Update an assignment (status, due date, title...). Mark done with status 'done'. When the result has star: true, ticking it earned a star on their sky: say so in a few words.",
     schema: z.object({
       id: idArg("Assignment"),
       title: z.string().min(1).max(300).optional(),
@@ -208,11 +210,11 @@ export const schoolTools = [
     }),
     mutates: true,
     async execute({ id, ...patch }, ctx) {
-      const updated = await ctx.run(async (s) => {
+      const { updated, star } = await ctx.run(async (s) => {
         await updateAssignment(s, ctx.tz, id, patch);
-        return getAssignment(s, id);
+        return { updated: await getAssignment(s, id), star: patch.status === "done" && (await hasStar(s, `assignment:${id}`)) };
       });
-      return { updated: presentAssignment(updated, ctx) };
+      return { updated: presentAssignment(updated, ctx), ...(star && { star: true }) };
     },
   }),
   defineTool({

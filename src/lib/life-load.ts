@@ -156,3 +156,36 @@ export function computeLifeLoad(i: LoadInput): WeekLoad {
 
   return { days, totalHours, heaviest, lighterBefore, summary };
 }
+
+/**
+ * The week for the skyling's own reading (the life_load tool). The summary above is worded for the screen, in whole hours
+ * ("about 9 hours"), while each day carries its exact figure (8.5): a model given both quoted one in one answer and the other
+ * in the next. Here every sentence uses the day's own figure, and the nearest light day is named, so "when do I get a
+ * breather" has an answer in the result instead of a guess.
+ */
+export function loadFacts(w: WeekLoad) {
+  const said = (h: number) => (h < 1 ? `${Math.round(h * 60)} minutes` : `${h} hour${h === 1 ? "" : "s"}`);
+  const day = (d: DayLoad) => ({ date: d.date, label: d.label, level: d.level, hours: d.hours });
+  const nearestLight = w.days.find((d) => d.level === "light") ?? null;
+  const lightest = w.days.reduce((a, b) => (b.hours < a.hours ? b : a));
+  const full =
+    w.heaviest.hours < 4
+      ? `A light week: the fullest day is ${w.heaviest.label} at ${said(w.heaviest.hours)}.`
+      : w.heaviest.level === "overloaded"
+        ? `${w.heaviest.label} is too full at ${said(w.heaviest.hours)}, ${said(round1(w.heaviest.hours - DAY_CAPACITY_HOURS))} more than fits in a day.`
+        : `${w.heaviest.label} is the fullest day at ${said(w.heaviest.hours)}.`;
+  const light =
+    w.heaviest.hours < 4
+      ? ""
+      : nearestLight
+        ? ` The nearest light day is ${nearestLight.label} (${said(nearestLight.hours)}).`
+        : ` No day this week is light; the lightest is ${lightest.label} (${said(lightest.hours)}).`;
+  const move = w.lighterBefore ? ` ${w.lighterBefore.label} comes before the fullest day and is lighter, so work can start then.` : "";
+  return {
+    summary: full + light + move,
+    fullest: day(w.heaviest),
+    nearestLight: nearestLight && day(nearestLight),
+    lightest: day(lightest),
+    totalHours: w.totalHours,
+  };
+}

@@ -159,12 +159,15 @@ export async function subscriptionReport(scope: UserScope, today: string) {
   return {
     items: items.map(({ series: _series, ...i }) => i).sort((a, b) => b.yearlyCents - a.yearlyCents),
     subscriptionsYearlyCents: subs.reduce((s, i) => s + i.yearlyCents, 0),
+    // "what do my subscriptions cost a month" and "how many am I paying for" are answered here, never added up by the model
+    subscriptionsMonthlyCents: Math.round(subs.reduce((s, i) => s + i.yearlyCents, 0) / 12),
+    subscriptionCount: subs.length,
     priceChanges,
     overlaps,
     studentPlans: subs
       .filter((i) => /spotify|apple music|youtube|amazon|prime|hulu|adobe|notion|github|microsoft|chegg/i.test(i.name))
       .map((i) => ({ name: i.name, note: `${i.name} has offered a student plan. Check the current student price on their official site before switching.` })),
-    note: "Cancel only what you don't use. Yearly cost = the charge times how often it repeats.",
+    note: "Cancel only what you don't use. Yearly cost = the charge times how often it repeats; the monthly total is the yearly total over 12. The totals and the count cover subscriptions only, never bills like rent.",
   };
 }
 

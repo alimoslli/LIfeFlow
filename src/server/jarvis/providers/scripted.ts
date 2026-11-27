@@ -11,7 +11,7 @@ import type { ChatItem, ModelProvider, ModelTurn, TokenUsage, ToolCall } from ".
  * Tests can also install a custom responder.
  */
 export type ScriptStep = { text?: string; toolCalls?: { name: string; args: unknown }[]; usage?: TokenUsage };
-export type Responder = (ctx: { history: ChatItem[]; step: number; results: { callId: string; output: string }[] }) => ScriptStep;
+export type Responder = (ctx: { history: ChatItem[]; step: number; results: { callId: string; output: string }[]; note?: string }) => ScriptStep;
 
 let customResponder: Responder | null = null;
 export function setScriptedResponder(r: Responder | null) {
@@ -48,8 +48,8 @@ export class ScriptedProvider implements ModelProvider {
     let step = 0;
     const responder = this.responder ?? customResponder ?? defaultResponder;
     return {
-      async *step(toolResults) {
-        const out = responder({ history, step: step++, results: toolResults ?? [] });
+      async *step(toolResults, _tools, opts) {
+        const out = responder({ history, step: step++, results: toolResults ?? [], note: opts?.note });
         const toolCalls: ToolCall[] = (out.toolCalls ?? []).map((c) => ({ callId: `call_${++counter}`, name: c.name, arguments: JSON.stringify(c.args) }));
         if (out.text) {
           for (const chunk of out.text.match(/[\s\S]{1,40}/g) ?? []) yield { type: "text_delta", delta: chunk };

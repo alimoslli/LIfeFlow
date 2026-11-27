@@ -5,6 +5,7 @@ import { addDaysStr, daysBetween, formatIn, localDateOf } from "@/lib/dates";
 import { EVENT_KINDS, busyAgenda, createEvent, findConflicts, freeSlots, getAgenda, getEvent, updateEvent, type AgendaItem } from "../../services/calendar";
 import { dateArg, defineTool, idArg, timeArg, type ToolContext } from "../tool";
 import { lifeLoad } from "../../services/life-load";
+import { loadFacts } from "@/lib/life-load";
 import { courseArg, withCourseIds } from "./course-arg";
 
 export function presentAgendaItem(i: AgendaItem, ctx: ToolContext) {
@@ -48,13 +49,18 @@ export const calendarTools = [
   defineTool({
     name: "life_load",
     description:
-      "How full each of the next 7 days is: classes, events and shifts, plus the work upcoming deadlines need (spread over the days before them), to-dos, and bills due (when Money isn't locked). Use it for \"how's my week\", planning study time, or spotting a day that's too much. Suggest moving work to the lighter days it names.",
+      "How full each of the next 7 days is: classes, events and shifts, plus the work upcoming deadlines need (spread over the days before them), to-dos, and bills due (when Money isn't locked). Use it for \"how's my week\", planning study time, or spotting a day that's too much. It names the fullest day, the nearest light day and the lightest day with their hours: quote those figures as given and suggest moving work to the lighter days it names.",
     schema: z.object({}),
     mutates: false,
     async execute(_a, ctx) {
       const w = await ctx.run((s) => lifeLoad(s, ctx.tz, ctx.today, { includeMoney: !ctx.moneyLocked }));
+      const facts = loadFacts(w);
       return {
-        summary: w.summary,
+        summary: facts.summary,
+        fullest: facts.fullest,
+        nearestLight: facts.nearestLight,
+        lightest: facts.lightest,
+        totalHours: facts.totalHours,
         days: w.days.map((d) => ({
           date: d.date,
           label: d.label,

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { attachmentMeta, listConversations, listMessages, listPendingActions } from "@/server/jarvis/conversations";
 import { ownedChat, sessionChatId } from "@/server/jarvis/chat-session";
-import { suggestedMemoryIds, toUiMessages } from "@/server/jarvis/ui-messages";
+import { answerRuns, suggestedMemoryIds, toUiMessages } from "@/server/jarvis/ui-messages";
 import { memoryStatuses } from "@/server/services/memory";
 import type { UiMessage } from "@/components/jarvis/types";
 import { missingConnections } from "@/server/services/integrations";
@@ -34,7 +34,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
       const rows = await listMessages(s, activeId);
       const actions = await listPendingActions(s, activeId);
       const atts = await attachmentMeta(s, [...new Set(rows.flatMap((r) => r.attachmentIds))]);
-      messages = toUiMessages(rows, actions, atts, await memoryStatuses(s, suggestedMemoryIds(rows)));
+      messages = toUiMessages(rows, actions, atts, await memoryStatuses(s, suggestedMemoryIds(rows)), await answerRuns(s, activeId));
     }
     return {
       conversations,

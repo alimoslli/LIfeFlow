@@ -23,7 +23,7 @@ import { routeSkills } from "./skills";
 import { buildSystemPrompt, PROMPT_VERSION } from "./prompt";
 import type { ModelProvider, TokenUsage } from "./providers/types";
 import { toolSpecsFor, type ToolSpec } from "./registry";
-import { chooseEffort } from "./effort";
+import { chooseEffort, chooseVerbosity } from "./effort";
 import { MONEY_RESULT_TOOLS, TOOL_GROUPS, type ToolGroup } from "./tool-groups";
 import { selectToolGroups } from "./tool-select";
 import type { ToolContext } from "./tool";
@@ -33,6 +33,8 @@ import { openQuestions } from "../services/proactive/questions";
 import { recordError } from "../services/error-reports";
 import { getDb } from "../db/client";
 import { turnFailureReport } from "./turn-error";
+import { env } from "../env";
+import { checkAnswer, fixNote, flaggedCalls, QUICK_WORDS, type AnswerChecksMode, type CheckContext } from "./answer-checks";
 
 export type JarvisEvent =
   | { type: "conversation"; id: string; title: string }
@@ -89,6 +91,8 @@ export type TurnInput = {
   door?: AiDoor;
   /** Replaces the per-person limits for this turn. For tests only; the app always uses the configured limits. */
   aiLimits?: PersonLimits;
+  /** The answer checks for this turn (answer-checks.ts). Omitted: the server's setting, which is off unless the owner turned it on. */
+  answerChecks?: AnswerChecksMode;
 };
 
 export function makeToolContext(user: SessionUser, conversationId: string, now = new Date(), userText = "", moneyLocked = false): ToolContext {
@@ -246,7 +250,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   // 3. Model/tool loop. Only the tool groups this request needs (load_tools adds more), a per-user cache key,
   // and a thinking level that fits the request.
   // Short by default (owner, 2026-11-09); "detailed" tone gets medium, never an essay.
-  const verbosity = user.preferences?.jarvisTone === "detailed" ? "medium" : "low";
+  const verbosity = chooseVerbosity(input.text, user.preferences?.jarvisTone);
   const turn = provider.startTurn({
     system,
     history,
@@ -271,6 +275,38 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   let refused: AiRefusal | null = null;
   let hold: AiHold | null = null;
   let extraChars = 0;
+  // The answer checks (answer-checks.ts; off unless the owner's setting says otherwise). "watch" only counts what it finds.
+  // "fix" holds each step's words until they are checked; a final answer that fails goes back to the model once, as one
+  // more step of this turn (so it is set aside and settled through the AI gate like any other step), and a save for a time
+  // already gone or with a made-up figure is not run the first time it is asked for.
+  const checksMode: AnswerChecksMode = input.answerChecks ?? env().SKYLING_ANSWER_CHECKS ?? "off";
+  const checksFound: string[] = [];
+  let checksLeft: string[] | null = null;
+  let sentBack = false;
+  /** The answer that was held back, kept so a failed second try never costs the person their answer. */
+  let fallback: string | null = null;
+  let note: string | undefined;
+  const refusedOnce = new Set<string>();
+  const turnOutputs: string[] = [];
+  const pastSources = [
+    system,
+    ...history.flatMap((h) => (h.type === "user" || h.type === "assistant" ? [h.text] : h.type === "tool_result" ? [h.output] : [])),
+  ];
+  const checkCtx = (): CheckContext => ({
+    now,
+    tz: user.timezone,
+    asked: input.text,
+    sources: [...pastSources, ...turnOutputs],
+    used: tally.toolNames,
+    quickLimit: user.preferences?.jarvisTone === "detailed" ? QUICK_WORDS * 2 : QUICK_WORDS,
+    hasFiles,
+  });
+  const saveAnswer = async (content: string) => {
+    const [m] = await run((s) =>
+      s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "assistant", content }).returning({ id: messages.id }),
+    );
+    finalMessageId = m.id;
+  };
   const subject = await subjectFor(user.id, {
     id: user.id,
     timezone: user.timezone,
@@ -316,11 +352,16 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       let sawEvent = false;
       let stepUsage: TokenUsage | undefined;
       let cutOff = false;
+      // in "fix" the words wait for the check; once an answer has been sent back, the second one is shown as it comes
+      const holding = checksMode === "fix" && !sentBack;
+      const stepNote = note;
+      note = undefined;
       try {
-        for await (const ev of turn.step(toolResults, nextTools, { mainModel: toMain })) {
+        for await (const ev of turn.step(toolResults, nextTools, { mainModel: toMain, note: stepNote })) {
           sawEvent = true;
-          if (ev.type === "text_delta") emit({ type: "text", delta: ev.delta });
-          else {
+          if (ev.type === "text_delta") {
+            if (!holding) emit({ type: "text", delta: ev.delta });
+          } else {
             text = ev.text;
             calls = ev.toolCalls;
             stepUsage = ev.usage;
@@ -347,6 +388,25 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       await hold.settle({ micros: stepCost });
       hold = null;
       extraChars += text.length;
+      if (checksMode !== "off" && !cutOff && !calls.length && text.trim()) {
+        const notes = checkAnswer(checkCtx(), text);
+        if (sentBack) checksLeft = notes.map((n) => n.code);
+        else checksFound.push(...notes.map((n) => n.code));
+        // one more try, only with room for it: a step left, and enough of the turn's time that the person still gets an answer
+        if (checksMode === "fix" && notes.length && !sentBack && step < MAX_STEPS - 1 && deadline - Date.now() > deadlineMs * 0.4) {
+          sentBack = true;
+          fallback = text;
+          note = fixNote(notes);
+          extraChars += note.length;
+          toolResults = undefined;
+          continue;
+        }
+      }
+      // a second try that came back empty: the person gets the first answer
+      const cameBackEmpty = fallback != null && !calls.length && !text.trim();
+      if (cameBackEmpty && fallback != null) text = fallback;
+      if ((holding || cameBackEmpty) && text) emit({ type: "text", delta: text });
+      if (!calls.length) fallback = null;
       if (cutOff) {
         // The model ran out of room mid-answer (or mid tool call). Keep what it wrote, say so plainly, and record the turn honestly (not "ok").
         if (text.trim()) {
@@ -387,6 +447,23 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
           toolResults.push({ callId: call.callId, output: serializeResult(notLoaded(call.name).result) });
           continue;
         }
+        // a save for a time already gone, or with a figure nobody gave: counted, and in "fix" not run the first time. The
+        // model is told why; the very same call asked for again goes through (the person may really have meant it).
+        const flagged = checksMode === "off" ? undefined : flaggedCalls(checkCtx(), [call]).get(call);
+        if (flagged) {
+          checksFound.push(flagged.code);
+          const key = `${call.name} ${call.arguments}`;
+          if (checksMode === "fix" && !refusedOnce.has(key)) {
+            refusedOnce.add(key);
+            const refusal = serializeResult({
+              ok: false,
+              error: `Not run. ${flagged.note} If they really did ask for exactly this, call it again unchanged and it will run.`,
+            });
+            toolResults.push({ callId: call.callId, output: refusal });
+            extraChars += refusal.length;
+            continue;
+          }
+        }
         emit({ type: "tool_start", callId: call.callId, name: call.name, label: describeToolCall(call.name) });
         const outcome = await beforeDeadline(executeToolCall(call.name, call.arguments, ctx, call.callId));
         tally.toolCalls++;
@@ -420,6 +497,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
         }
         toolResults.push({ callId: call.callId, output: serializeResult(outcome.result) });
         extraChars += toolResults[toolResults.length - 1].output.length;
+        if (checksMode !== "off") turnOutputs.push(toolResults[toolResults.length - 1].output);
         if (call.name === "load_tools" && outcome.kind === "result" && outcome.result.ok) {
           const loaded = ((outcome.result.data as { loaded?: string[] } | undefined)?.loaded ?? []).filter((g): g is ToolGroup =>
             (TOOL_GROUPS as readonly string[]).includes(g),
@@ -436,7 +514,15 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       }
     }
   } catch (e) {
-    if (e instanceof StoppedError) {
+    if (fallback != null && !(e instanceof StoppedError)) {
+      // The second try failed (a limit, the provider, the clock). The person still gets the answer that was held back:
+      // a check must never cost them their answer. It stays counted as found and not fixed.
+      if (!(e instanceof AiRefusedError)) console.error("[jarvis] the second try of a checked answer failed", e instanceof Error ? e.name : typeof e);
+      emit({ type: "text", delta: fallback });
+      await saveAnswer(fallback);
+      checksLeft = [...checksFound];
+      fallback = null;
+    } else if (e instanceof StoppedError) {
       // The user pressed Stop: nothing more runs, what was already saved stays, and no error is shown.
       outcome = "cancelled";
       errorKind = "cancelled";
@@ -489,6 +575,8 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
         costMicros: priced.costMicros,
         memoryIds: memories.map((x) => x.id),
         skills: skills.map((k) => k.name),
+        answerChecks: checksFound,
+        answerFixed: sentBack ? (checksLeft ?? []).length === 0 : null,
       }),
     );
   } catch (e) {

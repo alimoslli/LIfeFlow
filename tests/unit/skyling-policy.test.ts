@@ -89,6 +89,6 @@ describe("skyling policy (owner, 2026-11-26)", () => {
     const a = fixed(prompt());
     expect(a).toBe(fixed(prompt(both)));
     for (const h of ["# When someone is struggling", "# Health questions", "# What you are", "# Acting on your own: limits"]) expect(a).toContain(h);
-    expect(PROMPT_VERSION).toBe("2026-11-26.3");
+    expect(PROMPT_VERSION).toBe("2026-11-27.1");
   });
 });

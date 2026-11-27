@@ -91,3 +91,17 @@ export function chooseEffort(i: { text: string; skills: SkillFile[]; hasFiles: b
   if (i.skills.some((s) => THINKING_SKILLS.has(s.name)) && !LOOKUP.test(t)) return "medium";
   return "low";
 }
+
+/** They asked to have something explained, broken down or walked through: an answer that may need room. Not a plan or a schedule, which belong in the app. */
+const REAL_HELP =
+  /\b(explain|walk me through|break\w* (it|this|that|the|my|down)|step by step|the steps|how (do|does|can|should|would) (i|you|we|it|this|that)\b|how to\b|teach me|in detail|tell me more|help me understand|what (does|is) [a-z ]{3,40} mean)\b/i;
+
+/**
+ * How long the model's own answer-length setting lets a reply run. Short by default (owner, 2026-11-09: a prompt rule alone
+ * left week plans at 800+ words). Medium when they chose detailed answers, or asked for real help (owner, 2026-11-26: "there
+ * shouldn't be a strict cap to messages as some do require a big response for help, same for the breakdown and steps").
+ * Not measured on the real model yet.
+ */
+export function chooseVerbosity(text: string, tone?: string): "low" | "medium" {
+  return tone === "detailed" || REAL_HELP.test(text) ? "medium" : "low";
+}

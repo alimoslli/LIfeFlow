@@ -8,7 +8,8 @@ import { Badge, Card, CardHeader, EmptyState } from "@/components/ui/surface";
 import { formatIn } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
-import { jarvisStats, skillStats } from "@/server/jarvis/metrics";
+import { answerQuality, jarvisStats, skillStats } from "@/server/jarvis/metrics";
+import { RATING_REASON_LABELS, isRatingReason } from "@/lib/answer-rating";
 import { SKILLS } from "@/server/jarvis/skills";
 import { jarvisStatus } from "@/server/jarvis/providers";
 import { listAllMemories } from "@/server/services/memory";
@@ -44,8 +45,10 @@ export async function MemorySection({ sp }: { sp: { debug?: string; imported?: s
       () => learnedStats(s, new Date(), js.learningResetAt),
     );
     const skills = await skillStats(s);
+    const quality = debug ? await answerQuality(s) : [];
     return {
       skills,
+      quality,
       learned,
       muted: js.mutedKinds,
       all,
@@ -327,6 +330,42 @@ export async function MemorySection({ sp }: { sp: { debug?: string; imported?: s
                       {k.runs} use{k.runs === 1 ? "" : "s"} · {k.successRate == null ? "-" : `${Math.round(k.successRate * 100)}% ok`} · 👍 {k.up} 👎 {k.down}
                       {k.flagged && <Badge tone="warning">Needs work</Badge>}
                     </span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </Card>
+
+          <Card className="p-5">
+            <details>
+              <summary className="cursor-pointer list-none font-medium [&::-webkit-details-marker]:hidden">
+                Answer checks <span className="text-sm font-normal text-muted">· by prompt version</span>
+              </summary>
+              <p className="mt-2 text-sm text-muted">
+                What the answer checks found, how many answers were sent back and came back clean, and the thumbs with their reasons. Codes only, never words of
+                a chat.
+              </p>
+              <ul className="lf-rows mt-3 *:px-3">
+                {d.quality.length === 0 && <li className="py-2 text-sm text-muted">No answers yet.</li>}
+                {d.quality.map((q) => (
+                  <li key={q.promptVersion} className="flex flex-col gap-1 py-2 text-sm">
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="tabular min-w-0 truncate">{q.promptVersion}</span>
+                      <span className="shrink-0 text-xs text-muted">
+                        {q.runs} answer{q.runs === 1 ? "" : "s"} · {q.flagged} flagged · {q.fixed} of {q.sentBack} fixed · 👍 {q.up} 👎 {q.down}
+                      </span>
+                    </span>
+                    {(Object.keys(q.found).length > 0 || Object.keys(q.reasons).length > 0) && (
+                      <span className="text-xs text-muted">
+                        {Object.entries(q.found)
+                          .map(([c, n]) => `${c.replace(/_/g, " ")} ${n}`)
+                          .join(" · ")}
+                        {Object.keys(q.reasons).length > 0 &&
+                          ` · why 👎: ${Object.entries(q.reasons)
+                            .map(([r, n]) => `${isRatingReason(r) ? RATING_REASON_LABELS[r].toLowerCase() : r} ${n}`)
+                            .join(", ")}`}
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>

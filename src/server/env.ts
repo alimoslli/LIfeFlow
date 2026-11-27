@@ -81,6 +81,21 @@ const schema = z.object({
   AI_GLOBAL_DAY_CALLS: optionalNumber,
   /** A Pro person's monthly AI allowance in US dollars after paid plans turn on (decision 7). OFF until the owner picks a number: unset means no per-person dollar limit for Pro. */
   AI_PRO_MONTH_DOLLARS: optionalNumber,
+  /**
+   * The skyling's answer checks (jarvis/answer-checks.ts; the clock, made-up figures, the owner's standard). "off" (default):
+   * nothing runs. "watch": every answer is checked and what was found is counted on the run; nothing changes for the person
+   * and no model is called. "fix": an answer that fails is held back and sent to the model once with what to fix, as one more
+   * step of the same turn (set aside and counted through the AI gate like any step); answers then arrive whole, not word by word.
+   */
+  SKYLING_ANSWER_CHECKS: z
+    .enum(["off", "watch", "fix"])
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  /** "on": a thumbs-down asks one tap more, why (too long, wrong, didn't do it, missed the point). Off until the owner has seen it. */
+  SKYLING_RATING_WHY: z
+    .enum(["on", "off"])
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
 

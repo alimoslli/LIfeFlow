@@ -41,6 +41,15 @@ async function insert(scope: UserScope, kind: "star" | "sun", key: string, now: 
   return rows.length > 0;
 }
 
+/** Whether `key` holds a star right now (a tick that really earned one: not over the day's limit, not taken back). */
+export async function hasStar(scope: UserScope, key: string) {
+  const [row] = await scope.tx
+    .select({ id: skyRewards.id })
+    .from(skyRewards)
+    .where(and(eq(skyRewards.userId, scope.userId), eq(skyRewards.kind, "star"), eq(skyRewards.key, key)));
+  return !!row;
+}
+
 /** A star for `key` ("task:<id>", "assignment:<id>", "sky:<agenda key>"). True only when it's new. */
 export async function awardStar(scope: UserScope, key: string, tz: string, now = new Date()) {
   const tick = key.startsWith("task:") || key.startsWith("assignment:");

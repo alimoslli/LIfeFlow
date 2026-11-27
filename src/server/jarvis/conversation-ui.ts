@@ -3,7 +3,7 @@ import type { UserScope } from "../db/with-user";
 import { memoryStatuses } from "../services/memory";
 import { attachmentMeta, getConversation, listMessages, listPendingActions } from "./conversations";
 import { turnStateOf, type TurnState } from "./turn-state";
-import { suggestedMemoryIds, toUiMessages } from "./ui-messages";
+import { answerRuns, suggestedMemoryIds, toUiMessages } from "./ui-messages";
 
 /**
  * The saved conversation of one send, found by the id the app made for it, plus where that send's turn stands.
@@ -20,5 +20,6 @@ export async function snapshotForSend(
   const actions = await listPendingActions(scope, conv.id);
   const atts = await attachmentMeta(scope, [...new Set(rows.flatMap((r) => r.attachmentIds))]);
   const statuses = await memoryStatuses(scope, suggestedMemoryIds(rows));
-  return { state: t.state, conversationId: conv.id, title: conv.title, messages: toUiMessages(rows, actions, atts, statuses) };
+  const runs = await answerRuns(scope, conv.id);
+  return { state: t.state, conversationId: conv.id, title: conv.title, messages: toUiMessages(rows, actions, atts, statuses, runs) };
 }

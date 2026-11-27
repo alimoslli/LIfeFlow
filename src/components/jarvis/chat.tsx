@@ -13,6 +13,7 @@ import { adoptPageChat, chatChangedAt, currentChat, joinNewVisit, onChatChanged,
 import { SkyHome, homeHeight } from "@/components/skylings/sky-home";
 import type { SkyCounts } from "@/lib/sky-home";
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
+import { RATING_REASONS, RATING_REASON_LABELS, type RatingReason } from "@/lib/answer-rating";
 import { cn } from "@/lib/utils";
 import { isAppPath, viewAtName } from "@/lib/app-routes";
 import { jsonOf, PlainError, serverWords } from "@/lib/plain-error";
@@ -86,7 +87,10 @@ export function JarvisChat({
   startVoice,
   home,
   pageVersion,
+  askWhy,
 }: {
+  /** A thumbs-down asks one tap more, why (the server's setting; off until the owner has seen it). */
+  askWhy?: boolean;
   conversationId?: string | null;
   initialMessages?: UiMessage[];
   module: JarvisModule;
@@ -782,7 +786,15 @@ export function JarvisChat({
               m.role === "user" ? (
                 <UserBubble key={m.id} m={m} />
               ) : (
-                <AssistantBubble key={m.id} m={m} last={i === messages.length - 1} onDecide={decide} onMemory={decideMemory} onRetry={tryAgain} />
+                <AssistantBubble
+                  key={m.id}
+                  m={m}
+                  last={i === messages.length - 1}
+                  onDecide={decide}
+                  onMemory={decideMemory}
+                  onRetry={tryAgain}
+                  askWhy={askWhy}
+                />
               ),
             )}
             {!aiConsent && !empty && <AiConsentCard name={assistantName} />}
@@ -980,7 +992,9 @@ function AssistantBubble({
   onDecide,
   onMemory,
   onRetry,
+  askWhy,
 }: {
+  askWhy?: boolean;
   m: Extract<UiMessage, { role: "assistant" }>;
   /** The newest reply's skyling stays awake (blinks, hops when something gets done); older ones are still pictures. */
   last?: boolean;
@@ -1019,7 +1033,7 @@ function AssistantBubble({
             )}
           </div>
         )}
-        {!m.streaming && m.runId && m.text && <RateAnswer runId={m.runId} initial={m.rating ?? null} />}
+        {!m.streaming && m.runId && m.text && <RateAnswer runId={m.runId} initial={m.rating ?? null} askWhy={askWhy} />}
         {m.confirmations.map((c) => (
           <div key={c.actionId} className="rounded-2xl bg-surface p-4 shadow-soft">
             <p className="text-[0.9375rem] font-medium">{c.summary.split("\n")[0]}</p>
@@ -1143,16 +1157,32 @@ function SourceList({ tools }: { tools: UiTool[] }) {
   );
 }
 
+/** Where the thumbs-down question stands, per answer (its run), for this visit only. */
+const WHY_ASKED = new Map<string, "asking" | "said">();
+
 /** 👍 / 👎 on an answer. Logged on the run (and its skills) so weak answers can be found and fixed. */
-function RateAnswer({ runId, initial }: { runId: string; initial: 1 | -1 | null }) {
+function RateAnswer({ runId, initial, askWhy }: { runId: string; initial: 1 | -1 | null; askWhy?: boolean }) {
   const [rating, setRating] = useState(initial);
+  // after a thumbs-down in this visit: one tap more for why (a fixed list, never typed words), then a short thanks
+  // kept per answer for this visit, so the chat loading the answer again (right after it lands) doesn't drop the question
+  const [why, setWhyState] = useState<"asking" | "said" | null>(() => WHY_ASKED.get(runId) ?? null);
+  const setWhy = (w: "asking" | "said" | null) => {
+    if (w) WHY_ASKED.set(runId, w);
+    else WHY_ASKED.delete(runId);
+    setWhyState(w);
+  };
   const rate = (r: 1 | -1) => {
     const next = rating === r ? null : r;
     setRating(next);
+    setWhy(askWhy && next === -1 ? "asking" : null);
     void rateRunAction(runId, next);
   };
+  const say = (reason: RatingReason) => {
+    setWhy("said");
+    void rateRunAction(runId, -1, reason);
+  };
   return (
-    <div className="flex items-center gap-1 text-muted">
+    <div className="flex flex-wrap items-center gap-x-1 gap-y-2 text-muted">
       <button
         type="button"
         aria-label="Good answer"
@@ -1171,6 +1201,21 @@ function RateAnswer({ runId, initial }: { runId: string; initial: 1 | -1 | null 
       >
         <PixelIcon name="thumbdown" className="h-4 w-4" />
       </button>
+      {why === "asking" && (
+        <div className="flex basis-full flex-wrap items-center gap-2" role="group" aria-label="What was off?">
+          <span className="text-[0.8125rem] text-text-2">What was off?</span>
+          {RATING_REASONS.map((r) => (
+            <button key={r} type="button" onClick={() => say(r)} className="lf-sb lf-sb-app lf-sb-sm">
+              {RATING_REASON_LABELS[r]}
+            </button>
+          ))}
+        </div>
+      )}
+      {why === "said" && (
+        <p className="basis-full text-[0.8125rem] text-text-2" role="status">
+          Got it. That helps me do better.
+        </p>
+      )}
     </div>
   );
 }

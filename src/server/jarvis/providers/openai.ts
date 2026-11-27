@@ -222,6 +222,8 @@ export class OpenAIProvider implements ModelProvider {
       },
       async *step(toolResults, nextTools, opts) {
         for (const r of toolResults ?? []) input.push({ type: "function_call_output", call_id: r.callId, output: r.output });
+        // The app's own note on the answer just given (an answer check). Not yet proven against the real API: no paid call was made for it.
+        if (opts?.note) input.push({ type: "message", role: "developer", content: opts.note });
         if (nextTools) toolDefs = toToolDefs(nextTools);
         // Money never stays on the small model (COO review, 2026-11-12): once money tools are loaded the main model takes
         // the rest of the turn. The small model's reasoning items belong to it, so they are left out; its tool calls and

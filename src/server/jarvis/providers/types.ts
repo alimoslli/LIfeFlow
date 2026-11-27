@@ -22,9 +22,11 @@ export interface ModelTurn {
   readonly model?: string;
   /**
    * `tools` replaces the tool list from this step on (after load_tools added a group). `mainModel` moves a turn that
-   * started on the small model to the main one from this step on (money tools were loaded mid-answer).
+   * started on the small model to the main one from this step on (money tools were loaded mid-answer). `note` is a line
+   * from the app itself, put after the model's last answer when that answer failed a check and is being asked for again
+   * (jarvis/answer-checks.ts); the person never sees it.
    */
-  step(toolResults?: { callId: string; output: string }[], tools?: ToolSpec[], opts?: { mainModel?: boolean }): AsyncGenerator<StepEvent>;
+  step(toolResults?: { callId: string; output: string }[], tools?: ToolSpec[], opts?: { mainModel?: boolean; note?: string }): AsyncGenerator<StepEvent>;
 }
 
 /** How hard a reasoning model thinks on this turn (chosen per turn, see effort.ts). */

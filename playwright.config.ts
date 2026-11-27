@@ -57,6 +57,8 @@ export default defineConfig({
         EMAIL_FROM: "",
         // a build id, so the "a new version is live" check can be exercised (pwa-phone.spec.ts)
         VERCEL_GIT_COMMIT_SHA: "e2e-build",
+        // the thumbs-down reason (answer-reason-phone.spec.ts); off in the app until the owner says yes
+        SKYLING_RATING_WHY: "on",
       },
     },
   ],

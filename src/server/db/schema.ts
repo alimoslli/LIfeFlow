@@ -1775,6 +1775,15 @@ export const jarvisRuns = pgTable(
       .default(sql`'{}'::text[]`),
     /** The user's 👍 (1) or 👎 (-1) on the answer. */
     rating: integer("rating"),
+    /** Why a 👎: one of the fixed reasons in lib/answer-rating.ts (a tap, never typed words). */
+    ratingReason: text("rating_reason"),
+    /** What the answer checks found on the first answer: codes only (jarvis/answer-checks.ts), never words of the answer. */
+    answerChecks: text("answer_checks")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    /** The answer was sent back to the model once: true = the second one was clean. Null = nothing was sent back. */
+    answerFixed: boolean("answer_fixed"),
     /** Memories that were put in front of the model for this turn. */
     memoryIds: uuid("memory_ids")
       .array()

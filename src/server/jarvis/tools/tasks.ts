@@ -3,6 +3,7 @@ import { moveToTrash } from "../../services/trash";
 import { localDateOf, localTimeOf, startOfLocalDay, addDaysStr } from "@/lib/dates";
 import { createTask, getTask, listTasks, updateTask } from "../../services/tasks";
 import { createProject, listProjects } from "../../services/notes";
+import { hasStar } from "../../services/sky-home";
 import { dateArg, defineTool, idArg, timeArg, type ToolContext } from "../tool";
 import { courseArg, withCourseIds } from "./course-arg";
 
@@ -91,7 +92,8 @@ export const taskTools = [
   }),
   defineTool({
     name: "update_task",
-    description: "Update a task's title, notes, priority, due date or status. Set dueDate to null to clear it.",
+    description:
+      "Update a task's title, notes, priority, due date or status. Set dueDate to null to clear it. When the result has star: true, ticking it earned a star on their sky: say so in a few words.",
     schema: z.object({
       id: idArg("Task"),
       title: z.string().min(1).max(300).optional(),
@@ -103,8 +105,12 @@ export const taskTools = [
     }),
     mutates: true,
     async execute({ id, ...patch }, ctx) {
-      const t = await ctx.run((s) => updateTask(s, ctx.tz, id, patch));
-      return { updated: presentTask(t, ctx) };
+      // the star is read back from their own records (owner, 2026-11-26: "remember the stars?"), never assumed: the day has a limit
+      const { t, star } = await ctx.run(async (s) => {
+        const t = await updateTask(s, ctx.tz, id, patch);
+        return { t, star: patch.status === "done" && (await hasStar(s, `task:${id}`)) };
+      });
+      return { updated: presentTask(t, ctx), ...(star && { star: true }) };
     },
   }),
   defineTool({

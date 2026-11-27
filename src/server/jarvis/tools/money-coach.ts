@@ -394,7 +394,7 @@ export const moneyCoachTools = [
   defineTool({
     name: "find_subscriptions",
     description:
-      "Recurring charges with yearly cost, price increases, overlapping services and student plans to check. Suggest what to cancel based on use, never decide for them.",
+      "Recurring charges with yearly cost, the subscriptions' total a month and a year (subscriptionsMonthly, subscriptionsYearly) and how many there are (subscriptionCount), price increases, overlapping services and student plans to check. Quote the totals and the count as given, never add them up yourself. Suggest what to cancel based on use, never decide for them.",
     schema: z.object({}),
     mutates: false,
     async execute(_a, ctx) {

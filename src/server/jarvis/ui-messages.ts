@@ -1,4 +1,6 @@
-import type { attachments, messages, pendingActions } from "../db/schema";
+import { and, eq, isNotNull } from "drizzle-orm";
+import { jarvisRuns, type attachments, type messages, type pendingActions } from "../db/schema";
+import type { UserScope } from "../db/with-user";
 import type { UiMemorySuggestion, UiMessage, UiTool } from "@/components/jarvis/types";
 import type { MemoryStatus } from "../db/schema";
 import { describeToolCall, describeToolResult, memoryProposalOf } from "./labels";
@@ -21,8 +23,26 @@ export function suggestedMemoryIds(rows: Msg[]): string[] {
     .filter((id): id is string => !!id);
 }
 
+/** The run of each answer, by its final message's id, so a chat loaded again keeps its 👍 / 👎 (see answerRuns). */
+export type AnswerRuns = Map<string, { runId: string; rating: number | null }>;
+
+/** The runs behind these answers (the user's own, row-level security), for toUiMessages. */
+export async function answerRuns(scope: UserScope, conversationId: string): Promise<AnswerRuns> {
+  const rows = await scope.tx
+    .select({ id: jarvisRuns.id, messageId: jarvisRuns.messageId, rating: jarvisRuns.rating })
+    .from(jarvisRuns)
+    .where(and(eq(jarvisRuns.userId, scope.userId), eq(jarvisRuns.conversationId, conversationId), isNotNull(jarvisRuns.messageId)));
+  return new Map(rows.map((r) => [r.messageId!, { runId: r.id, rating: r.rating }]));
+}
+
 /** Groups stored rows into chat bubbles: each user message, then one assistant bubble for its turn. */
-export function toUiMessages(rows: Msg[], actions: Action[], atts: Att[], memoryStatus: Map<string, MemoryStatus> = new Map()): UiMessage[] {
+export function toUiMessages(
+  rows: Msg[],
+  actions: Action[],
+  atts: Att[],
+  memoryStatus: Map<string, MemoryStatus> = new Map(),
+  runs: AnswerRuns = new Map(),
+): UiMessage[] {
   const out: UiMessage[] = [];
   const attById = new Map(atts.map((a) => [a.id, a]));
   let current: Extract<UiMessage, { role: "assistant" }> | null = null;
@@ -41,6 +61,12 @@ export function toUiMessages(rows: Msg[], actions: Action[], atts: Att[], memory
       const a = ensure(m.id);
       if (m.status === "error") a.error = m.content;
       else a.text = a.text ? `${a.text}\n\n${m.content}` : m.content;
+      // the answer a run points at keeps its thumbs after the chat is loaded again (before, they went at the first refresh)
+      const run = runs.get(m.id);
+      if (run) {
+        a.runId = run.runId;
+        a.rating = run.rating === 1 || run.rating === -1 ? run.rating : null;
+      }
     } else if (m.role === "tool" && m.toolName) {
       const a = ensure(m.id);
       // Text before a tool call was narration; the bubble keeps only the final answer.
