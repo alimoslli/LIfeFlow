@@ -9,7 +9,7 @@ import { bundle } from "@remotion/bundler";
 import { getCompositions, renderMedia, renderStill } from "@remotion/renderer";
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { cpus } from "node:os";
 import { join, relative } from "node:path";
 import { STUDIO, webpackOverride } from "../webpack-override.mjs";
@@ -39,7 +39,9 @@ const kitHash = hashFiles([...walk(join(STUDIO, "src/kit")), ...walk(join(STUDIO
 
 const t0 = Date.now();
 console.log("bundling…");
-const serveUrl = await bundle({ entryPoint: join(STUDIO, "src/index.ts"), webpackOverride, publicDir: join(STUDIO, "public") });
+// the bundle copies public/ (captures included) into a temp folder: removed when the render ends, however it ends
+const serveUrl = await bundle({ entryPoint: join(STUDIO, "src/index.ts"), webpackOverride, publicDir: join(STUDIO, "public"), enableCaching: false });
+process.on("exit", () => rmSync(serveUrl, { recursive: true, force: true }));
 const comps = await getCompositions(serveUrl, { browserExecutable: BROWSER });
 const full = comps.find((c) => c.id === `${pid}-full`);
 if (!full) throw new Error(`No project "${pid}". Projects: ${comps.filter((c) => c.id.endsWith("-full")).map((c) => c.id.replace(/-full$/, "")).join(", ")}`);
