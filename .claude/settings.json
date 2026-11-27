@@ -1,7 +1,8 @@
 {
   "enabledPlugins": {
     "everything-claude-code@everything-claude-code": true,
-    "agent-skills@addy-agent-skills": true
+    "agent-skills@addy-agent-skills": true,
+    "humanizer@humanizer": true
   },
   "extraKnownMarketplaces": {
     "everything-claude-code": {
@@ -14,6 +15,12 @@
       "source": {
         "source": "github",
         "repo": "addyosmani/agent-skills"
+      }
+    },
+    "humanizer": {
+      "source": {
+        "source": "github",
+        "repo": "blader/humanizer"
       }
     }
   },
