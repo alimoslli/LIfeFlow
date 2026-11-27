@@ -1,0 +1,1244 @@
+[
+{
+"text": "okay so um i am really behind on like everything and i dont even know where to start honestly",
+"family": "behind",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "hey so i have this paper do friday and i have not started it at all",
+"family": "behind",
+"needs": [
+"student"
+],
+"hours": null,
+"next": "yeah do that"
+},
+{
+"text": "i'm so behind on my reading its like three chapters no four chapters and the quiz is this week",
+"family": "behind",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "uh can you help me i think i'm going to fail this class i haven't done the homework in two weeks",
+"family": "behind",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "so stressed right now my lap report is not done and i work tonight",
+"family": "behind",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "okay okay so everything is due at once and i'm kind of freaking out a little",
+"family": "behind",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "i keep saying i'll start the project and then i don't and now it's almost due",
+"family": "behind",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "um so i missed like two assignments i think maybe three can you check what i'm behind on",
+"family": "behind",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "I'm behind on my by all homework and my mid term is coming help",
+"family": "behind",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "hey it's me again i still have not started the essay i know i know",
+"family": "behind",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "so i got home from work and i'm exhausted but the problem set is due tomorrow what do i do",
+"family": "behind",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "i have no idea how i'm going to finish all of this before finals no idea",
+"family": "behind",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "can you just like tell me how bad it is how behind am i really in my classes",
+"family": "behind",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "I am behind with the homework because I was working all the weekend what I should do first",
+"family": "behind",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "okay plan my day for me i've got class and then work and i need to study somewhere in there",
+"family": "plan",
+"needs": [],
+"hours": [
+6,
+15
+]
+},
+{
+"text": "can you um can you find me time to study for my exam this week and just put it in",
+"family": "plan",
+"needs": [],
+"hours": null
+},
+{
+"text": "so i need like two hours for my paper where does that fit",
+"family": "plan",
+"needs": [],
+"hours": null,
+"next": "ok do that"
+},
+{
+"text": "block some time for homework tomorrow not too early though",
+"family": "plan",
+"needs": [],
+"hours": null
+},
+{
+"text": "hey can you set up my week i have a lot going on and i can't think",
+"family": "plan",
+"needs": [],
+"hours": null
+},
+{
+"text": "i want to get ahead on my reading this weekend when should i do it",
+"family": "plan",
+"needs": [],
+"hours": null
+},
+{
+"text": "plan tomorrow for me i have class at nine and i'm off work no wait i work at four",
+"family": "plan",
+"needs": [],
+"hours": null
+},
+{
+"text": "find a time for the gym and for studying i need both this week",
+"family": "plan",
+"needs": [],
+"hours": null
+},
+{
+"text": "i need a plan for today like a real one not just a list",
+"family": "plan",
+"needs": [],
+"hours": [
+6,
+17
+]
+},
+{
+"text": "put study time on my calendar before the quiz and make it more than one day",
+"family": "plan",
+"needs": [],
+"hours": null
+},
+{
+"text": "can you figure out when i can do my project i work every evening this week",
+"family": "plan",
+"needs": [],
+"hours": null
+},
+{
+"text": "okay so tomorrow is crazy help me fit everything in",
+"family": "plan",
+"needs": [],
+"hours": null
+},
+{
+"text": "um so rent is due and i don't think i have enough what do i do",
+"family": "money_worry",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "i'm kind of scared to look at my account can you just tell me if i'm okay",
+"family": "money_worry",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "so i get paid friday but my phone bill comes out before that am i going to overdraw",
+"family": "money_worry",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "money is really tight this month like really tight",
+"family": "money_worry",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "i spent way too much this weekend how bad is it",
+"family": "money_worry",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "okay be honest can i make it to payday",
+"family": "money_worry",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "my hours got cut and i'm worried about bills this month",
+"family": "money_worry",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "I am worry about money this week the rent and the electric bill come together",
+"family": "money_worry",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "okay i finally turned in the paper it's done oh my god",
+"family": "done",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "just finished my homework like just now",
+"family": "done",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "i did it i submitted the lab report before the deadline",
+"family": "done",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "hey so the presentation is done i did it and it went okay i think",
+"family": "done",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "finished the reading for class finally only took me all day",
+"family": "done",
+"needs": [
+"student"
+],
+"hours": [
+15,
+27
+]
+},
+{
+"text": "um i turned in the problem set you can take it off",
+"family": "done",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "done with the quiz done done done",
+"family": "done",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "I finished my essay and I sent it to the professor already",
+"family": "done",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "okay i promise i'm going to start the paper tonight for real this time",
+"family": "promise",
+"needs": [],
+"hours": null
+},
+{
+"text": "i'll do the homework right after work i swear",
+"family": "promise",
+"needs": [],
+"hours": null
+},
+{
+"text": "tomorrow morning i'm studying before class i promise hold me to that",
+"family": "promise",
+"needs": [],
+"hours": null
+},
+{
+"text": "i'm going to the library after dinner no excuses i promise",
+"family": "promise",
+"needs": [],
+"hours": null
+},
+{
+"text": "okay so tonight no phone until the reading is done promise",
+"family": "promise",
+"needs": [],
+"hours": null
+},
+{
+"text": "i'll finish the problem set by friday i mean it",
+"family": "promise",
+"needs": [],
+"hours": null
+},
+{
+"text": "i swear i'm going to study for two hours tomorrow",
+"family": "promise",
+"needs": [],
+"hours": null,
+"next": "ok and check on me after"
+},
+{
+"text": "I promise I will start my project after my shift today",
+"family": "promise",
+"needs": [],
+"hours": [
+5,
+18
+]
+},
+{
+"text": "this project is huge can you um break it down for me into like steps",
+"family": "breakdown",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "i don't even know where to start with my paper can you split it up",
+"family": "breakdown",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "okay so the group project is way too big what are the pieces",
+"family": "breakdown",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "break down studying for my exam i have a week",
+"family": "breakdown",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "my presentation feels impossible can you make it smaller steps",
+"family": "breakdown",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "can you break my essay into parts so i can do a little each day",
+"family": "breakdown",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "hey i woke up with a fever i'm not going anywhere today",
+"family": "sick",
+"needs": [],
+"hours": [
+6,
+13
+]
+},
+{
+"text": "um i'm really sick i can't do class or work today what do i do",
+"family": "sick",
+"needs": [],
+"hours": [
+6,
+13
+]
+},
+{
+"text": "i've been up sick since last night today is cancelled",
+"family": "sick",
+"needs": [],
+"hours": [
+6,
+13
+]
+},
+{
+"text": "so i think i have the flu i'm staying in bed can you move my stuff",
+"family": "sick",
+"needs": [],
+"hours": [
+6,
+13
+]
+},
+{
+"text": "i feel terrible i'm not going to make it to class this morning",
+"family": "sick",
+"needs": [],
+"hours": [
+6,
+12
+]
+},
+{
+"text": "I am sick today I cannot go to my classes what happens with my day",
+"family": "sick",
+"needs": [],
+"hours": [
+6,
+13
+]
+},
+{
+"text": "okay i've got like an hour what should i do",
+"family": "now",
+"needs": [],
+"hours": [
+6,
+22
+]
+},
+{
+"text": "um what should i be working on right now",
+"family": "now",
+"needs": [],
+"hours": [
+6,
+22
+]
+},
+{
+"text": "i just got out of class what now",
+"family": "now",
+"needs": [],
+"hours": [
+8,
+20
+]
+},
+{
+"text": "i have a break between classes what's the best use of it",
+"family": "now",
+"needs": [],
+"hours": [
+8,
+18
+]
+},
+{
+"text": "okay i'm at the library where do i start",
+"family": "now",
+"needs": [],
+"hours": [
+8,
+23
+]
+},
+{
+"text": "what do i need to do first today like the very first thing",
+"family": "now",
+"needs": [],
+"hours": [
+5,
+18
+]
+},
+{
+"text": "so i have thirty minutes before work what can i get done",
+"family": "now",
+"needs": [],
+"hours": [
+6,
+20
+]
+},
+{
+"text": "hey what's the next thing i should do",
+"family": "now",
+"needs": [],
+"hours": [
+6,
+22
+]
+},
+{
+"text": "okay i can't do all of this this week what can wait",
+"family": "slide",
+"needs": [],
+"hours": null
+},
+{
+"text": "something has to go this week what's the least important thing",
+"family": "slide",
+"needs": [],
+"hours": null
+},
+{
+"text": "can i push anything to next week i'm drowning",
+"family": "slide",
+"needs": [],
+"hours": null
+},
+{
+"text": "what can i skip this week without it hurting my grade",
+"family": "slide",
+"needs": [],
+"hours": null
+},
+{
+"text": "um is there anything that's not really due this week that i can move",
+"family": "slide",
+"needs": [],
+"hours": null
+},
+{
+"text": "too much this week which thing can slide",
+"family": "slide",
+"needs": [],
+"hours": null
+},
+{
+"text": "hey just so you know i can't focus after like nine at night",
+"family": "about",
+"needs": [],
+"hours": null
+},
+{
+"text": "by the way i work better in the morning before anyone's up",
+"family": "about",
+"needs": [],
+"hours": null,
+"next": "yes keep that"
+},
+{
+"text": "oh and i don't do homework on sundays that's my day off",
+"family": "about",
+"needs": [],
+"hours": null
+},
+{
+"text": "just so you know i need a break after work before i can study",
+"family": "about",
+"needs": [],
+"hours": null
+},
+{
+"text": "fyi i hate long study blocks like forty five minutes is my max",
+"family": "about",
+"needs": [],
+"hours": null
+},
+{
+"text": "remember that i pick up my kid at three every day so nothing then",
+"family": "about",
+"needs": [],
+"hours": null
+},
+{
+"text": "by the way fridays i'm useless after class don't plan anything hard",
+"family": "about",
+"needs": [],
+"hours": null
+},
+{
+"text": "For your information I pray at midday on Fridays so please keep that time free",
+"family": "about",
+"needs": [],
+"hours": null
+},
+{
+"text": "where is all my money going can you tell me what to cut",
+"family": "cut",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "i need to spend less what's the dumbest thing i'm paying for",
+"family": "cut",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "okay so i want to save like fifty bucks a month where does it come from",
+"family": "cut",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "what subscriptions do i have i think i forgot some",
+"family": "cut",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "i'm spending too much on food aren't i",
+"family": "cut",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "help me cut my spending i don't know where to start",
+"family": "cut",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "so i bombed the quiz like really bombed it",
+"family": "bad",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "i got my mid term back and it's bad it's really bad",
+"family": "bad",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "um i failed the exam i don't know what to do now",
+"family": "bad",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "i did terrible on the presentation i froze",
+"family": "bad",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "i think i just failed that test i left half of it blank",
+"family": "bad",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "my grade on the paper was way worse than i thought i feel awful",
+"family": "bad",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "hey good morning",
+"family": "life",
+"needs": [],
+"hours": [
+5,
+12
+]
+},
+{
+"text": "oh my god i got the job",
+"family": "life",
+"needs": [],
+"hours": null
+},
+{
+"text": "today was really rough i just need to say that",
+"family": "life",
+"needs": [],
+"hours": null
+},
+{
+"text": "i'm so nervous about tomorrow",
+"family": "life",
+"needs": [],
+"hours": null
+},
+{
+"text": "guess what i passed",
+"family": "life",
+"needs": [],
+"hours": null
+},
+{
+"text": "hi are you there",
+"family": "life",
+"needs": [],
+"hours": null
+},
+{
+"text": "ugh long day",
+"family": "life",
+"needs": [],
+"hours": null
+},
+{
+"text": "today was actually a good day for once",
+"family": "life",
+"needs": [],
+"hours": null
+},
+{
+"text": "can you just write the first paragraph of my essay i'll do the rest",
+"family": "graded",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "um what's the answer to number three on my homework",
+"family": "graded",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "write my discussion post for me it's only like a hundred words",
+"family": "graded",
+"needs": [
+"student"
+],
+"hours": null,
+"next": "fair. can you help me do it myself?"
+},
+{
+"text": "can you fix my essay so it sounds smarter",
+"family": "graded",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "just do the problem set for me this one time please",
+"family": "graded",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "my professor said we can use ai so can you write the conclusion of my paper",
+"family": "graded",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "can you move a hundred dollars to my savings",
+"family": "move_money",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "pay my phone bill for me",
+"family": "move_money",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "send my roommate fifty bucks for utilities",
+"family": "move_money",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "um can you put some money on my credit card",
+"family": "move_money",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "how much am i getting paid this week",
+"family": "pay",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "when's my next paycheck and how much is it",
+"family": "pay",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "so i worked extra hours how much will my check be",
+"family": "pay",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "i get paid friday right so i can spend now",
+"family": "pay",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "how many hours did i work this week",
+"family": "pay",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "email my professor and tell her i'll be late",
+"family": "reach",
+"needs": [],
+"hours": null
+},
+{
+"text": "can you text my roommate that i'll be home late",
+"family": "reach",
+"needs": [],
+"hours": null
+},
+{
+"text": "message my landlord about the broken heater",
+"family": "reach",
+"needs": [],
+"hours": null
+},
+{
+"text": "um tell my group i can't make the meeting",
+"family": "reach",
+"needs": [],
+"hours": null
+},
+{
+"text": "cancel my gym membership",
+"family": "reach",
+"needs": [],
+"hours": null
+},
+{
+"text": "text my manager that i'm running late",
+"family": "reach_job",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "tell my boss i can't come in tomorrow i have an exam",
+"family": "reach_job",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "can you let work know i'm sick",
+"family": "reach_job",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "um message my manager and ask for friday off",
+"family": "reach_job",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "i'm so tired all the time is something wrong with me",
+"family": "health",
+"needs": [],
+"hours": null
+},
+{
+"text": "do you think i have adhd i can't focus on anything",
+"family": "health",
+"needs": [],
+"hours": null
+},
+{
+"text": "should i take something to help me sleep",
+"family": "health",
+"needs": [],
+"hours": null
+},
+{
+"text": "am i depressed or just burned out",
+"family": "health",
+"needs": [],
+"hours": null
+},
+{
+"text": "wait are you a real person",
+"family": "who",
+"needs": [],
+"hours": null
+},
+{
+"text": "are you like chat gpt or something",
+"family": "who",
+"needs": [],
+"hours": null
+},
+{
+"text": "who am i talking to right now",
+"family": "who",
+"needs": [],
+"hours": null
+},
+{
+"text": "what are you exactly",
+"family": "who",
+"needs": [],
+"hours": null
+},
+{
+"text": "should i go out tonight or stay in and study",
+"family": "decide",
+"needs": [],
+"hours": [
+10,
+21
+]
+},
+{
+"text": "um is it okay if i skip the gym today",
+"family": "decide",
+"needs": [],
+"hours": [
+8,
+20
+]
+},
+{
+"text": "my friends want to get food should i go",
+"family": "decide",
+"needs": [],
+"hours": [
+10,
+21
+]
+},
+{
+"text": "can i take tonight off or is that a bad idea",
+"family": "decide",
+"needs": [],
+"hours": [
+10,
+21
+]
+},
+{
+"text": "should i pick up the extra shift this weekend or study",
+"family": "decide",
+"needs": [],
+"hours": null
+},
+{
+"text": "movie tonight yes or no",
+"family": "decide",
+"needs": [],
+"hours": [
+10,
+21
+]
+},
+{
+"text": "do i have time for a nap before class",
+"family": "decide",
+"needs": [],
+"hours": [
+8,
+17
+]
+},
+{
+"text": "is it bad if i just go to bed early and do it tomorrow",
+"family": "decide",
+"needs": [],
+"hours": [
+18,
+26
+]
+},
+{
+"text": "so my exam got moved to thursday can you fix my week",
+"family": "change",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "class is cancelled tomorrow what do i do with that time",
+"family": "change",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "my professor pushed the paper back a week",
+"family": "change",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "um am i forgetting anything for class this week",
+"family": "change",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "they added a quiz on friday i just found out",
+"family": "change",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "okay which day is the worst one for me this week with classes and everything",
+"family": "change",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "my manager added me to a shift saturday morning does that work",
+"family": "change_job",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "i picked up a shift tomorrow night five to close",
+"family": "change_job",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "they cut my shift on friday so i'm free now",
+"family": "change_job",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "um my schedule at work changed i'm on tuesday and thursday now instead of wednesday",
+"family": "change_job",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "i think i got charged twice at the grocery store",
+"family": "change_money",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "there's a charge i don't recognize on my account",
+"family": "change_money",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "is my savings goal still doable",
+"family": "change_money",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "um i got a refund did it show up",
+"family": "change_money",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "delete everything on my calendar this week",
+"family": "wipe",
+"needs": [],
+"hours": null
+},
+{
+"text": "clear all my to do's i want to start over",
+"family": "wipe",
+"needs": [],
+"hours": null
+},
+{
+"text": "remember my bank pin it's four eight two one",
+"family": "secret",
+"needs": [],
+"hours": null
+},
+{
+"text": "save my password for the school portal it's bluebird ninety nine",
+"family": "secret",
+"needs": [],
+"hours": null
+},
+{
+"text": "i signed up for a yoga class thursday at six put it on my calendar",
+"family": "signup",
+"needs": [],
+"hours": null
+},
+{
+"text": "add a dentist appointment tuesday at ten",
+"family": "signup",
+"needs": [],
+"hours": null,
+"next": "actually make it an hour later"
+},
+{
+"text": "um i have a study group wednesday at four can you add that",
+"family": "signup",
+"needs": [],
+"hours": null
+},
+{
+"text": "put coffee with my friend on saturday at noon",
+"family": "signup",
+"needs": [],
+"hours": null
+}
+]

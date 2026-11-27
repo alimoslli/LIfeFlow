@@ -1,0 +1,14 @@
+{
+  "_about": "What the same person types next, by what the skyling REALLY did in the turn before (generate.ts works that out from the tools that ran and the answer). One table for the bank builder (build_alive_questions.py) and the generator (generate.ts). Made up, generic, fits any life.",
+  "made": ["actually make it an hour later", "undo it please", "never mind, take that off", "can you make it tomorrow instead", "thanks, that helps", "wait, move it to the day after", "can you add one more for tomorrow too", "take that back", "perfect, thanks", "can you make it 30 minutes shorter", "ok and what's after that?", "push it back a bit, I need to eat first", "nice. is the rest of my day clear?", "hmm that's too early for me, later please", "ok cool"],
+  "yes": ["yes please", "ok do that", "sure, go ahead", "yeah do it", "yes", "ok yeah", "please do", "sounds good, do it", "yep go for it"],
+  "no": ["not right now", "no thanks", "maybe later", "nah I'm good", "no, leave it"],
+  "promised": ["actually make it tomorrow morning instead", "thanks, hold me to it", "never mind, forget that one", "ok and check on me after", "make the check-in a bit later, I eat late", "ok. don't let me off easy"],
+  "remembered": ["actually scratch that, forget it", "thanks", "yes keep that", "ok good. use that when you plan my week", "wait, change that, it's only on weekdays"],
+  "declined": ["ok fine, what can you do then?", "why not?", "ok thanks", "fair. can you help me do it myself?", "ugh ok. what's the closest thing you can do?"],
+  "talked": ["thanks, that helps", "ok", "what should I do first then?", "ok and after that?", "got it", "can you say that shorter", "lol ok", "makes sense"],
+  "asked": ["not sure honestly, you pick", "whichever is due first", "the first one", "idk, what do you think?", "either is fine", "the nearest one", "I don't know yet", "can you just check and tell me?"],
+  "undone": ["thanks", "actually put it back, sorry", "ok good", "perfect. I'll sort it out later", "ok and nothing else changed, right?"],
+  "drafted": ["can you make it shorter", "make it a bit more polite", "thanks, I'll send it", "perfect", "less formal please", "ok can you add that I'm sorry for the late notice"],
+  "closer": ["thanks", "thank you!", "perfect, thanks", "ok cool", "got it, thanks", "ty", "awesome", "ok thanks"]
+}

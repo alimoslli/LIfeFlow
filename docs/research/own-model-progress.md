@@ -78,3 +78,11 @@ Full report: `docs/research/2026-11-25-training-night.md`. Short version:
 - **Spent:** 224.18 credits on two boxes. One box was lost to idling between stages (a sleeping loop does not hold a box).
 - **Next, each needs the owner's yes:** train Qwen3-8B on the 435 examples (about 60 credits); a 10-minute speed test of the big model with the fast kernels (about 20); fix the teacher's two big mistakes in code before making more examples.
 
+## Step 8: the owner's standard, everywhere (2026-11-27, no credits; owner: "do 1-9 i want to see it perfectly completed")
+
+- **The owner score** (item 7): his grades as a 39-probe test with machine checks (`chat-eval/owner_exam.json`, `owner_score.py`), run on the teacher before any examples and on every trained model. Stop line: 31 of 39 and no rule at zero. Round 1's kept answers meet his standard on 155 of 250 (62%) with the shared checks alone. The scorer agrees with his own reason on 7 of his 8 grades. No model score yet (needs a GPU). Note: `docs/research/2026-11-27-owner-standard-test.md`.
+- **Longer chats** (item 8): a third of chats run 3 to 5 messages, each follow-up chosen from what the skyling really did. A later turn is trained on only when every earlier turn of its chat was kept.
+- **Parts of the app with no examples** (item 9): every skill now has at least 12 different messages; 166 spoken-style and 62 told-schedule messages. Photos and real voice cannot be made as text and are not faked (runbook, Step 2).
+- **In the app** (items 1 to 5, branch `claude/skyling-standard`, held for the owner's yes): the same answer checks in the skyling's own loop (off by default; watch; fix with one retry through the AI gate), his standard in the instructions, a one-tap reason on a thumbs-down (off by default), the three tool fixes. Note: `docs/research/2026-11-27-skyling-standard-in-the-app.md` on that branch.
+- **Item 6** is the owner's: grading the other 22 answers on his page.
+

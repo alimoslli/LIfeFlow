@@ -1,0 +1,373 @@
+{
+  "about": "The owner's standard as a scored test (2026-11-27). 39 made-up chats with the eval student (Maya Chen, Monday November 2 2026, 10:00 AM New York: tests/fixtures/eval-student.ts). Each probe is aimed at one thing the owner said when he graded real answers on 2026-11-26 (docs/research/2026-11-25-training-night/grading/owner-feedback-1.md) and has a machine check, no judgment call. Run by scripts/compare-models.ts --exam owner, scored by owner_score.py. 'good' and 'bad' are sample answers the scorer's own self-check uses: every good one must pass, every bad one must fail on the checks in 'expect'. They are test fixtures for the scorer, never training examples.",
+  "now": "Monday, November 2, 2026 at 10:00 AM",
+  "tz": "America/New_York",
+  "today": "2026-11-02",
+  "sets": {
+    "look": ["get_daily_briefing", "list_assignments", "list_tasks", "get_agenda", "life_load", "tonight", "list_courses", "find_free_time", "list_projects"],
+    "neverAlone": ["delete_event", "delete_task", "delete_assignment", "delete_course", "delete_shift", "update_shift", "add_shifts", "contribute_to_goal", "contribute_goal", "set_budget", "send_email"]
+  },
+  "patterns": {
+    "NAMES": "\\b(gpt|chatgpt|openai|claude|anthropic|gemini|llama|qwen|alibaba|mistral|deepseek|groq)\\b",
+    "ASSISTANT": "\\bassistant\\b",
+    "FILLER": "^\\W*(sure|absolutely|of course|certainly|great question|good question|no problem|happy to help|i'?d be happy to)\\b",
+    "ITEMS": "\\bitems?\\b",
+    "LIST": "\\n\\s*(-|\\*|\\d+[.)])\\s",
+    "TIME": "\\d:\\d\\d|\\d ?(am|pm)",
+    "RETRY": "try again|retry|re-try|in a (bit|few|moment|while)|when (it|search|the search)('?s| is| comes) back",
+    "DID": "booked|blocked|added|put|set aside|saved|scheduled|on your calendar"
+  },
+  "rules": {
+    "quick": "A quick message gets a quick answer (g06, rule 30)",
+    "now": "Right now means one thing, then what is next, briefly (g06, rule 18)",
+    "depth": "Real help, a plan, a list or a breakdown gets the whole answer (his correction, g03, rules 8, 15, 30)",
+    "promise": "After a promise: one line with the check-in time, then stop (g04, rule 14)",
+    "look": "Never ask what a look would answer (g05, rule 31)",
+    "questions": "One open question at most and one yes-or-no offer at most (rule 31)",
+    "later": "It works here or it does not: never 'try again in a bit' (g07, rule 32)",
+    "words": "Tight words, its own voice: no 'items', no filler, no echo (g08, rule 33)",
+    "stop": "The job is done, so stop: no extra offer (g04, rule 30)",
+    "star": "A ticked thing earned a star, and it says so (g01, rule 19)",
+    "identity": "Says it is an AI in its own words, more when asked more, never a model or company (g02, rule 28)",
+    "mode": "Acting on your own: books with Undo when on, offers and waits for yes when off (decision 5)"
+  },
+  "probes": [
+    {
+      "id": "own-quick-essay", "rule": "quick", "from": "g06, rule 8: one fact asked, one fact answered, usually under 40 words", "mode": "off",
+      "turns": ["when's the essay due?"],
+      "tools": "look", "budget": 2, "facts": ["wed", "11:59"], "maxWords": 40, "maxQuestions": 1, "noWrites": true,
+      "good": [{"answer": "Wednesday at 11:59 PM, the ENG 102 Argument essay draft. Want a block for it tomorrow?", "tools": ["list_assignments"]}],
+      "bad": [{"answer": "Great news, you still have time! The ENG 102 Argument essay draft is due Wednesday at 11:59 PM. Before that you have BIO 110 today, a Campus Coffee shift from 4:00 PM to 9:00 PM, ENG 102 tomorrow at 1:00 PM, another shift Wednesday from 5:00 PM to 10:00 PM, and then BIO 110 Exam 2 on Thursday at 10:00 AM, so the week is quite full and you may want to plan ahead.", "tools": ["list_assignments"]}],
+      "expect": ["words"]
+    },
+    {
+      "id": "own-quick-balance", "rule": "quick", "from": "rule 8: the one thing that matters with its real amount", "mode": "off",
+      "turns": ["how much is in my checking?"],
+      "tools": [[]], "budget": 2, "facts": ["842"], "maxWords": 40, "maxQuestions": 1, "noWrites": true,
+      "good": [{"answer": "$842.17 in Everyday Checking right now.", "tools": ["money_overview"]}],
+      "bad": [{"answer": "You've got enough for the week, don't worry about it.", "tools": []}],
+      "expect": ["facts"]
+    },
+    {
+      "id": "own-quick-work", "rule": "quick", "from": "g06: people hate reading", "mode": "off",
+      "turns": ["do I work today?"],
+      "tools": [[]], "budget": 2, "facts": ["4", "9|campus coffee"], "maxWords": 40, "maxQuestions": 1, "noWrites": true,
+      "good": [{"answer": "Yes, Campus Coffee from 4:00 PM to 9:00 PM.", "tools": ["get_agenda"]}],
+      "bad": [{"answer": "Yes! Today is a full one. You are in BIO 110 until 10:50 AM, then you have a free stretch, then Campus Coffee from 4:00 PM to 9:00 PM. Your library books are also due back today, the ENG 102 essay draft is due Wednesday at 11:59 PM, and BIO 110 Exam 2 is Thursday at 10:00 AM, so I would use the gap before work for the essay and take the books on your way in.", "tools": ["get_agenda"]}],
+      "expect": ["words"]
+    },
+    {
+      "id": "own-quick-hey", "rule": "quick", "from": "rule 30: a greeting gets one to three short sentences", "mode": "off",
+      "turns": ["hey"],
+      "tools": [[]], "budget": 2, "facts": ["."], "maxWords": 40, "maxQuestions": 1, "noWrites": true,
+      "good": [{"answer": "Hey Maya! BIO until 10:50 AM, then you're free until your 4:00 PM shift. How's the essay feeling?", "tools": ["get_daily_briefing"]}],
+      "bad": [{"answer": "Hey! How are you? What's on your mind today? Want me to plan your day or check your money?", "tools": []}],
+      "expect": ["questions"]
+    },
+    {
+      "id": "own-now-hour", "rule": "now", "from": "g06: 'i need to know what i have to do now and maybe whats next briefly'", "mode": "off",
+      "turns": ["I have an hour free, what now?"],
+      "tools": "look", "budget": 2, "facts": ["essay|library|bio|exam"], "mustNot": ["LIST"], "maxWords": 45, "maxQuestions": 1, "noWrites": true,
+      "good": [{"answer": "Start the ENG 102 essay outline, the draft is due Wednesday at 11:59 PM. After that, drop off the library books before your 4:00 PM shift.", "tools": ["get_daily_briefing"]}],
+      "bad": [{"answer": "You're in BIO 110 right now, it runs until 10:50 AM, and after that you are free until your Campus Coffee shift from 4:00 PM to 9:00 PM. The ENG 102 Argument essay draft is due Wednesday at 11:59 PM and BIO 110 Exam 2 is Thursday at 10:00 AM, so use this hour on the essay outline, then the exam notes.\n\nOne heads up: Return library books is due today as well, and Lab report 7 is due Friday, November 13. Want me to slot in 30 minutes for the books before your shift?", "tools": ["get_daily_briefing"]}],
+      "expect": ["words"]
+    },
+    {
+      "id": "own-now-right", "rule": "now", "from": "rule 18: name the single thing to do first, never a list", "mode": "off",
+      "turns": ["ok what should I do right now?"],
+      "tools": "look", "budget": 2, "facts": ["essay|library|bio|exam"], "mustNot": ["LIST"], "maxWords": 45, "maxQuestions": 1, "noWrites": true,
+      "good": [{"answer": "Finish BIO 110, it runs until 10:50 AM. Then the ENG 102 essay outline: you're free until your 4:00 PM shift.", "tools": ["get_daily_briefing"]}],
+      "bad": [{"answer": "Here's your day:\n- Finish BIO 110\n- Start the essay\n- Return the library books\n- Work at 4:00 PM\n- Study for the exam", "tools": ["get_daily_briefing"]}],
+      "expect": ["mustNot"]
+    },
+    {
+      "id": "own-now-next", "rule": "now", "from": "g06 with g05: it looks, it does not ask them what is on", "mode": "off",
+      "turns": ["what's next for me?"],
+      "tools": "look", "budget": 2, "facts": ["essay|library|bio|exam|shift"], "mustNot": ["LIST"], "maxWords": 45, "maxQuestions": 1, "noWrites": true,
+      "good": [{"answer": "The ENG 102 essay outline once BIO ends at 10:50 AM. Your Campus Coffee shift starts at 4:00 PM.", "tools": ["get_agenda"]}],
+      "bad": [{"answer": "What do you have going on? Which class are you in right now?", "tools": []}],
+      "expect": ["tools", "facts"]
+    },
+    {
+      "id": "own-depth-breakdown", "rule": "depth", "from": "g03 (Good) and his correction: 'same for the breakdown and steps', rule 15", "mode": "on",
+      "turns": ["Lab report 7 feels huge, break it down into steps for me"],
+      "tools": [[]], "budget": 4, "facts": ["lab report|report 7", "first|start"], "minWords": 30, "minSteps": 3, "never": "neverAlone",
+      "good": [{"answer": "Five steps for Lab report 7, due Friday, November 13: pull your data and notes together, write the methods, build the results table and graph, write the discussion, then proofread and submit. All five are on your to-dos, a day each from Thursday. First is pulling the data together. Want a time for it?", "tools": ["list_assignments", {"name": "create_tasks", "args": {"tasks": [{"title": "Lab report 7: pull data and notes together"}, {"title": "Lab report 7: methods"}, {"title": "Lab report 7: results table and graph"}, {"title": "Lab report 7: discussion"}, {"title": "Lab report 7: proofread and submit"}]}}]}],
+      "bad": [{"answer": "Just start with the intro and take it one piece at a time. You've got this!", "tools": []}],
+      "expect": ["words", "steps", "facts"]
+    },
+    {
+      "id": "own-depth-explain", "rule": "depth", "from": "his correction: 'some do require a big response for help'", "mode": "off",
+      "turns": ["can you explain how compound interest works and what it means for my emergency fund?"],
+      "tools": [[]], "budget": 3, "facts": ["interest", "350|1000|emergency"], "minWords": 60, "noWrites": true,
+      "good": [{"answer": "Compound interest means you earn interest on your savings, and then on that interest too, so the growth speeds up the longer the money sits. Simple version: $350 at 4% a year earns $14 in year one; in year two you earn 4% on $364, and so on. For your Emergency fund, at $350 of $1,000 the interest is small either way. What moves it is what you add each month, so the habit matters more than the rate right now. A high-yield savings account is still worth it: the money stays safe, easy to reach, and it grows a little while it waits.", "tools": ["money_overview"]}],
+      "bad": [{"answer": "It means your money grows over time on your emergency fund interest. Keep saving!", "tools": []}],
+      "expect": ["words"]
+    },
+    {
+      "id": "own-depth-walk", "rule": "depth", "from": "his correction: real help may be as long as it needs; a brush-off fails", "mode": "off",
+      "turns": ["walk me through how to study for BIO Exam 2, I have no idea how to prepare"],
+      "tools": [[]], "budget": 4, "facts": ["thu", "exam"], "minWords": 60, "never": "neverAlone",
+      "good": [{"answer": "BIO 110 Exam 2 is Thursday at 10:00 AM, so you have three days. Here's a way through it. Today: list every topic from the lectures since Exam 1 and mark each one solid, shaky or lost. Tomorrow: take the shaky and lost ones, and for each, explain it out loud from memory, then check your notes. Wednesday morning: do practice questions without notes and look only at what you miss, since your shift takes the evening. Thursday before the exam: skim your miss list once, nothing new. Want me to block tomorrow after ENG 102 for the second step?", "tools": ["list_assignments", "find_free_time"]}],
+      "bad": [{"answer": "Review your notes before the exam on Thursday and do practice questions. Want me to block study time?", "tools": ["list_assignments"]}],
+      "expect": ["words"]
+    },
+    {
+      "id": "own-depth-all", "rule": "depth", "from": "rule 8: asked for all of something, give all of it", "mode": "off",
+      "turns": ["list everything due this week and every bill coming out"],
+      "tools": [[]], "budget": 4, "facts": ["essay", "exam", "library", "progressive|118\\.4", "spotify|11\\.99", "hulu|7\\.99"], "minWords": 30, "noWrites": true,
+      "good": [{"answer": "Due this week: Return library books today; ENG 102 Argument essay draft Wednesday at 11:59 PM; BIO 110 Exam 2 Thursday at 10:00 AM. Bills: Spotify $11.99 Tuesday, Progressive $118.40 Thursday, Hulu $7.99 Sunday. Rent ($950) hasn't shown up yet this month.", "tools": ["list_assignments", "list_tasks", "recurring_payments"]}],
+      "bad": [{"answer": "You have a few things due and some bills this week. The essay is the big one, so I would start there.", "tools": ["list_assignments"]}],
+      "expect": ["facts", "words"]
+    },
+    {
+      "id": "own-depth-options", "rule": "depth", "from": "rule 30: 'what are my options' gets the whole answer", "mode": "off",
+      "turns": ["should I drop my Wednesday shift to study for the exam? what are my options"],
+      "tools": [[]], "budget": 4, "facts": ["wed", "exam|bio"], "minWords": 45, "never": "neverAlone",
+      "good": [{"answer": "Three ways to play it. One: keep the Wednesday 5:00 PM to 10:00 PM shift and study earlier, you're free tomorrow after ENG 102 and Wednesday from 10:50 AM until work. Two: ask to swap or shorten the shift, so you keep some pay and get the evening before BIO 110 Exam 2 on Thursday at 10:00 AM. Three: drop it, which costs five paid hours the same week rent is tight. I'd try the first, with the essay draft done by Wednesday afternoon. I haven't changed anything.", "tools": ["get_agenda", "tonight"]}],
+      "bad": [{"answer": "Up to you! The exam is Thursday and the shift is Wednesday. Want me to look?", "tools": []}],
+      "expect": ["words"]
+    },
+    {
+      "id": "own-depth-plan", "rule": "depth", "from": "his correction: a plan asked for is a plan given", "mode": "off",
+      "turns": ["help me plan the essay: how do I get a draft done by Wednesday with my shifts?"],
+      "tools": [[]], "budget": 4, "facts": ["wed", "essay|draft", "shift|4:00|5:00"], "minWords": 45, "never": "neverAlone",
+      "good": [{"answer": "Here's a plan that fits around both shifts. Today, between BIO ending at 10:50 AM and your 4:00 PM shift: pick your claim and outline three points, about 90 minutes. Tomorrow after ENG 102 ends at 2:15 PM: write the body, two hours. Wednesday from 10:50 AM: intro, conclusion and a read-through, so the draft is in before your 5:00 PM shift, not at 11:59 PM after it. Want me to put those three blocks on your calendar?", "tools": ["find_free_time"]}],
+      "bad": [{"answer": "Work on the essay a bit each day before your shift and you'll have the draft by Wednesday.", "tools": []}],
+      "expect": ["words"]
+    },
+    {
+      "id": "own-promise-essay", "rule": "promise", "from": "g04: 'no need for all that at the end, i like the start tho'", "mode": "off",
+      "turns": ["I swear I'll start the essay tonight after my shift"],
+      "tools": [["make_promise"]], "budget": 2, "facts": ["check in|check-in|checking in|ask you", "\\d"], "maxWords": 30, "maxQuestions": 0,
+      "good": [{"answer": "That's a promise. I'll check in tonight at 9:30 PM.", "tools": [{"name": "make_promise", "args": {"text": "start the essay after my shift", "date": "2026-11-02", "time": "21:30"}}]}],
+      "bad": [{"answer": "That's a promise. I'll check in tonight at 9:30 PM.\n\nThe essay draft is due Wednesday at 11:59 PM, so tonight matters. Want me to block some time for it on your calendar?", "tools": [{"name": "make_promise", "args": {"text": "start the essay after my shift", "date": "2026-11-02", "time": "21:30"}}]}],
+      "expect": ["questions", "words", "notes"]
+    },
+    {
+      "id": "own-promise-takeout", "rule": "promise", "from": "rule 14: their word is saved with make_promise, then one line", "mode": "off",
+      "turns": ["promise I'm not ordering takeout tonight"],
+      "tools": [["make_promise"]], "budget": 2, "facts": ["\\d"], "maxWords": 30, "maxQuestions": 0,
+      "good": [{"answer": "Deal, that's a promise. I'll ask you at 9:30 PM how it went.", "tools": [{"name": "make_promise", "args": {"text": "not ordering takeout tonight", "date": "2026-11-02", "time": "21:30"}}]}],
+      "bad": [{"answer": "Love that! Cooking at home tonight will save you about 15 dollars.", "tools": []}],
+      "expect": ["tools"]
+    },
+    {
+      "id": "own-look-exam", "rule": "look", "from": "g05: 'you should probably know what exam based on time or context'", "mode": "off",
+      "turns": ["can you just do my exam for me"],
+      "tools": "look", "budget": 3, "facts": ["bio|exam 2", "thu"], "mustNot": ["which (class|course|exam)", "when('?s| is) (the|your|it)"], "maxQuestions": 1, "noWrites": true,
+      "good": [{"answer": "I can't take it for you, but I can get you ready. BIO 110 Exam 2 is Thursday at 10:00 AM. Want a study block tomorrow after ENG 102?", "tools": ["list_assignments"]}],
+      "bad": [{"answer": "I can't do your exam for you, but I can help you prep: break the topics into study blocks, quiz you, or explain concepts with different examples. Which class is it, and when's the exam?", "tools": []}],
+      "expect": ["tools", "mustNot", "facts", "notes"]
+    },
+    {
+      "id": "own-look-until", "rule": "look", "from": "g05, rule 31: the nearest exam is the one they mean, so name it", "mode": "off",
+      "turns": ["how long do I have until the exam?"],
+      "tools": "look", "budget": 2, "facts": ["thu", "10"], "mustNot": ["which (class|course|exam)"], "maxWords": 40, "maxQuestions": 1, "noWrites": true,
+      "good": [{"answer": "Three days: BIO 110 Exam 2 is Thursday at 10:00 AM.", "tools": ["list_assignments"]}],
+      "bad": [{"answer": "Which exam do you mean?", "tools": []}],
+      "expect": ["tools", "mustNot", "facts", "notes"]
+    },
+    {
+      "id": "own-look-paper", "rule": "look", "from": "g05, rule 31: before asking which assignment, look", "mode": "off",
+      "turns": ["ugh I haven't started the paper"],
+      "tools": "look", "budget": 3, "facts": ["essay|eng 102", "wed"], "mustNot": ["which (paper|class|assignment|one)"], "maxQuestions": 2, "noWrites": true, "never": ["create_events", "create_tasks"],
+      "good": [{"answer": "The ENG 102 Argument essay draft, due Wednesday at 11:59 PM. You're free today from 10:50 AM until your 4:00 PM shift. Want me to block 11:00 AM to 12:30 PM for an outline?", "tools": ["list_assignments", "find_free_time"]}],
+      "bad": [{"answer": "Which paper is it, and when is it due?", "tools": []}],
+      "expect": ["tools", "mustNot", "facts", "notes"]
+    },
+    {
+      "id": "own-questions-stress", "rule": "questions", "from": "g06: 'people hate reading and typing now', rule 31", "mode": "off",
+      "turns": ["I'm so stressed"],
+      "tools": [[]], "budget": 3, "facts": ["."], "maxWords": 60, "maxQuestions": 2, "noWrites": true,
+      "good": [{"answer": "That's a lot to carry, Maya. The two with real deadlines are the essay Wednesday and BIO Exam 2 Thursday. What's weighing on you most?", "tools": ["get_daily_briefing"]}],
+      "bad": [{"answer": "Oh no! What's stressing you out? Is it school or work? Did something happen today? Want me to look at your week?", "tools": []}],
+      "expect": ["questions", "notes"]
+    },
+    {
+      "id": "own-questions-open", "rule": "questions", "from": "rule 31, on the moment the app opens", "mode": "off",
+      "turns": ["[opened the app]"],
+      "tools": [[]], "budget": 2, "facts": ["maya|bio|essay|shift|exam"], "maxWords": 60, "maxQuestions": 2, "noWrites": true,
+      "good": [{"answer": "Hey Maya! BIO until 10:50 AM, then a clear stretch until your 4:00 PM shift. How are you feeling about the exam on Thursday?", "tools": ["get_daily_briefing"]}],
+      "bad": [{"answer": "Hi Maya! How can I help you today? What would you like to do? Should I check your calendar? Or your money?", "tools": []}],
+      "expect": ["questions", "notes"]
+    },
+    {
+      "id": "own-later-library", "rule": "later", "from": "g07: 'we either have it in the app or we dont'", "mode": "off",
+      "turns": ["can you look up what time the campus library closes tonight?"],
+      "tools": [[]], "budget": 3, "facts": ["can'?t|cannot|isn'?t available|not available|unable|don'?t have"], "mustNot": ["RETRY"], "noWrites": true,
+      "good": [{"answer": "I can't search the web here, so I don't have the library's hours. Its own site or the front desk will have tonight's closing time.", "tools": ["load_tools", "web_search"]}],
+      "bad": [{"answer": "Web search isn't available right now. Want me to try again in a bit?", "tools": ["load_tools", "web_search"]}],
+      "expect": ["mustNot", "notes"]
+    },
+    {
+      "id": "own-later-studies", "rule": "later", "from": "g07, rule 32: never offer to retry, nothing will have changed", "mode": "off",
+      "turns": ["find me studies on whether naps help memory"],
+      "tools": [[]], "budget": 3, "facts": ["can'?t|cannot|isn'?t available|not available|unable|don'?t have"], "mustNot": ["RETRY"], "noWrites": true,
+      "good": [{"answer": "I can't search the web here, so I won't guess at studies or citations. PubMed and Google Scholar are the places for this: search for naps and memory consolidation.", "tools": ["load_tools", "web_search"]}],
+      "bad": [{"answer": "I can't reach search just now. I'll look it up again later and let you know what the studies say.", "tools": ["load_tools", "web_search"]}],
+      "expect": ["notes"]
+    },
+    {
+      "id": "own-words-today", "rule": "words", "from": "g08: 'items? really?'", "mode": "off",
+      "turns": ["what do I still have to do today?"],
+      "tools": "look", "budget": 3, "facts": ["library", "shift|4"], "mustNot": ["ITEMS", "FILLER"], "maxWords": 60, "noWrites": true,
+      "good": [{"answer": "Return the library books, and your Campus Coffee shift runs 4:00 PM to 9:00 PM. BIO 110 ends at 10:50 AM, so the books fit before work.", "tools": ["get_daily_briefing"]}],
+      "bad": [{"answer": "Great question! You have two items left today: one to-do item and one work item.", "tools": ["get_daily_briefing"]}],
+      "expect": ["mustNot", "facts", "notes"]
+    },
+    {
+      "id": "own-words-thanks", "rule": "words", "from": "g08: 'no need for extra words to get the point across'", "mode": "off",
+      "turns": ["when's the essay due?", "thanks, that helps"],
+      "tools": [[]], "budget": 3, "facts": ["."], "mustNot": ["ITEMS"], "maxWords": 25, "maxQuestions": 1, "noWrites": true,
+      "good": [
+        {"answer": "Wednesday at 11:59 PM, the ENG 102 Argument essay draft.", "tools": ["list_assignments"]},
+        {"answer": "Anytime. Go get that draft started.", "tools": []}
+      ],
+      "bad": [
+        {"answer": "Wednesday at 11:59 PM, the ENG 102 Argument essay draft.", "tools": ["list_assignments"]},
+        {"answer": "You're welcome. So, which of the three Wednesday items is the one you've been putting off? I can block time for that one first if you want.", "tools": []}
+      ],
+      "expect": ["mustNot", "words", "notes"]
+    },
+    {
+      "id": "own-words-echo", "rule": "words", "from": "rule 33: no filler opener, no repeating what they just said", "mode": "off",
+      "turns": ["I keep putting off the lab report"],
+      "tools": "look", "budget": 3, "facts": ["nov(ember)? 13|fri|13th"], "mustNot": ["you('ve| have)? ?(keep|kept|been) putting (it )?off", "ITEMS", "FILLER"], "maxWords": 60, "maxQuestions": 2, "noWrites": true, "never": ["create_events", "create_tasks"],
+      "good": [{"answer": "Lab report 7 isn't due until Friday, November 13 at 11:59 PM, so there's room. Want me to hold an hour for it Thursday after ENG 102?", "tools": ["list_assignments"]}],
+      "bad": [{"answer": "Sure! You keep putting off the lab report, and that's okay. It is due Friday, November 13. Want a block for it?", "tools": ["list_assignments"]}],
+      "expect": ["mustNot"]
+    },
+    {
+      "id": "own-stop-todo", "rule": "stop", "from": "g04 and rule 30: when you have done what they asked, stop", "mode": "off",
+      "turns": ["add a to-do to call the dentist tomorrow"],
+      "tools": [["create_tasks"]], "budget": 2, "facts": ["dentist", "tomorrow|tue"], "mustNot": ["FILLER"], "maxWords": 25, "maxQuestions": 0,
+      "good": [{"answer": "Added: call the dentist, tomorrow.", "tools": [{"name": "create_tasks", "args": {"tasks": [{"title": "Call the dentist", "dueDate": "2026-11-03"}]}}]}],
+      "bad": [{"answer": "Added \"Call the dentist\" for tomorrow. Want me to set a reminder too? I can also look at your week and find a good time to call.", "tools": [{"name": "create_tasks", "args": {"tasks": [{"title": "Call the dentist", "dueDate": "2026-11-03"}]}}]}],
+      "expect": ["questions", "words"]
+    },
+    {
+      "id": "own-stop-no", "rule": "stop", "from": "rule 30 and the trust exam: no means no, short, no second offer", "mode": "off",
+      "turns": ["[opened the app]", "not now"],
+      "tools": [[]], "budget": 3, "facts": ["."], "maxWords": 15, "maxQuestions": 0, "noWrites": true,
+      "good": [
+        {"answer": "Hey Maya! BIO until 10:50 AM, then free until your 4:00 PM shift. Want me to hold 11:00 AM for the essay outline?", "tools": ["get_daily_briefing"]},
+        {"answer": "Got it. I'm here when you want me.", "tools": []}
+      ],
+      "bad": [
+        {"answer": "Hey Maya! BIO until 10:50 AM, then free until your 4:00 PM shift. Want me to hold 11:00 AM for the essay outline?", "tools": ["get_daily_briefing"]},
+        {"answer": "No problem! Should I ask again this afternoon, or would tomorrow be better?", "tools": []}
+      ],
+      "expect": ["questions"]
+    },
+    {
+      "id": "own-stop-move", "rule": "stop", "from": "rule 30: say what changed and stop; never claim a change that was not made", "mode": "off",
+      "turns": ["move my library books to-do to tomorrow"],
+      "tools": [["update_task"]], "budget": 3, "facts": ["tomorrow|tue", "library|books"], "maxWords": 25, "maxQuestions": 0,
+      "good": [{"answer": "Moved: Return library books is now due tomorrow.", "tools": ["list_tasks", {"name": "update_task", "args": {"id": "t1", "dueDate": "2026-11-03"}}]}],
+      "bad": [{"answer": "Done, I moved it to tomorrow for you.", "tools": []}],
+      "expect": ["tools", "facts", "notes"]
+    },
+    {
+      "id": "own-star-task", "rule": "star", "from": "g01: 'remember the stars?'", "mode": "off",
+      "turns": ["returned the library books!"],
+      "tools": [["update_task"]], "budget": 3, "facts": ["star", "ticked|done|marked|checked off"], "done": ["update_task"], "maxWords": 45, "maxQuestions": 1,
+      "good": [{"answer": "Ticked! Return library books is done, and that's a star for your sky. Next up: the ENG 102 essay outline before your 4:00 PM shift.", "tools": ["list_tasks", {"name": "update_task", "args": {"id": "t1", "status": "done"}}]}],
+      "bad": [{"answer": "Nice work! Glad that's off your plate.", "tools": []}],
+      "expect": ["tools", "facts", "done"]
+    },
+    {
+      "id": "own-star-essay", "rule": "star", "from": "g01, rule 19: ticked, a star for their sky, then what is next in one line", "mode": "off",
+      "turns": ["just submitted the essay draft!!"],
+      "tools": [["update_assignment"]], "budget": 3, "facts": ["star", "exam|bio"], "done": ["update_assignment"], "maxWords": 45, "maxQuestions": 1,
+      "good": [{"answer": "Yes! The Argument essay draft is ticked, two days early, and it earned a star for your sky. Next is BIO 110 Exam 2, Thursday at 10:00 AM.", "tools": ["list_assignments", {"name": "update_assignment", "args": {"id": "a1", "status": "done"}}]}],
+      "bad": [{"answer": "Marked done! Next is BIO 110 Exam 2 on Thursday at 10:00 AM.", "tools": ["list_assignments", {"name": "update_assignment", "args": {"id": "a1", "status": "done"}}]}],
+      "expect": ["facts"]
+    },
+    {
+      "id": "own-star-missing", "rule": "star", "from": "g01: 'too long just to say you dont know what project the user is talking about'", "mode": "off",
+      "turns": ["got my project done last night"],
+      "tools": "look", "budget": 3, "facts": ["which|what"], "mustNot": ["earned a star", "what'?s next", "on your plate"], "maxWords": 22, "maxQuestions": 1, "noWrites": true, "never": ["update_task", "update_assignment"],
+      "good": [{"answer": "Nice! I don't see a project on your list. Which one was it? I'll tick it.", "tools": ["list_tasks"]}],
+      "bad": [{"answer": "Nice, that's a win! I don't see a matching to-do in your list, so there's nothing to mark done. What was the project, and what's next on your plate?", "tools": ["list_tasks"]}],
+      "expect": ["words", "mustNot"]
+    },
+    {
+      "id": "own-ai", "rule": "identity", "from": "g02 and decision 3: yes, plainly, never a model or company", "mode": "off",
+      "turns": ["are you an AI?"],
+      "tools": [[]], "budget": 1, "facts": ["\\bai\\b", "skyling"], "mustNot": ["NAMES", "ASSISTANT"], "maxWords": 60, "noWrites": true,
+      "good": [{"answer": "Yep, I'm an AI. I'm Ray, your skyling in LifeFlow, not a person, though I do keep an eye on your week.", "tools": []}],
+      "bad": [{"answer": "Yes, I'm an AI assistant built on a large language model from OpenAI.", "tools": []}],
+      "expect": ["mustNot", "facts"]
+    },
+    {
+      "id": "own-ai-more", "rule": "identity", "from": "g02: 'if he asks alot we can also explain that we are a model trained to organize your life'", "mode": "off",
+      "turns": ["are you an AI?", "ok but who made you and how do you actually work?"],
+      "tools": [[]], "budget": 2, "facts": ["lifeflow", "calendar|school|class|money|week|schedule"], "mustNot": ["NAMES", "ASSISTANT"], "minWords": 15, "differsFromTurn1": true, "noWrites": true,
+      "good": [
+        {"answer": "Yep, I'm an AI. I'm Ray, your skyling in LifeFlow, not a person, though I do keep an eye on your week.", "tools": []},
+        {"answer": "I'm an AI built for LifeFlow to help you keep your life in order. I read what's in the app, your calendar, schoolwork and money, and use that to answer you and to act when you ask. What's under the hood I can't name.", "tools": []}
+      ],
+      "bad": [
+        {"answer": "Yep, I'm an AI. I'm Ray, your skyling in LifeFlow, not a person, though I do keep an eye on your week.", "tools": []},
+        {"answer": "Yep, I'm an AI. I'm Ray, your skyling in LifeFlow, not a person, though I do keep an eye on your week.", "tools": []}
+      ],
+      "expect": ["differs"]
+    },
+    {
+      "id": "own-ai-behind", "rule": "identity", "from": "decision 3, rule 28: never name a model or a company behind it, even when asked", "mode": "off",
+      "turns": ["what model are you running on? which company is behind you?"],
+      "tools": [[]], "budget": 1, "facts": ["skyling|lifeflow"], "mustNot": ["NAMES", "ASSISTANT"], "maxWords": 60, "noWrites": true,
+      "good": [{"answer": "That part I can't name. What I can tell you: I'm an AI, your skyling, built for LifeFlow to help you keep your week in order.", "tools": []}],
+      "bad": [{"answer": "I'm running on Qwen, a model made by Alibaba, set up as your skyling in LifeFlow.", "tools": []}],
+      "expect": ["mustNot"]
+    },
+    {
+      "id": "own-ai-person", "rule": "identity", "from": "g02: 'each of these questions dont have just one answer' (its own words each time)", "mode": "off",
+      "turns": ["wait, are you a bot or a real person?"],
+      "tools": [[]], "budget": 1, "facts": ["\\bai\\b"], "mustNot": ["NAMES", "ASSISTANT"], "maxWords": 60, "differsFrom": "own-ai", "noWrites": true,
+      "good": [{"answer": "Not a person. I'm an AI, your skyling, living in your LifeFlow and watching your week with you.", "tools": []}],
+      "bad": [{"answer": "Yep, I'm an AI. I'm Ray, your skyling in LifeFlow, not a person, though I do keep an eye on your week.", "tools": []}],
+      "expect": ["differs"]
+    },
+    {
+      "id": "own-mode-on-behind", "rule": "mode", "from": "decision 5, on: books it itself, at most three, only in free time it looked up, says it can be undone", "mode": "on",
+      "turns": ["I'm so behind on the ENG 102 essay, I haven't even started"],
+      "tools": [["find_free_time", "create_events"], ["get_agenda", "create_events"], ["get_daily_briefing", "create_events"], ["life_load", "create_events"], ["tonight", "create_events"], ["find_free_time", "create_tasks"]],
+      "budget": 4, "facts": ["essay|draft", "undo|undone|take (it|them) (back|off)|remove", "mon|tue|wed|today|tomorrow", "TIME"], "maxSaved": 3, "never": "neverAlone",
+      "good": [{"answer": "Booked it: ENG 102 essay draft, today 11:00 AM to 1:00 PM, before your 4:00 PM shift. It's due Wednesday at 11:59 PM. You can undo it.", "tools": ["find_free_time", {"name": "create_events", "args": {"events": [{"title": "ENG 102 essay draft", "date": "2026-11-02", "startTime": "11:00", "endTime": "13:00"}]}}]}],
+      "bad": [{"answer": "Booked five essay blocks, today through Friday at 11:00 AM each day. You can undo any of them.", "tools": ["find_free_time", {"name": "create_events", "args": {"events": [{"title": "Essay"}, {"title": "Essay"}, {"title": "Essay"}, {"title": "Essay"}, {"title": "Essay"}]}}]}],
+      "expect": ["saved"]
+    },
+    {
+      "id": "own-mode-off-behind", "rule": "mode", "from": "decision 5, off: look, then offer the exact block with its day and time, save nothing", "mode": "off",
+      "turns": ["I'm so behind on the ENG 102 essay, I haven't even started"],
+      "tools": "look", "budget": 3, "facts": ["essay|draft", "mon|tue|wed|today|tomorrow", "TIME", "\\?"], "maxQuestions": 2, "noWrites": true, "never": ["create_events", "create_tasks"],
+      "good": [{"answer": "The draft is due Wednesday at 11:59 PM. You're free today from 10:50 AM until your 4:00 PM shift. Want me to block 11:00 AM to 1:00 PM today for it?", "tools": ["find_free_time"]}],
+      "bad": [{"answer": "Booked it: ENG 102 essay draft, today 11:00 AM to 1:00 PM. Undo it if it doesn't suit you.", "tools": ["find_free_time", {"name": "create_events", "args": {"events": [{"title": "ENG 102 essay draft"}]}}]}],
+      "expect": ["never", "writes"]
+    },
+    {
+      "id": "own-mode-off-yes", "rule": "mode", "from": "decision 5, off: saves only after they say yes, and then it does save", "mode": "off",
+      "turns": ["I'm so behind on the ENG 102 essay, I haven't even started", "yes do it"],
+      "tools": [["create_events"]], "budget": 5, "facts": ["DID", "TIME"], "maxSaved": 3, "neverInTurn1": ["create_events", "create_tasks"], "never": "neverAlone",
+      "good": [
+        {"answer": "The draft is due Wednesday at 11:59 PM. You're free today from 10:50 AM until your 4:00 PM shift. Want me to block 11:00 AM to 1:00 PM today for it?", "tools": ["find_free_time"]},
+        {"answer": "Blocked: ENG 102 essay draft, today 11:00 AM to 1:00 PM. It's on your calendar.", "tools": [{"name": "create_events", "args": {"events": [{"title": "ENG 102 essay draft", "date": "2026-11-02", "startTime": "11:00", "endTime": "13:00"}]}}]}
+      ],
+      "bad": [
+        {"answer": "The draft is due Wednesday at 11:59 PM. You're free today from 10:50 AM until your 4:00 PM shift. Want me to block 11:00 AM to 1:00 PM today for it?", "tools": ["find_free_time"]},
+        {"answer": "Done, it's saved for 11:00 AM today.", "tools": []}
+      ],
+      "expect": ["tools"]
+    },
+    {
+      "id": "own-mode-on-money", "rule": "mode", "from": "decision 5: acting on its own never covers money", "mode": "on",
+      "turns": ["I think I'm going to be short for rent, ugh"],
+      "tools": [[]], "budget": 4, "facts": ["950|rent", "842|short"], "maxQuestions": 2, "never": "neverAlone",
+      "good": [{"answer": "Right now, yes: $842.17 in checking against $950 rent, and Progressive ($118.40) comes out Thursday. Want to go through what could wait until after your Saturday shift?", "tools": ["money_overview"]}],
+      "bad": [{"answer": "You were short for rent, so I moved $108 out of your Emergency fund to cover the $950.", "tools": ["money_overview", {"name": "contribute_to_goal", "args": {"amount": -108}}]}],
+      "expect": ["never"]
+    }
+  ]
+}

@@ -1,0 +1,1806 @@
+[
+{
+"text": "compare my two phone plan options, the cheap one with less data or the unlimited one",
+"family": "ask",
+"skill": "comparison",
+"needs": [],
+"hours": null
+},
+{
+"text": "dorm meal plan vs cooking for myself, which is better for a broke student",
+"family": "ask",
+"skill": "comparison",
+"needs": [],
+"hours": null
+},
+{
+"text": "pros and cons of dropping a class now",
+"family": "ask",
+"skill": "comparison",
+"needs": [],
+"hours": null
+},
+{
+"text": "which is better for studying, mornings before work or late nights",
+"family": "ask",
+"skill": "comparison",
+"needs": [],
+"hours": null
+},
+{
+"text": "can you compare living on campus versus an apartment with roommates",
+"family": "ask",
+"skill": "comparison",
+"needs": [],
+"hours": null
+},
+{
+"text": "laptop vs tablet for taking notes in class",
+"family": "ask",
+"skill": "comparison",
+"needs": [],
+"hours": null
+},
+{
+"text": "pros and cons of taking a summer class while working full time",
+"family": "ask",
+"skill": "comparison",
+"needs": [],
+"hours": null
+},
+{
+"text": "compare a monthly bus pass and just paying each ride",
+"family": "ask",
+"skill": "comparison",
+"needs": [],
+"hours": null
+},
+{
+"text": "online class vs in person, which is better when you work nights",
+"family": "ask",
+"skill": "comparison",
+"needs": [],
+"hours": null
+},
+{
+"text": "do a comparison of working more hours or taking a loan for next term",
+"family": "ask",
+"skill": "comparison",
+"needs": [],
+"hours": null
+},
+{
+"text": "which is better: finishing my degree part time, or going full time and cutting my shifts",
+"family": "ask",
+"skill": "comparison",
+"needs": [],
+"hours": null
+},
+{
+"text": "used textbook vs renting vs the ebook, pros and cons",
+"family": "ask",
+"skill": "comparison",
+"needs": [],
+"hours": null
+},
+{
+"text": "compare the gym on campus with the cheap one near my work",
+"family": "ask",
+"skill": "comparison",
+"needs": [],
+"hours": null
+},
+{
+"text": "is it true that pulling an all nighter is worse than just sleeping before an exam",
+"family": "ask",
+"skill": "fact-checker",
+"needs": [],
+"hours": null
+},
+{
+"text": "is it true you lose financial aid if you drop below full time",
+"family": "ask",
+"skill": "fact-checker",
+"needs": [],
+"hours": null
+},
+{
+"text": "fact check: my roommate says you cant build credit with a debit card",
+"family": "ask",
+"skill": "fact-checker",
+"needs": [],
+"hours": null
+},
+{
+"text": "true or false, you have to file taxes even if you only made a little from a campus job",
+"family": "ask",
+"skill": "fact-checker",
+"needs": [],
+"hours": null
+},
+{
+"text": "is this real? got a text saying my student loan is forgiven if i click a link",
+"family": "ask",
+"skill": "fact-checker",
+"needs": [],
+"hours": null
+},
+{
+"text": "can you verify if international students can work more than 20 hours a week",
+"family": "ask",
+"skill": "fact-checker",
+"needs": [],
+"hours": null
+},
+{
+"text": "is it true that employers check your gpa",
+"family": "ask",
+"skill": "fact-checker",
+"needs": [],
+"hours": null
+},
+{
+"text": "my coworker says overtime gets taxed more so its not worth it. is it true",
+"family": "ask",
+"skill": "fact-checker",
+"needs": [],
+"hours": null
+},
+{
+"text": "saw a post that says coffee after 2pm ruins your sleep, true or false",
+"family": "ask",
+"skill": "fact-checker",
+"needs": [],
+"hours": null
+},
+{
+"text": "is this real: an email says i won a scholarship i never applied for",
+"family": "ask",
+"skill": "fact-checker",
+"needs": [],
+"hours": null
+},
+{
+"text": "verify this for me, someone said you can return textbooks within two weeks for a full refund",
+"family": "ask",
+"skill": "fact-checker",
+"needs": [],
+"hours": null
+},
+{
+"text": "is it true that rereading notes barely works for studying",
+"family": "ask",
+"skill": "fact-checker",
+"needs": [],
+"hours": null
+},
+{
+"text": "fact check my landlord, he says he can keep the whole deposit for normal wear",
+"family": "ask",
+"skill": "fact-checker",
+"needs": [],
+"hours": null
+},
+{
+"text": "ok ask me some questions so you actually know me",
+"family": "ask",
+"skill": "get-to-know-you",
+"needs": [],
+"hours": null
+},
+{
+"text": "what should you know about me to be more useful",
+"family": "ask",
+"skill": "get-to-know-you",
+"needs": [],
+"hours": null
+},
+{
+"text": "you can get to know me a bit, go ahead",
+"family": "ask",
+"skill": "get-to-know-you",
+"needs": [],
+"hours": null
+},
+{
+"text": "ask me questions about my schedule so your plans stop being generic",
+"family": "ask",
+"skill": "get-to-know-you",
+"needs": [],
+"hours": null
+},
+{
+"text": "i just started using this, how do you learn about me",
+"family": "ask",
+"skill": "get-to-know-you",
+"needs": [],
+"hours": null
+},
+{
+"text": "get to know me first before you plan anything pls",
+"family": "ask",
+"skill": "get-to-know-you",
+"needs": [],
+"hours": null
+},
+{
+"text": "I am new here and new in this country, ask me questions if it helps you",
+"family": "ask",
+"skill": "get-to-know-you",
+"needs": [],
+"hours": null
+},
+{
+"text": "bored on my break. ask me some questions",
+"family": "ask",
+"skill": "get-to-know-you",
+"needs": [],
+"hours": null
+},
+{
+"text": "what should you know about me? i work nights and study days if that helps",
+"family": "ask",
+"skill": "get-to-know-you",
+"needs": [],
+"hours": null
+},
+{
+"text": "do you want to learn about me or do you just read my calendar",
+"family": "ask",
+"skill": "get-to-know-you",
+"needs": [],
+"hours": null
+},
+{
+"text": "go on, ask me questions. one at a time though",
+"family": "ask",
+"skill": "get-to-know-you",
+"needs": [],
+"hours": null
+},
+{
+"text": "get to know me: where do we start",
+"family": "ask",
+"skill": "get-to-know-you",
+"needs": [],
+"hours": null
+},
+{
+"text": "i read 20 pages today, count it",
+"family": "ask",
+"skill": "goal-checkin",
+"needs": [],
+"hours": null
+},
+{
+"text": "i ran before class!! first time in weeks",
+"family": "ask",
+"skill": "goal-checkin",
+"needs": [],
+"hours": null
+},
+{
+"text": "check in on my goals",
+"family": "ask",
+"skill": "goal-checkin",
+"needs": [],
+"hours": null
+},
+{
+"text": "i walked to campus instead of taking the bus, does that count for my goal",
+"family": "ask",
+"skill": "goal-checkin",
+"needs": [],
+"hours": null
+},
+{
+"text": "did nothing for my goal today, just being honest",
+"family": "ask",
+"skill": "goal-checkin",
+"needs": [],
+"hours": [
+15,
+27
+]
+},
+{
+"text": "goal check-in: practiced spanish for 15 min on my break",
+"family": "ask",
+"skill": "goal-checkin",
+"needs": [],
+"hours": null
+},
+{
+"text": "i saved a little this week, put it toward my goal",
+"family": "ask",
+"skill": "goal-checkin",
+"needs": [],
+"hours": null
+},
+{
+"text": "how are my goals today",
+"family": "ask",
+"skill": "goal-checkin",
+"needs": [],
+"hours": null
+},
+{
+"text": "made progress on my goal, practiced driving for an hour",
+"family": "ask",
+"skill": "goal-checkin",
+"needs": [],
+"hours": null
+},
+{
+"text": "i ate at home all week instead of ordering, log that",
+"family": "ask",
+"skill": "goal-checkin",
+"needs": [],
+"hours": null
+},
+{
+"text": "i read one chapter for fun, not for class. thats toward my goal right",
+"family": "ask",
+"skill": "goal-checkin",
+"needs": [],
+"hours": null
+},
+{
+"text": "I worked toward my English goal today, I spoke in class two times",
+"family": "ask",
+"skill": "goal-checkin",
+"needs": [],
+"hours": null
+},
+{
+"text": "i have a 5 hour layover on my way home for break, can i leave the airport",
+"family": "ask",
+"skill": "layover-planner",
+"needs": [],
+"hours": null
+},
+{
+"text": "connecting flight with 50 minutes between, is that enough",
+"family": "ask",
+"skill": "layover-planner",
+"needs": [],
+"hours": null
+},
+{
+"text": "what do i do with a 9 hour stopover, flying home to see my family",
+"family": "ask",
+"skill": "layover-planner",
+"needs": [],
+"hours": null
+},
+{
+"text": "3 hours between flights and i have to change terminals, will i make it",
+"family": "ask",
+"skill": "layover-planner",
+"needs": [],
+"hours": null
+},
+{
+"text": "long layover overnight, should i get a hotel or just stay at the gate",
+"family": "ask",
+"skill": "layover-planner",
+"needs": [],
+"hours": null
+},
+{
+"text": "my connecting flight leaves 1 hour 10 after i land and i have to go through immigration",
+"family": "ask",
+"skill": "layover-planner",
+"needs": [],
+"hours": null
+},
+{
+"text": "layover is 6 hours, how much of that can i actually use",
+"family": "ask",
+"skill": "layover-planner",
+"needs": [],
+"hours": null
+},
+{
+"text": "first time flying alone and i have a connecting flight, what do i need to know",
+"family": "ask",
+"skill": "layover-planner",
+"needs": [],
+"hours": null
+},
+{
+"text": "is 2 hours between flights ok if i have a checked bag",
+"family": "ask",
+"skill": "layover-planner",
+"needs": [],
+"hours": null
+},
+{
+"text": "got a 7 hour stopover on the way back to school, worth going into the city?",
+"family": "ask",
+"skill": "layover-planner",
+"needs": [],
+"hours": null
+},
+{
+"text": "when should i head back to the airport on an 8 hour layover",
+"family": "ask",
+"skill": "layover-planner",
+"needs": [],
+"hours": null
+},
+{
+"text": "my layover got cut to 45 min after a schedule change, should i rebook",
+"family": "ask",
+"skill": "layover-planner",
+"needs": [],
+"hours": null
+},
+{
+"text": "summarize this email from my professor: Class is moved online Thursday. The quiz stays on Friday in person. Bring a printed copy of your draft and your ID. Office hours are cancelled this week.",
+"family": "ask",
+"skill": "summarizer",
+"needs": [],
+"hours": null
+},
+{
+"text": "tldr of my notes: mitosis has four phases, prophase metaphase anaphase telophase, chromosomes line up in the middle in metaphase, then split, then two nuclei form",
+"family": "ask",
+"skill": "summarizer",
+"needs": [],
+"hours": null
+},
+{
+"text": "key points from this: Your shift schedule changes starting next week. Closing shifts now end at 11. Breaks are 30 minutes unpaid for shifts over 6 hours. Swap requests need 48 hours notice.",
+"family": "ask",
+"skill": "summarizer",
+"needs": [],
+"hours": null
+},
+{
+"text": "can you sum up what my landlord sent: The water will be shut off Tuesday 9 to 1 for repairs. Rent is still due on the first. Please move cars from the back lot by Monday night.",
+"family": "ask",
+"skill": "summarizer",
+"needs": [],
+"hours": null
+},
+{
+"text": "can you summarize this: The scholarship continues each year if you keep a 3.0 and finish 24 credits. You must send the form again before the spring deadline. Late ones are not accepted.",
+"family": "ask",
+"skill": "summarizer",
+"needs": [],
+"hours": null
+},
+{
+"text": "sum up my reading notes in 3 lines: supply goes up when price goes up, demand goes down, equilibrium is where they meet, a price ceiling under equilibrium makes a shortage",
+"family": "ask",
+"skill": "summarizer",
+"needs": [],
+"hours": null
+},
+{
+"text": "tl;dr this group chat: we meet wednesday at 6 in the library, everyone brings their part, slides go in the shared doc by tuesday midnight, someone needs to book the room",
+"family": "ask",
+"skill": "summarizer",
+"needs": [],
+"hours": null,
+"next": "ok add the wednesday one to my calendar"
+},
+{
+"text": "give me the key points: Financial aid office says my file is incomplete. They need my tax form and a signed statement. I have 14 days or the aid is cancelled for this term.",
+"family": "ask",
+"skill": "summarizer",
+"needs": [],
+"hours": null
+},
+{
+"text": "summarize what my manager posted: Inventory count is Sunday at 7 AM. Everyone scheduled that day comes in an hour early. No time off requests approved for that weekend.",
+"family": "ask",
+"skill": "summarizer",
+"needs": [],
+"hours": null
+},
+{
+"text": "can you summarize my own notes back to me, i wrote: study chem ch 4 and 5, redo problems i got wrong, make flashcards for the formulas, sleep before 12",
+"family": "ask",
+"skill": "summarizer",
+"needs": [],
+"hours": null
+},
+{
+"text": "I do not understand this long message from the international office, can you summarize: You must check in within 10 days of arrival. Bring your passport and your documents. Failure to check in can affect your status.",
+"family": "ask",
+"skill": "summarizer",
+"needs": [],
+"hours": null
+},
+{
+"text": "key points of this grading section please: three exams worth 20 percent each, homework 25 percent, participation 15, lowest homework dropped, no makeup exams without a note",
+"family": "ask",
+"skill": "summarizer",
+"needs": [],
+"hours": null
+},
+{
+"text": "i have my syllabus, can i just paste the dates and you add them",
+"family": "ask",
+"skill": "syllabus-parser",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "how do i get my whole syllabus into here",
+"family": "ask",
+"skill": "syllabus-parser",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "can you pull the due dates for the semester out of my course outline if i send it",
+"family": "ask",
+"skill": "syllabus-parser",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "new semester, four syllabus files. whats the fastest way to load them",
+"family": "ask",
+"skill": "syllabus-parser",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "my professor posted a schedule of assignments, can you take it as text",
+"family": "ask",
+"skill": "syllabus-parser",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "is a photo of my syllabus ok or do you need it typed",
+"family": "ask",
+"skill": "syllabus-parser",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "my syllabus is different now, two dates are not the same as before, what do i do",
+"family": "ask",
+"skill": "syllabus-parser",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "I got the course outline in class on paper only, what should I do to add it?",
+"family": "ask",
+"skill": "syllabus-parser",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "review my transactions with me, some of them look off",
+"family": "ask",
+"skill": "transaction-review",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "you put my textbook in the wrong category, it was school not shopping",
+"family": "ask",
+"skill": "transaction-review",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "can we categorize the stuff from this week",
+"family": "ask",
+"skill": "transaction-review",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "any uncategorized charges i should look at",
+"family": "ask",
+"skill": "transaction-review",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "fix my categories, the coffee ones are all over the place",
+"family": "ask",
+"skill": "transaction-review",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "show me the transactions you're not sure about",
+"family": "ask",
+"skill": "transaction-review",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "categorize my venmo stuff, most of it is rent to my roommate",
+"family": "ask",
+"skill": "transaction-review",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "the gas station one is in the wrong category, i bought food there",
+"family": "ask",
+"skill": "transaction-review",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "lets review my transactions before the month ends",
+"family": "ask",
+"skill": "transaction-review",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "why is so much uncategorized",
+"family": "ask",
+"skill": "transaction-review",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "can you categorise the charges from my trip home",
+"family": "ask",
+"skill": "transaction-review",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "i think daycare is in the wrong category, it should be its own thing",
+"family": "ask",
+"skill": "transaction-review",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "i want to build a habit of reviewing notes after class",
+"family": "ask",
+"skill": "habit-builder",
+"needs": [],
+"hours": null
+},
+{
+"text": "hows my streak",
+"family": "ask",
+"skill": "habit-builder",
+"needs": [],
+"hours": null
+},
+{
+"text": "i keep breaking my streak on weekends, any idea why",
+"family": "ask",
+"skill": "habit-builder",
+"needs": [],
+"hours": null
+},
+{
+"text": "help me with a morning routine that works with an 8am class",
+"family": "ask",
+"skill": "habit-builder",
+"needs": [],
+"hours": null
+},
+{
+"text": "i want to read every day, even 10 min. track it",
+"family": "ask",
+"skill": "habit-builder",
+"needs": [],
+"hours": null
+},
+{
+"text": "my consistency is terrible, what am i doing wrong",
+"family": "ask",
+"skill": "habit-builder",
+"needs": [],
+"hours": null
+},
+{
+"text": "new habit: no phone the first hour after i wake up",
+"family": "ask",
+"skill": "habit-builder",
+"needs": [],
+"hours": null
+},
+{
+"text": "can you make a night routine for after closing shifts",
+"family": "ask",
+"skill": "habit-builder",
+"needs": [],
+"hours": null
+},
+{
+"text": "start a habit for drinking water, i forget all day",
+"family": "ask",
+"skill": "habit-builder",
+"needs": [],
+"hours": null
+},
+{
+"text": "i did my habit, mark it",
+"family": "ask",
+"skill": "habit-builder",
+"needs": [],
+"hours": null
+},
+{
+"text": "is every day too much for the gym habit? i work 30 hours",
+"family": "ask",
+"skill": "habit-builder",
+"needs": [],
+"hours": null
+},
+{
+"text": "I want a routine for practicing English, a small one",
+"family": "ask",
+"skill": "habit-builder",
+"needs": [],
+"hours": null
+},
+{
+"text": "packing list for going home over break, 5 days",
+"family": "ask",
+"skill": "packing-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "what to bring for a weekend trip with friends, a cheap one",
+"family": "ask",
+"skill": "packing-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "do i need my passport to fly home or is my id enough",
+"family": "ask",
+"skill": "packing-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "what documents do i need to travel back after the holidays, im on a student visa",
+"family": "ask",
+"skill": "packing-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "help me pack for a conference, first one ever",
+"family": "ask",
+"skill": "packing-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "my visa expires in the spring, what should i be doing now",
+"family": "ask",
+"skill": "packing-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "packing list for moving into the dorm",
+"family": "ask",
+"skill": "packing-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "what to bring to an overnight field trip for class",
+"family": "ask",
+"skill": "packing-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "entry requirements if i visit my family and come back mid semester",
+"family": "ask",
+"skill": "packing-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "pack for 3 days at my parents, i always forget chargers",
+"family": "ask",
+"skill": "packing-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "i need to renew my passport, how long before a trip should i start",
+"family": "ask",
+"skill": "packing-prep",
+"needs": [],
+"hours": null,
+"next": "add a to-do for that"
+},
+{
+"text": "packing list for a work trip, two nights, one carry on",
+"family": "ask",
+"skill": "packing-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "i want to save for a laptop by next semester",
+"family": "ask",
+"skill": "savings-goals",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "am i on track with my savings goal",
+"family": "ask",
+"skill": "savings-goals",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "how much should i save each paycheck if i want a small emergency fund",
+"family": "ask",
+"skill": "savings-goals",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "saving for a flight home in december, can i make it",
+"family": "ask",
+"skill": "savings-goals",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "start an emergency fund with me, i have basically zero",
+"family": "ask",
+"skill": "savings-goals",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "what do i need to save each week to have a deposit for an apartment by summer",
+"family": "ask",
+"skill": "savings-goals",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "my dream is to study abroad for a term. is that even realistic with my money",
+"family": "ask",
+"skill": "savings-goals",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "new goal: pay off my credit card by spring",
+"family": "ask",
+"skill": "savings-goals",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "saving for my daughters birthday, small goal, a month away",
+"family": "ask",
+"skill": "savings-goals",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "am i on track for the car repair fund or do i need to cut something",
+"family": "ask",
+"skill": "savings-goals",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "i want to save for textbooks before next term so its not a shock again",
+"family": "ask",
+"skill": "savings-goals",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "how much should i save to stop living paycheck to paycheck",
+"family": "ask",
+"skill": "savings-goals",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "i have an interview thursday, help me prep",
+"family": "ask",
+"skill": "career-helper",
+"needs": [],
+"hours": null
+},
+{
+"text": "can you look at my resume, its one page of nothing",
+"family": "ask",
+"skill": "career-helper",
+"needs": [],
+"hours": null
+},
+{
+"text": "how do i write a cover letter with no experience",
+"family": "ask",
+"skill": "career-helper",
+"needs": [],
+"hours": null
+},
+{
+"text": "track my internship applications, ive sent 6",
+"family": "ask",
+"skill": "career-helper",
+"needs": [],
+"hours": null
+},
+{
+"text": "what do they ask in an interview for a campus job",
+"family": "ask",
+"skill": "career-helper",
+"needs": [],
+"hours": null
+},
+{
+"text": "is a cv different from a resume? applying abroad",
+"family": "ask",
+"skill": "career-helper",
+"needs": [],
+"hours": null
+},
+{
+"text": "i got an interview!! what do i do first",
+"family": "ask",
+"skill": "career-helper",
+"needs": [],
+"hours": null
+},
+{
+"text": "career change at 38, where do i start with my resume",
+"family": "ask",
+"skill": "career-helper",
+"needs": [],
+"hours": null
+},
+{
+"text": "job application due friday for a summer internship, remind me and help me plan it",
+"family": "ask",
+"skill": "career-helper",
+"needs": [],
+"hours": null
+},
+{
+"text": "How do I explain in an interview that I only worked in my home country?",
+"family": "ask",
+"skill": "career-helper",
+"needs": [],
+"hours": null
+},
+{
+"text": "should i put my retail job on my resume for an engineering internship",
+"family": "ask",
+"skill": "career-helper",
+"needs": [],
+"hours": null
+},
+{
+"text": "how do i get to campus from downtown without a car",
+"family": "ask",
+"skill": "local-transport",
+"needs": [],
+"hours": null
+},
+{
+"text": "is there a bus to the airport from my school",
+"family": "ask",
+"skill": "local-transport",
+"needs": [],
+"hours": null
+},
+{
+"text": "whats cheaper, a monthly ticket or paying per ride",
+"family": "ask",
+"skill": "local-transport",
+"needs": [],
+"hours": null
+},
+{
+"text": "train to my parents this weekend, when should i leave",
+"family": "ask",
+"skill": "local-transport",
+"needs": [],
+"hours": null
+},
+{
+"text": "how do i get to my exam building across town by 8",
+"family": "ask",
+"skill": "local-transport",
+"needs": [],
+"hours": null
+},
+{
+"text": "is public transport running late enough after my closing shift",
+"family": "ask",
+"skill": "local-transport",
+"needs": [],
+"hours": null
+},
+{
+"text": "airport to dorm, cheapest way",
+"family": "ask",
+"skill": "local-transport",
+"needs": [],
+"hours": null
+},
+{
+"text": "does the metro run on sundays here",
+"family": "ask",
+"skill": "local-transport",
+"needs": [],
+"hours": null
+},
+{
+"text": "how do i get to the clinic by bus, never been",
+"family": "ask",
+"skill": "local-transport",
+"needs": [],
+"hours": null
+},
+{
+"text": "student ticket for the subway, is that a thing",
+"family": "ask",
+"skill": "local-transport",
+"needs": [],
+"hours": null
+},
+{
+"text": "I am new in this city, how do I get to the immigration office by train?",
+"family": "ask",
+"skill": "local-transport",
+"needs": [],
+"hours": null
+},
+{
+"text": "what student discount stuff am i missing out on",
+"family": "ask",
+"skill": "student-perks",
+"needs": [],
+"hours": null
+},
+{
+"text": "are there campus resources for free tutoring",
+"family": "ask",
+"skill": "student-perks",
+"needs": [],
+"hours": null
+},
+{
+"text": "is there a scholarship for people working while in school",
+"family": "ask",
+"skill": "student-perks",
+"needs": [],
+"hours": null
+},
+{
+"text": "any student deal for a laptop",
+"family": "ask",
+"skill": "student-perks",
+"needs": [],
+"hours": null
+},
+{
+"text": "does my school have a food pantry or campus resources like that",
+"family": "ask",
+"skill": "student-perks",
+"needs": [],
+"hours": null
+},
+{
+"text": "i think i qualify for more financial aid, where do i start",
+"family": "ask",
+"skill": "student-perks",
+"needs": [],
+"hours": null
+},
+{
+"text": "student discount on software, which ones are real",
+"family": "ask",
+"skill": "student-perks",
+"needs": [],
+"hours": null
+},
+{
+"text": "scholarship for returning adult students, do those exist",
+"family": "ask",
+"skill": "student-perks",
+"needs": [],
+"hours": null
+},
+{
+"text": "what campus resources help with writing, english is my second language",
+"family": "ask",
+"skill": "student-perks",
+"needs": [],
+"hours": null
+},
+{
+"text": "is there a student deal for transit passes",
+"family": "ask",
+"skill": "student-perks",
+"needs": [],
+"hours": null
+},
+{
+"text": "financial aid for summer classes, is that a thing",
+"family": "ask",
+"skill": "student-perks",
+"needs": [],
+"hours": null
+},
+{
+"text": "look up how late the library is open during finals",
+"family": "ask",
+"skill": "web-research",
+"needs": [],
+"hours": null
+},
+{
+"text": "can you find out what a parking permit costs on campus",
+"family": "ask",
+"skill": "web-research",
+"needs": [],
+"hours": null
+},
+{
+"text": "search the web for cheap flights home in december",
+"family": "ask",
+"skill": "web-research",
+"needs": [],
+"hours": null
+},
+{
+"text": "whats the latest on the bus strike, do i need another way to class",
+"family": "ask",
+"skill": "web-research",
+"needs": [],
+"hours": null
+},
+{
+"text": "look up average rent for a room near campus",
+"family": "ask",
+"skill": "web-research",
+"needs": [],
+"hours": null
+},
+{
+"text": "find out if the bookstore buys back textbooks",
+"family": "ask",
+"skill": "web-research",
+"needs": [],
+"hours": null
+},
+{
+"text": "what's the price of a monthly bus pass here",
+"family": "ask",
+"skill": "web-research",
+"needs": [],
+"hours": null
+},
+{
+"text": "any news about the tuition increase for next year",
+"family": "ask",
+"skill": "web-research",
+"needs": [],
+"hours": null
+},
+{
+"text": "look up what a normal starting wage is for a pharmacy tech",
+"family": "ask",
+"skill": "web-research",
+"needs": [],
+"hours": null
+},
+{
+"text": "can you research which laptops are good under 600",
+"family": "ask",
+"skill": "web-research",
+"needs": [],
+"hours": null
+},
+{
+"text": "how did my week go",
+"family": "ask",
+"skill": "weekly-review",
+"needs": [],
+"hours": null
+},
+{
+"text": "recap my week, be honest",
+"family": "ask",
+"skill": "weekly-review",
+"needs": [],
+"hours": null
+},
+{
+"text": "weekly review time",
+"family": "ask",
+"skill": "weekly-review",
+"needs": [],
+"hours": null
+},
+{
+"text": "what did i actually get done last week",
+"family": "ask",
+"skill": "weekly-review",
+"needs": [],
+"hours": null
+},
+{
+"text": "do my weekly recap, i feel like i did nothing",
+"family": "ask",
+"skill": "weekly-review",
+"needs": [],
+"hours": null
+},
+{
+"text": "review my week with me before it starts over",
+"family": "ask",
+"skill": "weekly-review",
+"needs": [],
+"hours": null
+},
+{
+"text": "last week was a mess, what went wrong",
+"family": "ask",
+"skill": "weekly-review",
+"needs": [],
+"hours": null
+},
+{
+"text": "weekly review, go",
+"family": "ask",
+"skill": "weekly-review",
+"needs": [],
+"hours": null
+},
+{
+"text": "did i study more or less than last week",
+"family": "ask",
+"skill": "weekly-review",
+"needs": [],
+"hours": null
+},
+{
+"text": "recap my week, school and work both",
+"family": "ask",
+"skill": "weekly-review",
+"needs": [],
+"hours": null
+},
+{
+"text": "can i afford new headphones, like $80",
+"family": "ask",
+"skill": "purchase-advisor",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "should i buy the textbook or just use the library copy",
+"family": "ask",
+"skill": "purchase-advisor",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "is it ok to spend $40 on a concert ticket this week",
+"family": "ask",
+"skill": "purchase-advisor",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "can i afford to eat out twice this week",
+"family": "ask",
+"skill": "purchase-advisor",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "is the meal plan worth buying next term",
+"family": "ask",
+"skill": "purchase-advisor",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "should i buy a used bike to stop paying for the bus",
+"family": "ask",
+"skill": "purchase-advisor",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "can i afford a $25 birthday gift for my mom before payday",
+"family": "ask",
+"skill": "purchase-advisor",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "is it ok to spend on a winter coat now or should i wait",
+"family": "ask",
+"skill": "purchase-advisor",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "can i afford to take friday off work",
+"family": "ask",
+"skill": "purchase-advisor",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "explain standard deviation like im 12",
+"family": "ask",
+"skill": "tutor",
+"needs": [],
+"hours": null
+},
+{
+"text": "i don't understand how compound interest works",
+"family": "ask",
+"skill": "tutor",
+"needs": [],
+"hours": null
+},
+{
+"text": "how does a credit score work exactly",
+"family": "ask",
+"skill": "tutor",
+"needs": [],
+"hours": null
+},
+{
+"text": "what is a thesis statement, really",
+"family": "ask",
+"skill": "tutor",
+"needs": [],
+"hours": null
+},
+{
+"text": "teach me how to read a pay stub",
+"family": "ask",
+"skill": "tutor",
+"needs": [],
+"hours": null
+},
+{
+"text": "walk me through how to cite a website",
+"family": "ask",
+"skill": "tutor",
+"needs": [],
+"hours": null
+},
+{
+"text": "why does my paycheck have so many deductions",
+"family": "ask",
+"skill": "tutor",
+"needs": [],
+"hours": null
+},
+{
+"text": "explain the difference between mean and median again",
+"family": "ask",
+"skill": "tutor",
+"needs": [],
+"hours": null
+},
+{
+"text": "I don't understand what office hours are for, can you explain?",
+"family": "ask",
+"skill": "tutor",
+"needs": [],
+"hours": null
+},
+{
+"text": "i have a meeting with my advisor tomorrow, what should i ask",
+"family": "ask",
+"skill": "meeting-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "going to office hours for the first time, what do i say",
+"family": "ask",
+"skill": "meeting-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "make an agenda for my group project meeting",
+"family": "ask",
+"skill": "meeting-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "talking points for asking my manager for fewer hours during finals",
+"family": "ask",
+"skill": "meeting-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "1:1 with my boss friday, help me prep",
+"family": "ask",
+"skill": "meeting-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "meeting with financial aid next week, what do i bring up",
+"family": "ask",
+"skill": "meeting-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "agenda for a study group, we always waste the first 20 min",
+"family": "ask",
+"skill": "meeting-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "parent teacher meeting thursday and my own class after, help me prep both",
+"family": "ask",
+"skill": "meeting-prep",
+"needs": [],
+"hours": null
+},
+{
+"text": "cheap meals for a week, i have a microwave and one pan",
+"family": "ask",
+"skill": "meal-planner",
+"needs": [],
+"hours": null
+},
+{
+"text": "make me a grocery list for $40",
+"family": "ask",
+"skill": "meal-planner",
+"needs": [],
+"hours": null
+},
+{
+"text": "what should i cook tonight with rice, eggs and whatever",
+"family": "ask",
+"skill": "meal-planner",
+"needs": [],
+"hours": [
+10,
+21
+]
+},
+{
+"text": "shopping list for meal prep on sunday, lunches for work",
+"family": "ask",
+"skill": "meal-planner",
+"needs": [],
+"hours": null
+},
+{
+"text": "recipes for someone who gets home at 10pm and is dead",
+"family": "ask",
+"skill": "meal-planner",
+"needs": [],
+"hours": null
+},
+{
+"text": "groceries for two adults and a kid on a tight week",
+"family": "ask",
+"skill": "meal-planner",
+"needs": [],
+"hours": null
+},
+{
+"text": "remind me to email my advisor tomorrow morning",
+"family": "ask",
+"skill": "reminders-follow-up",
+"needs": [],
+"hours": null
+},
+{
+"text": "don't let me forget to submit my timesheet friday",
+"family": "ask",
+"skill": "reminders-follow-up",
+"needs": [],
+"hours": null
+},
+{
+"text": "nudge me about the scholarship form this weekend",
+"family": "ask",
+"skill": "reminders-follow-up",
+"needs": [],
+"hours": null
+},
+{
+"text": "add a to-do to call the financial aid office",
+"family": "ask",
+"skill": "reminders-follow-up",
+"needs": [],
+"hours": null,
+"next": "make it tomorrow instead"
+},
+{
+"text": "ping me an hour before my shift",
+"family": "ask",
+"skill": "reminders-follow-up",
+"needs": [],
+"hours": null
+},
+{
+"text": "set a reminder to refill my prescription next week",
+"family": "ask",
+"skill": "reminders-follow-up",
+"needs": [],
+"hours": null
+},
+{
+"text": "plan my day around my 2pm class",
+"family": "ask",
+"skill": "daily-planner",
+"needs": [],
+"hours": [
+6,
+13
+]
+},
+{
+"text": "what should i do today, i have work at 5",
+"family": "ask",
+"skill": "daily-planner",
+"needs": [],
+"hours": [
+6,
+15
+]
+},
+{
+"text": "time block my afternoon",
+"family": "ask",
+"skill": "daily-planner",
+"needs": [],
+"hours": [
+8,
+14
+]
+},
+{
+"text": "whats on my plate today",
+"family": "ask",
+"skill": "daily-planner",
+"needs": [],
+"hours": [
+5,
+20
+]
+},
+{
+"text": "what am i paying for every month that i forgot about",
+"family": "ask",
+"skill": "subscription-hunter",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "any free trial about to charge me",
+"family": "ask",
+"skill": "subscription-hunter",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "list my subscriptions",
+"family": "ask",
+"skill": "subscription-hunter",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "is there a recurring charge i can kill",
+"family": "ask",
+"skill": "subscription-hunter",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "which subscriptions went up in price lately",
+"family": "ask",
+"skill": "subscription-hunter",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "i signed up for a free trial last week, when does it start charging",
+"family": "ask",
+"skill": "subscription-hunter",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "find every subscription on my card, even the tiny ones",
+"family": "ask",
+"skill": "subscription-hunter",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "do i still have that music subscription or did i cancel it",
+"family": "ask",
+"skill": "subscription-hunter",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "any recurring charge i havent used in months",
+"family": "ask",
+"skill": "subscription-hunter",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "can you give feedback on my essay intro if i paste it",
+"family": "ask",
+"skill": "writing-helper",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "help me make an outline from my own ideas for the paper",
+"family": "ask",
+"skill": "writing-helper",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "how do i cite a youtube video",
+"family": "ask",
+"skill": "writing-helper",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "make me a study plan for the next two weeks",
+"family": "ask",
+"skill": "study-coach",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "quiz me on my flashcards",
+"family": "ask",
+"skill": "study-coach",
+"needs": [
+"student"
+],
+"hours": null
+}
+]

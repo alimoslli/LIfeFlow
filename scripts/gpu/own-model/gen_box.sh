@@ -101,9 +101,26 @@ fi
 step "teacher baseline"
 TAG="${TAG:-g$(date -u +%m%d%H)}"
 echo "eval|$TAG-teacher-cards-old20|--no-retry --alive-rules|$CARDS" > $D/plan-baseline.txt
+# The owner's standard as a number (2026-11-27): 39 probes made from his own grades, scored by chat-eval/owner_score.py. The
+# teacher writes the examples, so its score says what the examples will teach. Each probe sends its own "acting on your own"
+# line. OWNER_EXAM=0 leaves it out; it takes teacher time before generation starts (not measured yet; 10 more minutes are allowed).
+BASE_MIN=12
+[ "${OWNER_EXAM:-1}" = 1 ] && { echo "eval|$TAG-teacher-cards-owner|--no-retry --exam owner|$CARDS" >> $D/plan-baseline.txt; BASE_MIN=22; }
 grep -q "^RESULT n1-teacher-bare-old20 " $T/board.txt 2> /dev/null || echo "eval|n1-teacher-bare-old20|--no-retry --alive-rules|--think off" >> $D/plan-baseline.txt
-sh scripts/gpu/own-model/runplan.sh qwen38-27b 12 "--max-model-len 65536 --reasoning-parser qwen3 --tool-call-parser qwen3_coder" $D/plan-baseline.txt keep > $D/baseline.log 2>&1
+sh scripts/gpu/own-model/runplan.sh qwen38-27b $BASE_MIN "--max-model-len 65536 --reasoning-parser qwen3 --tool-call-parser qwen3_coder" $D/plan-baseline.txt keep > $D/baseline.log 2>&1
 grep "^RESULT $TAG-teacher\|^RESULT n1-teacher-bare" $T/board.txt | cut -c1-240 >> $ST
+# The stop line for training on what this teacher writes: 31 of 39 and no rule at zero (docs/research/own-model-runbook.md).
+# It is said in the status either way; with OWNER_MIN=31 the box also stops here, before any example is made.
+OWN=$(grep "^RESULT $TAG-teacher-cards-owner " $T/board.txt | sed -n 's/.*owner standard \([0-9]*\) of \([0-9]*\).*/\1 \2/p' | tail -1)
+if [ -n "$OWN" ]; then
+  OWN_PTS=${OWN% *}; OWN_ALL=${OWN#* }
+  ZERO=$(grep "^RESULT $TAG-teacher-cards-owner " $T/board.txt | tail -1 | grep -o "[a-z]* 0/[0-9]*" | tr '\n' ' ')
+  note "OWNER SCORE: the teacher meets the owner's standard on $OWN_PTS of $OWN_ALL probes${ZERO:+; rules with nothing passed: $ZERO}"
+  [ "$OWN_PTS" -lt 31 ] || [ -n "$ZERO" ] && note "NOTE: that is under the stop line (31 of 39, no rule at zero). Read the misses in $T/summary-$TAG-teacher-cards-owner.txt before training on this set."
+  [ -n "$OWNER_MIN" ] && [ "$OWN_PTS" -lt "$OWNER_MIN" ] && fail "the teacher scored $OWN_PTS on the owner's standard, under OWNER_MIN=$OWNER_MIN; no examples were made"
+elif [ "${OWNER_EXAM:-1}" = 1 ]; then
+  note "NOTE: the owner's-standard test did not finish (see $T/eval-$TAG-teacher-cards-owner.log); generation goes on without its number"
+fi
 curl -sf http://127.0.0.1:8000/v1/models > /dev/null || fail "the teacher is not serving (see $D/baseline.log and $T/vllm-plan-qwen38-27b.log)"
 VPID=$(pgrep -f "[v]llm serve" | head -1)
 service postgresql start > /dev/null 2>&1; sleep 2

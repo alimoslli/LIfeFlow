@@ -78,6 +78,8 @@ type Q = {
   noWrites?: boolean;
   /** Tools that must not be called for this question (things a good skyling never does on its own). */
   never?: string[];
+  /** The owner exam only: which "acting on your own" line this person's prompt carries (sent to the translator as X-Mode). */
+  mode?: "on" | "off";
   perfect: string;
 };
 
@@ -261,7 +263,39 @@ async function questions(): Promise<Q[]> {
   // The trust exam (--exam trust, 2026-11-22): what makes a person keep a helper around. It follows up on what you said you
   // would do, it is honest about bad news, it undoes only its own thing, and it takes no for an answer.
   if (arg("exam") === "trust") return TRUST;
+  // The owner's standard (--exam owner, 2026-11-27): 39 probes made from the owner's own grades of 2026-11-26, one rule each
+  // (a quick answer for a quick message, the whole answer for real help, one line after a promise, look before asking, ...).
+  if (arg("exam") === "owner") return ownerExam();
   return all;
+}
+
+/**
+ * The owner exam lives in scripts/gpu/chat-eval/owner_exam.json so the harness (here) and its scorer (owner_score.py) read
+ * the same probes. This harness runs them and applies the checks every exam has (facts, tools, budget, writes); the owner
+ * score itself, with the length, question, step and wording checks, is owner_score.py's: `python3 owner_score.py run <raw file>`.
+ */
+function ownerExam(): Q[] {
+  type Probe = Omit<Q, "tools" | "never" | "group" | "kind" | "perfect"> & { rule: string; from: string; tools: string | string[][]; never?: string | string[]; good: { answer: string }[] };
+  const exam = JSON.parse(readFileSync(join(process.cwd(), "scripts/gpu/chat-eval/owner_exam.json"), "utf8")) as {
+    sets: Record<string, string[]>;
+    patterns: Record<string, string>;
+    probes: Probe[];
+  };
+  const named = (xs?: string[]) => xs?.map((x) => exam.patterns[x] ?? x);
+  return exam.probes.map((p) => ({
+    id: p.id,
+    group: "hard",
+    kind: `owner: ${p.rule} (${p.from})`,
+    turns: p.turns,
+    tools: typeof p.tools === "string" ? exam.sets[p.tools].map((t) => [t]) : p.tools,
+    budget: p.budget,
+    facts: named(p.facts) ?? [],
+    mustNot: named(p.mustNot),
+    noWrites: p.noWrites,
+    never: typeof p.never === "string" ? exam.sets[p.never] : p.never,
+    mode: p.mode,
+    perfect: p.good[p.good.length - 1].answer,
+  }));
 }
 
 const NEVER_ALONE = ["delete_event", "delete_task", "delete_assignment", "delete_course", "contribute_goal", "update_event", "update_assignment"];
@@ -773,7 +807,7 @@ async function runModel(modelId: string) {
 
   // --- one provider per candidate, built explicitly; a fetch wrapper counts requests and errors, and (for the Groq
   // models, whose names the app does not recognise as reasoning models) sends the effort the app picked this turn.
-  const stats = { requests: 0, waitMs: 0, errors: [] as { status: number; message: string }[], effort: undefined as Effort };
+  const stats = { requests: 0, waitMs: 0, errors: [] as { status: number; message: string }[], effort: undefined as Effort, mode: undefined as Q["mode"] };
   // Groq's free tier allows 8,000 tokens a minute per model. To keep rate-limit noise out of the quality and speed
   // numbers, Groq calls are paced to stay under it (the wait is measured and subtracted from the times). A single request
   // bigger than the limit is still sent: it fails with 413, and that failure is a real finding about the prompt size.
@@ -800,6 +834,12 @@ async function runModel(modelId: string) {
       const body = JSON.parse(init.body);
       if (!body.reasoning) body.reasoning = { effort: stats.effort };
       nextInit = { ...init, body: JSON.stringify(body) };
+    }
+    // the owner exam: this probe's "acting on your own" line, which the translator adds to the prompt (its X-Mode header)
+    if (stats.mode) {
+      const headers = new Headers(nextInit?.headers);
+      headers.set("X-Mode", stats.mode);
+      nextInit = { ...nextInit, headers };
     }
     const res = await fetch(input, nextInit);
     if (!res.ok) {
@@ -892,6 +932,7 @@ async function runModel(modelId: string) {
     // counters in this throwaway test database before each question, so the limit can't stand in for the model's answer.
     await run((s) => s.tx.execute(sql`delete from ai_budgets where key like ${`u:${st.session.id}:%`}`));
     const since = ((await run((s) => s.tx.execute(sql`select now()::text as n`))).rows[0] as { n: string }).n;
+    stats.mode = q.mode;
     const before = await snapshot();
     let conversationId: string | null = null;
     const turns: TurnRecord[] = [];

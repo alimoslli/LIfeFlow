@@ -8,11 +8,16 @@ So every message now says which lives and which hours it fits, and a follow-up i
   {"text": ..., "skill": ..., "source": "alive" | "voice-..." | "seed" | "teacher-...", "family": ...,
    "needs": ["student", "job", "money"],      # the life must have these (generate.ts checks it against the loaded life)
    "hours": [6, 13] | null,                   # the hours of the day a person would type it; null = any time
-   "followUp": "undo that"}                   # optional second turn
+   "followUp": "undo that",                   # optional second turn, as the author expected it; generate.ts keeps it only
+                                              # when it fits what the skyling really did, and picks every later turn itself
+   "needsSkill": "paper-pack"}                # only for a skill this branch's app side does not have yet (it exists on main)
 
-Sources: the families below (generic lines with slots), the written messages in messages/voice-*.json (four voices: working
-students, dorm students, adult learners, first-generation and international students), and the base bank from
-build_questions.py (the router pilot's messages), tagged here by their own words. Made up, generic (no names, no courses), so a
+Sources: the families below (generic lines with slots), the written messages in messages/*.json (the four voices: working
+students, dorm students, adult learners, first-generation and international students; spoken-style.json: what a person says
+out loud after speech-to-text; told-schedule.json: a week or a schedule told or pasted as text in one message;
+skill-topups.json and skill-main-only.json: messages for skills the bank barely reached), and the base bank from
+build_questions.py (the router pilot's messages), tagged here by their own words. The follow-up lines are messages/after.json,
+shared with generate.ts. Made up, generic (no names, no courses), so a
 message fits every life that has its traits. No message is a test question (the same list build_questions.py leaves out).
 
   python3 scripts/gpu/chat-data/build_alive_questions.py --base /root/job/questions.json --out /root/job/questions-alive.json \
@@ -22,6 +27,8 @@ message fits every life that has its traits. No message is a test question (the 
 import argparse, collections, glob, json, random, re
 from pathlib import Path
 
+from skill_route import load_skills, router
+
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
 ap = argparse.ArgumentParser()
@@ -30,6 +37,8 @@ ap.add_argument("--out", required=True)
 ap.add_argument("--share", type=float, default=0.6, help="share of the output that is not from the base bank")
 ap.add_argument("--total", type=int, default=1500)
 ap.add_argument("--seed", type=int, default=25)
+ap.add_argument("--skill-floor", type=int, default=12, help="at least this many different messages reach every skill that has written messages "
+                "(they take the place of repeats, so the bank only gets more varied); 0 turns it off")
 a = ap.parse_args()
 rng = random.Random(a.seed)
 
@@ -39,16 +48,11 @@ THING = ["gym class", "club meeting", "study group", "dentist appointment", "cof
 DAY = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 HOUR = ["8 AM", "10 AM", "noon", "2 PM", "4 PM", "5 PM", "6 PM", "7 PM"]
 
-# What the same person types next, by what a good first answer will have done.
-AFTER = {
-    "made": ["actually make it an hour later", "undo that", "never mind, take that off", "can you make it tomorrow instead", "thanks, that helps",
-             "wait, move it to the day after", "can you add one more for tomorrow too", "take that back", "perfect, thanks"],
-    "offered": ["yes please", "ok do that", "not right now", "no thanks", "maybe later", "sure, go ahead", "thanks, that helps", "yeah do it"],
-    "promised": ["actually make it tomorrow morning instead", "thanks, hold me to it", "never mind, forget that one", "ok and check on me after"],
-    "remembered": ["actually scratch that, forget it", "thanks", "yes keep that"],
-    "declined": ["ok fine, what can you do then?", "why not?", "ok thanks", "fair. can you help me do it myself?"],
-    "talked": ["thanks, that helps", "ok", "not right now", "what should I do first then?"],
-}
+# What the same person types next, by what a good first answer will have done (messages/after.json, shared with generate.ts,
+# which picks by what the skyling really did).
+_after = json.load(open(HERE / "messages" / "after.json"))
+AFTER = {k: v for k, v in _after.items() if not k.startswith("_")}
+AFTER["offered"] = AFTER["yes"] + AFTER["no"]
 
 # family: (messages, skills, needs, hours, what the first answer does, weight). Hours are [from, to) on a 24-hour clock; 26 = 2 AM.
 FAMILIES = {
@@ -116,7 +120,15 @@ FAMILIES = {
                 "which day is going to be the worst this week?"], ["smart-scheduler", "weekly-review"], ["student"], None, "offered", 3),
     "change_job": (["they added me to a shift Tuesday 6 to 9, does that work?", "I picked up an extra shift Saturday morning"], ["shift-manager"], ["job"], None, "offered", 2),
     "change_money": (["I think I got charged twice for something", "is my savings goal still realistic?"], ["transaction-review", "savings-goals"], ["money"], None, "offered", 2),
+    # Written messages only (no slot lines), added 2026-11-27 for the parts of the app that had no examples:
+    # a week or a schedule told or pasted as text in one message (set_up_schedule, a pasted syllabus list, a pasted shift list)
+    "setup": ([], ["smart-scheduler", "syllabus-parser", "shift-manager"], [], None, "made", 4),
+    # one message for one skill the bank barely reached; each record names its skill
+    "ask": ([], ["tutor"], [], None, "talked", 8),
+    # the same for a skill that exists only on main (generate.ts skips these until this branch is rebased)
+    "newskill": ([], ["study-coach"], [], None, "talked", 3),
 }
+WORDS = {"setup": 170, "ask": 110}   # the most words a written message may have; 45 for every other family, 70 for a spoken one
 VOICE_FAMILY = {"reach": "reach", "change": "change", "decide": "decide"}   # the written voices use the plain family names
 DEFAULT_SKILLS = {k: v[1] for k, v in FAMILIES.items()}
 
@@ -190,24 +202,35 @@ def from_family(name):
     return q
 
 
+HERE_SKILLS, ALL_SKILLS = load_skills(ROOT)   # this branch's skills, and those plus the ones only on main
+route = router(ALL_SKILLS)
+
+
 def voices():
-    """The written messages (messages/voice-*.json), checked: a known family, short enough, not a test question, no repeats."""
+    """The written messages (messages/*.json), checked: a known family, short enough, not a test question, no repeats."""
     out, seen, dropped = [], set(), collections.Counter()
-    for f in sorted(glob.glob(str(HERE / "messages" / "voice-*.json"))):
+    for f in sorted(glob.glob(str(HERE / "messages" / "*.json"))):
         src = Path(f).stem
+        if src == "after":
+            continue
         for m in json.load(open(f)):
             text, fam = str(m.get("text", "")).strip(), str(m.get("family", ""))
             fam = fam if fam in FAMILIES else None
             n = norm(text)
-            why = ("no family" if not fam else "crisis is ours to write" if fam == "crisis" else "length" if not 1 <= len(text.split()) <= 45 else
-                   "test question" if n in TEST else "repeat" if n in seen else "em dash" if "—" in text else "not ours to write" if BAD_WORDS.search(text) else None)
+            most = WORDS.get(fam, 70 if src.startswith("spoken") else 45)
+            skill = m.get("skill")
+            why = ("no family" if not fam else "crisis is ours to write" if fam == "crisis" else "length" if not 1 <= len(text.split()) <= most else
+                   "test question" if n in TEST else "repeat" if n in seen else "em dash" if "—" in text else "not ours to write" if BAD_WORDS.search(text) else
+                   "unknown skill" if skill and skill not in ALL_SKILLS else None)
             if why:
                 dropped[why] += 1
                 continue
             seen.add(n)
             hours = m.get("hours") if isinstance(m.get("hours"), list) and len(m["hours"]) == 2 else None
             need, hrs = tags(text, [x for x in (m.get("needs") or []) if x in TRAIT], hours)
-            q = {"text": text, "skill": rng.choice(DEFAULT_SKILLS[fam]), "source": src, "family": fam, "needs": need, "hours": hrs}
+            q = {"text": text, "skill": skill or rng.choice(DEFAULT_SKILLS[fam]), "source": src, "family": fam, "needs": need, "hours": hrs}
+            if skill and skill not in HERE_SKILLS:
+                q["needsSkill"] = skill
             nxt = str(m.get("next") or "").strip()
             if nxt and fam != "crisis" and len(nxt.split()) <= 20:
                 q["followUp"] = nxt
@@ -226,13 +249,55 @@ new, left = [], collections.defaultdict(list)
 while len(new) < n_new:
     fam = rng.choices(names, weights)[0]
     pool = by_family.get(fam) or []
-    # two in three from the written voices when there are any (more ways of saying it), the rest from the slot lines
-    if pool and fam != "opened" and rng.random() < 0.67:
+    slots = bool(FAMILIES[fam][0]) or fam == "signup"
+    if not pool and not slots:
+        continue
+    # two in three from the written voices when there are any (more ways of saying it), the rest from the slot lines;
+    # a family with no slot lines is written messages only
+    if pool and fam != "opened" and (rng.random() < 0.67 or not slots):
         if not left[fam]:   # every written message is used once before any is used twice
             left[fam] = rng.sample(pool, len(pool))
         new.append(dict(left[fam].pop()))
     else:
         new.append(from_family(fam))
+
+
+def reach(rows):
+    """skill -> the different messages in these rows that the app's own routing sends to it."""
+    got = collections.defaultdict(set)
+    for q in rows:
+        for sk in route(q["text"]):
+            got[sk].add(norm(q["text"]))
+    return got
+
+
+# Every skill with written messages gets at least --skill-floor different messages that really reach it. They take the place
+# of repeats (1,500 messages were 894 different before this), so nothing is lost and the bank gets more varied.
+floored = collections.Counter()
+if a.skill_floor:
+    got = reach(new)
+    have = collections.Counter(norm(q["text"]) for q in new)
+    spare = [q for q in written if q.get("skill") in route(q["text"])]   # the message reaches the skill its author wrote it for
+    rng.shuffle(spare)
+    on_purpose = {k for k, v in FAMILIES.items() if not by_family.get(k) and len(v[0]) <= 4 and k != "signup"}
+    open_slots = [i for i, q in enumerate(new) if q["family"] not in on_purpose]
+    for sk in sorted({q["skill"] for q in spare}):
+        for q in spare:
+            if len(got[sk]) >= a.skill_floor:
+                break
+            if q["skill"] != sk or norm(q["text"]) in have:
+                continue
+            # the slot to give up: a repeat of the message that is in the bank most often. Never from a family that repeats on
+            # purpose (the opened app, the three careful lines): those have their own weight and no written pool.
+            at = max(open_slots, key=lambda i: have[norm(new[i]["text"])], default=None)
+            if at is None or have[norm(new[at]["text"])] < 2:
+                break
+            have[norm(new[at]["text"])] -= 1
+            new[at] = dict(q)
+            have[norm(q["text"])] += 1
+            for s2 in route(q["text"]):
+                got[s2].add(norm(q["text"]))
+            floored[sk] += 1
 
 base = []
 if a.base:
@@ -252,3 +317,14 @@ print(f"written voices: {len(written)} kept, dropped {dict(dropped)}")
 print(f"with a second turn: {sum('followUp' in q for q in out)} | need a student {sum('student' in q['needs'] for q in out)}, a job {sum('job' in q['needs'] for q in out)}, "
       f"money {sum('money' in q['needs'] for q in out)} | tied to hours {sum(q['hours'] is not None for q in out)}")
 print("by family: " + ", ".join(f"{k} {v}" for k, v in fam.most_common()))
+src = collections.Counter(q["source"] for q in out)
+print("by source: " + ", ".join(f"{k} {v}" for k, v in src.most_common()))
+print(f"only for a skill on main (skipped by the generator until the branch is rebased): {sum('needsSkill' in q for q in out)}")
+if floored:
+    print(f"added to reach {a.skill_floor} per skill: " + ", ".join(f"{k} +{v}" for k, v in sorted(floored.items())))
+got = reach(out)
+thin = sorted(k for k in ALL_SKILLS if len(got[k]) < a.skill_floor)
+print(f"skills reached by fewer than {a.skill_floor} different messages: {', '.join(f'{k} {len(got[k])}' for k in thin) or 'none'}")
+bad_after = sorted({l for k, v in AFTER.items() for l in v if norm(l) in TEST})
+if bad_after:
+    raise SystemExit(f"messages/after.json has a test question in it: {bad_after}")

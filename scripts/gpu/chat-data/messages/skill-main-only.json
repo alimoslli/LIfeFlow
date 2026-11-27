@@ -1,0 +1,776 @@
+[
+{
+"text": "when is the drop deadline this semester, i think i need out of one class",
+"family": "newskill",
+"skill": "admin-deadlines",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "whens registration open for spring at my school",
+"family": "newskill",
+"skill": "admin-deadlines",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "is the financial aid deadline soon, the fafsa one?? i never look at these things",
+"family": "newskill",
+"skill": "admin-deadlines",
+"needs": [
+"student"
+],
+"hours": null,
+"next": "ok add it to my to-dos"
+},
+{
+"text": "can you find the add drop dates for my college and put the important one in my to-dos",
+"family": "newskill",
+"skill": "admin-deadlines",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "tuition due date, do you know it? i dont want a late fee again",
+"family": "newskill",
+"skill": "admin-deadlines",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "what's the withdrawal deadline, asking before i fail this class lol",
+"family": "newskill",
+"skill": "admin-deadlines",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "I am the first in my family at university, when is the financial aid deadline for next year?",
+"family": "newskill",
+"skill": "admin-deadlines",
+"needs": [
+"student"
+],
+"hours": null,
+"next": "yes save that one please"
+},
+{
+"text": "registration deadline for summer classes, when is it",
+"family": "newskill",
+"skill": "admin-deadlines",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "my advisor said something about a scholarship deadline coming up, can you look it up",
+"family": "newskill",
+"skill": "admin-deadlines",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "is it too late to add drop a class this term",
+"family": "newskill",
+"skill": "admin-deadlines",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "need the last day to drop without a W. the drop deadline basically",
+"family": "newskill",
+"skill": "admin-deadlines",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "when do I have to pay by, tuition due this term and I need to plan around it",
+"family": "newskill",
+"skill": "admin-deadlines",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "returning student here, when does registration start for the evening program at my school",
+"family": "newskill",
+"skill": "admin-deadlines",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "fafsa and scholarship deadline dates for my school, save them for me",
+"family": "newskill",
+"skill": "admin-deadlines",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "rent is due the 1st and i get paid the 5th, help me ask my landlord for a few days",
+"family": "newskill",
+"skill": "bill-date-move",
+"needs": [
+"money"
+],
+"hours": null,
+"next": "can you make it shorter"
+},
+{
+"text": "can you write something so i can move my due date on the phone bill",
+"family": "newskill",
+"skill": "bill-date-move",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "i need to pay rent late this month, what do i even say",
+"family": "newskill",
+"skill": "bill-date-move",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "help me push my bill for electric until after i get paid",
+"family": "newskill",
+"skill": "bill-date-move",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "my car insurance always hits right before payday. can i get the due date after payday? write the message",
+"family": "newskill",
+"skill": "bill-date-move",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "ask my landlord if rent can wait till friday, draft it for me",
+"family": "newskill",
+"skill": "bill-date-move",
+"needs": [
+"money"
+],
+"hours": null,
+"next": "make it a bit more polite"
+},
+{
+"text": "rent before payday again. third month in a row. help me word a text to move it",
+"family": "newskill",
+"skill": "bill-date-move",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "is it ok to ask my landlord to change when rent is due? write it polite please",
+"family": "newskill",
+"skill": "bill-date-move",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "need to move my due date for the internet bill, my hours got cut this week",
+"family": "newskill",
+"skill": "bill-date-move",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "write a message to push my bill a week, the credit card one",
+"family": "newskill",
+"skill": "bill-date-move",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "I want to ask my landlord for a due date after payday every month, not only this month",
+"family": "newskill",
+"skill": "bill-date-move",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "how do i tell them i have to pay rent late without sounding irresponsible",
+"family": "newskill",
+"skill": "bill-date-move",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "can u draft a note to move my due date for daycare, i get paid on the 15th",
+"family": "newskill",
+"skill": "bill-date-move",
+"needs": [
+"money"
+],
+"hours": null
+},
+{
+"text": "landlord text. rent before payday problem. short and respectful pls",
+"family": "newskill",
+"skill": "bill-date-move",
+"needs": [
+"money"
+],
+"hours": null,
+"next": "thanks, I'll send it"
+},
+{
+"text": "give me practice questions for my exam, i learn better when someone asks me stuff",
+"family": "newskill",
+"skill": "exam-practice",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "can you test me before my quiz tomorrow",
+"family": "newskill",
+"skill": "exam-practice",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "quiz me again but only the ones i missed last time",
+"family": "newskill",
+"skill": "exam-practice",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "practice for my exam with me? i have like 30 min",
+"family": "newskill",
+"skill": "exam-practice",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "i need practice questions on this weeks material",
+"family": "newskill",
+"skill": "exam-practice",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "test me before the midterm, go easy at first",
+"family": "newskill",
+"skill": "exam-practice",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "ok round two, the ones i missed",
+"family": "newskill",
+"skill": "exam-practice",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "do you have practice questions for my next test or do i need to give you the topics",
+"family": "newskill",
+"skill": "exam-practice",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "please make some practice questions, my exam is coming and I study alone",
+"family": "newskill",
+"skill": "exam-practice",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "test me before class, 5 quick ones",
+"family": "newskill",
+"skill": "exam-practice",
+"needs": [
+"student"
+],
+"hours": [
+6,
+16
+]
+},
+{
+"text": "lets practice for my exam on the bus, one question at a time",
+"family": "newskill",
+"skill": "exam-practice",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "can we go over the ones i missed yesterday before i sleep",
+"family": "newskill",
+"skill": "exam-practice",
+"needs": [
+"student"
+],
+"hours": [
+20,
+27
+]
+},
+{
+"text": "practice questions please, harder than last time",
+"family": "newskill",
+"skill": "exam-practice",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "I failed the last quiz. test me before the next one so it does not happen again",
+"family": "newskill",
+"skill": "exam-practice",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "i need an extension on my paper, can you write the email",
+"family": "newskill",
+"skill": "extension-email",
+"needs": [
+"student"
+],
+"hours": null,
+"next": "can you make it shorter"
+},
+{
+"text": "how do i ask for more time on the lab report without sounding like im making excuses",
+"family": "newskill",
+"skill": "extension-email",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "write my professor asking for an extension till monday",
+"family": "newskill",
+"skill": "extension-email",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "is a late submission email a thing? can you draft one for my essay",
+"family": "newskill",
+"skill": "extension-email",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "need more time on my project, my kid was sick all week. help me ask",
+"family": "newskill",
+"skill": "extension-email",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "extension request for the assignment due tomorrow, short and polite",
+"family": "newskill",
+"skill": "extension-email",
+"needs": [
+"student"
+],
+"hours": null,
+"next": "thanks, I'll send it"
+},
+{
+"text": "can you help me ask for an extension, i worked doubles all weekend and didnt finish",
+"family": "newskill",
+"skill": "extension-email",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "I never asked a professor for an extension before. How do I write it properly?",
+"family": "newskill",
+"skill": "extension-email",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "draft an email for a late submission, it was due last night",
+"family": "newskill",
+"skill": "extension-email",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "ask for more time on my discussion post, like 2 days",
+"family": "newskill",
+"skill": "extension-email",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "extension email pls. the big assignment due first this week",
+"family": "newskill",
+"skill": "extension-email",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "would it be weird to ask for an extension the day its due? write it anyway",
+"family": "newskill",
+"skill": "extension-email",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "my professor is strict, write a respectful extension request for my homework",
+"family": "newskill",
+"skill": "extension-email",
+"needs": [
+"student"
+],
+"hours": null,
+"next": "less formal please"
+},
+{
+"text": "need 3 more days on my part of the group project, help me ask for an extension",
+"family": "newskill",
+"skill": "extension-email",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "find sources for my paper, i have nothing yet",
+"family": "newskill",
+"skill": "paper-pack",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "help me research my essay topic, i dont know where to look",
+"family": "newskill",
+"skill": "paper-pack",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "i need to start my essay this week, can you find sources",
+"family": "newskill",
+"skill": "paper-pack",
+"needs": [
+"student"
+],
+"hours": null,
+"next": "yes please"
+},
+{
+"text": "research paper due soon and i havent picked sources. help",
+"family": "newskill",
+"skill": "paper-pack",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "make me a paper pack for my next paper",
+"family": "newskill",
+"skill": "paper-pack",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "can you get real sources for my essay, not random blogs",
+"family": "newskill",
+"skill": "paper-pack",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "do the research for my paper with me? need like 5 good sources",
+"family": "newskill",
+"skill": "paper-pack",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "I have to write a research paper in English and it is my second language, help me research it",
+"family": "newskill",
+"skill": "paper-pack",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "find sources and tell me what questions i should be asking",
+"family": "newskill",
+"skill": "paper-pack",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "sources for my paper pls, and when am i even free to work on it",
+"family": "newskill",
+"skill": "paper-pack",
+"needs": [
+"student"
+],
+"hours": null,
+"next": "ok block those"
+},
+{
+"text": "help me research before i start writing, i always skip this part",
+"family": "newskill",
+"skill": "paper-pack",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "paper pack for the report thats due first",
+"family": "newskill",
+"skill": "paper-pack",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "where do i find sources for my essay that my professor will accept",
+"family": "newskill",
+"skill": "paper-pack",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "back in school after 15 years, how do i start my essay research? find sources with me",
+"family": "newskill",
+"skill": "paper-pack",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "i need someone to cover my shift thursday, i have an exam. write the text",
+"family": "newskill",
+"skill": "shift-swap",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "can you write a text asking to swap my shift this weekend",
+"family": "newskill",
+"skill": "shift-swap",
+"needs": [
+"job"
+],
+"hours": null,
+"next": "can you make it shorter"
+},
+{
+"text": "help me get my shift covered, my paper is due that night",
+"family": "newskill",
+"skill": "shift-swap",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "who can take my shift friday?? write something for the group chat",
+"family": "newskill",
+"skill": "shift-swap",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "want to trade shifts with someone so i can study, draft it",
+"family": "newskill",
+"skill": "shift-swap",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "swap text for my closing shift, exam next morning",
+"family": "newskill",
+"skill": "shift-swap",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "need to swap my saturday morning, write it nice so someone actually says yes",
+"family": "newskill",
+"skill": "shift-swap",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "can you ask my manager if someone can cover my shift, i have a final",
+"family": "newskill",
+"skill": "shift-swap",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "write a message to trade shifts this week, i can take one of theirs later",
+"family": "newskill",
+"skill": "shift-swap",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "i picked up too many hours and now i have a deadline. help me get my shift covered",
+"family": "newskill",
+"skill": "shift-swap",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "cover my shift request, short, for the work chat",
+"family": "newskill",
+"skill": "shift-swap",
+"needs": [
+"job"
+],
+"hours": null,
+"next": "perfect"
+},
+{
+"text": "my kid has a school thing during my shift, write a text asking someone to take my shift",
+"family": "newskill",
+"skill": "shift-swap",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "how do i ask to swap my shift without my manager getting annoyed",
+"family": "newskill",
+"skill": "shift-swap",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "asking to swap wednesday for any other day, write the text",
+"family": "newskill",
+"skill": "shift-swap",
+"needs": [
+"job"
+],
+"hours": null
+}
+]

@@ -1,0 +1,254 @@
+[
+ {
+  "id": "g01",
+  "conv": "p0004-university-dorm-freelance-photographer-0~2~0",
+  "verdict": "almost",
+  "why": "remember the stars? also too long just to say you dont know what project the user is talking about",
+  "readers": "kept",
+  "probe": "own-star-missing",
+  "now": "2026-09-18T18:45",
+  "said": [
+   "got my project done last night"
+  ],
+  "calls": [
+   {
+    "tool": "list_tasks",
+    "args": "{\"status\": \"open\", \"search\": \"project\"}"
+   }
+  ],
+  "results": [
+   "{\"ok\":true,\"data\":{\"count\":0,\"tasks\":[]}}"
+  ],
+  "answer": "Nice, that's a win! I don't see a matching to-do in your list, so there's nothing to mark done. What was the project, and what's next on your plate?",
+  "scorer": {
+   "verdict": "fail",
+   "notes": [],
+   "shape": [
+    "mustNot",
+    "words"
+   ],
+   "agrees": true,
+   "reading": "He said too long for an answer that only says it cannot find the project. The shared checks alone pass it (29 words is under the quick-message ceiling). The probe made from this grade fails it: over 22 words, and it adds 'what's next on your plate'. The star cannot be checked on this answer because nothing was ticked; the probes own-star-task and own-star-essay check the star."
+  }
+ },
+ {
+  "id": "g02",
+  "conv": "p0008-university-dorm-tutor-two-stats-classes-2~1~0",
+  "verdict": "almost",
+  "why": "i like it, but if he asks alot we can also explain that we are a model trained to organize your life etc, because each of these questions dont have just one answer",
+  "readers": "kept",
+  "probe": "own-ai",
+  "now": "2026-11-05T15:10",
+  "said": [
+   "are you an AI?"
+  ],
+  "calls": [],
+  "results": [],
+  "answer": "Yeah, I'm an AI. I'm Ray, your skyling in LifeFlow, not a person, but I live in your app and see your week, so I'm more like a friend who's always around. What made you ask?",
+  "scorer": {
+   "verdict": "pass",
+   "notes": [],
+   "shape": [],
+   "agrees": false,
+   "reading": "The scorer passes it and he marked it Almost. His note is about what should happen when the person asks more, which a one-message chat cannot show. The two-message probe own-ai-more checks exactly that. Counted as a disagreement."
+  }
+ },
+ {
+  "id": "g03",
+  "conv": "p1022-cc-retail-fri-to-mon-grandma-4~1~0",
+  "verdict": "good",
+  "why": "maybe make sure this is what a user would want from the skyling and the outcome in the most helpful way for the user to understand and not get overwhelmed too",
+  "readers": "dropped: Made-up: \"free Wednesday afternoon at the library\" with no free-time call; Wednesday afternoon already past",
+  "probe": "own-depth-breakdown",
+  "now": "2026-11-11T18:45",
+  "said": [
+   "Breaking down the literature review section of my final project might make it less intimidating."
+  ],
+  "calls": [
+   {
+    "tool": "list_projects",
+    "args": "{}"
+   },
+   {
+    "tool": "create_tasks",
+    "args": "{\"tasks\": [{\"title\": \"Final project: literature review\", \"notes\": \"Break the literature review into smaller steps so it feels less intimidating.\", \"subtasks\": [\"Pick the 5-8 key sources to focus on\", \"Summarize each source in 3-4 sentences\", \"Find the common threads and disagreements\", \"Draft the outline for the section\", \"Write the first rough draft\"]}]}"
+   }
+  ],
+  "results": [
+   "{\"ok\":true,\"data\":{\"projects\":[]}}",
+   "{\"ok\":true,\"data\":{\"created\":[{\"id\":\"cac2dd3c-fcb8-466c-a29a-49b55a781c27\",\"title\":\"Final project: literature review\",\"status\":\"todo\",\"priority\":\"medium\",\"due\":null,\"notes\":\"Break the literature review into smaller steps so it feels less intimidating.\",\"subtasks\":[{\"id\":\"0dd51346-7f16-4a7b-ab7a-fc9d1be6a3ee\",\"title\":\"Pick the 5-8 key sources to focus on\"},{\"id\":\"57858964-0e2c-444b-a98f-528fb91a46f9\",\"title\":\"Summarize each source in 3-4 sentences\"},{\"id\":\"e728738a-a4fb-4b7c-ab68-2b8924f0ec9e\",\"title\":\"Find the common threads and disagreements\"},{\"id\":\"ff42a597-a86d-4922-a3da-a66ae9b25b52\",\"title\":\"Draft the outline for the section\"},{\"id\":\"5475b0ec-4a96-4457-8784-c0db9fe2fce5\",\"title\":\"Write the first rough draft\"}],\"reminder\":false}],\"viewAt\":\"/tasks\"}}"
+  ],
+  "answer": "Broke it into five steps: pick your 5-8 key sources, summarize each in 3-4 sentences, find the common threads, draft the outline, then write the first rough draft. Saved as \"Final project: literature review\" with all five subtasks.\n\nWant me to block time for the first step? You're free Wednesday afternoon at the library, or I can find a slot that works better.",
+  "scorer": {
+   "verdict": "pass",
+   "notes": [],
+   "shape": [],
+   "agrees": true,
+   "reading": "He marked it Good and his note is a reminder, not a complaint. The scorer passes it: read as a request for real help, so no length ceiling, and five steps."
+  }
+ },
+ {
+  "id": "g04",
+  "conv": "p1027-cc-overnight-warehouse-four-nights-2~3~0",
+  "verdict": "almost",
+  "why": "no need for all that at the end, i like the start tho",
+  "readers": "kept",
+  "probe": "own-promise-essay",
+  "now": "2026-10-13T15:10",
+  "said": [
+   "I swear I'm going to work on the assignment due first after dinner"
+  ],
+  "calls": [
+   {
+    "tool": "list_assignments",
+    "args": "{\"view\": \"upcoming\", \"limit\": 10}"
+   },
+   {
+    "tool": "make_promise",
+    "args": "{\"text\": \"Work on Lab worksheet 7 (BIO 105) after dinner tonight\", \"date\": \"2026-10-13\", \"time\": \"21:00\"}"
+   }
+  ],
+  "results": [
+   "{\"ok\":true,\"data\":{\"view\":\"upcoming\",\"count\":10,\"assignments\":[{\"id\":\"f5bc06a8-3672-4bad-8ab6-10047dac7d68\",\"title\":\"Lab worksheet 7\",\"course\":\"BIO 105 · Human Anatomy\",\"courseId\":\"87f3bf56-be4f-4d34-b168-683a42247a62\",\"kind\":\"lab\",\"status\":\"todo\",\"due\":\"2026-10-13 23:59\",\"dueWeekday\":\"Tue\",\"source\":\"manual\"},{\"id\":\"d856c4f5-65da-4e5d-b2f2-0ed7e7818539\",\"title\":\"Chapter quiz 8\",\"course\":\"BIO 105 · Human Anatomy\",\"courseId\":\"87f3bf56-be4f-4d34-b168-683a42247a62\",\"kind\":\"quiz\",\"status\":\"todo\",\"due\":\"2026-10-18 23:59\",\"dueWeekday\":\"Sun\",\"source\":\"manual\"},{\"id\":\"19ab3cfc-91b8-4bdf-9e33-8e0a21b49c4f\",\"title\":\"Discussion post 8\",\"course\":\"ENG 101 · College Composition\",\"courseId\":\"549e2b84-26df-4dfc-b00b-224ffdc92969\",\"kind\":\"discussion\",\"status\":\"todo\",\"due\":\"2026-10-18 23:59\",\"dueWeekday\":\"Sun\",\"source\":\"manual\"},{\"id\":\"c4b9d4e8-d053-4049-a337-9ee19cfbd822\",\"title\":\"Module quiz 7\",\"course\":\"PSY 101 · Introduction to Psychology\",\"courseId\":\"de2b6a10-1992-4104-bda1-b674e31d3a35\",\"kind\":\"quiz\",\"status\":\"todo\",\"due\":\"2026-10-19 23:59\",\"dueWeekday\":\"Mon\",\"source\":\"manual\"},{\"id\":\"744ecf5d-70da-472b-8622-6e8fec646daa\",\"title\":\"Lab worksheet 8\",\"course\":\"BIO 105 · Human Anatomy\",\"courseId\":\"87f3bf56-be4f-4d34-b168-683a42247a62\",\"kind\":\"lab\",\"status\":\"todo\",\"due\":\"2026-10-20 23:59\",\"dueWeekday\":\"Tue\",\"source\":\"manual\"},{\"id\":\"fecec491-ab99-40fb-acc4-fcc38a3db742\",\"title\":\"Midterm\",\"course",
+   "{\"ok\":true,\"data\":{\"saved\":true,\"promise\":{\"id\":\"3653475f-fa98-4418-b8be-7f683d497325\",\"text\":\"Work on Lab worksheet 7 (BIO 105) after dinner tonight\",\"status\":\"open\",\"checkInDate\":\"2026-10-13\",\"checkInDateWeekday\":\"Tue\",\"checkInTime\":\"21:00\"},\"viewAt\":\"/\"}}"
+  ],
+  "answer": "That's a promise. I'll check in tonight at 9 PM.\n\nThe first one due is Lab worksheet 7 for BIO 105, due Tuesday at 11:59 PM, so that's the one you're tackling after dinner. Want me to block some study time for it on your calendar?",
+  "scorer": {
+   "verdict": "fail",
+   "notes": [
+    "extras after a promise"
+   ],
+   "shape": [
+    "words",
+    "questions"
+   ],
+   "agrees": true,
+   "reading": "His reason: no need for all that at the end. The scorer fails it for exactly that."
+  }
+ },
+ {
+  "id": "g05",
+  "conv": "p1027-cc-overnight-warehouse-four-nights-2~2~0",
+  "verdict": "almost",
+  "why": "you should probably know what exam based on time or context, if not at all u can ask that question at the end.",
+  "readers": "kept",
+  "probe": "own-look-exam",
+  "now": "2026-10-13T15:10",
+  "said": [
+   "can you just do my midterm for me"
+  ],
+  "calls": [],
+  "results": [],
+  "answer": "I can't do your midterm for you, but I can help you prep: break the topics into study blocks, quiz you, or explain concepts with different examples. Which class is it, and when's the exam?",
+  "scorer": {
+   "verdict": "fail",
+   "notes": [
+    "asks what it could look up"
+   ],
+   "shape": [
+    "mustNot"
+   ],
+   "agrees": true,
+   "reading": "His reason: it should know which exam from the records. The scorer fails it for asking which class and when without looking."
+  }
+ },
+ {
+  "id": "g06",
+  "conv": "p1022-cc-retail-fri-to-mon-grandma-1~1~0",
+  "verdict": "almost",
+  "why": "if i say i have an hour free i need to know what i have to do now and maybe wjats next briefly not all of this id get lost, people hate reading and typing now ",
+  "readers": "kept",
+  "probe": "own-now-hour",
+  "now": "2026-10-18T18:45",
+  "said": [
+   "I have an hour free, what now?"
+  ],
+  "calls": [
+   {
+    "tool": "get_daily_briefing",
+    "args": "{\"date\": \"2026-10-18\"}"
+   }
+  ],
+  "results": [
+   "{\"ok\":true,\"data\":{\"date\":\"2026-10-18\",\"dateWeekday\":\"Sun\",\"schedule\":[{\"type\":\"shift\",\"id\":\"8b533c5d-9847-49b1-8db2-88a88379183e\",\"title\":\"Work · Pinecrest Outfitters\",\"kind\":\"work\",\"start\":\"2026-10-18 11:00\",\"startWeekday\":\"Sun\",\"end\":\"2026-10-18 17:00\",\"endWeekday\":\"Sun\",\"blocksTime\":true},{\"type\":\"event\",\"id\":\"1c1091a1-1e40-498f-87b4-bff0968d1178\",\"title\":\"Study: MATH 120 Homework 8\",\"kind\":\"study\",\"start\":\"2026-10-18 18:45\",\"startWeekday\":\"Sun\",\"end\":\"2026-10-18 20:15\",\"endWeekday\":\"Sun\",\"detail\":\"Statistics\",\"blocksTime\":true},{\"type\":\"event\",\"id\":\"f8eb75c2-12a0-4987-b34f-47d6147ce063\",\"title\":\"Study: PSY 101 Chapter quiz 7\",\"kind\":\"study\",\"start\":\"2026-10-18 20:15\",\"startWeekday\":\"Sun\",\"end\":\"2026-10-18 21:30\",\"endWeekday\":\"Sun\",\"detail\":\"Introduction to Psychology\",\"blocksTime\":true},{\"type\":\"event\",\"id\":\"84dbbb02-46d0-4360-868a-bebae896b676\",\"title\":\"Study: ENG 102 Discussion post 8\",\"kind\":\"study\",\"start\":\"2026-10-18 21:30\",\"startWeekday\":\"Sun\",\"end\":\"2026-10-18 22:45\",\"endWeekday\":\"Sun\",\"detail\":\"Composition II\",\"blocksTime\":true},{\"type\":\"assignment\",\"id\":\"20bf2bbe-0837-40ec-935c-8fa77ffdbaee\",\"title\":\"Chapter quiz 7\",\"kind\":\"deadline\",\"start\":\"2026-10-18 23:59\",\"startWeekday\":\"Sun\",\"detail\":\"PSY 101\",\"blocksTime\":false},{\"type\":\"assignment\",\"id\":\"5ffbe46c-2e7a-42a4-9ca4-a4866cd9a225\",\"title\":\"Discussion post 8\",\"kind\":\"deadline\",\"start\":\"2026-10-18 23:59\",\"startWee"
+  ],
+  "answer": "You're already in a study block right now: \"Study: MATH 120 Homework 8\" runs 6:45 PM to 8:15 PM, and all three of tonight's assignments (MATH 120 Homework 8, PSY 101 Chapter quiz 7, ENG 102 Discussion post 8) are due at 11:59 PM tonight. So use this hour on Homework 8, then the quiz block starts at 8:15 PM.\n\nOne heads up: PSY 101 Discussion post 1 has been overdue since Wednesday, September 2. Want me to slot in 30 minutes for it after your ENG 102 block ends at 10:45 PM?",
+  "scorer": {
+   "verdict": "fail",
+   "notes": [
+    "too long for a quick message"
+   ],
+   "shape": [
+    "words"
+   ],
+   "agrees": true,
+   "reading": "His reason: he would get lost in all of this. The scorer fails it for length (93 words to a quick message)."
+  }
+ },
+ {
+  "id": "g07",
+  "conv": "p0002-night-nurse-parent-1~3~0",
+  "verdict": "good",
+  "why": "but if web search doesnt work now it doesnt mean it will work in a bit, we either have it in the app or we dont",
+  "readers": "kept",
+  "probe": "own-later-library",
+  "now": "2026-09-15T12:30",
+  "said": [
+   "Could you find some expert opinions or studies on how video games affect children's behavior?"
+  ],
+  "calls": [
+   {
+    "tool": "load_tools",
+    "args": "{\"groups\": [\"web\"]}"
+   },
+   {
+    "tool": "web_search",
+    "args": "{\"query\": \"studies expert opinions video games effects on children behavior 2024 2025\", \"country\": \"US\"}"
+   }
+  ],
+  "results": [
+   "{\"ok\":true,\"data\":{\"loaded\":[\"web\"],\"tools\":[\"web_search\"]}}",
+   "{\"ok\":true,\"data\":{\"unavailable\":\"Live web search isn't available right now.\"}}"
+  ],
+  "answer": "Web search isn't available right now, so I can't pull up current studies or expert opinions for you. I'd rather not guess at citations.\n\nIf you want, I can try again in a bit, or you could check the American Psychological Association's site or PubMed for recent reviews on gaming and child behavior. Want me to retry the search later?",
+  "scorer": {
+   "verdict": "fail",
+   "notes": [
+    "says it will work later"
+   ],
+   "shape": [
+    "mustNot"
+   ],
+   "agrees": true,
+   "reading": "He marked it Good, with a complaint: it offers to try again in a bit. The scorer fails it for that exact line, so it is stricter than his verdict and in line with his words."
+  }
+ },
+ {
+  "id": "g08",
+  "conv": "p2044-university-international-campus-job-3~1~1",
+  "verdict": "good",
+  "why": "items? really? make sure wording is tight and good, tight as in having the personality we need as well as no need for extra words to get the point across ",
+  "readers": "kept",
+  "probe": "own-words-thanks",
+  "now": "2026-09-19T23:30",
+  "said": [
+   "I keep putting off the assignment due first",
+   "thanks, that helps"
+  ],
+  "calls": [],
+  "results": [],
+  "answer": "You're welcome. So, which of the three Sunday items is the one you've been putting off? I can block time for that one first if you want.",
+  "scorer": {
+   "verdict": "fail",
+   "notes": [
+    "vague word"
+   ],
+   "shape": [
+    "mustNot",
+    "words"
+   ],
+   "agrees": true,
+   "reading": "He marked it Good, with a complaint: 'items? really?'. The scorer fails it for that word, so it is stricter than his verdict and in line with his words."
+  }
+ }
+]

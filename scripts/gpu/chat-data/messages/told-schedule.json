@@ -1,0 +1,524 @@
+[
+{
+"text": "ok heres my week: bio mon wed fri 10 to 10:50, chem tue thu 1 to 2:15, chem lab thu 3 to 5:50, and i work sat sun 9 to 5",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "my schedule this semester is english 101 monday wednesday 9:30-10:45, math 120 tuesday thursday 11-12:15, psych online. work is fridays 4 to close",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "classes: MWF calc 8am, MW history 1pm, TTh spanish 9:30, T lab 2 to 5. can you set all that up",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null,
+"next": "the lab is thursday not tuesday, fix that"
+},
+{
+"text": "new term. accounting class mon 6 to 8:45 pm, business law class wed 6 to 8:45 pm. i work 8 to 4:30 weekdays. add it all",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "i have nursing clinicals tuesday and thursday 6:30 am to 3, lecture monday 9 to 12, and i work weekend nights 7p to 7a",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "set up my week pls: stats class m/w 2-3:15, soc t/th 12:30-1:45, bio lab f 9-11:50, work t/th 5-10 and sat 10-6",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "This is my timetable: Monday English class 9 to 11, Tuesday Mathematics 10 to 12, Wednesday free, Thursday Computer Science 14 to 17, Friday English 9 to 11. Please add.",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "my week is basically class 9 to 2 every day except friday, work 4 to 9 mon wed thu, and church sunday morning",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "adding my stuff: chem 1010 class MWF 11-11:50, calc 2 daily at 9, writing seminar T 3-5:30. no job this term",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "schedule dump: econ class tues thurs 8 to 9:15, marketing tues thurs 9:30 to 10:45, stats lab wed 4 to 5:50, barista shifts mon wed fri 6am to noon",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "can you put in my classes, i have anatomy mon/wed 5:30 to 8:20 pm and a lab saturday 8 to 11. i work days 7 to 3:30",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "ok so soccer practice tue thu 6 to 8, games saturday mornings, classes are mwf 10 to 2 straight through, tutoring job sunday 1 to 5",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "my kids school pickup is 3:15 every weekday, my own class is tue and thu 6 to 9 pm, and i work 9 to 2 mon through fri. set it up around that",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "week setup: physics lecture mwf 1-1:50, physics lab m 3-5:50, cs 201 class tth 2-3:15, dining hall shift tth 5-8, sun 11-3",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null,
+"next": "yes that's right"
+},
+{
+"text": "I have language school classes every morning 8:30 to 12:30 Monday to Friday and I work in the restaurant Thursday Friday Saturday from 17:00 to 23:00",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "classes this quarter: MW 10-11:50 design studio, TTh 1-2:50 art history, F 9-12 printmaking. work study mon and wed 1 to 4",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "put my schedule in: ged class mon wed 6-8pm at the community center, work is rotating so skip that, bible study thursday 7",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "sophomore schedule!! orgo lecture mwf 9, orgo lab w 1-4, genetics class tth 11-12:15, spanish 3 mtwth at 2",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "my week: online classes so no set times, but i have live sessions tuesday 7pm and thursday 7pm, and i work three 12 hour shifts, this week its mon tue fri 7 to 7",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "first week here. Lectures for my course: Mon 10-12 and Wed 10-12, tutorial Thu 15-16, lab Fri 13-16. I do not have a job yet.",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "okay so my week is um i have english class monday and wednesday at ten and then math tuesday thursday at one and i work friday and saturday night like five to eleven",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "hey can you set up my class schedule so i've got biology monday wednesday friday at nine chemistry tuesday thursday at eleven and a lab thursday afternoon two to five",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "so my classes are all in the morning eight to noon monday through thursday and then i work at the store from two to eight on those days and saturdays all day",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "um i need to add my schedule i have night class tuesday and thursday six to nine and my job is monday to friday eight to four thirty",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "okay here's the thing i have class monday at ten no wait monday at eleven and wednesday at eleven and then a lab on friday at one",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null,
+"next": "yes that's right"
+},
+{
+"text": "can you add all this i have psych class at nine thirty on tuesdays and thursdays stats right after at eleven and then i'm at work by one until six",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "my week okay so clinical is wednesday all day six to six lecture for class is monday and tuesday nine to noon",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "so this semester it's history mondays and wednesdays two to three fifteen spanish class every day at ten and i work the front desk tuesday thursday evenings",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "hi uh i want to put my schedule in i have four classes two on monday wednesday at nine and eleven and two on tuesday thursday at ten and two",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "okay add this my shifts are thursday friday saturday four to close and class is monday wednesday one to four that's it that's my whole week",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "I want to tell you my week. I have English class in the morning from eight thirty until twelve every day and I work on the weekend in the evening from five",
+"family": "setup",
+"needs": [
+"student",
+"job"
+],
+"hours": null
+},
+{
+"text": "so um practice is every day at four except friday classes are nine to two and i tutor on sunday afternoons can you set that all up",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "from my syllabus:\nQuiz 1 - Dec 2\nEssay draft - Dec 4\nQuiz 2 - Dec 9\nFinal essay - Dec 14\nFinal exam - Dec 16\ncan you add these",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "pasting my bio syllabus dates: lab report 4 due dec 3, lab practical dec 8, problem set 9 due dec 10, final exam dec 15 at 8 am",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "syllabus says: weekly quiz every friday by 11:59 pm, discussion post every wednesday, two replies by sunday, final project dec 12",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "here is the schedule of assignments for my class. Week 14: chapter 11 homework. Week 15: chapter 12 homework and review. Finals week: cumulative exam. Homework is always due Sunday night.",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "syllabus for stats: HW 10 due 12/1, HW 11 due 12/8, project presentation 12/10, final 12/17 10:30am",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null,
+"next": "thanks, that helps"
+},
+{
+"text": "copy pasted from the syllabus -> Paper 3 (6 pages) due Dec 5. Peer review Dec 7. Revision due Dec 11. Portfolio due Dec 16. no late work accepted",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "course outline for the rest of the term: Dec 1 unit 5 test, Dec 3 lab notebook check, Dec 8 group presentation, Dec 14 final exam 1 to 3 pm",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "My syllabus, the remaining dates: Reading response 8 on December 2. Oral presentation on December 9. Final written exam on December 15. Please add them to my assignments.",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "syllabus dump for accounting: ch 9 quiz dec 1 / ch 10 quiz dec 8 / practice set due dec 10 / final dec 16 6pm",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "can you take these from my chem syllabus? prelab every tuesday before lab, lab report every friday 5pm, exam 4 on dec 4, final dec 14",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "syllabus (english comp): annotated bibliography due dec 2, rough draft dec 6, conference with instructor dec 8 or 9, final paper dec 13",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "the due dates for the semester that are left: dec 1 module 12 quiz, dec 4 module 13 quiz, dec 7 case study, dec 11 final project, dec 15 final exam",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "this is from the syllabus for my night class, add what you can: Midterm 2 Dec 3. Paper due Dec 10. Final Dec 17. Attendance counts 10 percent.",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "pasted from my syllabus pdf sorry its messy: Assignment 7........Dec 2   Assignment 8........Dec 9   Exam 3........Dec 11   Final........Dec 18",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "nursing syllabus dates: care plan 3 due dec 1 at 8am, med calc quiz dec 3 (must pass 90), skills check off dec 8, final dec 14",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "syllabus for my online class says everything unlocks monday and closes sunday 11:59pm. week 14 quiz + discussion, week 15 quiz + final reflection, final exam window dec 12 to dec 16",
+"family": "setup",
+"needs": [
+"student"
+],
+"hours": null
+},
+{
+"text": "my shifts this week: mon 4-10, wed 4-10, fri 5-close, sat 12-8",
+"family": "setup",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "work posted the schedule. Tue 9a-3p, Thu 9a-3p, Sat 7a-3:30p, Sun 7a-3:30p. add my shifts",
+"family": "setup",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "shifts next week from the app: Monday 5:00 PM - 9:30 PM, Wednesday 5:00 PM - 9:30 PM, Saturday 10:00 AM - 6:00 PM, Sunday 10:00 AM - 4:00 PM",
+"family": "setup",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "new work schedule just dropped. thurs close, fri close, sat open, sun off, mon mid. closes are 4 to 11:30, open is 5am to 1, mid is 11 to 7",
+"family": "setup",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "can you add my shifts: wed 6a-2p, thu 6a-2p, fri 2p-10p, sat 2p-10p. lunch is 30 min unpaid",
+"family": "setup",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "copying my shifts from the schedule photo: Mon OFF / Tue 3-11 / Wed 3-11 / Thu OFF / Fri 7-3 / Sat 7-3 / Sun 7-3",
+"family": "setup",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "My work schedule for this week is Tuesday 17:00 to 23:00, Friday 17:00 to 23:00 and Saturday 12:00 to 23:00. Please put my shifts in my calendar.",
+"family": "setup",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "hospital shifts for this week: Wed 7p-7a, Thu 7p-7a, Sun 7p-7a. three twelves",
+"family": "setup",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "my manager texted my hours: tues 10-4, weds 10-4, fri 12-8, sat 8-4. put them in",
+"family": "setup",
+"needs": [
+"job"
+],
+"hours": null,
+"next": "the friday one is 12 to 6 actually"
+},
+{
+"text": "shifts for the next two weeks. this week: mon wed fri 4-9. next week: tue thu 4-9 and sat 9-5",
+"family": "setup",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "campus job shifts this week are mon 1-4, wed 1-4, thu 9-11. same every week actually, can you repeat it",
+"family": "setup",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "got my work schedule. friday 4pm to midnight, saturday 4pm to midnight, sunday 2pm to 10pm. thats it for my shifts this week",
+"family": "setup",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "delivery shifts i picked up: tue 5-8, thu 5-9, sat 11-2 and 5-10. add those as work",
+"family": "setup",
+"needs": [
+"job"
+],
+"hours": null
+},
+{
+"text": "the warehouse posted my shifts: sun through wed 6:00pm to 4:30am this week, the four tens. add them all",
+"family": "setup",
+"needs": [
+"job"
+],
+"hours": null
+}
+]

@@ -96,10 +96,11 @@ def known_numbers(messages):
     return seen
 
 
-def check(meta_row, last, year):
+def check(meta_row, last, year, upto=None):
     reasons = []
-    turn = meta_row["turns"][-1] if meta_row else None
-    if not meta_row or any(t["outcome"] != "ok" for t in meta_row["turns"]):
+    # this turn and the ones before it: a later turn that failed says nothing about this one (chats run to 5 turns since 2026-11-27)
+    upto = len(meta_row["turns"]) if meta_row and upto is None else upto
+    if not meta_row or upto > len(meta_row["turns"]) or any(t["outcome"] != "ok" for t in meta_row["turns"][:upto]):
         reasons.append("turn error")
     reply = last["reply"]
     text = (reply.get("content") or "").split("</think>")[-1].strip()
@@ -180,12 +181,37 @@ def check(meta_row, last, year):
 kept, why = [], collections.Counter()
 details = []
 by_source = collections.Counter()
-for conv_turn, rs in steps.items():
+def clean(text):
+    """The same clean-up check() gives a final answer, for the skyling's earlier answers in a long chat's history."""
+    text = re.sub(r"\*\*(.+?)\*\*", r"\1", text or "").replace("__", "")
+    text = re.sub(r"\s*\u2014\s*", ", ", text)
+    return text.replace("\u202f", " ").replace("\u00a0", " ").replace("\u2011", "-")
+
+
+def history(msgs):
+    return [{**x, "content": clean(x["content"])} if x.get("role") == "assistant" and isinstance(x.get("content"), str) else x for x in msgs]
+
+
+# A chat's turns in order. A later turn is kept only when every turn before it in the same chat was kept (2026-11-27): its
+# history holds the earlier answers, and a model trained to go on from a bad answer learns to expect one. The loss is on the
+# last answer only (train_big.py), so the earlier answers are context, never targets.
+def order(key):
+    life, k, t = key.split("~")
+    return (life, int(k), int(t))
+
+
+broken = set()   # "<life>~<k>" of a chat whose turn was dropped
+for conv_turn in sorted(steps, key=order):
+    rs = steps[conv_turn]
     life, k, t = conv_turn.split("~")
     m = meta.get(f"{life}~{k}")
     last = rs[-1]
     year = int((m or {}).get("nowLocal", "2026")[:4])
-    reasons, text = check(m, last, year)
+    reasons, text = check(m, last, year, int(t) + 1)
+    if not reasons and f"{life}~{k}" in broken:
+        reasons = ["an earlier turn of this chat was dropped"]
+    if reasons:
+        broken.add(f"{life}~{k}")
     if a.details and m:
         turn_text = m["turns"][int(t)]["text"] if int(t) < len(m["turns"]) else m["question"]["text"]
         calls = [c["function"]["name"] for r in rs for c in (r["reply"].get("tool_calls") or [])]
@@ -194,7 +220,8 @@ for conv_turn, rs in steps.items():
     if reasons:
         why.update(r.split(":")[0] for r in reasons)
         continue
-    meta_row = {"conv": conv_turn, "persona": m["persona"], "skill": m["question"].get("skill"), "source": m["question"]["source"], "steps": len(rs)}
+    meta_row = {"conv": conv_turn, "persona": m["persona"], "skill": m["question"].get("skill"), "source": m["question"]["source"], "steps": len(rs),
+                "turn": int(t), "turns": len(m["turns"])}
     # Every step is its own example. The first steps are the short ones where the skyling decides which tools to call:
     # training on the last step alone (2026-11-21) left those out, and the tuned model stopped calling tools.
     for i, r in enumerate(rs[:-1]):
@@ -202,8 +229,8 @@ for conv_turn, rs in steps.items():
         if not calls:
             continue
         reply = {"role": "assistant", "content": "", "tool_calls": calls}
-        kept.append({"messages": list(r["messages"]) + [reply], "tools": r["tools"], "meta": {**meta_row, "step": i, "kind": "tool_call"}})
-    msgs = [x for x in last["messages"]] + [{"role": "assistant", "content": text}]
+        kept.append({"messages": history(r["messages"]) + [reply], "tools": r["tools"], "meta": {**meta_row, "step": i, "kind": "tool_call"}})
+    msgs = history(last["messages"]) + [{"role": "assistant", "content": text}]
     kept.append({"messages": msgs, "tools": last["tools"], "meta": {**meta_row, "step": len(rs) - 1, "kind": "answer" if len(rs) > 1 else "answer_no_tools"}})
     by_source[m["question"]["source"]] += 1
 
@@ -245,7 +272,8 @@ if a.details:
     with open(a.details, "w") as f:
         for d in details:
             f.write(json.dumps(d) + "\n")
-report = {"turns": len(steps), "kept": len(kept), "by_kind": collections.Counter(r["meta"]["kind"] for r in kept).most_common(), "added_from_earlier_runs": sum(added.values()), "dropped_reasons": why.most_common(), "kept_by_source": by_source.most_common(),
+report = {"turns": len(steps), "kept": len(kept),
+          "kept_by_turn": sorted(collections.Counter(r["meta"].get("turn", 0) for r in kept if r["meta"]["kind"] != "tool_call").items()), "by_kind": collections.Counter(r["meta"]["kind"] for r in kept).most_common(), "added_from_earlier_runs": sum(added.values()), "dropped_reasons": why.most_common(), "kept_by_source": by_source.most_common(),
           "kept_by_persona": collections.Counter(r["meta"]["persona"] for r in kept).most_common()}
 json.dump(report, open(a.report, "w"), indent=1)
-print(json.dumps({k: report[k] for k in ("turns", "kept", "by_kind", "added_from_earlier_runs", "dropped_reasons")}, indent=1))
+print(json.dumps({k: report[k] for k in ("turns", "kept", "kept_by_turn", "by_kind", "added_from_earlier_runs", "dropped_reasons")}, indent=1))

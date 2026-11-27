@@ -110,11 +110,16 @@ step "trained and merged"
 
 # score the trained model: with nothing of ours around it (before training that was the n1-teacher-bare-old20 line), then with our rules, cards and checks
 # MODE=on (round 2 and later): the prompt of every test states "Acting on your own: on", as the examples of those rounds do.
+# The owner exam (--exam owner, 39 probes from the owner's grades, scored by chat-eval/owner_score.py) sends its own mode line
+# with each probe, so it reads the same with or without MODE. "bare" on it is how much of his standard the training put
+# into the model itself; "full" is what a person would get, with our rules and checks around it.
 BARE="--think off${MODE:+ --mode $MODE}"
 CARDS="--think off${MODE:+ --mode $MODE} --guard --system-append scripts/gpu/own-model/skyling-rules.txt --system-append scripts/gpu/own-model/skyling-alive.txt --remind scripts/gpu/own-model/skyling-reminders-alive2.txt --situations scripts/gpu/own-model/skyling-situations.txt"
 cat > $N/plan-trained.txt <<PLAN
 eval|$TAG-trained-bare-old20|--no-retry --alive-rules|$BARE
 eval|$TAG-trained-full-old20|--no-retry --alive-rules|$CARDS
+eval|$TAG-trained-full-owner|--no-retry --exam owner|$CARDS
+eval|$TAG-trained-bare-owner|--no-retry --exam owner|$BARE
 eval|$TAG-trained-bare-alive6|--no-retry --exam alive|$BARE
 eval|$TAG-trained-full-alive6|--no-retry --exam alive|$CARDS
 eval|$TAG-trained-full-trust4|--no-retry --exam trust|$CARDS
