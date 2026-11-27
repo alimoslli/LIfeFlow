@@ -20,15 +20,19 @@ const DayRun = () => {
   const frame = useCurrentFrame();
   const { durationInFrames, fps } = useVideoConfig();
   const L = useLayout();
-  const minute = interpolate(frame, [0, durationInFrames - 1], [6 * 60 + 10, 23 * 60], { extrapolateRight: "clamp" });
+  // equal screen time for each skyling: the scene is cut in five, and each part runs through that skyling's own hours
+  const WINDOWS: [number, number][] = [
+    [SUN.rise - 60, SUN.rise + 40],
+    [SUN.rise + 50, SUN.set - 95],
+    [SUN.set - 85, SUN.set],
+    [SUN.set + 10, 20 * 60 + 50],
+    [21 * 60 + 10, 23 * 60 + 40],
+  ];
+  const part = durationInFrames / WINDOWS.length;
+  const k = Math.min(WINDOWS.length - 1, Math.floor(frame / part));
+  const minute = interpolate(frame - k * part, [0, part], WINDOWS[k]);
   const who = skylingAt(minute, SUN.rise, SUN.set);
-  // frames since this skyling came up, for its little hop in
-  let since = 0;
-  for (let f = frame; f >= 0; f--) {
-    const m = interpolate(f, [0, durationInFrames - 1], [6 * 60 + 10, 23 * 60]);
-    if (skylingAt(m, SUN.rise, SUN.set) !== who) break;
-    since = frame - f;
-  }
+  const since = Math.round(frame - k * part);
   const hop = Math.min(1, since / 10);
   const night = minute > SUN.set + 30 || minute < SUN.rise - 30;
   const name = companionOf(who).name;
@@ -39,7 +43,7 @@ const DayRun = () => {
     <Fade>
       <Sky minute={minute} clouds={4} />
       <Stage3D cam={[{ f: 0, pos: [0, 0.4, 7.5], look: [0, 0.2, 0], fov: 32 }, { f: durationInFrames, pos: [0, 0.6, 6.4], look: [0, 0.3, 0], fov: 32 }]} warmth={night ? 0.1 : 0.7}>
-        <group position={[0, (L.portrait ? 0.45 : 0.1) + (1 - hop) * -2.2 + Math.sin((since / fps) * 5) * 0.06, 0]} rotation={[0.05, Math.sin(frame / 22) * 0.55, 0]} scale={0.6 + 0.4 * hop}>
+        <group position={[0, (L.portrait ? 0.75 : 0.25) + (1 - hop) * -2.2 + Math.sin((since / fps) * 5) * 0.06, 0]} rotation={[0.05, Math.sin(frame / 22) * 0.55, 0]} scale={0.6 + 0.4 * hop}>
           <VoxelSkyling who={who} pose={since < 18 ? "celebrate" : "idle"} poseFrame={Math.floor(since / 5)} night={night && (who === "star" || who === "moon")} height={L.portrait ? 2.2 : 3.0} />
         </group>
       </Stage3D>
@@ -64,7 +68,7 @@ const Lineup = () => {
         {COMPANION_KEYS.map((k, i) => {
           const s = prog(frame, 6 + i * 5, 20 + i * 5);
           // a row on wide screens; on a phone three over two
-          const [x, y] = L.portrait ? [i < 3 ? (i - 1) * 1.3 : (i - 3.5) * 1.3, i < 3 ? 0.75 : -1.15] : [(i - 2) * 2.05, -0.6];
+          const [x, y] = L.portrait ? [i < 3 ? (i - 1) * 1.3 : (i - 3.5) * 1.3, i < 3 ? 0.2 : -1.75] : [(i - 2) * 2.05, -0.6];
           const jump = Math.max(0, Math.sin((frame - 30 - i * 4) / 4)) * (frame > 30 && frame < 70 ? 0.35 : 0);
           return (
             <group key={k} position={[x, y + (1 - s) * -3 + jump, 0]} rotation={[0, Math.sin(frame / 30 + i) * 0.25, 0]}>

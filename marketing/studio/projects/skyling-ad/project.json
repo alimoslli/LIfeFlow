@@ -1,0 +1,82 @@
+{
+ "id": "skyling-ad",
+ "title": "Someone's always up",
+ "concept": "A creative skyling ad: the five skylings as glossy 3D toys built from the app's own pixel art, each owning their hour of the day, ending on the cast.",
+ "formats": [
+  "9x16",
+  "1x1",
+  "16x9"
+ ],
+ "captures": [],
+ "music": {
+  "file": "audio/music_bright.mp3",
+  "from": 12,
+  "gain": -9
+ },
+ "cues": [
+  {
+   "t": 0.1,
+   "sfx": "night_stars_twinkle",
+   "gain": -10
+  },
+  {
+   "t": 2.3,
+   "sfx": "whoosh_scene_change",
+   "gain": -10
+  },
+  {
+   "t": 2.6,
+   "sfx": "skylings_pop_up",
+   "gain": -9
+  },
+  {
+   "t": 10.2,
+   "sfx": "whoosh_scene_change",
+   "gain": -10
+  },
+  {
+   "t": 11.4,
+   "sfx": "star_tick_it_off",
+   "gain": -8
+  },
+  {
+   "t": 14.6,
+   "sfx": "logo_ending_sound",
+   "gain": -6
+  }
+ ],
+ "scenes": [
+  {
+   "id": "hook",
+   "title": "Someone's always up",
+   "seconds": 2.5,
+   "mode": "code",
+   "why": "Type over the app's sky.",
+   "estimate": null
+  },
+  {
+   "id": "dayrun",
+   "title": "The day runs, each skyling takes its hour",
+   "seconds": 8,
+   "mode": "code",
+   "why": "3D voxels from the app's pixel art; who appears is the app's own skylingAt rule.",
+   "estimate": null
+  },
+  {
+   "id": "lineup",
+   "title": "All five, night",
+   "seconds": 4.5,
+   "mode": "code",
+   "why": "Same voxel builder, one camera move.",
+   "estimate": null
+  },
+  {
+   "id": "outro",
+   "title": "Meet your skyling",
+   "seconds": 3,
+   "mode": "code",
+   "why": "Brand sign-off.",
+   "estimate": null
+  }
+ ]
+}

@@ -1,0 +1,98 @@
+{
+ "id": "product-demo",
+ "title": "LifeFlow: your day, worked out",
+ "concept": "A cinematic product demonstration: the real app in a phone the camera flies around, the skyling, a bill heads-up, the brand.",
+ "formats": [
+  "9x16",
+  "1x1",
+  "16x9"
+ ],
+ "captures": [
+  "alex-student/today",
+  "alex-student/money"
+ ],
+ "music": {
+  "file": "audio/music_bright.mp3",
+  "from": 2,
+  "gain": -9
+ },
+ "cues": [
+  {
+   "t": 0.05,
+   "sfx": "sky_turns",
+   "gain": -10
+  },
+  {
+   "t": 2.4,
+   "sfx": "whoosh_scene_change",
+   "gain": -10
+  },
+  {
+   "t": 4.6,
+   "sfx": "tap",
+   "gain": -6
+  },
+  {
+   "t": 8.4,
+   "sfx": "skylings_pop_up",
+   "gain": -8
+  },
+  {
+   "t": 11.4,
+   "sfx": "whoosh_scene_change",
+   "gain": -10
+  },
+  {
+   "t": 12.35,
+   "sfx": "answer_lands",
+   "gain": -7
+  },
+  {
+   "t": 15.4,
+   "sfx": "logo_ending_sound",
+   "gain": -6
+  }
+ ],
+ "scenes": [
+  {
+   "id": "hook",
+   "title": "Hook: the morning sky",
+   "seconds": 2.5,
+   "mode": "code",
+   "why": "Type and the app's own sky: fast and exact in code.",
+   "estimate": null
+  },
+  {
+   "id": "today",
+   "title": "The real Today screen in a flying phone",
+   "seconds": 6,
+   "mode": "code",
+   "why": "The phone is 3D in code and the screen is a real capture of the current app.",
+   "estimate": null
+  },
+  {
+   "id": "ray",
+   "title": "Meet Ray",
+   "seconds": 3,
+   "mode": "code",
+   "why": "The skyling is drawn by the app's own pixel code.",
+   "estimate": null
+  },
+  {
+   "id": "money",
+   "title": "A bill heads-up over the Money screen",
+   "seconds": 4,
+   "mode": "code",
+   "why": "Real Money capture, notification drawn in code.",
+   "estimate": null
+  },
+  {
+   "id": "outro",
+   "title": "LifeFlow sign-off",
+   "seconds": 3,
+   "mode": "code",
+   "why": "Brand mark and skylings from the app.",
+   "estimate": null
+  }
+ ]
+}

@@ -7,7 +7,7 @@
 // app version, QC). Scene renders are cached in cache/scenes/ by a hash of the code, the app version and the captures.
 import { bundle } from "@remotion/bundler";
 import { getCompositions, renderMedia, renderStill } from "@remotion/renderer";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { cpus } from "node:os";
@@ -160,8 +160,14 @@ s.save(sys.argv[2], quality=88)`, JSON.stringify(stills), sheet, join(STUDIO, "p
     chains.push(`[${i + (meta.music ? 2 : 1)}:a]adelay=${ms}|${ms},volume=${c.gain ?? -8}dB[c${i}]`);
   });
   const labels = [...(meta.music ? ["[m]"] : []), ...meta.cues.map((_, i) => `[c${i}]`)];
-  const mix = `${chains.join(";")};${labels.join("")}amix=inputs=${labels.length}:normalize=0:duration=longest,atrim=0:${total},loudnorm=I=-14:TP=-1.5:LRA=9,aresample=48000[a]`;
-  execFileSync("ffmpeg", ["-v", "error", "-y", "-i", silent, ...inputs, "-filter_complex", mix, "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", `${base}.mp4`]);
+  const mix = `${chains.join(";")};${labels.join("")}amix=inputs=${labels.length}:normalize=0:duration=longest,atrim=0:${total},aresample=48000[a]`;
+  const wav = join(STUDIO, "cache", `mix_${pid}.wav`);
+  execFileSync("ffmpeg", ["-v", "error", "-y", ...inputs.length ? ["-f", "lavfi", "-i", `anullsrc=r=48000:cl=stereo:d=${total}`] : [], ...inputs, "-filter_complex", mix.replace(/\[(\d+):a\]/g, (_, n) => `[${n}:a]`), "-map", "[a]", wav]);
+  // level to -14 LUFS: measure, then one exact gain and a limiter (one-pass loudnorm undershoots on short videos)
+  const meas = spawnSync("ffmpeg", ["-hide_banner", "-nostats", "-i", wav, "-af", "ebur128", "-f", "null", "-"], { encoding: "utf8" }).stderr;
+  const I = Number([...meas.matchAll(/I:\s+(-?[\d.]+) LUFS/g)].at(-1)?.[1] ?? -14);
+  // the picture: re-encoded once here so the final file is broadcast-range yuv420p (Remotion's JPEG frames give yuvj420p)
+  execFileSync("ffmpeg", ["-v", "error", "-y", "-i", silent, "-i", wav, "-af", `volume=${(-14 - I).toFixed(2)}dB,alimiter=limit=0.84:level=false`, "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-preset", preview ? "veryfast" : "medium", "-crf", preview ? "26" : "17", "-pix_fmt", "yuv420p", "-color_range", "tv", "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-shortest", "-movflags", "+faststart", `${base}.mp4`]);
   const renderSec = scenesOut.reduce((a, s) => a + s.renderSec, 0);
   const manifest = {
     project: pid,
