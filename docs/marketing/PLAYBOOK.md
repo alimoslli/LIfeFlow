@@ -377,6 +377,19 @@ Runner-up ideas kept for later: "The overdraft that didn't happen" (one money st
 
 ---
 
+### "Hectic" (open-world crime game look, about 28 s, 9:16), script agreed 2026-11-27, not yet generated
+
+Original characters only: **Cruz** (mid-30s, lean, shaved head, loud short-sleeve shirt, unbothered) and **Leana** (late 20s, short platinum bob, freckles, mechanic's jacket, the driver). They must not resemble any existing game's characters, and no game names, logos, places or trailer shots are copied. The owner asked for Jason and Lucia, then JJ and Lu; both were declined as the same characters.
+
+1. 0-3 s, 5:40 PM golden hour: Leana floors a battered convertible down a palm causeway, police lights behind; Cruz calm, phone buzzes. On screen "5:40 PM. Cops behind them." App notification (code): "Next: Dinner with Leana at 6:00 PM."
+2. 3-7 s: Cruz: "We have dinner at six." Leana: "We're a little busy!" Real Today screen full frame: Dinner 6:00 PM, Casino job 8:00 PM, tomorrow 10:00 AM Return the getaway van.
+3. 7-12 s, car wash hideout: eating-out heads-up (confirm the app really shows it, else change the line). Leana: "So dinner's off?" Cruz: "Dinner's on. We're splitting the fries."
+4. 12-18 s, 6:00 PM diner: Leana reads his to-dos: "Ask the crew to stop calling it a heist in the group chat." Leana: "...Okay. Good call." He ticks it off.
+5. 18-24 s, 7:58 PM outside a casino: timeline shows Casino job 8:00 PM next. Cruz: "Right on time." Leana: "Who are you, and what did you do with Cruz?" He holds up the phone: "LifeFlow."
+6. 24-28 s: "If it works for them, it'll work for you." Logo and skylings.
+
+Made with: MAGI-2 world shots from approved character stills; app screens (real captures of a demo profile renamed to Cruz/Leana), captions, HUD and logo in code at 1080p, no phone frame. Audio: original synth track, effects, in-shot dialogue checked line by line, -14 LUFS. Estimate 80-100 credits including retries; needs a top-up (balance 0.36) and the owner's yes; flag to the COO near 100.
+
 ## 4b. Ideas bank (saved for later)
 
 ### Hero film: "The School Project" (owner's idea, 2026-11-08; in planning, premiere target Nov 22)
