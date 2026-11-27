@@ -14,5 +14,13 @@
   "renderSec": 589.3,
   "credits": 0,
   "usd": 0
+ },
+ {
+  "at": "2026-11-27T22:31:36.598Z",
+  "kind": "local-render",
+  "what": "9x16 final v3",
+  "renderSec": 355.7,
+  "credits": 0,
+  "usd": 0
  }
 ]
