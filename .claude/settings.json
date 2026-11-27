@@ -21,13 +21,15 @@
     "humanizer": {
       "source": {
         "source": "github",
-        "repo": "blader/humanizer"
+        "repo": "blader/humanizer",
+        "ref": "a32f24407364c74c812b43c15926d638bee1e072"
       }
     },
     "impeccable": {
       "source": {
         "source": "github",
-        "repo": "pbakaus/impeccable"
+        "repo": "pbakaus/impeccable",
+        "ref": "2fc5e1459efbbf06d92c7306517c286bf12490cf"
       }
     }
   },
