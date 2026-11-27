@@ -1,24 +1,38 @@
 {
-  "_about": "LifeFlow's house open models (owner, 2026-11-27: when we use open models, always the same ones we train, so every generation also adds to training). The planner refuses other open models unless a job says why.",
-  "image": {
-    "base": "z-image-turbo",
-    "why": "Apache-2.0, in the Higgsfield catalog, runs on the cheapest GPU (L40S), fast, and the catalog supports LoRAs on it.",
-    "lora": { "name": "lifeflow-look", "status": "not trained yet", "teaches": "the skylings as 3D cube toys, the app's sky palette, our pixel icons, LifeFlow's light" }
-  },
-  "video": {
-    "base": "wan-2-2-t2v-a14b",
-    "image_to_video": "wan-2-1-i2v-14b-480p",
-    "why": "Apache-2.0, in the catalog, the most recommended commercially safe open video model; the catalog runs LoRAs on Wan I2V.",
-    "lora": { "name": "lifeflow-motion", "status": "not trained yet", "teaches": "how the skylings move and the studio's camera language" }
-  },
-  "dataset": {
-    "where": "/workspace/lifeflow-dataset on the Higgsfield GPU storage (persists across boxes), mirrored in marketing/studio/dataset/ (captions, sources)",
-    "what_goes_in": [
-      "every approved open-model output with its prompt, seed and model (generation adds to training)",
-      "studio renders of the skylings from many angles and poses: the code makes perfect, labelled training pictures for free",
-      "real app captures for anything UI-like (never used to fake the app; only to teach the look of our world)"
-    ],
-    "never": "user data, real people's faces without consent, anything from another brand or game"
-  },
-  "training": "A LoRA run needs the owner's yes and a cost cap (gpu/planner.mjs prices it). Then the house model + the newest LoRA is the default for every open-model job."
+ "_about": "LifeFlow's house open models (owner, 2026-11-27: when we use open models, always the same ones we train, so every generation also adds to training). The planner refuses other open models unless a job says why.",
+ "image": {
+  "base": "z-image-turbo",
+  "why": "Apache-2.0, in the Higgsfield catalog, runs on the cheapest GPU (L40S), fast, and the catalog supports LoRAs on it.",
+  "lora": {
+   "name": "lifeflow-look",
+   "status": "not trained yet",
+   "teaches": "the skylings as 3D cube toys, the app's sky palette, our pixel icons, LifeFlow's light"
+  }
+ },
+ "video": {
+  "base": "wan-2-2-t2v-a14b",
+  "image_to_video": "wan-2-1-i2v-14b-480p",
+  "why": "Apache-2.0, in the catalog, the most recommended commercially safe open video model; the catalog runs LoRAs on Wan I2V.",
+  "lora": {
+   "name": "lifeflow-motion",
+   "status": "not trained yet",
+   "teaches": "how the skylings move and the studio's camera language"
+  }
+ },
+ "dataset": {
+  "where": "/workspace/lifeflow-dataset on the Higgsfield GPU storage (persists across boxes), mirrored in marketing/studio/dataset/ (captions, sources)",
+  "what_goes_in": [
+   "every approved open-model output with its prompt, seed and model (generation adds to training)",
+   "studio renders of the skylings from many angles and poses: the code makes perfect, labelled training pictures for free",
+   "real app captures for anything UI-like (never used to fake the app; only to teach the look of our world)"
+  ],
+  "never": "user data, real people's faces without consent, anything from another brand or game"
+ },
+ "training": "A LoRA run needs the owner's yes and a cost cap (gpu/planner.mjs prices it). Then the house model + the newest LoRA is the default for every open-model job.",
+ "text": {
+  "base": "Qwen/Qwen3.8-27B",
+  "owner": "GPU rent work (AI Lab) chat",
+  "why": "the skyling's own chat model, chosen by the owner; the AI Lab trains its LoRA",
+  "note": "One house model per kind: text (Qwen, the skyling's replies), image (Z-Image Turbo), video (Wan). Training data for any of them follows docs/adr/0023-dev-own-models.md: made-up data only, never real user data."
+ }
 }
