@@ -1,0 +1,145 @@
+{
+ "project": "hectic",
+ "captures": [
+  "cruz-hectic/today"
+ ],
+ "title": "Hectic (Cruz and Leana)",
+ "format": "9x16",
+ "quality": "final",
+ "version": 1,
+ "file": "projects/hectic/renders/hectic_9x16_final_v1.mp4",
+ "seconds": 26.8,
+ "app": {
+  "commit": "8a6da3e4a50be66b4fb014ac707f24659603a5bc",
+  "date": "2026-11-27T00:03:08+00:00",
+  "subject": "Plan: smart memory and the gamechangers shipped (owner's yes)"
+ },
+ "scenes": [
+  {
+   "id": "chase",
+   "mode": "hybrid",
+   "seconds": 8.6,
+   "cached": false,
+   "renderSec": 268.5,
+   "file": "cache/scenes/hectic/9x16/final/chase_180fbc1f98e4337b.mp4"
+  },
+  {
+   "id": "app",
+   "mode": "code",
+   "seconds": 4.6,
+   "cached": false,
+   "renderSec": 23.9,
+   "file": "cache/scenes/hectic/9x16/final/app_812c974717434996.mp4"
+  },
+  {
+   "id": "casino",
+   "mode": "hybrid",
+   "seconds": 10,
+   "cached": false,
+   "renderSec": 317.3,
+   "file": "cache/scenes/hectic/9x16/final/casino_3d6d659d8eece094.mp4"
+  },
+  {
+   "id": "outro",
+   "mode": "code",
+   "seconds": 3.6,
+   "cached": false,
+   "renderSec": 14.1,
+   "file": "cache/scenes/hectic/9x16/final/outro_7e28e4cb7a659339.mp4"
+  }
+ ],
+ "renderSec": 623.8000000000001,
+ "realtimeFactor": 23.3,
+ "peakMemoryMb": 3555,
+ "machine": {
+  "cpus": 4,
+  "model": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+  "gpu": "none (software WebGL)"
+ },
+ "cost": {
+  "paidCredits": 0,
+  "paidUsd": 0,
+  "note": "Code only: rendered locally, no paid generation."
+ },
+ "madeAt": "2026-11-27T22:12:33.401Z",
+ "qc": {
+  "verdict": "pass",
+  "checks": [
+   {
+    "name": "Resolution and aspect ratio",
+    "status": "pass",
+    "detail": "1080x1920, expected 1080x1920"
+   },
+   {
+    "name": "Frame rate",
+    "status": "pass",
+    "detail": "30/1 (avg 30/1)"
+   },
+   {
+    "name": "Codec for social apps",
+    "status": "pass",
+    "detail": "h264 yuv420p"
+   },
+   {
+    "name": "Length",
+    "status": "pass",
+    "detail": "26.80s, expected 26.80s"
+   },
+   {
+    "name": "Black frames",
+    "status": "pass",
+    "detail": "none longer than 0.35 s"
+   },
+   {
+    "name": "Broken or stuck animation (picture frozen 2.5 s+)",
+    "status": "pass",
+    "detail": "always moving"
+   },
+   {
+    "name": "Loudness (social standard -14 LUFS)",
+    "status": "pass",
+    "detail": "-14.1 LUFS, true peak -1.9 dBFS"
+   },
+   {
+    "name": "Gaps in the sound",
+    "status": "pass",
+    "detail": "none"
+   },
+   {
+    "name": "Sound and picture line up (same length)",
+    "status": "pass",
+    "detail": "audio 26.80s, video 26.80s"
+   },
+   {
+    "name": "Rendered from the current app",
+    "status": "pass",
+    "detail": "render 8a6da3e4, synced 8a6da3e4"
+   },
+   {
+    "name": "App screens are from the current app",
+    "status": "pass",
+    "detail": "all captures match the synced app"
+   },
+   {
+    "name": "Brand files match the app",
+    "status": "pass",
+    "detail": "logo files identical"
+   },
+   {
+    "name": "Render time",
+    "status": "pass",
+    "detail": "23.3x realtime (623.8000000000001s for 26.8s)"
+   },
+   {
+    "name": "Memory",
+    "status": "pass",
+    "detail": "peak 3555 MB"
+   },
+   {
+    "name": "Manual review",
+    "status": "todo",
+    "detail": "Wording, readability, overlaps and taste: check the storyboard and the draft (docs/STUDIO.md, 'Manual checks')."
+   }
+  ]
+ }
+}

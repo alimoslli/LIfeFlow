@@ -11,3 +11,7 @@ captures/
 public/app-brand/
 src/app-bridge/brand.generated.json
 requests/*.json
+
+# Generated footage and music (kept in Higgsfield, not in git)
+public/generated/
+public/audio/hectic_music.mp3

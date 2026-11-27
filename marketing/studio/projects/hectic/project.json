@@ -1,0 +1,56 @@
+{
+ "id": "hectic",
+ "title": "Hectic (Cruz and Leana)",
+ "concept": "An open-world crime game look with original characters: a car chase at 5:40, but dinner's at 6; the real LifeFlow day; outside the casino at 7:58, right on time. 'Who are you, and what did you do with Cruz?' 'LifeFlow.'",
+ "formats": [
+  "9x16"
+ ],
+ "captures": [
+  "cruz-hectic/today"
+ ],
+ "music": {
+  "file": "audio/hectic_music.mp3",
+  "gain": -20
+ },
+ "cues": [],
+ "scenes": [
+  {
+   "id": "chase",
+   "title": "5:40 PM, the chase",
+   "seconds": 8.6,
+   "mode": "hybrid",
+   "why": "Game-look people and a city: MAGI-2 footage, HUD and text in code.",
+   "estimate": {
+    "credits": 25,
+    "model": "magi_2"
+   }
+  },
+  {
+   "id": "app",
+   "title": "Cruz's real day",
+   "seconds": 4.6,
+   "mode": "code",
+   "why": "The real app screen, filmed from the app.",
+   "estimate": null
+  },
+  {
+   "id": "casino",
+   "title": "7:58 PM, right on time",
+   "seconds": 9.8,
+   "mode": "hybrid",
+   "why": "The payoff line needs real faces and voices.",
+   "estimate": {
+    "credits": 25,
+    "model": "magi_2"
+   }
+  },
+  {
+   "id": "outro",
+   "title": "Sign-off",
+   "seconds": 3.6,
+   "mode": "code",
+   "why": "Brand ending from the app's own skylings.",
+   "estimate": null
+  }
+ ]
+}

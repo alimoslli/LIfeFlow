@@ -12,6 +12,12 @@
    "password": "budgetflow-demo",
    "tz": "America/New_York",
    "clock": "12:20"
+  },
+  "cruz-hectic": {
+   "email": "cruz@studio.lifeflow.local",
+   "password": "studio-demo-only",
+   "tz": "America/New_York",
+   "clock": "17:40"
   }
  },
  "shots": [
@@ -119,6 +125,20 @@
    "profile": "nico-mission",
    "path": "/tasks",
    "seconds": 3,
+   "actions": []
+  },
+  {
+   "id": "today",
+   "profile": "cruz-hectic",
+   "path": "/",
+   "seconds": 5,
+   "actions": []
+  },
+  {
+   "id": "todos",
+   "profile": "cruz-hectic",
+   "path": "/tasks",
+   "seconds": 4,
    "actions": []
   }
  ]
