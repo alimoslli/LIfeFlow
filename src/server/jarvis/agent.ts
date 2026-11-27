@@ -34,6 +34,7 @@ import { recordError } from "../services/error-reports";
 import { getDb } from "../db/client";
 import { turnFailureReport } from "./turn-error";
 import { env } from "../env";
+import { looksLikeDistress } from "@/lib/distress";
 import { checkAnswer, fixNote, flaggedCalls, QUICK_WORDS, type AnswerChecksMode, type CheckContext } from "./answer-checks";
 
 export type JarvisEvent =
@@ -279,7 +280,10 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   // "fix" holds each step's words until they are checked; a final answer that fails goes back to the model once, as one
   // more step of this turn (so it is set aside and settled through the AI gate like any other step), and a save for a time
   // already gone or with a made-up figure is not run the first time it is asked for.
-  const checksMode: AnswerChecksMode = input.answerChecks ?? env().SKYLING_ANSWER_CHECKS ?? "off";
+  // Never for someone who may be in real distress, this message or one of their last three (COO review, 2026-11-27): their
+  // reply is not judged, held back or sent back, and streams as it comes, whatever it says.
+  const inDistress = [input.text, ...earlier.slice(-3)].some(looksLikeDistress);
+  const checksMode: AnswerChecksMode = inDistress ? "off" : (input.answerChecks ?? env().SKYLING_ANSWER_CHECKS ?? "off");
   const checksFound: string[] = [];
   let checksLeft: string[] | null = null;
   let sentBack = false;

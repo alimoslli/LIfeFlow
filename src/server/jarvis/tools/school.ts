@@ -210,9 +210,11 @@ export const schoolTools = [
     }),
     mutates: true,
     async execute({ id, ...patch }, ctx) {
+      // star only when this very call earned it: done now, and the star row is new (not one already there from an earlier tick)
       const { updated, star } = await ctx.run(async (s) => {
+        const had = patch.status === "done" && (await hasStar(s, `assignment:${id}`));
         await updateAssignment(s, ctx.tz, id, patch);
-        return { updated: await getAssignment(s, id), star: patch.status === "done" && (await hasStar(s, `assignment:${id}`)) };
+        return { updated: await getAssignment(s, id), star: patch.status === "done" && !had && (await hasStar(s, `assignment:${id}`)) };
       });
       return { updated: presentAssignment(updated, ctx), ...(star && { star: true }) };
     },

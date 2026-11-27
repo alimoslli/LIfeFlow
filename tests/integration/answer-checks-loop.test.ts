@@ -5,6 +5,9 @@ import { aiUsage, calendarEvents, jarvisRuns, messages, promises } from "@/serve
 import { runJarvisTurn, type JarvisEvent } from "@/server/jarvis/agent";
 import type { AnswerChecksMode } from "@/server/jarvis/answer-checks";
 import { ScriptedProvider, type Responder } from "@/server/jarvis/providers/scripted";
+import { OpenAIProvider } from "@/server/jarvis/providers/openai";
+import { STEP_OUTPUT_TOKEN_CAP } from "@/server/services/ai-estimates";
+import { looksLikeDistress } from "@/lib/distress";
 import { makeUser, TZ } from "../helpers";
 import type { SessionUser } from "@/server/auth/sessions";
 
@@ -200,5 +203,84 @@ describe("answer checks in the skyling's loop", () => {
     const r = await recorded(u, t.out.conversationId);
     expect(r.run.answerChecks).toEqual(["past_save"]);
     expect(r.run.toolCalls).toBe(1);
+  });
+
+  it("fix: someone who may be in distress: no check, no hold, no retry, even with no number in the reply (COO review)", async () => {
+    const { u, session } = await person();
+    // long, three questions, asks something: every rule would trip, and none may
+    const stay =
+      "I'm really glad you told me, and I'm here with you right now. Is there someone you trust nearby who could come and be with you? Are you somewhere safe at the moment? Which feels harder tonight, being alone or the thoughts themselves? I'm not going anywhere, and you don't have to sort anything out with me right now, we can just talk for a minute.";
+    const t = await turn(session, "I want to die", () => ({ text: stay }), "fix");
+    expect(t.seen).toHaveLength(1);
+    expect(t.said).toBe(stay);
+    // streamed as it came, in pieces, not held back and sent whole
+    expect(t.events.filter((e) => e.type === "text").length).toBeGreaterThan(1);
+    const r = await recorded(u, t.out.conversationId);
+    expect(r.run.answerChecks).toEqual([]);
+    expect(r.run.answerFixed).toBeNull();
+    // and the next message in that chat too, whatever it says
+    const next = new ScriptedProvider(() => ({ text: "I'm still here. Can you tell me where you are right now? Is anyone with you? What would help most?" }));
+    const events: JarvisEvent[] = [];
+    const again = await runJarvisTurn({
+      user: session,
+      conversationId: t.out.conversationId,
+      text: "idk",
+      provider: next,
+      emit: (e) => events.push(e),
+      now: NOW,
+      answerChecks: "fix",
+    });
+    const r2 = await u.run(async (s) => (await s.tx.select().from(jarvisRuns).where(eq(jarvisRuns.id, again.runId!)))[0]);
+    expect(r2.answerChecks).toEqual([]);
+    expect(r2.steps).toBe(1);
+  });
+
+  it("the distress check: the prompt's own examples yes, everyday stress no", () => {
+    for (const x of [
+      "I want to die",
+      "I don't want to be here anymore",
+      "sometimes I think everyone would be better off without me",
+      "I can't do this anymore, what's the point",
+      "i keep thinking about killing myself",
+      "I'm not safe at home",
+      "I already hurt myself tonight",
+      "I wish I wasn't alive",
+      "I can’t go on",
+    ])
+      expect(looksLikeDistress(x), x).toBe(true);
+    for (const x of ["this week is killing me", "I'm dying of boredom", "I'm so done with this class", "my phone died", "the essay is killing me lol"])
+      expect(looksLikeDistress(x), x).toBe(false);
+  });
+
+  it("fix: the retry step carries the same output cap as every step (the real provider's request body)", async () => {
+    const { session } = await person();
+    const bodies: { max_output_tokens?: number }[] = [];
+    const fetchImpl = (async (_url: string, init: RequestInit) => {
+      bodies.push(JSON.parse(String(init.body)));
+      const text = bodies.length === 1 ? LATER_LINE : CLEAN_LINE;
+      const usage = { input_tokens: 100, output_tokens: 10, input_tokens_details: { cached_tokens: 0 }, output_tokens_details: { reasoning_tokens: 0 } };
+      const output = [{ type: "message", id: "m1", role: "assistant", status: "completed", content: [{ type: "output_text", text, annotations: [] }] }];
+      const events = [
+        { type: "response.output_text.delta", sequence_number: 0, item_id: "m1", output_index: 0, content_index: 0, delta: text, logprobs: [] },
+        { type: "response.completed", sequence_number: 1, response: { id: "r", object: "response", status: "completed", output, usage } },
+      ];
+      return new Response(events.map((e) => `event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join(""), {
+        status: 200,
+        headers: { "content-type": "text/event-stream" },
+      });
+    }) as typeof fetch;
+    const provider = new OpenAIProvider({ apiKey: "sk-fake", model: "gpt-5.5", baseURL: "http://fake.invalid/v1", fetch: fetchImpl });
+    const events: JarvisEvent[] = [];
+    await runJarvisTurn({ user: session, text: "find studies on video games", provider, emit: (e) => events.push(e), now: NOW, answerChecks: "fix" });
+    expect(bodies).toHaveLength(2);
+    for (const b of bodies) expect(b.max_output_tokens).toBe(STEP_OUTPUT_TOKEN_CAP);
+    // the second request carries the app's note after the first answer
+    expect(JSON.stringify(bodies[1])).toMatch(/was not shown to them/);
+    expect(
+      events
+        .filter((e) => e.type === "text")
+        .map((e) => (e.type === "text" ? e.delta : ""))
+        .join(""),
+    ).toBe(CLEAN_LINE);
   });
 });

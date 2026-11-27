@@ -11,7 +11,9 @@ from main at 8a6da3e) is built and held: no merge, no deploy, until his yes.
    as tests: a time already gone spoken of as still ahead, a save for a time already gone, an amount nobody gave sent to a
    tool, "you said" when they didn't, "I'll remind you" with nothing saved, "taken back" with nothing changed, a record's id
    shown, too long for a quick message, extras after a promise, more than two questions, asking what a look would answer,
-   "try again later", "items". A reply to someone in real distress is never judged.
+   "try again later", "items". When the person's message, or one of their last three, reads like real distress
+   (`lib/distress.ts`, broad on purpose), the checks are off for that turn: nothing is judged, held or sent back, and the
+   reply streams as it comes, whatever it says (COO review).
    - One setting, `SKYLING_ANSWER_CHECKS`: **off** (default, nothing runs), **watch** (counted on the run, nothing changes,
      no extra model call), **fix** (a failing answer is held back and sent to the model once with what to fix; a save for a
      time already gone, or with a figure nobody gave, is not run the first time it is asked for).
@@ -29,7 +31,7 @@ from main at 8a6da3e) is built and held: no merge, no deploy, until his yes.
    still comes first and overrides all of it. The model's own length setting gives "explain", "break it down" and "how do
    I" more room (`chooseVerbosity`); a week plan stays short (plans belong in the app).
 3. **Why a thumbs-down** (`lib/answer-rating.ts`). After a thumbs-down the chat asks one tap more: Too long, Got it wrong,
-   Didn't do it, Missed the point. Only the reason's code is stored on the run (`rating_reason`), never typed words or
+   Didn't do it, Missed the point. Text buttons, no icons; checked in light and dark mode. Only the reason's code is stored on the run (`rating_reason`), never typed words or
    anything of the chat. Behind `SKYLING_RATING_WHY` (off; the browser tests turn it on). Pictures in
    `docs/research/2026-11-27-skyling-standard-in-the-app/`.
 4. **Acting on your own**: already on main (skyling policy, 08f3ce0); checked, not redone.
@@ -47,6 +49,15 @@ from main at 8a6da3e) is built and held: no merge, no deploy, until his yes.
 
 Nothing new is on for anyone: both settings default to off. Suggested order once the owner says yes: `watch` for a week of
 real use (no cost, shows how often answers miss his standard), then `fix`.
+
+## What costs more even with both settings off
+
+The model's own length setting now gives "explain", "break it down", "walk me through" and "how do I" messages more room
+(`chooseVerbosity` in `effort.ts`: medium instead of low). That is on for everyone once this branch ships, with no setting,
+and it costs more on those turns: the answers are longer, so more output is billed. How much more is not measured. If the
+owner wants it behind a setting too, it is one line.
+
+The answer checks in "fix" add one model step to each answer they send back; in "off" and "watch" they cost nothing.
 
 ## Not measured (needs a paid run the owner has not approved)
 

@@ -29,6 +29,10 @@ test("a thumbs-down asks why in one tap and keeps only the reason", async ({ pag
   if (process.env.SHOTS) {
     await page.waitForTimeout(1200); // the reload's fade-in, for the picture only
     await page.screenshot({ path: `${process.env.SHOTS}/answer-reason-asking.png` });
+    await page.evaluate(() => (document.documentElement.dataset.theme = "dark"));
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: `${process.env.SHOTS}/answer-reason-asking-dark.png` });
+    await page.evaluate(() => delete document.documentElement.dataset.theme);
   }
   await answer.getByRole("button", { name: "Too long" }).filter({ visible: true }).first().click();
   await expect(answer.getByRole("status").filter({ hasText: "That helps me do better" })).toHaveText("Got it. That helps me do better.");

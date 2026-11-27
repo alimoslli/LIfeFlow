@@ -106,9 +106,11 @@ export const taskTools = [
     mutates: true,
     async execute({ id, ...patch }, ctx) {
       // the star is read back from their own records (owner, 2026-11-26: "remember the stars?"), never assumed: the day has a limit
+      // star only when this very call earned it: done now, and the star row is new (not one already there from an earlier tick)
       const { t, star } = await ctx.run(async (s) => {
+        const had = patch.status === "done" && (await hasStar(s, `task:${id}`));
         const t = await updateTask(s, ctx.tz, id, patch);
-        return { t, star: patch.status === "done" && (await hasStar(s, `task:${id}`)) };
+        return { t, star: patch.status === "done" && !had && (await hasStar(s, `task:${id}`)) };
       });
       return { updated: presentTask(t, ctx), ...(star && { star: true }) };
     },

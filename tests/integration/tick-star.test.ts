@@ -39,6 +39,9 @@ describe("a tick through the skyling says when it earned a star", () => {
     expect("star" in renamed).toBe(false);
     const done = await call("update_task", { id: task.id, status: "done" });
     expect(done.star).toBe(true);
+    // done again: nothing new was earned, so no star is claimed
+    const again = await call("update_task", { id: task.id, status: "done" });
+    expect("star" in again).toBe(false);
     // unticking takes the star back, and the result no longer says there is one
     const undone = await call("update_task", { id: task.id, status: "todo" });
     expect("star" in undone).toBe(false);
@@ -51,6 +54,7 @@ describe("a tick through the skyling says when it earned a star", () => {
       return (await createAssignment(s, TZ, { courseId: course.id, title: "Lab report", kind: "lab", dueDate: "2026-11-23" })).assignment;
     });
     expect((await call("update_assignment", { id: a.id, status: "done" })).star).toBe(true);
+    expect("star" in (await call("update_assignment", { id: a.id, status: "done" }))).toBe(false);
   });
 
   it("past the day's limit a tick earns no star, and the result does not claim one", async () => {
