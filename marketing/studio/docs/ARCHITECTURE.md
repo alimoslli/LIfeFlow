@@ -58,7 +58,7 @@ From our own runs (gpu/measured.json):
 - So for video, self-hosting is **not** cheaper today: about 4.6 credits a second against 2.5, before load time and idle. The planner shows this on every plan (the benchmark plan prices two Wan 2.2 clips at about 62 credits; the same 10 seconds on MAGI-2 cost 25).
 - Self-hosting should win for **images in bulk** (Z-Image Turbo: seconds per image on an L40S at 71 credits an hour), **upscaling** (1,396 frames for about 6.5 credits) and **LoRA work**. These are guesses until the benchmark runs.
 
-The benchmark (`gpu/benchmark-plan.json`): the same LifeFlow prompts through Z-Image Turbo, Qwen Image, LTX Video and Wan 2.2 on the cheapest suitable GPUs, timed, priced from gpu_my and scored by the owner, against MAGI-2. Estimate 107 credits, cap 140. **Not run**: it needs the owner's yes and a top-up (the balance was 0.36 credits).
+The owner dropped the model benchmark (2026-11-27): the studio focuses on code-made content, and GPU work is priced per job with the planner when a video needs it.
 
 ## Local machine versus remote
 

@@ -1,24 +1,51 @@
 {
-  "_about": "The benchmark the owner asked for (2026-11-27): the same LifeFlow prompts through each open model on the cheapest suitable GPU, timed and scored, against hosted MAGI-2. NOT RUN: needs the owner's yes and a credit top-up (balance 0.36).",
-  "prompts": {
-    "image": [
-      "Phone-shot photo of a college student at a dorm desk at night, laptop and a coffee, warm lamp light, realistic skin, no text",
-      "A small 3D toy character made of glossy orange cubes with a flat yellow disc hat, studio light on navy, sharp",
-      "Night city street in the rain, neon signs with invented names, wet road reflections, cinematic, no real brands"
-    ],
-    "video": [
-      "Handheld phone footage: a young man in a grey hoodie brushes his teeth at a bathroom mirror, morning light, realistic",
-      "Slow push-in on a night city street in the rain, neon reflections on the wet road, no people, cinematic",
-      "A small toy made of glossy cubes hops on a desk and waves, soft daylight, shallow depth of field"
-    ]
-  },
-  "jobs": [
-    { "id": "zit", "model": "z-image-turbo", "count": 9 },
-    { "id": "qwen", "model": "qwen-image", "count": 6 },
-    { "id": "ltx", "model": "ltx-video", "count": 3, "seconds": 5 },
-    { "id": "wan22", "model": "wan-2-2-t2v-a14b", "count": 2, "seconds": 5 },
-    { "id": "h3", "model": "minimax-h3", "count": 0, "seconds": 5 },
-    { "id": "flux", "model": "flux-2-dev", "count": 0 }
+ "_about": "Dropped by the owner on 2026-11-27 (\"i dont want the benchmark\"). Kept as a template for pricing a future GPU job with gpu/planner.mjs.",
+ "prompts": {
+  "image": [
+   "Phone-shot photo of a college student at a dorm desk at night, laptop and a coffee, warm lamp light, realistic skin, no text",
+   "A small 3D toy character made of glossy orange cubes with a flat yellow disc hat, studio light on navy, sharp",
+   "Night city street in the rain, neon signs with invented names, wet road reflections, cinematic, no real brands"
   ],
-  "score": "Each output gets: seconds to make it, credits (from gpu_my), and a 1 to 5 score on realism, prompt match and LifeFlow fit by the owner, in benchmark-results.json."
+  "video": [
+   "Handheld phone footage: a young man in a grey hoodie brushes his teeth at a bathroom mirror, morning light, realistic",
+   "Slow push-in on a night city street in the rain, neon reflections on the wet road, no people, cinematic",
+   "A small toy made of glossy cubes hops on a desk and waves, soft daylight, shallow depth of field"
+  ]
+ },
+ "jobs": [
+  {
+   "id": "zit",
+   "model": "z-image-turbo",
+   "count": 9
+  },
+  {
+   "id": "qwen",
+   "model": "qwen-image",
+   "count": 6
+  },
+  {
+   "id": "ltx",
+   "model": "ltx-video",
+   "count": 3,
+   "seconds": 5
+  },
+  {
+   "id": "wan22",
+   "model": "wan-2-2-t2v-a14b",
+   "count": 2,
+   "seconds": 5
+  },
+  {
+   "id": "h3",
+   "model": "minimax-h3",
+   "count": 0,
+   "seconds": 5
+  },
+  {
+   "id": "flux",
+   "model": "flux-2-dev",
+   "count": 0
+  }
+ ],
+ "score": "Each output gets: seconds to make it, credits (from gpu_my), and a 1 to 5 score on realism, prompt match and LifeFlow fit by the owner, in benchmark-results.json."
 }

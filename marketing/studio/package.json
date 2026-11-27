@@ -10,7 +10,8 @@
     "render": "node scripts/render.mjs",
     "qc": "node scripts/qc.mjs",
     "dashboard": "node dashboard/server.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "bench-report": "node scripts/bench-report.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "9.3.0",

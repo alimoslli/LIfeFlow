@@ -28,7 +28,7 @@ const PhoneUp = () => {
   return (
     <Fade>
       <AbsoluteFill style={{ background: "radial-gradient(ellipse at 50% 40%, #3a2c5c 0%, #120f26 70%)" }} />
-      <Stage3D cam={[{ f: 0, pos: [0.6, -1.6, 2.6], look: [0, 0, 0], fov: 32 }, { f: 60, pos: [0.15, -0.2, 2.25], look: [0, 0, 0], fov: 32 }, { f: 179, pos: [0, 0, 1.95], look: [0, 0.02, 0], fov: 32 }]} warmth={0.3}>
+      <Stage3D handheld={1.4} cam={[{ f: 0, pos: [0.6, -1.6, 2.6], look: [0, 0, 0], fov: 32 }, { f: 60, pos: [0.15, -0.2, 2.25], look: [0, 0, 0], fov: 32 }, { f: 179, pos: [0, 0, 1.95], look: [0, 0.02, 0], fov: 32 }]} warmth={0.3}>
         <Phone3D screenVideo="captures/nico-mission/today.mp4" rotation={[0.08, -0.1 + f * 0.0006, -0.04]} body="#3a3d46" />
       </Stage3D>
       <Notification at={20} hold={100} title="Twinkle" body="Dinner with Vale at 6:30. Flowers are still on your list." />

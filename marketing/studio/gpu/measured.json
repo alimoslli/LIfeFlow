@@ -1,11 +1,47 @@
 {
-  "_about": "Real numbers from our own GPU and generation runs. The planner trusts these over guesses. Add a row after every paid run (from gpu_my and the job timings).",
-  "runs": [
-    { "date": "2026-11-21", "gpu": "L40S", "task": "upscale 1,396 video frames 720p to 1440p", "minutes": 5.5, "credits": 6.5, "note": "drama clips, Real-ESRGAN style upscaler" },
-    { "date": "2026-11-21", "gpu": "RTX-PRO-6000", "task": "one 5 s open-model video clip (hook shot)", "minutes": 14, "credits": 23, "note": "per clip, model loaded; 2 more clips were cancelled" },
-    { "date": "2026-11-21", "gpu": "H100", "task": "fine-tune a 3B router model", "minutes": 12.7, "credits": 25.4, "note": "training ran; pilot only" },
-    { "date": "2026-11-25", "gpu": "hosted", "model": "magi_2", "task": "15 s 1080p clip with sound", "credits": 37.5, "minutes": 10, "note": "hosted, no GPU rental; quality judged good enough to deliver" },
-    { "date": "2026-11-25", "gpu": "H100", "task": "GPU rent work chat session (idle part included)", "minutes": 63, "credits": 126.4, "note": "a reminder that idle time is the biggest cost: always set auto_pause_minutes" }
-  ],
-  "pending_benchmarks": "gpu/benchmark-plan.json (not run: needs the owner's yes and credits; the balance was 0.36 on 2026-11-27)"
+ "_about": "Real numbers from our own GPU and generation runs. The planner trusts these over guesses. Add a row after every paid run (from gpu_my and the job timings).",
+ "runs": [
+  {
+   "date": "2026-11-21",
+   "gpu": "L40S",
+   "task": "upscale 1,396 video frames 720p to 1440p",
+   "minutes": 5.5,
+   "credits": 6.5,
+   "note": "drama clips, Real-ESRGAN style upscaler"
+  },
+  {
+   "date": "2026-11-21",
+   "gpu": "RTX-PRO-6000",
+   "task": "one 5 s open-model video clip (hook shot)",
+   "minutes": 14,
+   "credits": 23,
+   "note": "per clip, model loaded; 2 more clips were cancelled"
+  },
+  {
+   "date": "2026-11-21",
+   "gpu": "H100",
+   "task": "fine-tune a 3B router model",
+   "minutes": 12.7,
+   "credits": 25.4,
+   "note": "training ran; pilot only"
+  },
+  {
+   "date": "2026-11-25",
+   "gpu": "hosted",
+   "model": "magi_2",
+   "task": "15 s 1080p clip with sound",
+   "credits": 37.5,
+   "minutes": 10,
+   "note": "hosted, no GPU rental; quality judged good enough to deliver"
+  },
+  {
+   "date": "2026-11-25",
+   "gpu": "H100",
+   "task": "GPU rent work chat session (idle part included)",
+   "minutes": 63,
+   "credits": 126.4,
+   "note": "a reminder that idle time is the biggest cost: always set auto_pause_minutes"
+  }
+ ],
+ "pending_benchmarks": "none (the owner dropped the benchmark on 2026-11-27; we focus on code-made content)"
 }

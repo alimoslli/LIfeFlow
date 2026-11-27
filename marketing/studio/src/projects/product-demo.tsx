@@ -22,6 +22,7 @@ const PhoneToday = () => {
     <Fade>
       <Sky minute={12 * 60 + 20} clouds={4} sun />
       <Stage3D
+        handheld={1}
         cam={[
           { f: 0, pos: [1.6, -0.9, 2.2], look: [0, 0.05, 0], fov: 30 },
           { f: 80, pos: [0.35, 0.05, 2.35], look: [0, 0.05, 0], fov: 30 },
@@ -41,6 +42,7 @@ const Money = () => {
     <Fade>
       <Sky minute={17 * 60 + 10} clouds={3} />
       <Stage3D
+        handheld={1}
         cam={[
           { f: 0, pos: [-1.2, 0.5, 2.4], look: [0, 0, 0], fov: 30 },
           { f: 119, pos: [-0.4, 0.1, 2.0], look: [0, -0.05, 0], fov: 30 },
