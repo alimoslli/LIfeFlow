@@ -16,7 +16,7 @@ const Street = () => {
       </Stage3D>
       <MiniMap />
       <CashCounter from={4120} to={4120} a={0} b={1} />
-      <KineticTitle text="Port Solana. 5:10 PM." size={64} y={useLayout().height * 0.42} at={8} font={F.ui} />
+      <KineticTitle text="Port Solana. 10:40 AM." size={64} y={useLayout().height * 0.42} at={8} font={F.ui} />
       <Grain amount={0.09} vignette={0.6} />
       {f > 100 && <AbsoluteFill style={{ background: "#fff", opacity: (f - 100) / 30 }} />}
     </Fade>
@@ -31,7 +31,7 @@ const PhoneUp = () => {
       <Stage3D handheld={1.4} cam={[{ f: 0, pos: [0.9, -2.2, 3.7], look: [0, 0, 0], fov: 32 }, { f: 60, pos: [0.2, -0.3, 3.3], look: [0, 0, 0], fov: 32 }, { f: 179, pos: [0, 0, 2.8], look: [0, 0.02, 0], fov: 32 }]} warmth={0.3}>
         <Phone3D screen="captures/nico-mission/today" rotation={[0.08, -0.1 + f * 0.0006, -0.04]} body="#3a3d46" />
       </Stage3D>
-      <Notification at={20} hold={100} title="Twinkle" body="Dinner with Vale at 6:30. Flowers are still on your list." />
+      <Notification at={20} hold={100} title="Twinkle" body="Next: Buy flowers for Vale at 11:00 AM." />
       <CashCounter from={4120} to={4120} a={0} b={1} />
       <Grain amount={0.07} vignette={0.5} />
     </Fade>
@@ -47,7 +47,7 @@ const Mission = () => {
         <City3D seed={23} />
       </Stage3D>
       <MissionCard at={4} hold={52} kicker="New objective" title="Flowers for Vale" />
-      <Objective at={62} text="Get to the florist before 6:30 PM." mark="florist" />
+      <Objective at={62} text="Get to the florist before 11:00 AM." mark="florist" />
       <CashCounter from={4120} to={4075} a={72} b={92} />
       <MiniMap />
       <Grain amount={0.09} vignette={0.6} />
@@ -63,7 +63,7 @@ const Passed = () => {
       <Burst at={4} x={L.width / 2} y={L.height * 0.42} n={60} seed={5} />
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", flexDirection: "column", fontFamily: F.ui, fontStyle: "italic", textTransform: "uppercase", color: "#fff" }}>
         <div style={{ fontSize: 130 * L.u, fontWeight: 700, color: "#ffd77a", transform: `scale(${0.6 + 0.4 * prog(f, 0, 10)})`, WebkitTextStroke: `${6 * L.u}px #1a1030`, paintOrder: "stroke fill" }}>Day cleared</div>
-        <div style={{ fontSize: 40 * L.u, fontWeight: 600, opacity: prog(f, 12, 22), letterSpacing: "0.06em", textAlign: "center", lineHeight: 1.35 }}>Flowers bought · Dinner on time<br />Next: casino job, 9:30 PM</div>
+        <div style={{ fontSize: 40 * L.u, fontWeight: 600, opacity: prog(f, 12, 22), letterSpacing: "0.06em", textAlign: "center", lineHeight: 1.35 }}>Flowers bought · Dinner at 6:00<br />Next: casino heist, 8:00 PM</div>
       </AbsoluteFill>
       <CashCounter from={4075} to={4075} a={0} b={1} />
       <Grain amount={0.08} vignette={0.55} />

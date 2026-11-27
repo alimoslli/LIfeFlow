@@ -1,0 +1,161 @@
+{
+ "project": "ad-break",
+ "captures": [
+  "nico-mission/today"
+ ],
+ "title": "Ad break (open-world game parody, free version)",
+ "format": "9x16",
+ "quality": "preview",
+ "version": 1,
+ "file": "projects/ad-break/renders/ad-break_9x16_preview_v1.mp4",
+ "seconds": 30,
+ "app": {
+  "commit": "8a6da3e4a50be66b4fb014ac707f24659603a5bc",
+  "date": "2026-11-27T00:03:08+00:00",
+  "subject": "Plan: smart memory and the gamechangers shipped (owner's yes)"
+ },
+ "scenes": [
+  {
+   "id": "room-in",
+   "mode": "code",
+   "seconds": 6,
+   "cached": false,
+   "renderSec": 138.2,
+   "file": "cache/scenes/ad-break/9x16/preview/room-in_4bc3295b92513f14.mp4"
+  },
+  {
+   "id": "ad-phone",
+   "mode": "code",
+   "seconds": 8,
+   "cached": false,
+   "renderSec": 316.4,
+   "file": "cache/scenes/ad-break/9x16/preview/ad-phone_4e34e1caa7bec9b2.mp4"
+  },
+  {
+   "id": "ad-mission",
+   "mode": "code",
+   "seconds": 3.5,
+   "cached": false,
+   "renderSec": 132.8,
+   "file": "cache/scenes/ad-break/9x16/preview/ad-mission_a5cfdcf5c8882595.mp4"
+  },
+  {
+   "id": "ad-punch",
+   "mode": "code",
+   "seconds": 3.5,
+   "cached": false,
+   "renderSec": 27.8,
+   "file": "cache/scenes/ad-break/9x16/preview/ad-punch_a4e9e820fea4f1f0.mp4"
+  },
+  {
+   "id": "ad-cleared",
+   "mode": "code",
+   "seconds": 2.5,
+   "cached": false,
+   "renderSec": 7.6,
+   "file": "cache/scenes/ad-break/9x16/preview/ad-cleared_df5fa941baee7c8f.mp4"
+  },
+  {
+   "id": "room-out",
+   "mode": "code",
+   "seconds": 6.5,
+   "cached": false,
+   "renderSec": 261.5,
+   "file": "cache/scenes/ad-break/9x16/preview/room-out_c427404c19ceaa76.mp4"
+  }
+ ],
+ "renderSec": 884.3,
+ "realtimeFactor": 29.5,
+ "peakMemoryMb": 2071,
+ "machine": {
+  "cpus": 4,
+  "model": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+  "gpu": "none (software WebGL)"
+ },
+ "cost": {
+  "paidCredits": 0,
+  "paidUsd": 0,
+  "note": "Code only: rendered locally, no paid generation."
+ },
+ "madeAt": "2026-11-27T08:50:26.644Z",
+ "qc": {
+  "verdict": "pass",
+  "checks": [
+   {
+    "name": "Resolution and aspect ratio",
+    "status": "pass",
+    "detail": "540x960, expected 540x960"
+   },
+   {
+    "name": "Frame rate",
+    "status": "pass",
+    "detail": "30/1 (avg 30/1)"
+   },
+   {
+    "name": "Codec for social apps",
+    "status": "pass",
+    "detail": "h264 yuv420p"
+   },
+   {
+    "name": "Length",
+    "status": "pass",
+    "detail": "30.00s, expected 30.00s"
+   },
+   {
+    "name": "Black frames",
+    "status": "pass",
+    "detail": "none longer than 0.35 s"
+   },
+   {
+    "name": "Broken or stuck animation (picture frozen 2.5 s+)",
+    "status": "pass",
+    "detail": "always moving"
+   },
+   {
+    "name": "Loudness (social standard -14 LUFS)",
+    "status": "pass",
+    "detail": "-14.2 LUFS, true peak -0.9 dBFS"
+   },
+   {
+    "name": "Gaps in the sound",
+    "status": "pass",
+    "detail": "none"
+   },
+   {
+    "name": "Sound and picture line up (same length)",
+    "status": "pass",
+    "detail": "audio 30.00s, video 30.00s"
+   },
+   {
+    "name": "Rendered from the current app",
+    "status": "pass",
+    "detail": "render 8a6da3e4, synced 8a6da3e4"
+   },
+   {
+    "name": "App screens are from the current app",
+    "status": "pass",
+    "detail": "all captures match the synced app"
+   },
+   {
+    "name": "Brand files match the app",
+    "status": "pass",
+    "detail": "logo files identical"
+   },
+   {
+    "name": "Render time",
+    "status": "pass",
+    "detail": "29.5x realtime (884.3s for 30s)"
+   },
+   {
+    "name": "Memory",
+    "status": "pass",
+    "detail": "peak 2071 MB"
+   },
+   {
+    "name": "Manual review",
+    "status": "todo",
+    "detail": "Wording, readability, overlaps and taste: check the storyboard and the draft (docs/STUDIO.md, 'Manual checks')."
+   }
+  ]
+ }
+}

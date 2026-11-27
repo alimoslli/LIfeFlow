@@ -1,0 +1,153 @@
+{
+ "project": "mission",
+ "captures": [
+  "nico-mission/today"
+ ],
+ "title": "Nico's day (crime-game parody)",
+ "format": "9x16",
+ "quality": "preview",
+ "version": 1,
+ "file": "projects/mission/renders/mission_9x16_preview_v1.mp4",
+ "seconds": 19,
+ "app": {
+  "commit": "8a6da3e4a50be66b4fb014ac707f24659603a5bc",
+  "date": "2026-11-27T00:03:08+00:00",
+  "subject": "Plan: smart memory and the gamechangers shipped (owner's yes)"
+ },
+ "scenes": [
+  {
+   "id": "street",
+   "mode": "code",
+   "seconds": 4,
+   "cached": false,
+   "renderSec": 169.4,
+   "file": "cache/scenes/mission/9x16/preview/street_ebfead9efbdcc126.mp4"
+  },
+  {
+   "id": "phone",
+   "mode": "code",
+   "seconds": 6,
+   "cached": false,
+   "renderSec": 303.1,
+   "file": "cache/scenes/mission/9x16/preview/phone_ba49d2212b334748.mp4"
+  },
+  {
+   "id": "mission",
+   "mode": "code",
+   "seconds": 3.5,
+   "cached": false,
+   "renderSec": 131.5,
+   "file": "cache/scenes/mission/9x16/preview/mission_15634ce17297ff4c.mp4"
+  },
+  {
+   "id": "passed",
+   "mode": "code",
+   "seconds": 2.5,
+   "cached": false,
+   "renderSec": 16.8,
+   "file": "cache/scenes/mission/9x16/preview/passed_59b5df53fc020144.mp4"
+  },
+  {
+   "id": "outro",
+   "mode": "code",
+   "seconds": 3,
+   "cached": false,
+   "renderSec": 5.9,
+   "file": "cache/scenes/mission/9x16/preview/outro_6c8c78c25269dcd4.mp4"
+  }
+ ],
+ "renderSec": 626.6999999999999,
+ "realtimeFactor": 33,
+ "peakMemoryMb": 1997,
+ "machine": {
+  "cpus": 4,
+  "model": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+  "gpu": "none (software WebGL)"
+ },
+ "cost": {
+  "paidCredits": 0,
+  "paidUsd": 0,
+  "note": "Code only: rendered locally, no paid generation."
+ },
+ "madeAt": "2026-11-27T09:13:41.905Z",
+ "qc": {
+  "verdict": "pass",
+  "checks": [
+   {
+    "name": "Resolution and aspect ratio",
+    "status": "pass",
+    "detail": "540x960, expected 540x960"
+   },
+   {
+    "name": "Frame rate",
+    "status": "pass",
+    "detail": "30/1 (avg 30/1)"
+   },
+   {
+    "name": "Codec for social apps",
+    "status": "pass",
+    "detail": "h264 yuv420p"
+   },
+   {
+    "name": "Length",
+    "status": "pass",
+    "detail": "19.00s, expected 19.00s"
+   },
+   {
+    "name": "Black frames",
+    "status": "pass",
+    "detail": "none longer than 0.35 s"
+   },
+   {
+    "name": "Broken or stuck animation (picture frozen 2.5 s+)",
+    "status": "pass",
+    "detail": "always moving"
+   },
+   {
+    "name": "Loudness (social standard -14 LUFS)",
+    "status": "pass",
+    "detail": "-14.3 LUFS, true peak -1.3 dBFS"
+   },
+   {
+    "name": "Gaps in the sound",
+    "status": "pass",
+    "detail": "none"
+   },
+   {
+    "name": "Sound and picture line up (same length)",
+    "status": "pass",
+    "detail": "audio 18.99s, video 19.00s"
+   },
+   {
+    "name": "Rendered from the current app",
+    "status": "pass",
+    "detail": "render 8a6da3e4, synced 8a6da3e4"
+   },
+   {
+    "name": "App screens are from the current app",
+    "status": "pass",
+    "detail": "all captures match the synced app"
+   },
+   {
+    "name": "Brand files match the app",
+    "status": "pass",
+    "detail": "logo files identical"
+   },
+   {
+    "name": "Render time",
+    "status": "pass",
+    "detail": "33x realtime (626.6999999999999s for 19s)"
+   },
+   {
+    "name": "Memory",
+    "status": "pass",
+    "detail": "peak 1997 MB"
+   },
+   {
+    "name": "Manual review",
+    "status": "todo",
+    "detail": "Wording, readability, overlaps and taste: check the storyboard and the draft (docs/STUDIO.md, 'Manual checks')."
+   }
+  ]
+ }
+}

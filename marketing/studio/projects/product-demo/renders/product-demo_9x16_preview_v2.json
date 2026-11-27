@@ -1,0 +1,154 @@
+{
+ "project": "product-demo",
+ "captures": [
+  "alex-student/today",
+  "alex-student/money"
+ ],
+ "title": "LifeFlow: your day, worked out",
+ "format": "9x16",
+ "quality": "preview",
+ "version": 2,
+ "file": "projects/product-demo/renders/product-demo_9x16_preview_v2.mp4",
+ "seconds": 18.5,
+ "app": {
+  "commit": "8a6da3e4a50be66b4fb014ac707f24659603a5bc",
+  "date": "2026-11-27T00:03:08+00:00",
+  "subject": "Plan: smart memory and the gamechangers shipped (owner's yes)"
+ },
+ "scenes": [
+  {
+   "id": "hook",
+   "mode": "code",
+   "seconds": 2.5,
+   "cached": false,
+   "renderSec": 32.6,
+   "file": "cache/scenes/product-demo/9x16/preview/hook_9b4ca2314e7f776e.mp4"
+  },
+  {
+   "id": "today",
+   "mode": "code",
+   "seconds": 6,
+   "cached": false,
+   "renderSec": 292.7,
+   "file": "cache/scenes/product-demo/9x16/preview/today_48eb9e0823487653.mp4"
+  },
+  {
+   "id": "ray",
+   "mode": "code",
+   "seconds": 3,
+   "cached": false,
+   "renderSec": 6.1,
+   "file": "cache/scenes/product-demo/9x16/preview/ray_5200cceadb05c39c.mp4"
+  },
+  {
+   "id": "money",
+   "mode": "code",
+   "seconds": 4,
+   "cached": false,
+   "renderSec": 155.4,
+   "file": "cache/scenes/product-demo/9x16/preview/money_17c9d79659bd5239.mp4"
+  },
+  {
+   "id": "outro",
+   "mode": "code",
+   "seconds": 3,
+   "cached": false,
+   "renderSec": 19.7,
+   "file": "cache/scenes/product-demo/9x16/preview/outro_9031c30747d9627f.mp4"
+  }
+ ],
+ "renderSec": 506.50000000000006,
+ "realtimeFactor": 27.4,
+ "peakMemoryMb": 1807,
+ "machine": {
+  "cpus": 4,
+  "model": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+  "gpu": "none (software WebGL)"
+ },
+ "cost": {
+  "paidCredits": 0,
+  "paidUsd": 0,
+  "note": "Code only: rendered locally, no paid generation."
+ },
+ "madeAt": "2026-11-27T08:59:17.887Z",
+ "qc": {
+  "verdict": "pass",
+  "checks": [
+   {
+    "name": "Resolution and aspect ratio",
+    "status": "pass",
+    "detail": "540x960, expected 540x960"
+   },
+   {
+    "name": "Frame rate",
+    "status": "pass",
+    "detail": "30/1 (avg 30/1)"
+   },
+   {
+    "name": "Codec for social apps",
+    "status": "pass",
+    "detail": "h264 yuv420p"
+   },
+   {
+    "name": "Length",
+    "status": "pass",
+    "detail": "18.50s, expected 18.50s"
+   },
+   {
+    "name": "Black frames",
+    "status": "pass",
+    "detail": "none longer than 0.35 s"
+   },
+   {
+    "name": "Broken or stuck animation (picture frozen 2.5 s+)",
+    "status": "pass",
+    "detail": "always moving"
+   },
+   {
+    "name": "Loudness (social standard -14 LUFS)",
+    "status": "pass",
+    "detail": "-14.4 LUFS, true peak 0.4 dBFS"
+   },
+   {
+    "name": "Gaps in the sound",
+    "status": "pass",
+    "detail": "none"
+   },
+   {
+    "name": "Sound and picture line up (same length)",
+    "status": "pass",
+    "detail": "audio 18.50s, video 18.50s"
+   },
+   {
+    "name": "Rendered from the current app",
+    "status": "pass",
+    "detail": "render 8a6da3e4, synced 8a6da3e4"
+   },
+   {
+    "name": "App screens are from the current app",
+    "status": "pass",
+    "detail": "all captures match the synced app"
+   },
+   {
+    "name": "Brand files match the app",
+    "status": "pass",
+    "detail": "logo files identical"
+   },
+   {
+    "name": "Render time",
+    "status": "pass",
+    "detail": "27.4x realtime (506.50000000000006s for 18.5s)"
+   },
+   {
+    "name": "Memory",
+    "status": "pass",
+    "detail": "peak 1807 MB"
+   },
+   {
+    "name": "Manual review",
+    "status": "todo",
+    "detail": "Wording, readability, overlaps and taste: check the storyboard and the draft (docs/STUDIO.md, 'Manual checks')."
+   }
+  ]
+ }
+}
