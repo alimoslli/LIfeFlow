@@ -56,11 +56,11 @@ function Clock({ time }: { time: string }) {
 }
 
 /** One cutscene: the clip, the HUD and the subtitles. */
-function Cutscene({ file, from, time, lines, hook = false }: { file: string; from: number; time: string; lines: { who: string; text: string; s: number; e: number }[]; hook?: boolean }) {
+function Cutscene({ file, from, time, lines, hook = false, zoom = 1 }: { file: string; from: number; time: string; lines: { who: string; text: string; s: number; e: number }[]; hook?: boolean; zoom?: number }) {
   const L = useLayout();
   return (
     <AbsoluteFill style={{ background: "#000" }}>
-      <OffthreadVideo src={staticFile(file)} startFrom={Math.round(from * L.fps)} muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      <OffthreadVideo src={staticFile(file)} startFrom={Math.round(from * L.fps)} muted style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${zoom})`, transformOrigin: "50% 0%" }} />
       <Clock time={time} />
       <MiniMap seed={hook ? 3 : 7} />
       <GameSubtitles lines={lines} />
@@ -115,6 +115,7 @@ function Casino() {
       <Cutscene
         file="generated/hectic/casino.mp4"
         from={0.2}
+        zoom={1.07}
         time="7:58 PM"
         lines={[
           { who: "Cruz", text: "Eight o'clock. Right on time.", s: 2.1, e: 4.2 },
