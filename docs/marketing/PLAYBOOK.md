@@ -589,6 +589,12 @@ Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playboo
 
 ## 6. Decisions and preferences (keep adding)
 
+- 2026-11-27 (Ali, on the Creative Studio code drafts "Flowers for Vale" and "Your day, worked out"): **"bullshit... nonsense", and "why is the quality so low?"** Both broke the 2026-11-25 avoid list: a floating phone frame, a made-up animated world (a block city at night while the caption says 10:40 AM), the rent heads-up again, and a story where nothing really happens ("Day cleared" with no reason). Lessons:
+  - Code is for crisp app screens, type and skyling art. It is not a substitute for a story or for real footage. A procedural 3D city looks like an old game; don't build a world in code and call it the ad.
+  - Every code video still needs the 2026-11-25 format: one real, specific moment with a hook in the first 2 s, the app shown big enough to read, and an ending that follows from what happened.
+  - Only full 1080p goes to the owner's gallery. Half-size previews (540x960) are for checking timing here, never for review. Show storyboard stills before rendering anything long.
+  - Full-size renders of these drafts were stopped; they are not to be posted.
+
 - 2026-11-25 (Ali, on the MAGI-2 skyling ads): **the winning format and what to avoid.**
   - **The format that worked ("It already knows"):** UGC-style footage of a realistic person through an ordinary day, with a 3D pixel skyling (glossy cubes, the app's own shapes) floating beside them. Short, calm exchanges where the skyling already knows and warns or helps: a free trial about to charge, eating out or shopping above the usual, an important email with the reply ready, a fitness goal hit, tomorrow's plan. Make it as realistic as possible, with a hook on screen in the first 2 s, short ad lines and word-by-word captions.
   - **Avoid:** cutesy or feminine tone (high voices, giggles, lullabies, high-fives), animated "AI worlds", a phone frame, punchlines that need you to know the app ("he thinks he found them"), the overused rent/school/work/shift list, and anything that doesn't really happen (a flight moved an hour earlier, a forgotten mom's birthday). Every line must be accurate and real.
