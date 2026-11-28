@@ -10,7 +10,7 @@ import type { Project } from "./types";
  */
 
 const GOLD = "#f3c46a";
-type Line = { who: string; text: string; s: number; e: number; top?: boolean };
+type Line = { who: string; text: string; s: number; e: number; top?: boolean; high?: boolean };
 
 /** Big mission title on the first frame, then it shrinks away. */
 function MissionTitle() {
@@ -74,7 +74,7 @@ function Subs({ lines }: { lines: Line[] }) {
     <>
       <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: L.height * 0.3, background: "linear-gradient(180deg, rgb(0 0 0 / 0), rgb(0 0 0 / 0.42))" }} />
       {cur && (
-        <div style={{ position: "absolute", left: L.safe.side, right: L.safe.side, ...(cur.top ? { top: L.safe.top * 0.75 + 190 * L.u } : { bottom: L.safe.bottom * 0.55 + 150 * L.u }), textAlign: "center", opacity: Math.min(1, (t - cur.s) / 0.1, (cur.e - t) / 0.1) }}>
+        <div style={{ position: "absolute", left: L.safe.side, right: L.safe.side, ...(cur.high ? { top: L.safe.top * 0.75 } : cur.top ? { top: L.safe.top * 0.75 + 190 * L.u } : { bottom: L.safe.bottom * 0.55 + 150 * L.u }), textAlign: "center", opacity: Math.min(1, (t - cur.s) / 0.1, (cur.e - t) / 0.1) }}>
           <div style={{ fontFamily: F.hud, fontWeight: 600, fontSize: 24 * L.u, letterSpacing: "0.32em", color: GOLD, marginBottom: 8 * L.u, textShadow: "0 2px 8px rgb(0 0 0 / 0.8)" }}>{cur.who.toUpperCase()}</div>
           <div style={{ fontFamily: F.hud, fontWeight: 600, fontSize: 48 * L.u, lineHeight: 1.22, color: "#fff", textShadow: "0 2px 10px rgb(0 0 0 / 0.85), 0 0 2px rgb(0 0 0 / 0.9)" }}>{cur.text}</div>
         </div>
@@ -101,7 +101,7 @@ function Shot({ file, from = 0, time, night, lines, objective, children }: { fil
 }
 
 const S1 = () => (
-  <Shot file="generated/olj/s1.mp4" time="8:10 AM" lines={[{ who: "Cruz", text: "Almost a million.", s: 2.15, e: 3.25, top: true }, { who: "Cruz", text: "One more job.", s: 3.7, e: 5.0, top: true }]} objective={{ text: "Pick up the car · 11:00 AM", at: 5.5 }}>
+  <Shot file="generated/olj/s1.mp4" time="8:10 AM" lines={[{ who: "Cruz", text: "Almost a million.", s: 2.15, e: 3.25, high: true }, { who: "Cruz", text: "One more job.", s: 3.7, e: 5.0, high: true }]} objective={{ text: "Pick up the car · 11:00 AM", at: 5.5 }}>
     <MissionTitle />
   </Shot>
 );

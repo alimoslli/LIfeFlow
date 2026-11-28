@@ -5,10 +5,11 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 IN="$1"; OUT="$2"; T=$(mktemp -d); G=public/generated/olj; A=public/audio
 # shot starts and lengths (must match src/projects/one-last-job.tsx)
-S=(0 8.05 16.95 26.95 34.45); D=(8.05 8.9 10 7.5 9.0); O=43.45; END=46.95
+S=(0 8.05 16.95 26.95 34.45); D=(8.05 8.9 10 7.5 9.0); O=43.45
+END=$(ffprobe -v error -select_streams v:0 -show_entries stream=duration -of csv=p=0 "$IN")
 f=""; inputs=""
 for i in 0 1 2 3 4; do
-  inputs+=" -i $G/s$((i+1)).mp4"
+  inputs+=" -i $G/audio/s$((i+1)).wav"
   ms=$(echo "${S[$i]}*1000" | bc | cut -d. -f1)
   f+="[$i:a]atrim=0:${D[$i]},asetpts=PTS-STARTPTS,aresample=48000,afade=t=in:d=0.04,afade=t=out:st=$(echo "${D[$i]}-0.08"|bc):d=0.08,adelay=${ms}:all=1[c$i];"
 done

@@ -1,0 +1,164 @@
+{
+ "project": "one-last-job",
+ "captures": [
+  "cruz-morning/networth",
+  "cruz-morning/today",
+  "cruz-noon/tick",
+  "cruz-night/today"
+ ],
+ "title": "One Last Job (Cruz and Leana)",
+ "format": "9x16",
+ "quality": "final",
+ "version": 1,
+ "file": "projects/one-last-job/renders/one-last-job_9x16_final_v1.mp4",
+ "seconds": 46.96666666666667,
+ "app": {
+  "commit": "8a6da3e4a50be66b4fb014ac707f24659603a5bc",
+  "date": "2026-11-27T00:03:08+00:00",
+  "subject": "Plan: smart memory and the gamechangers shipped (owner's yes)"
+ },
+ "scenes": [
+  {
+   "id": "s1",
+   "mode": "hybrid",
+   "seconds": 8.05,
+   "cached": false,
+   "renderSec": 246.8,
+   "file": "cache/scenes/one-last-job/9x16/final/s1_f61e37745cd22998.mp4"
+  },
+  {
+   "id": "s2",
+   "mode": "hybrid",
+   "seconds": 8.9,
+   "cached": false,
+   "renderSec": 275.7,
+   "file": "cache/scenes/one-last-job/9x16/final/s2_119e4bee6c600527.mp4"
+  },
+  {
+   "id": "s3",
+   "mode": "hybrid",
+   "seconds": 10,
+   "cached": false,
+   "renderSec": 306.9,
+   "file": "cache/scenes/one-last-job/9x16/final/s3_954262d8d923a585.mp4"
+  },
+  {
+   "id": "s4",
+   "mode": "hybrid",
+   "seconds": 7.5,
+   "cached": false,
+   "renderSec": 226.2,
+   "file": "cache/scenes/one-last-job/9x16/final/s4_2fcc6f1bab785b81.mp4"
+  },
+  {
+   "id": "s5",
+   "mode": "hybrid",
+   "seconds": 9,
+   "cached": false,
+   "renderSec": 272.8,
+   "file": "cache/scenes/one-last-job/9x16/final/s5_aeec5d78df08416b.mp4"
+  },
+  {
+   "id": "outro",
+   "mode": "code",
+   "seconds": 3.5,
+   "cached": false,
+   "renderSec": 13.5,
+   "file": "cache/scenes/one-last-job/9x16/final/outro_81e41d5d3d2cb4d7.mp4"
+  }
+ ],
+ "renderSec": 1341.8999999999999,
+ "realtimeFactor": 28.6,
+ "peakMemoryMb": 3878,
+ "machine": {
+  "cpus": 4,
+  "model": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+  "gpu": "none (software WebGL)"
+ },
+ "cost": {
+  "paidCredits": 0,
+  "paidUsd": 0,
+  "note": "Code only: rendered locally, no paid generation."
+ },
+ "madeAt": "2026-11-28T08:47:14.745Z",
+ "qc": {
+  "verdict": "pass",
+  "checks": [
+   {
+    "name": "Resolution and aspect ratio",
+    "status": "pass",
+    "detail": "1080x1920, expected 1080x1920"
+   },
+   {
+    "name": "Frame rate",
+    "status": "pass",
+    "detail": "30/1 (avg 30/1)"
+   },
+   {
+    "name": "Codec for social apps",
+    "status": "pass",
+    "detail": "h264 yuv420p"
+   },
+   {
+    "name": "Length",
+    "status": "pass",
+    "detail": "46.97s, expected 46.97s"
+   },
+   {
+    "name": "Black frames",
+    "status": "pass",
+    "detail": "none longer than 0.35 s"
+   },
+   {
+    "name": "Broken or stuck animation (picture frozen 2.5 s+)",
+    "status": "pass",
+    "detail": "always moving"
+   },
+   {
+    "name": "Loudness (social standard -14 LUFS)",
+    "status": "pass",
+    "detail": "-14.1 LUFS, true peak -1.3 dBFS"
+   },
+   {
+    "name": "Gaps in the sound",
+    "status": "pass",
+    "detail": "none"
+   },
+   {
+    "name": "Sound and picture line up (same length)",
+    "status": "pass",
+    "detail": "audio 46.97s, video 46.97s"
+   },
+   {
+    "name": "Rendered from the current app",
+    "status": "pass",
+    "detail": "render 8a6da3e4, synced 8a6da3e4"
+   },
+   {
+    "name": "App screens are from the current app",
+    "status": "pass",
+    "detail": "all captures match the synced app"
+   },
+   {
+    "name": "Brand files match the app",
+    "status": "pass",
+    "detail": "logo files identical"
+   },
+   {
+    "name": "Render time",
+    "status": "pass",
+    "detail": "28.6x realtime (1341.8999999999999s for 46.96666666666667s)"
+   },
+   {
+    "name": "Memory",
+    "status": "pass",
+    "detail": "peak 3878 MB"
+   },
+   {
+    "name": "Manual review",
+    "status": "todo",
+    "detail": "Wording, readability, overlaps and taste: check the storyboard and the draft (docs/STUDIO.md, 'Manual checks')."
+   }
+  ]
+ }
+}
