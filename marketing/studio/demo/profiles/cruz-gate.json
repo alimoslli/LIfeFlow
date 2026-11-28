@@ -1,0 +1,166 @@
+{
+ "_about": "Cruz Rivera for 'The Gate': an original character, almost a millionaire on paper (mostly stocks) with very little in checking. All made up, invented city.",
+ "email": "cruz@studio.lifeflow.local",
+ "name": "Cruz Rivera",
+ "tz": "America/New_York",
+ "skyling": "sky",
+ "accounts": [
+  {
+   "key": "chk",
+   "name": "Everyday Checking",
+   "type": "depository",
+   "subtype": "checking",
+   "institution": "Port Solana Credit Union",
+   "mask": "7781",
+   "balance": 240.15
+  },
+  {
+   "key": "sav",
+   "name": "Rainy Day Savings",
+   "type": "depository",
+   "subtype": "savings",
+   "institution": "Port Solana Credit Union",
+   "mask": "7790",
+   "balance": 121000
+  },
+  {
+   "key": "card",
+   "name": "Night Owl Card",
+   "type": "credit",
+   "institution": "Bayside Card Co",
+   "mask": "0420",
+   "balance": 612.18,
+   "limit": 5000
+  },
+  {
+   "key": "brk",
+   "name": "Brokerage",
+   "type": "investment",
+   "subtype": "brokerage",
+   "institution": "Harborline Investing",
+   "mask": "3301",
+   "balance": 812400.55
+  }
+ ],
+ "transactions": [
+  {
+   "account": "card",
+   "daysAgo": 0,
+   "desc": "BEAN THERE CAFE",
+   "merchant": "Bean There",
+   "amount": -5.4,
+   "category": "Coffee"
+  },
+  {
+   "account": "card",
+   "daysAgo": 0,
+   "desc": "PROTEIN BAR CO",
+   "merchant": "Protein Bar Co",
+   "amount": -8.75,
+   "category": "Restaurants"
+  },
+  {
+   "account": "card",
+   "daysAgo": 1,
+   "desc": "GAS & GO 12",
+   "merchant": "Gas & Go",
+   "amount": -52.1,
+   "category": "Gas"
+  },
+  {
+   "account": "card",
+   "daysAgo": 1,
+   "desc": "HARBOR MARKET",
+   "merchant": "Harbor Market",
+   "amount": -64.2,
+   "category": "Groceries"
+  },
+  {
+   "account": "card",
+   "daysAgo": 2,
+   "desc": "SPARKLE CAR WASH",
+   "merchant": "Sparkle Car Wash",
+   "amount": -18,
+   "category": "Transportation"
+  },
+  {
+   "account": "card",
+   "daysAgo": 3,
+   "desc": "MUSCLE BEACH GYM",
+   "merchant": "Muscle Beach Gym",
+   "amount": -39,
+   "category": "Fitness"
+  },
+  {
+   "account": "chk",
+   "daysAgo": 4,
+   "desc": "PAYROLL PORT SOLANA AUTO",
+   "merchant": "Port Solana Auto",
+   "amount": 1450,
+   "category": "Income",
+   "kind": "income"
+  }
+ ],
+ "bills": [
+  {
+   "name": "Car insurance",
+   "amount": -212,
+   "inDays": 2,
+   "category": "Insurance"
+  },
+  {
+   "name": "Phone plan",
+   "amount": -68,
+   "inDays": 3,
+   "category": "Phone"
+  }
+ ],
+ "goals": [
+  {
+   "name": "Beach house fund",
+   "target": 250000,
+   "saved": 41300,
+   "inDays": 700
+  }
+ ],
+ "events": [
+  {
+   "title": "Leg day",
+   "day": 0,
+   "start": "13:00",
+   "end": "14:00",
+   "location": "Muscle Beach"
+  },
+  {
+   "title": "Dinner with Leana",
+   "day": 0,
+   "start": "18:00",
+   "end": "19:30",
+   "location": "Sunset Diner"
+  },
+  {
+   "title": "Casino job",
+   "day": 3,
+   "start": "23:30",
+   "end": "23:59",
+   "location": "Golden Reef Casino"
+  }
+ ],
+ "tasks": [
+  {
+   "title": "Move $300 from savings",
+   "day": 1,
+   "priority": "high"
+  },
+  {
+   "title": "Laundry",
+   "day": 0,
+   "priority": "low"
+  },
+  {
+   "title": "Pick up the suit from the tailor",
+   "day": 2,
+   "priority": "medium"
+  }
+ ]
+}

@@ -36,6 +36,18 @@
    "password": "studio-demo-only",
    "tz": "America/New_York",
    "clock": "19:58"
+  },
+  "gate-tue": {
+   "email": "cruz@studio.lifeflow.local",
+   "password": "studio-demo-only",
+   "tz": "America/New_York",
+   "clock": "10:30"
+  },
+  "gate-wed": {
+   "email": "cruz@studio.lifeflow.local",
+   "password": "studio-demo-only",
+   "tz": "America/New_York",
+   "clock": "09:00"
   }
  },
  "shots": [
@@ -229,6 +241,40 @@
     {
      "at": 0.8,
      "tap": "[aria-label=\"Mark \\\"Send Lorenza $50,000\\\" done\"]"
+    }
+   ]
+  },
+  {
+   "id": "money",
+   "profile": "gate-tue",
+   "path": "/money",
+   "seconds": 6,
+   "actions": [
+    {
+     "at": 2.2,
+     "scroll": [
+      620,
+      1.4
+     ]
+    }
+   ]
+  },
+  {
+   "id": "todos",
+   "profile": "gate-tue",
+   "path": "/tasks",
+   "seconds": 4,
+   "actions": []
+  },
+  {
+   "id": "tick",
+   "profile": "gate-wed",
+   "path": "/tasks",
+   "seconds": 6,
+   "actions": [
+    {
+     "at": 1.0,
+     "tap": "[aria-label=\"Mark \\\"Move $300 from savings\\\" done\"]"
     }
    ]
   }
