@@ -1,5 +1,5 @@
 {
- "_about": "Profile for the 'Hectic' ad. All made up: original characters Cruz and Leana in an invented city (Port Solana). No real people, brands or game characters.",
+ "_about": "Cruz Rivera for 'One Last Job': an original character with a normal life (workouts, coffee, gas, groceries, family) plus one big night. All made up, invented city (Port Solana).",
  "email": "cruz@studio.lifeflow.local",
  "name": "Cruz Rivera",
  "tz": "America/New_York",
@@ -12,7 +12,16 @@
    "subtype": "checking",
    "institution": "Port Solana Credit Union",
    "mask": "7781",
-   "balance": 4120.37
+   "balance": 58412.37
+  },
+  {
+   "key": "sav",
+   "name": "Rainy Day Savings",
+   "type": "depository",
+   "subtype": "savings",
+   "institution": "Port Solana Credit Union",
+   "mask": "7790",
+   "balance": 121000
   },
   {
    "key": "card",
@@ -22,20 +31,37 @@
    "mask": "0420",
    "balance": 612.18,
    "limit": 5000
+  },
+  {
+   "key": "brk",
+   "name": "Brokerage",
+   "type": "investment",
+   "subtype": "brokerage",
+   "institution": "Harborline Investing",
+   "mask": "3301",
+   "balance": 783560.12
   }
  ],
  "transactions": [
   {
    "account": "card",
    "daysAgo": 0,
-   "desc": "SUNSET DINER",
-   "merchant": "Sunset Diner",
-   "amount": -14.2,
-   "category": "Restaurants"
+   "desc": "BEAN THERE CAFE",
+   "merchant": "Bean There",
+   "amount": -5.4,
+   "category": "Coffee"
   },
   {
    "account": "card",
    "daysAgo": 0,
+   "desc": "PROTEIN BAR CO",
+   "merchant": "Protein Bar Co",
+   "amount": -8.75,
+   "category": "Restaurants"
+  },
+  {
+   "account": "card",
+   "daysAgo": 1,
    "desc": "GAS & GO 12",
    "merchant": "Gas & Go",
    "amount": -52.1,
@@ -44,6 +70,14 @@
   {
    "account": "card",
    "daysAgo": 1,
+   "desc": "HARBOR MARKET",
+   "merchant": "Harbor Market",
+   "amount": -64.2,
+   "category": "Groceries"
+  },
+  {
+   "account": "card",
+   "daysAgo": 2,
    "desc": "SPARKLE CAR WASH",
    "merchant": "Sparkle Car Wash",
    "amount": -18,
@@ -51,84 +85,20 @@
   },
   {
    "account": "card",
-   "daysAgo": 1,
-   "desc": "NEON ARCADE",
-   "merchant": "Neon Arcade",
-   "amount": -25,
-   "category": "Entertainment"
-  },
-  {
-   "account": "card",
-   "daysAgo": 2,
-   "desc": "HARBOR TAILORS",
-   "merchant": "Harbor Tailors",
-   "amount": -40,
-   "category": "Clothing"
-  },
-  {
-   "account": "card",
    "daysAgo": 3,
-   "desc": "MARINA FUEL DOCK",
-   "merchant": "Marina Fuel Dock",
-   "amount": -96.4,
-   "category": "Gas"
+   "desc": "MUSCLE BEACH GYM",
+   "merchant": "Muscle Beach Gym",
+   "amount": -39,
+   "category": "Fitness"
   },
   {
    "account": "chk",
    "daysAgo": 4,
-   "desc": "SIDE GIGS LLC PAYROLL",
-   "merchant": "Side Gigs LLC",
-   "amount": 1850,
-   "category": "Paycheck",
+   "desc": "PAYROLL PORT SOLANA AUTO",
+   "merchant": "Port Solana Auto",
+   "amount": 1450,
+   "category": "Income",
    "kind": "income"
-  },
-  {
-   "account": "card",
-   "daysAgo": 8,
-   "desc": "SUNSET DINER",
-   "merchant": "Sunset Diner",
-   "amount": -14,
-   "category": "Restaurants"
-  },
-  {
-   "account": "card",
-   "daysAgo": 15,
-   "desc": "SUNSET DINER",
-   "merchant": "Sunset Diner",
-   "amount": -16,
-   "category": "Restaurants"
-  },
-  {
-   "account": "card",
-   "daysAgo": 22,
-   "desc": "SUNSET DINER",
-   "merchant": "Sunset Diner",
-   "amount": -12,
-   "category": "Restaurants"
-  },
-  {
-   "account": "card",
-   "daysAgo": 1,
-   "desc": "OCEAN GRILL",
-   "merchant": "Ocean Grill",
-   "amount": -45,
-   "category": "Restaurants"
-  },
-  {
-   "account": "card",
-   "daysAgo": 2,
-   "desc": "OCEAN GRILL",
-   "merchant": "Ocean Grill",
-   "amount": -52,
-   "category": "Restaurants"
-  },
-  {
-   "account": "card",
-   "daysAgo": 3,
-   "desc": "OCEAN GRILL",
-   "merchant": "Ocean Grill",
-   "amount": -59,
-   "category": "Restaurants"
   }
  ],
  "bills": [
@@ -155,17 +125,25 @@
  ],
  "events": [
   {
-   "title": "Gym",
+   "title": "Morning run",
+   "day": 0,
+   "start": "07:00",
+   "end": "07:40",
+   "location": "Port Solana boardwalk"
+  },
+  {
+   "title": "Pick up the car",
+   "day": 0,
+   "start": "11:00",
+   "end": "11:20",
+   "location": "Marina garage"
+  },
+  {
+   "title": "Leg day",
    "day": 0,
    "start": "13:00",
    "end": "14:00",
-   "location": "Muscle Beach Port Solana"
-  },
-  {
-   "title": "Call the crew",
-   "day": 0,
-   "start": "16:00",
-   "end": "16:15"
+   "location": "Muscle Beach"
   },
   {
    "title": "Dinner with Leana",
@@ -180,37 +158,28 @@
    "start": "20:00",
    "end": "23:00",
    "location": "Golden Reef Casino"
-  },
-  {
-   "title": "Return the getaway van",
-   "day": 1,
-   "start": "10:00",
-   "end": "10:30",
-   "location": "Harbor Rentals"
   }
  ],
  "tasks": [
   {
-   "title": "Ask the crew to stop calling it a heist in the group chat",
+   "title": "Send Lorenza $50,000",
    "day": 0,
    "priority": "high"
   },
   {
-   "title": "Pay the parking tickets (all 14)",
-   "day": 2,
+   "title": "Pick up Leana's birthday gift",
+   "day": 1,
+   "priority": "high"
+  },
+  {
+   "title": "Renew car insurance",
+   "day": 3,
    "priority": "medium"
   },
   {
-   "title": "Lay low (2 hrs)",
+   "title": "Laundry",
    "day": 0,
-   "priority": "medium",
-   "done": true
-  },
-  {
-   "title": "Pick up the suit from the tailor",
-   "day": 0,
-   "priority": "medium",
-   "done": true
+   "priority": "low"
   }
  ]
 }

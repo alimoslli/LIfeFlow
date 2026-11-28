@@ -18,6 +18,24 @@
    "password": "studio-demo-only",
    "tz": "America/New_York",
    "clock": "17:40"
+  },
+  "cruz-morning": {
+   "email": "cruz@studio.lifeflow.local",
+   "password": "studio-demo-only",
+   "tz": "America/New_York",
+   "clock": "08:10"
+  },
+  "cruz-noon": {
+   "email": "cruz@studio.lifeflow.local",
+   "password": "studio-demo-only",
+   "tz": "America/New_York",
+   "clock": "14:30"
+  },
+  "cruz-night": {
+   "email": "cruz@studio.lifeflow.local",
+   "password": "studio-demo-only",
+   "tz": "America/New_York",
+   "clock": "19:58"
   }
  },
  "shots": [
@@ -138,6 +156,48 @@
    "id": "todos",
    "profile": "cruz-hectic",
    "path": "/tasks",
+   "seconds": 4,
+   "actions": []
+  },
+  {
+   "id": "today",
+   "profile": "cruz-morning",
+   "path": "/",
+   "seconds": 6,
+   "actions": []
+  },
+  {
+   "id": "today",
+   "profile": "cruz-noon",
+   "path": "/",
+   "seconds": 3,
+   "actions": []
+  },
+  {
+   "id": "todos",
+   "profile": "cruz-noon",
+   "path": "/tasks",
+   "seconds": 3,
+   "actions": []
+  },
+  {
+   "id": "money",
+   "profile": "cruz-noon",
+   "path": "/money",
+   "seconds": 3,
+   "actions": []
+  },
+  {
+   "id": "today",
+   "profile": "cruz-night",
+   "path": "/",
+   "seconds": 3,
+   "actions": []
+  },
+  {
+   "id": "networth",
+   "profile": "cruz-morning",
+   "path": "/finances/accounts",
    "seconds": 4,
    "actions": []
   }
