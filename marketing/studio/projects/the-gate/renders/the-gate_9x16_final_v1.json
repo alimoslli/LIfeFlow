@@ -1,0 +1,147 @@
+{
+ "project": "the-gate",
+ "captures": [
+  "gate-tue/money",
+  "gate-tue/todos",
+  "gate-wed/tick"
+ ],
+ "title": "The Gate (Cruz and Leana)",
+ "format": "9x16",
+ "quality": "final",
+ "version": 1,
+ "file": "projects/the-gate/renders/the-gate_9x16_final_v1.mp4",
+ "seconds": 30.5,
+ "app": {
+  "commit": "8a6da3e4a50be66b4fb014ac707f24659603a5bc",
+  "date": "2026-11-27T00:03:08+00:00",
+  "subject": "Plan: smart memory and the gamechangers shipped (owner's yes)"
+ },
+ "scenes": [
+  {
+   "id": "g1",
+   "mode": "hybrid",
+   "seconds": 9,
+   "cached": false,
+   "renderSec": 235.9,
+   "file": "cache/scenes/the-gate/9x16/final/g1_92f5aad9d8a42974.mp4"
+  },
+  {
+   "id": "g2",
+   "mode": "hybrid",
+   "seconds": 9,
+   "cached": false,
+   "renderSec": 231,
+   "file": "cache/scenes/the-gate/9x16/final/g2_f5c6c33a795b007e.mp4"
+  },
+  {
+   "id": "g3",
+   "mode": "hybrid",
+   "seconds": 9,
+   "cached": false,
+   "renderSec": 232.1,
+   "file": "cache/scenes/the-gate/9x16/final/g3_154c8f207be07040.mp4"
+  },
+  {
+   "id": "outro",
+   "mode": "code",
+   "seconds": 3.5,
+   "cached": false,
+   "renderSec": 12.6,
+   "file": "cache/scenes/the-gate/9x16/final/outro_7440cf168fc26131.mp4"
+  }
+ ],
+ "renderSec": 711.6,
+ "realtimeFactor": 23.3,
+ "peakMemoryMb": 3491,
+ "machine": {
+  "cpus": 4,
+  "model": "Intel(R) Xeon(R) Processor @ 2.30GHz",
+  "gpu": "none (software WebGL)"
+ },
+ "cost": {
+  "paidCredits": 0,
+  "paidUsd": 0,
+  "note": "Code only: rendered locally, no paid generation."
+ },
+ "madeAt": "2026-11-28T10:30:21.977Z",
+ "qc": {
+  "verdict": "pass",
+  "checks": [
+   {
+    "name": "Resolution and aspect ratio",
+    "status": "pass",
+    "detail": "1080x1920, expected 1080x1920"
+   },
+   {
+    "name": "Frame rate",
+    "status": "pass",
+    "detail": "30/1 (avg 30/1)"
+   },
+   {
+    "name": "Codec for social apps",
+    "status": "pass",
+    "detail": "h264 yuv420p"
+   },
+   {
+    "name": "Length",
+    "status": "pass",
+    "detail": "30.50s, expected 30.50s"
+   },
+   {
+    "name": "Black frames",
+    "status": "pass",
+    "detail": "none longer than 0.35 s"
+   },
+   {
+    "name": "Broken or stuck animation (picture frozen 2.5 s+)",
+    "status": "pass",
+    "detail": "always moving"
+   },
+   {
+    "name": "Loudness (social standard -14 LUFS)",
+    "status": "pass",
+    "detail": "-14.1 LUFS, true peak -1.3 dBFS"
+   },
+   {
+    "name": "Gaps in the sound",
+    "status": "pass",
+    "detail": "none"
+   },
+   {
+    "name": "Sound and picture line up (same length)",
+    "status": "pass",
+    "detail": "audio 30.50s, video 30.50s"
+   },
+   {
+    "name": "Rendered from the current app",
+    "status": "pass",
+    "detail": "render 8a6da3e4, synced 8a6da3e4"
+   },
+   {
+    "name": "App screens are from the current app",
+    "status": "pass",
+    "detail": "all captures match the synced app"
+   },
+   {
+    "name": "Brand files match the app",
+    "status": "pass",
+    "detail": "logo files identical"
+   },
+   {
+    "name": "Render time",
+    "status": "pass",
+    "detail": "23.3x realtime (711.6s for 30.5s)"
+   },
+   {
+    "name": "Memory",
+    "status": "pass",
+    "detail": "peak 3491 MB"
+   },
+   {
+    "name": "Manual review",
+    "status": "todo",
+    "detail": "Wording, readability, overlaps and taste: check the storyboard and the draft (docs/STUDIO.md, 'Manual checks')."
+   }
+  ]
+ }
+}
