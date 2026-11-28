@@ -1,0 +1,61 @@
+{
+ "id": "the-gate",
+ "title": "The Gate (Cruz and Leana)",
+ "concept": "Thursday night, a getaway at a garage exit card reader: 'If your card declines, we're walking.' 'Tuesday.' Two days earlier his real LifeFlow app warned he could run out of money around Thursday; he set a to-do and ticked it off. APPROVED. 'You told me nothing.'",
+ "formats": [
+  "9x16"
+ ],
+ "captures": [
+  "gate-tue/money",
+  "gate-tue/todos",
+  "gate-wed/tick"
+ ],
+ "music": {
+  "file": "audio/olj_music.mp3",
+  "gain": -20
+ },
+ "cues": [],
+ "scenes": [
+  {
+   "id": "g1",
+   "title": "Thursday 11:52 PM, the gate",
+   "seconds": 9,
+   "mode": "hybrid",
+   "why": "The hook needs a real game-look night and real faces.",
+   "estimate": {
+    "credits": 63,
+    "model": "seedance_2_5 720p"
+   }
+  },
+  {
+   "id": "g2",
+   "title": "Tuesday, the heads-up and the tick",
+   "seconds": 9,
+   "mode": "hybrid",
+   "why": "The real app on his phone, his skyling beside him.",
+   "estimate": {
+    "credits": 63,
+    "model": "seedance_2_5 720p"
+   }
+  },
+  {
+   "id": "g3",
+   "title": "Thursday 11:53 PM, approved",
+   "seconds": 9,
+   "mode": "hybrid",
+   "why": "The payoff on the same gate.",
+   "estimate": {
+    "credits": 63,
+    "model": "seedance_2_5 720p"
+   }
+  },
+  {
+   "id": "outro",
+   "title": "Sign-off",
+   "seconds": 3.5,
+   "mode": "code",
+   "why": "Brand ending with the app's own skylings.",
+   "estimate": null
+  }
+ ]
+}

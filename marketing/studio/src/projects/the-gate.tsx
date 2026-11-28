@@ -1,4 +1,4 @@
-import { AbsoluteFill, OffthreadVideo, staticFile, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Img, OffthreadVideo, staticFile, useCurrentFrame } from "remotion";
 import { BrandOutro, F, Grain, prog, useLayout } from "../kit";
 import type { Project } from "./types";
 
@@ -90,6 +90,21 @@ function Jump({ top, bottom, at, dur = 1.1 }: { top: string; bottom: string; at:
   );
 }
 
+/** A magnified crop of the real app screen (from the capture), floating above the phone so it reads on a small screen. */
+function Callout({ src, at, until }: { src: string; at: number; until: number }) {
+  const f = useCurrentFrame();
+  const L = useLayout();
+  const t = f / L.fps;
+  if (t < at || t > until) return null;
+  const a = Math.min(1, (t - at) / 0.18, (until - t) / 0.18);
+  const s = 0.92 + 0.08 * prog(f, at * L.fps, (at + 0.25) * L.fps);
+  return (
+    <div style={{ position: "absolute", left: L.width * 0.08, right: L.width * 0.08, top: L.safe.top * 0.75 + 130 * L.u, opacity: a, transform: `scale(${s})`, transformOrigin: "50% 100%" }}>
+      <Img src={staticFile(src)} style={{ width: "100%", borderRadius: 26 * L.u, boxShadow: "0 18px 50px rgb(0 0 0 / 0.45), 0 0 0 2px rgb(255 255 255 / 0.7)" }} />
+    </div>
+  );
+}
+
 function Shot({ file, children }: { file: string; children?: React.ReactNode }) {
   const f = useCurrentFrame();
   const flash = 1 - prog(f, 0, 5);
@@ -112,18 +127,26 @@ const G1 = () => (
     <Hook />
   </Shot>
 );
-const G2 = () => (
-  <Shot file="generated/gate/g2.mp4">
-    <Subs lines={[{ who: "Cruz", text: "Three hundred from savings. Tomorrow, nine.", s: 1.0, e: 3.3, top: true }]} />
-    <When day="TUESDAY" time="10:30 AM" />
-    <Jump top="TWO DAYS EARLIER" bottom="TUESDAY" at={0} dur={1.0} />
-  </Shot>
-);
+const G2 = () => {
+  const f = useCurrentFrame();
+  const L = useLayout();
+  const wed = f / L.fps >= 4.8;
+  return (
+    <Shot file="generated/gate/g2.mp4">
+      <Subs lines={[{ who: "Cruz", text: "Three hundred from savings.", s: 0.95, e: 2.15 }, { who: "Cruz", text: "Tomorrow, nine.", s: 2.65, e: 3.45 }]} />
+      <Callout src="generated/gate/callout_heads.png" at={1.2} until={3.3} />
+      <Callout src="generated/gate/callout_todo.png" at={3.45} until={4.7} />
+      {wed ? <When day="WEDNESDAY" time="9:00 AM" /> : <When day="TUESDAY" time="10:30 AM" />}
+      <Jump top="TWO DAYS EARLIER" bottom="TUESDAY" at={0} dur={1.0} />
+      <Jump top="NEXT MORNING" bottom="WEDNESDAY" at={4.8} dur={0.75} />
+    </Shot>
+  );
+};
 const G3 = () => (
   <Shot file="generated/gate/g3.mp4">
-    <Subs lines={[{ who: "Cruz", text: "Told you.", s: 2.0, e: 3.0 }, { who: "Leana", text: "You told me nothing.", s: 3.4, e: 5.0 }]} />
-    <ReaderTag text="PROCESSING..." color="#f3b45a" at={0} until={1.0} />
-    <ReaderTag text="APPROVED" color="#7ee2a8" at={1.0} />
+    <Subs lines={[{ who: "Cruz", text: "Told you.", s: 2.1, e: 2.8 }, { who: "Leana", text: "You told me nothing.", s: 2.95, e: 4.1 }]} />
+    <ReaderTag text="PROCESSING..." color="#f3b45a" at={0} until={0.7} />
+    <ReaderTag text="APPROVED" color="#7ee2a8" at={0.7} until={3.0} />
     <When day="THURSDAY" time="11:53 PM" />
   </Shot>
 );
