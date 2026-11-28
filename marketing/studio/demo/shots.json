@@ -219,6 +219,18 @@
    "path": "/finances/accounts",
    "seconds": 4,
    "actions": []
+  },
+  {
+   "id": "tick",
+   "profile": "cruz-noon",
+   "path": "/tasks",
+   "seconds": 8,
+   "actions": [
+    {
+     "at": 0.8,
+     "tap": "[aria-label=\"Mark \\\"Send Lorenza $50,000\\\" done\"]"
+    }
+   ]
   }
  ]
 }

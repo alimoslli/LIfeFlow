@@ -15,3 +15,4 @@ requests/*.json
 # Generated footage and music (kept in Higgsfield, not in git)
 public/generated/
 public/audio/hectic_music.mp3
+public/audio/olj_music.mp3

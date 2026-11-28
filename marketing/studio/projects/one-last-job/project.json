@@ -1,0 +1,84 @@
+{
+ "id": "one-last-job",
+ "title": "One Last Job (Cruz and Leana)",
+ "concept": "A modern open-world crime game look with original characters. Cruz is almost a millionaire with one more job, and his real LifeFlow day runs the mission: net worth at sunrise, the car at 11, ticking off 'Send Lorenza $50,000', dinner at 6, the casino at 8. 'Can I get this?'",
+ "formats": [
+  "9x16"
+ ],
+ "captures": [
+  "cruz-morning/networth",
+  "cruz-morning/today",
+  "cruz-noon/tick",
+  "cruz-night/today"
+ ],
+ "music": {
+  "file": "audio/olj_music.mp3",
+  "gain": -20
+ },
+ "cues": [],
+ "scenes": [
+  {
+   "id": "s1",
+   "title": "8:10 AM, balcony (first person)",
+   "seconds": 8.05,
+   "mode": "hybrid",
+   "why": "Game-look world from MAGI-2, the real app pinned on his phone.",
+   "estimate": {
+    "credits": 20,
+    "model": "magi_2"
+   }
+  },
+  {
+   "id": "s2",
+   "title": "11:00 AM, the car (third person)",
+   "seconds": 8.9,
+   "mode": "hybrid",
+   "why": "Gameplay camera and dialogue need real motion and faces.",
+   "estimate": {
+    "credits": 22.5,
+    "model": "magi_2"
+   }
+  },
+  {
+   "id": "s3",
+   "title": "2:30 PM, passenger seat (first person)",
+   "seconds": 10,
+   "mode": "hybrid",
+   "why": "The real tick-off on his phone while Leana drives.",
+   "estimate": {
+    "credits": 25,
+    "model": "magi_2"
+   }
+  },
+  {
+   "id": "s4",
+   "title": "6:00 PM, the diner",
+   "seconds": 7.5,
+   "mode": "hybrid",
+   "why": "The reveal needs a real face.",
+   "estimate": {
+    "credits": 22.5,
+    "model": "magi_2"
+   }
+  },
+  {
+   "id": "s5",
+   "title": "7:58 PM, the casino (first person)",
+   "seconds": 9,
+   "mode": "hybrid",
+   "why": "The real night screen in his hand, Leana's last line.",
+   "estimate": {
+    "credits": 22.5,
+    "model": "magi_2"
+   }
+  },
+  {
+   "id": "outro",
+   "title": "Sign-off",
+   "seconds": 3.5,
+   "mode": "code",
+   "why": "Brand ending from the app's own skylings.",
+   "estimate": null
+  }
+ ]
+}

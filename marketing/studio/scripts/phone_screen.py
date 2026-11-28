@@ -58,9 +58,91 @@ def quad_of(mask):
     return order(cv2.boxPoints(cv2.minAreaRect(hull))), area
 
 
+def smooth(x):
+    x = min(1.0, max(0.0, x))
+    return x * x * (3 - 2 * x)
+
+
+def zoom_at(keys, t):
+    """keys: [(t, z), ...] sorted. Eased between keys, held outside."""
+    if not keys:
+        return 1.0
+    if t <= keys[0][0]:
+        return keys[0][1]
+    for (t0, z0), (t1, z1) in zip(keys, keys[1:]):
+        if t <= t1:
+            return z0 + (z1 - z0) * smooth((t - t0) / max(1e-6, t1 - t0))
+    return keys[-1][1]
+
+
+def fit_app(app, q):
+    """Crop the app frame to the screen's own shape (no stretching), keeping the top of the screen."""
+    wq = (np.linalg.norm(q[1] - q[0]) + np.linalg.norm(q[2] - q[3])) / 2
+    hq = (np.linalg.norm(q[3] - q[0]) + np.linalg.norm(q[2] - q[1])) / 2
+    ah, aw = app.shape[:2]
+    target = wq / max(1.0, hq)
+    if aw / ah < target:  # screen is wider than the app: show the top part of the app
+        nh = int(round(aw / target))
+        app = app[:nh]
+    else:
+        nw = int(round(ah * target))
+        x0 = (aw - nw) // 2
+        app = app[:, x0 : x0 + nw]
+    # pre-shrink close to the final size so small text stays clean
+    th = max(8, int(hq * 1.5))
+    if app.shape[0] > th:
+        app = cv2.resize(app, (int(app.shape[1] * th / app.shape[0]), th), interpolation=cv2.INTER_AREA)
+    return app
+
+
+def composite(f, q_hint, app, dim):
+    """Find the screen again on this exact frame (no lag), near where the tracker expects it, then pin the app."""
+    h, w = f.shape[:2]
+    m_all = green_mask(f)
+    # keep only the green blob(s) around the expected screen (teal water or foliage elsewhere stays untouched)
+    c0 = q_hint.mean(0)
+    hint = np.zeros_like(m_all)
+    cv2.fillConvexPoly(hint, (c0 + (q_hint - c0) * 1.35).astype(np.int32), 255)
+    m = cv2.bitwise_and(m_all, hint)
+    # keep only the screen itself: the biggest green shape (plus anything inside its outline, e.g. around a thumb)
+    cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if cnts:
+        big = max(cnts, key=cv2.contourArea)
+        keep = np.zeros_like(m)
+        cv2.fillConvexPoly(keep, cv2.convexHull(big), 255)
+        m = cv2.bitwise_and(m, keep)
+    q, _ = quad_of(m)
+    if q is None:
+        q = q_hint
+    c = q.mean(0)
+    app = fit_app(app, q)
+    ah, aw = app.shape[:2]
+    qg = c + (q - c) * 1.03
+    M = cv2.getPerspectiveTransform(np.float32([[0, 0], [aw, 0], [aw, ah], [0, ah]]), qg.astype(np.float32))
+    warped = cv2.warpPerspective(app, M, (w, h), flags=cv2.INTER_LINEAR).astype(np.float32) * dim
+    a = cv2.dilate(m, np.ones((3, 3), np.uint8), 1)
+    a = cv2.GaussianBlur(a, (3, 3), 0).astype(np.float32) / 255.0
+    base = f.astype(np.float32)
+    edge = cv2.dilate(m, np.ones((15, 15), np.uint8), 1) > 0
+    g = base[..., 1]
+    lim = np.maximum(base[..., 0], base[..., 2])
+    base[..., 1] = np.where(edge & (g > lim), lim, g)
+    o = base * (1 - a[..., None]) + warped * a[..., None]
+    # any green left on the screen or its edge becomes the phone's dark bezel
+    rim = cv2.dilate(m, np.ones((11, 11), np.uint8), 1) > 0
+    gr = (o[..., 1] > np.maximum(o[..., 0], o[..., 2]) + 25) & rim
+    gr = cv2.dilate(gr.astype(np.uint8), np.ones((3, 3), np.uint8), 1) > 0
+    o[gr] = o[gr] * 0.15 + np.array([18, 18, 20], np.float32) * 0.85
+    # soften the edge where a thumb crosses the screen
+    band = (cv2.dilate(m, np.ones((5, 5), np.uint8)) > 0) & (cv2.erode(m, np.ones((5, 5), np.uint8)) == 0)
+    soft = cv2.GaussianBlur(o, (5, 5), 0)
+    o[band] = soft[band]
+    return np.clip(o, 0, 255).astype(np.uint8)
+
+
 def main():
     args = sys.argv[1:]
-    opts = {"--switch": "", "--dim": "1.0", "--start": "0"}
+    opts = {"--switch": "", "--dim": "1.0", "--start": "0", "--zoom": ""}
     pos = []
     i = 0
     while i < len(args):
@@ -74,11 +156,15 @@ def main():
     switches = [float(x) for x in opts["--switch"].split(",") if x]
     dim = float(opts["--dim"])
     start = float(opts["--start"])
+    # --zoom "t:z,t:z,..." pushes in on the phone (a game's phone view); the app is composited after the zoom so it stays sharp
+    keys = sorted((float(a), float(b)) for a, b in (k.split(":") for k in opts["--zoom"].split(",") if k))
+    zmax = max([z for _, z in keys] + [1.0])
 
     src, fps = frames_of(shot)
     clips = [frames_of(a)[0] for a in apps]
     h, w = src[0].shape[:2]
     prev = None
+    ctr = None
     enc = subprocess.Popen(
         ["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{w}x{h}", "-r", str(fps), "-i", "-",
          "-c:v", "libx264", "-crf", "12", "-preset", "slow", "-pix_fmt", "yuv420p", out],
@@ -92,42 +178,32 @@ def main():
         clip = clips[k]
         ai = min(len(clip) - 1, int((t - clip_start[k]) * 30)) if t >= clip_start[k] else 0
         app = clip[max(0, ai)]
-        m = green_mask(f)
-        q, area = quad_of(m)
-        if q is None:
+        q, area = quad_of(green_mask(f))
+        if q is not None:
+            found += 1
+            if prev is not None and np.abs(q - prev).max() < 40:
+                q = prev * 0.55 + q * 0.45  # smooth small jitter, follow big moves
+            prev = q
+        else:
             prev = None
-            enc.stdin.write(f.tobytes())
-            continue
-        found += 1
-        if prev is not None and np.abs(q - prev).max() < 40:
-            q = prev * 0.55 + q * 0.45  # smooth small jitter, follow big moves
-        prev = q
-        ah, aw = app.shape[:2]
-        # the green area is the visible screen; grow the quad a touch so the app reaches under the rounded corners
-        c = q.mean(0)
-        qg = c + (q - c) * 1.03
-        M = cv2.getPerspectiveTransform(np.float32([[0, 0], [aw, 0], [aw, ah], [0, ah]]), qg.astype(np.float32))
-        warped = cv2.warpPerspective(app, M, (w, h), flags=cv2.INTER_CUBIC)
-        warped = np.clip(warped.astype(np.float32) * dim, 0, 255)
-        # only the phone: keep the green mask inside the screen quad (teal water or foliage elsewhere stays untouched)
-        region = np.zeros_like(m)
-        cv2.fillConvexPoly(region, (c + (q - c) * 1.08).astype(np.int32), 255)
-        m = cv2.bitwise_and(m, region)
-        # soft alpha from the green mask, slightly grown into the anti-aliased edge
-        a = cv2.dilate(m, np.ones((3, 3), np.uint8), 1)
-        a = cv2.GaussianBlur(a, (3, 3), 0).astype(np.float32) / 255.0
-        # a faint glass sheen across the screen, top-left to bottom-right
-        yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-        sheen = np.clip(1 - np.abs(((xx - c[0]) + (yy - c[1]) * 0.6) / (w * 0.9)), 0, 1) ** 6 * 18
-        comp = warped + sheen[..., None]
-        base = f.astype(np.float32)
-        # remove green spill from the border around the screen
-        edge = cv2.dilate(m, np.ones((9, 9), np.uint8), 1) > 0
-        g = base[..., 1]
-        lim = np.maximum(base[..., 0], base[..., 2])
-        base[..., 1] = np.where(edge & (g > lim), lim, g)
-        o = base * (1 - a[..., None]) + comp * a[..., None]
-        enc.stdin.write(np.clip(o, 0, 255).astype(np.uint8).tobytes())
+        z = zoom_at(keys, t)
+        if q is not None:
+            pc = q.mean(0)
+            ctr = pc if ctr is None else ctr * 0.8 + pc * 0.2  # the camera follows the phone gently
+        if z > 1.001:
+            big = cv2.resize(f, (int(w * z), int(h * z)), interpolation=cv2.INTER_CUBIC)
+            p = (z - 1) / max(1e-6, zmax - 1)
+            fc = np.array([w / 2, h / 2]) * z
+            tc = (ctr if ctr is not None else np.array([w / 2, h / 2])) * z
+            cc = fc + (tc - fc) * p
+            x0 = int(min(max(0, cc[0] - w / 2), big.shape[1] - w))
+            y0 = int(min(max(0, cc[1] - h / 2), big.shape[0] - h))
+            if q is not None:
+                big = composite(big, q * z, app, dim)
+            frame = big[y0 : y0 + h, x0 : x0 + w]
+        else:
+            frame = composite(f, q, app, dim) if q is not None else f
+        enc.stdin.write(np.ascontiguousarray(frame).tobytes())
     enc.stdin.close()
     enc.wait()
     print(f"{out}: {len(src)} frames, phone found in {found}")
